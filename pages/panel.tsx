@@ -206,22 +206,27 @@ const handleSubmit = async (e: React.FormEvent) => {
 
     console.log('🔍 rawText z GPT:', rawText);
 
-    try {
-      const cleaned = rawText
-        .replace(/^```json/, '')
-        .replace(/```$/, '')
-        .trim();
+ try {
+  const cleaned = rawText
+    .replace(/```json/g, '')
+    .replace(/```/g, '')
+    .trim();
 
-      const parsed = JSON.parse(cleaned);
-      const translatedDiet = mapDaysToPolish(parsed);
-      const normalizedDiet = normalizeDiet(translatedDiet);
+  if (!cleaned.startsWith('{')) {
+    throw new Error('Odpowiedź nie zaczyna się od obiektu JSON');
+  }
 
-      setDiet(normalizedDiet);
-      setEditableDiet(normalizedDiet);
-    } catch (err) {
-      console.error('❌ Błąd parsowania JSON:', err);
-      alert('Błąd przy analizie odpowiedzi AI. Odpowiedź nie jest prawidłowym JSON-em.');
-    }
+  const parsed = JSON.parse(cleaned);
+  const translatedDiet = mapDaysToPolish(parsed);
+  const normalizedDiet = normalizeDiet(translatedDiet);
+
+  setDiet(normalizedDiet);
+  setEditableDiet(normalizedDiet);
+} catch (err) {
+  console.error('❌ Błąd parsowania JSON:', err);
+  alert('Błąd przy analizie odpowiedzi AI. Odpowiedź nie jest prawidłowym JSON-em.');
+}
+
 
   } catch (err: any) {
     console.error('❌ Błąd generowania diety (frontend):', err.message || err);
