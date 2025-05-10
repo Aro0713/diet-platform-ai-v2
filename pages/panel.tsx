@@ -160,7 +160,7 @@ function Panel() {
     return result
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
   const missing: string[] = [];
@@ -194,24 +194,35 @@ function Panel() {
     const reader = res.body.getReader();
     const decoder = new TextDecoder('utf-8');
     let rawText = '';
-let done = false;
+    let done = false;
 
-while (!done) {
-  const { value, done: doneReading } = await reader.read();
-  done = doneReading;
-  const chunk = decoder.decode(value, { stream: true });
-  rawText += chunk;
-  setStreamingText(rawText);
-}
+    while (!done) {
+      const { value, done: doneReading } = await reader.read();
+      done = doneReading;
+      const chunk = decoder.decode(value, { stream: true });
+      rawText += chunk;
+      setStreamingText(rawText);
+    }
 
+    console.log('🔍 rawText z GPT:', rawText);
 
-    // Kiedy cały tekst dotarł — próbujemy sparsować JSON
-    const parsed = JSON.parse(rawText);
-    const translatedDiet = mapDaysToPolish(parsed);
-    const normalizedDiet = normalizeDiet(translatedDiet);
+    try {
+      const cleaned = rawText
+        .replace(/^```json/, '')
+        .replace(/```$/, '')
+        .trim();
 
-    setDiet(normalizedDiet);
-    setEditableDiet(normalizedDiet);
+      const parsed = JSON.parse(cleaned);
+      const translatedDiet = mapDaysToPolish(parsed);
+      const normalizedDiet = normalizeDiet(translatedDiet);
+
+      setDiet(normalizedDiet);
+      setEditableDiet(normalizedDiet);
+    } catch (err) {
+      console.error('❌ Błąd parsowania JSON:', err);
+      alert('Błąd przy analizie odpowiedzi AI. Odpowiedź nie jest prawidłowym JSON-em.');
+    }
+
   } catch (err: any) {
     console.error('❌ Błąd generowania diety (frontend):', err.message || err);
     alert('Wystąpił błąd podczas generowania diety. Spróbuj ponownie.');
@@ -219,7 +230,6 @@ while (!done) {
     setIsGenerating(false);
   }
 };
-
 
   const handleSendToPatient = () => {
     alert('?? Dieta została wysłana pacjentowi (symulacja).')
