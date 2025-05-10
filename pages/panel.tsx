@@ -207,14 +207,15 @@ const handleSubmit = async (e: React.FormEvent) => {
     console.log('🔍 rawText z GPT:', rawText);
 
  try {
-  const cleaned = rawText
-    .replace(/```json/g, '')
-    .replace(/```/g, '')
-    .trim();
+  const startIndex = rawText.indexOf('{');
+  const endIndex = rawText.lastIndexOf('}');
 
-  if (!cleaned.startsWith('{')) {
-    throw new Error('Odpowiedź nie zaczyna się od obiektu JSON');
+  if (startIndex === -1 || endIndex === -1) {
+    throw new Error('Brak nawiasów JSON w odpowiedzi GPT');
   }
+
+  const cleaned = rawText.slice(startIndex, endIndex + 1);
+  console.log('✅ cleaned JSON:', cleaned);
 
   const parsed = JSON.parse(cleaned);
   const translatedDiet = mapDaysToPolish(parsed);
@@ -226,6 +227,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   console.error('❌ Błąd parsowania JSON:', err);
   alert('Błąd przy analizie odpowiedzi AI. Odpowiedź nie jest prawidłowym JSON-em.');
 }
+
 
 
   } catch (err: any) {

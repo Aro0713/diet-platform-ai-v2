@@ -1,26 +1,28 @@
-﻿# dependencies
+﻿# === DEPENDENCJE / PAKIETY ===
 node_modules/
+
+# === ŚRODOWISKO ===
 .env
 .env.local
 .env.development
 .env.production
 
-# build
+# === BUILD I OUTPUT ===
 .next/
 out/
 dist/
+.cache/
+.turbo/
+coverage/
 
-# logs
+# === LOGI ===
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# OS files
+# === SYSTEM / EDITORY ===
 .DS_Store
 Thumbs.db
-# Next.js build output
-.next/
-out/
-
-# dependencies
-node_modules/
+.vscode/
+.idea/
