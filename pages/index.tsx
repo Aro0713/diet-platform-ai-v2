@@ -72,15 +72,15 @@ export default function Home() {
             height={100}
             className="mx-auto"
           />
-          <motion.img
+  <motion.img
   src="/pioro.png"
   alt="Pióro"
-  style={{ width: '3rem' }}
   initial={{ x: 200, opacity: 0 }}
   animate={{ x: 0, opacity: 1 }}
   transition={{ delay: 4.6, duration: 1.2 }}
-  className="absolute left-[60%] top-4"
+  className="absolute left-[60%] top-4 w-12"
 />
+
 
         </motion.div>
 
