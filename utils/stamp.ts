@@ -1,0 +1,1 @@
+export const stampBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZAAAAGQCAYAAACAvzbMAAAgAElEQVR4nO3dWZAdV33n8d8RA0giIiAIiBCLLmiGfVq2vSftX1bV1tt1r92zqmrbrqnt2WV9W/d7qZfZcf/VhEV3RQsMgAcQhAOJw4EdIgghdV9k3nP+/M+Z..."; // (pełny base64 pieczątki)
