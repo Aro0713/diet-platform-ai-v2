@@ -97,8 +97,16 @@ const DietTable: React.FC<DietTableProps> = ({ editableDiet, setEditableDiet, se
                             <textarea
                               className="w-full border rounded px-1 py-0.5 mb-1 text-sm"
                               rows={2}
+                              value={meal.description ?? ''}
+                              onChange={(e) => handleInputChange(day, mealIndex, 'description', e.target.value)}
+                              placeholder="Opis (AI)"
+                            />
+                            <textarea
+                              className="w-full border rounded px-1 py-0.5 mb-1 text-sm"
+                              rows={2}
                               value={meal.ingredients?.map(i => `${i.product} (${i.weight}g)`).join(', ') ?? ''}
                               onChange={(e) => handleInputChange(day, mealIndex, 'ingredients', e.target.value)}
+                              placeholder="Składniki"
                             />
                             <input
                               type="number"
@@ -118,6 +126,9 @@ const DietTable: React.FC<DietTableProps> = ({ editableDiet, setEditableDiet, se
                         ) : (
                           <>
                             <div className="font-semibold">{meal.name}</div>
+                            {meal.description && (
+                              <div className="text-sm italic mb-1">{meal.description}</div>
+                            )}
                             <ul className="text-sm list-disc list-inside">
                               {meal.ingredients.map((i, idx) => (
                                 <li key={idx}>{i.product} ({i.weight}g)</li>

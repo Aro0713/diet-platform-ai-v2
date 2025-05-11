@@ -146,22 +146,25 @@ function Panel() {
     name: '',
     ingredients: [],
     calories: 0,
-    glycemicIndex: 0
+    glycemicIndex: 0,
+    description: ''
   };
 
   const mealsPerDay = interviewData.mealsPerDay || 3;
 
   for (const day in diet) {
-    const meals = [...diet[day].slice(0, mealsPerDay)];
+    const dayMeals = Array.isArray(diet[day]) ? diet[day] : [];
+
+    const meals = [...dayMeals.slice(0, mealsPerDay)];
     while (meals.length < mealsPerDay) {
       meals.push({ ...defaultMeal });
     }
+
     result[day] = meals;
   }
 
   return result;
 };
-
 
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();

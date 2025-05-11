@@ -8,7 +8,8 @@ export type Meal = {
   ingredients: Ingredient[];
   calories: number;
   glycemicIndex: number;
-  errors?: string[]; // błędy walidacyjne
+  description?: string;     // 🆕 opis posiłku (np. wygenerowany przez AI)
+  errors?: string[];        // opcjonalne błędy walidacyjne
 };
 
 export type TestResult = {
@@ -31,7 +32,7 @@ export type ConditionWithTests = {
 export type PatientData = {
   name: string;
   age: number;
-  sex: 'female' | 'male';        // ✅ dodane pole wymagane w InterviewForm
+  sex: 'female' | 'male';        // zgodnie z InterviewForm
   weight: number;
   height: number;
   allergies?: string;
