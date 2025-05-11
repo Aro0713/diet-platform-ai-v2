@@ -9,10 +9,13 @@ interface DietTableProps {
 }
 
 const DAYS = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota', 'Niedziela'];
-const MAX_MEALS_PER_DAY = 3;
 
 const DietTable: React.FC<DietTableProps> = ({ editableDiet, setEditableDiet, setConfirmedDiet, isEditable }) => {
   const [saveMessage, setSaveMessage] = useState('');
+
+  const maxMeals = Math.max(
+    ...DAYS.map((day) => editableDiet[day]?.length || 0)
+  );
 
   const handleInputChange = (day: string, mealIndex: number, field: keyof Meal, value: string) => {
     const updatedDayMeals = [...(editableDiet[day] || [])];
@@ -73,7 +76,7 @@ const DietTable: React.FC<DietTableProps> = ({ editableDiet, setEditableDiet, se
           </tr>
         </thead>
         <tbody>
-          {Array.from({ length: MAX_MEALS_PER_DAY }).map((_, mealIndex) => (
+          {Array.from({ length: maxMeals }).map((_, mealIndex) => (
             <tr key={mealIndex}>
               <td className="border border-gray-400 bg-white px-2 py-1 font-semibold">Posiłek {mealIndex + 1}</td>
               {DAYS.map((day) => {

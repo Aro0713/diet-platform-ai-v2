@@ -230,7 +230,24 @@ try {
   console.log('✅ Cleaned JSON:', cleaned);
 
   const parsed = JSON.parse(cleaned);
-  const translatedDiet = mapDaysToPolish(parsed);
+
+  // Konwersja obiektu: { Monday: { Śniadanie: "...", ... } } → { Monday: Meal[] }
+  const converted = Object.fromEntries(
+    Object.entries(parsed).map(([day, mealsObj]) => {
+      const meals: Meal[] = Object.entries(mealsObj as Record<string, string>).map(
+        ([name, description]) => ({
+          name,
+          description,
+          ingredients: [{ product: description, weight: 0 }],
+          calories: 0,
+          glycemicIndex: 0
+        })
+      );
+      return [day, meals];
+    })
+  );
+
+  const translatedDiet = mapDaysToPolish(converted);
   const normalizedDiet = normalizeDiet(translatedDiet);
 
   setDiet(normalizedDiet);
@@ -239,9 +256,6 @@ try {
   console.error('❌ Błąd parsowania JSON:', err);
   alert('Błąd przy analizie odpowiedzi AI. Odpowiedź nie jest prawidłowym JSON-em.');
 }
-
-
-
 
   } catch (err: any) {
     console.error('❌ Błąd generowania diety (frontend):', err.message || err);
