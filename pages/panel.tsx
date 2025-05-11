@@ -231,30 +231,32 @@ try {
   // Wytnij czysty obiekt JSON
   cleaned = cleaned.slice(startIndex, endIndex + 1);
   console.log('✅ Cleaned JSON:', cleaned);
+  
+const parsed = JSON.parse(cleaned);
 
-  const parsed = JSON.parse(cleaned);
+// Obsługa struktury: { mealPlan: [...] }
+const converted: Record<string, Meal[]> = {};
+if (!parsed.mealPlan || !Array.isArray(parsed.mealPlan)) {
+  throw new Error('Brak pola mealPlan w odpowiedzi AI');
+}
 
-  // Konwersja obiektu: { Monday: { Śniadanie: "...", ... } } → { Monday: Meal[] }
-  const converted = Object.fromEntries(
-    Object.entries(parsed).map(([day, mealsObj]) => {
-      const meals: Meal[] = Object.entries(mealsObj as Record<string, string>).map(
-        ([name, description]) => ({
-          name,
-          description,
-          ingredients: [{ product: description, weight: 0 }],
-          calories: 0,
-          glycemicIndex: 0
-        })
-      );
-      return [day, meals];
-    })
-  );
+for (const entry of parsed.mealPlan) {
+  const { day, meals } = entry;
+  converted[day] = meals.map((m: any) => ({
+    name: m.meal,
+    description: m.dish,
+    ingredients: [{ product: m.dish, weight: 0 }],
+    calories: m.macros?.kcal || 0,
+    glycemicIndex: 0
+  }));
+}
 
-  const translatedDiet = mapDaysToPolish(converted);
-  const normalizedDiet = normalizeDiet(translatedDiet);
+const translatedDiet = mapDaysToPolish(converted);
+const normalizedDiet = normalizeDiet(translatedDiet);
 
-  setDiet(normalizedDiet);
-  setEditableDiet(normalizedDiet);
+setDiet(normalizedDiet);
+setEditableDiet(normalizedDiet);
+
 } catch (err) {
   console.error('❌ Błąd parsowania JSON:', err);
   alert('Błąd przy analizie odpowiedzi AI. Odpowiedź nie jest prawidłowym JSON-em.');
