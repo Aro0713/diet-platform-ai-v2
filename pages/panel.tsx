@@ -141,24 +141,27 @@ function Panel() {
   }
 
   const normalizeDiet = (diet: Record<string, Meal[]>): Record<string, Meal[]> => {
-    const result: Record<string, Meal[]> = {}
-    const defaultMeal: Meal = {
-      name: '',
-      ingredients: [],
-      calories: 0,
-      glycemicIndex: 0
-    }
+  const result: Record<string, Meal[]> = {};
+  const defaultMeal: Meal = {
+    name: '',
+    ingredients: [],
+    calories: 0,
+    glycemicIndex: 0
+  };
 
-    for (const day in diet) {
-      const meals = [...diet[day].slice(0, 3)]
-      while (meals.length < 3) {
-        meals.push({ ...defaultMeal })
-      }
-      result[day] = meals
-    }
+  const mealsPerDay = interviewData.mealsPerDay || 3;
 
-    return result
+  for (const day in diet) {
+    const meals = [...diet[day].slice(0, mealsPerDay)];
+    while (meals.length < mealsPerDay) {
+      meals.push({ ...defaultMeal });
+    }
+    result[day] = meals;
   }
+
+  return result;
+};
+
 
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
