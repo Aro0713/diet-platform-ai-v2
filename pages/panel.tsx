@@ -21,6 +21,7 @@ import CalculationBlock from '../components/CalculationBlock';
 import { languageLabels } from '../utils/i18n';
 import { tUI } from '../utils/i18n';
 import type { LangKey } from '../utils/i18n';
+import { parseMealPlanPreview } from '../utils/parseMealPlanPreview';
 
 
 function Panel() {
@@ -140,7 +141,7 @@ function Panel() {
     return translated
   }
 
-  const normalizeDiet = (diet: Record<string, Meal[]>): Record<string, Meal[]> => {
+const normalizeDiet = (diet: Record<string, Meal[]>): Record<string, Meal[]> => {
   const result: Record<string, Meal[]> = {};
   const defaultMeal: Meal = {
     name: '',
@@ -150,13 +151,14 @@ function Panel() {
     description: ''
   };
 
-  const mealsPerDay = interviewData.mealsPerDay || 3;
-
   for (const day in diet) {
     const dayMeals = Array.isArray(diet[day]) ? diet[day] : [];
 
-    const meals = [...dayMeals.slice(0, mealsPerDay)];
-    while (meals.length < mealsPerDay) {
+    // Jeśli użytkownik podał konkretną liczbę posiłków – uzupełnij brakujące
+    const expectedMeals = interviewData.mealsPerDay || dayMeals.length;
+    const meals: Meal[] = [...dayMeals];
+
+    while (meals.length < expectedMeals) {
       meals.push({ ...defaultMeal });
     }
 
@@ -165,6 +167,7 @@ function Panel() {
 
   return result;
 };
+
 
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
@@ -203,12 +206,35 @@ const handleSubmit = async (e: React.FormEvent) => {
     let done = false;
 
     while (!done) {
-      const { value, done: doneReading } = await reader.read();
-      done = doneReading;
-      const chunk = decoder.decode(value, { stream: true });
-      rawText += chunk;
-      setStreamingText(rawText);
-    }
+  const { value, done: doneReading } = await reader.read();
+  done = doneReading;
+  const chunk = decoder.decode(value, { stream: true });
+  rawText += chunk;
+  setStreamingText(rawText);
+
+  // 🔁 Próbuj parsować częściowy JSON i narysuj podgląd na żywo
+  try {
+    let cleaned = rawText
+      .replace(/```json/g, '')
+      .replace(/```/g, '')
+      .replace(/\r?\n/g, '')
+      .trim();
+
+    const start = cleaned.indexOf('{');
+    const end = cleaned.lastIndexOf('}');
+    if (start === -1 || end === -1) continue;
+
+    cleaned = cleaned.slice(start, end + 1);
+    const partial = JSON.parse(cleaned);
+
+    // Podgląd w locie
+    const preview = parseMealPlanPreview(partial);
+    setEditableDiet(preview);
+  } catch {
+    // Ignoruj błędy częściowego JSON – to normalne w streamie
+  }
+}
+
 
     console.log('🔍 rawText z GPT:', rawText);
 
@@ -415,44 +441,62 @@ setEditableDiet(normalizedDiet);
   />
 </div> 
 
+{/* Przyciski */}
+<div className="w-full flex flex-wrap justify-between gap-4 px-8 mt-6">
 
-    {/* Przyciski */}
-    <div className="w-full flex flex-wrap justify-between gap-4 px-8 mt-6">
-      <button
-        type="button"
-        onClick={handleSubmit}
-        className="flex-1 bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
-        disabled={isGenerating}
-      >
-        {isGenerating ? '✍️ Piszę dietę...' : tUI('generate', lang)}
-      </button>
+  {/* Generowanie diety */}
+  <button
+    type="button"
+    onClick={handleSubmit}
+    className="flex-1 bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
+    disabled={isGenerating}
+  >
+    {isGenerating ? '✍️ Piszę dietę...' : tUI('generate', lang)}
+  </button>
 
-      <button
-        type="button"
-        className="flex-1 bg-purple-700 text-white px-4 py-2 rounded hover:bg-purple-800"
-        onClick={() => setDietApproved(true)}
-        disabled={!confirmedDiet}
-      >
-        ✅ {tUI('approvedDiet', lang)}
-      </button>
+  {/* Zatwierdź */}
+  <button
+    type="button"
+    className="flex-1 bg-purple-700 text-white px-4 py-2 rounded hover:bg-purple-800 disabled:opacity-50"
+    onClick={() => setDietApproved(true)}
+    disabled={isGenerating || !confirmedDiet}
+  >
+    {isGenerating ? '🔒 Czekaj...' : `✅ ${tUI('approvedDiet', lang)}`}
+  </button>
 
-      <button
-        type="button"
-        className="flex-1 bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800"
-        onClick={() => generateDietPdf(form, bmi, confirmedDiet || [], dietApproved)}
-        disabled={!confirmedDiet}
-      >
-        🧾 {tUI('pdf', lang)}
-      </button>
+  {/* PDF */}
+<button
+  type="button"
+  className="flex-1 bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 disabled:opacity-50"
+  onClick={() => {
+    if (isGenerating) {
+      alert('⏳ Dieta nie została jeszcze w pełni wygenerowana. Poczekaj na zakończenie.');
+      return;
+    }
 
-      <button
-        type="button"
-        className="flex-1 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-        onClick={handleSendToPatient}
-      >
-        📤 {tUI('sendToPatient', lang)}
-      </button>
-    </div>
+    if (!confirmedDiet) {
+      alert('⚠️ Najpierw zatwierdź dietę, zanim pobierzesz PDF.');
+      return;
+    }
+
+    generateDietPdf(form, bmi, confirmedDiet, dietApproved);
+  }}
+  disabled={isGenerating || !confirmedDiet}
+>
+  {isGenerating ? '🔒 Czekaj...' : `🧾 ${tUI('pdf', lang)}`}
+</button>
+
+
+  {/* Wyślij pacjentowi */}
+  <button
+    type="button"
+    className="flex-1 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
+    onClick={handleSendToPatient}
+    disabled={isGenerating}
+  >
+    {isGenerating ? '🔒 Czekaj...' : `📤 ${tUI('sendToPatient', lang)}`}
+  </button>
+</div>
 
 {isGenerating && (
   <div className="w-full px-8 mt-4 text-sm text-gray-600 italic animate-pulse">

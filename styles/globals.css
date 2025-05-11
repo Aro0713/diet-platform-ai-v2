@@ -1,7 +1,17 @@
-﻿@tailwind base;
-@tailwind components;
-@tailwind utilities;
+﻿@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
 
-body {
-  font-family: sans-serif;
+@keyframes typewriter {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+.animate-typewriter {
+  animation: typewriter 8s steps(80, end) 1 normal both;
+}
+
+.animate-cursor {
+  animation: blink 0.8s step-start infinite;
 }

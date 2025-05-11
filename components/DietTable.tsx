@@ -127,8 +127,12 @@ const DietTable: React.FC<DietTableProps> = ({ editableDiet, setEditableDiet, se
                           <>
                             <div className="font-semibold">{meal.name}</div>
                             {meal.description && (
-                              <div className="text-sm italic mb-1">{meal.description}</div>
-                            )}
+                            <div className="text-sm italic mb-1 animate-typewriter relative whitespace-pre-wrap overflow-hidden border-r-2 border-gray-500">
+                            {meal.description}
+                            <span className="ml-1 inline-block w-1 h-5 bg-gray-700 animate-cursor"></span>
+                          </div>
+                        )}
+
                             <ul className="text-sm list-disc list-inside">
                               {meal.ingredients.map((i, idx) => (
                                 <li key={idx}>{i.product} ({i.weight}g)</li>
