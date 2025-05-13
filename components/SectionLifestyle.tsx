@@ -1,83 +1,44 @@
-import { LangKey, getTranslation } from '../utils/i18n';
-import { section3 } from '../components/utils/translations/interview/section3';
-
-interface Section3LifestyleData {
-  activity: string;
-  sleep: string;
-  stress: string;
-  smoking: string;
-  alcohol: string;
-  caffeine: string;
-}
+import React from 'react';
+import { LangKey } from '../utils/i18n';
+import { section3 } from './utils/translations/interview/section3';
 
 interface Props {
-  data: Section3LifestyleData;
-  onChange: (key: keyof Section3LifestyleData, value: string) => void;
+  data: { [key: string]: string };
+  onChange: (key: string, value: string) => void;
   lang: LangKey;
 }
 
 export default function SectionLifestyle({ data, onChange, lang }: Props) {
-  const t = (key: keyof typeof section3) => getTranslation(section3, key, lang);
+  const t = (key: keyof typeof section3): string =>
+    section3[key]?.[lang] ?? section3[key]?.pl ?? key;
+
+  const keys: (keyof typeof section3)[] = [
+    'q3_1',
+    'q3_2',
+    'q3_3',
+    'q3_4',
+    'q3_5',
+    'q3_6'
+  ];
 
   return (
-    <div className="space-y-4 mt-6">
-      <h3 className="text-lg font-bold">{t('section3_title')}</h3>
+    <div className="space-y-4 bg-[#f7f7f7] p-4 rounded shadow mt-4">
+      <h3 className="text-xl font-semibold border-b pb-2">3. {t('section3_title')}</h3>
 
-      <div>
-        <label className="block font-semibold">{t('q3_1')}</label>
-        <textarea
-          className="w-full border px-2 py-1"
-          value={data.activity}
-          onChange={(e) => onChange('activity', e.target.value)}
-        />
-      </div>
-
-      <div>
-        <label className="block font-semibold">{t('q3_2')}</label>
-        <textarea
-          className="w-full border px-2 py-1"
-          value={data.sleep}
-          onChange={(e) => onChange('sleep', e.target.value)}
-        />
-      </div>
-
-      <div>
-        <label className="block font-semibold">{t('q3_3')}</label>
-        <textarea
-          className="w-full border px-2 py-1"
-          value={data.stress}
-          onChange={(e) => onChange('stress', e.target.value)}
-        />
-      </div>
-
-      <div>
-        <label className="block font-semibold">{t('q3_4')}</label>
-        <input
-          type="text"
-          className="w-full border px-2 py-1"
-          value={data.smoking}
-          onChange={(e) => onChange('smoking', e.target.value)}
-        />
-      </div>
-
-      <div>
-        <label className="block font-semibold">{t('q3_5')}</label>
-        <input
-          type="text"
-          className="w-full border px-2 py-1"
-          value={data.alcohol}
-          onChange={(e) => onChange('alcohol', e.target.value)}
-        />
-      </div>
-
-      <div>
-        <label className="block font-semibold">{t('q3_6')}</label>
-        <input
-          type="text"
-          className="w-full border px-2 py-1"
-          value={data.caffeine}
-          onChange={(e) => onChange('caffeine', e.target.value)}
-        />
+      <div className="grid grid-cols-1 gap-4">
+        {keys.map((key) => (
+          <div key={key}>
+            <label className="block font-medium text-sm mb-1 text-gray-700">
+              {t(key)}
+            </label>
+            <textarea
+              rows={2}
+              className="w-full border rounded px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={data[key] || ''}
+              onChange={(e) => onChange(key, e.target.value)}
+            />
+          </div>
+        ))}
       </div>
     </div>
   );

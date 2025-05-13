@@ -5,8 +5,8 @@ import Select from "react-select";
 import { diseaseGroups } from "./diseaseGroups";
 import { testsByCondition } from "@/types/testsByCondition";
 import { testReferenceValues } from "./testReferenceValues";
-import { LangKey, getTranslation, translations } from "../utils/i18n";
-
+import { LangKey } from '../utils/i18n';
+import { translationsUI } from '../utils/translationsUI';
 
 interface MedicalFormProps {
   onChange: (data: {
@@ -14,18 +14,17 @@ interface MedicalFormProps {
     selectedConditions: string[];
     testResults: { [testName: string]: string };
   }) => void;
+  lang: LangKey;
 }
 
-const MedicalForm: React.FC<MedicalFormProps> = ({ onChange }) => {
+const MedicalForm: React.FC<MedicalFormProps> = ({ onChange, lang }) => {
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [availableConditions, setAvailableConditions] = useState<string[]>([]);
   const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
   const [testResults, setTestResults] = useState<{ [key: string]: string }>({});
 
-  const lang: LangKey = 'pl'; // lub dynamicznie z kontekstu
-  const t = (key: keyof typeof translations) =>
-    getTranslation(translations, key, lang);
-  
+  const t = (key: keyof typeof translationsUI): string =>
+    translationsUI[key]?.[lang] || translationsUI[key]?.pl || key;
 
   const groupOptions = Object.keys(diseaseGroups).map(group => ({
     value: group,

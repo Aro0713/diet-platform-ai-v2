@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { translationsUI } from '../utils/translations';
+import { translationsUI } from '../utils/translationsUI'; 
 import { LangKey } from '../utils/i18n';
 
 export interface LabTest {

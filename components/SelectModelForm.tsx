@@ -1,9 +1,10 @@
 import React from 'react';
 import { LangKey } from '../utils/i18n';
-import { translations } from '../utils/i18n';
+import { translationsUI } from '../utils/translationsUI';
+
 
 interface Props {
-  onChange: (value: string) => void;
+  onChange: (model: string) => void;
   lang: LangKey;
 }
 
@@ -324,27 +325,29 @@ const models: Record<string, Record<LangKey, string>> = {
   },
   };
 
-  export default function SelectModelForm({ onChange, lang }: Props) {
-    return (
-      <div className="bg-white p-4 rounded shadow space-y-2">
-        <label className="block font-semibold mb-1">
-          {translations.selectModel?.[lang] || translations.selectModel.pl}
-        </label>
-  
-        <select
-          className="w-full border px-2 py-1 rounded"
-          defaultValue=""
-          onChange={(e) => onChange(e.target.value)}
-        >
-          <option value="">
-            -- {translations.selectModel?.[lang] || translations.selectModel.pl} --
+export default function SelectModelForm({ onChange, lang }: Props) {
+  const t = (key: keyof typeof translationsUI): string =>
+  translationsUI[key]?.[lang] || translationsUI[key]?.pl || key;
+
+
+  return (
+    <div className="bg-white p-4 rounded shadow space-y-2">
+      <label className="block font-semibold mb-1">
+        {t('selectModel')}
+      </label>
+
+      <select
+        className="w-full border px-2 py-1 rounded"
+        defaultValue=""
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <option value="">--</option>
+        {Object.entries(models).map(([key, labels]) => (
+          <option key={key} value={key}>
+            {labels[lang] || labels.pl}
           </option>
-          {Object.entries(models).map(([key, labels]) => (
-            <option key={key} value={key}>
-              {labels[lang] || labels.pl}
-            </option>
-          ))}
-        </select>
-      </div>
-    );
-  }
+        ))}
+      </select>
+    </div>
+  );
+}

@@ -7,17 +7,17 @@ export default function ProfilePage() {
   const [edited, setEdited] = useState({ name: '', email: '', phone: '' })
   const [saved, setSaved] = useState(false)
 
-  useEffect(() => {
-    const stored = localStorage.getItem('patientData')
-    if (!stored) {
-      alert('Nie znaleziono danych pacjenta. Zaloguj się ponownie.')
-      router.push('/login')
-      return
-    }
-    const parsed = JSON.parse(stored)
-    setData(parsed)
-    setEdited({ name: parsed.name, email: parsed.email, phone: parsed.phone })
-  }, [])
+ useEffect(() => {
+  const stored = localStorage.getItem('patientData')
+  if (!stored) {
+    alert('Nie znaleziono danych pacjenta. Zaloguj się ponownie.')
+    router.push('/login')
+    return
+  }
+  const parsed = JSON.parse(stored)
+  setData(parsed)
+  setEdited({ name: parsed.name, email: parsed.email, phone: parsed.phone })
+}, [router])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEdited({ ...edited, [e.target.name]: e.target.value })

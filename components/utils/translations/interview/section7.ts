@@ -89,7 +89,21 @@ export const section7 = {
       hi: 'अन्य पाचन समस्याएं (यदि कोई हों):',
       ar: 'مشكلات هضمية أخرى (إن وجدت):',
       he: 'בעיות עיכול נוספות (אם קיימות):'
-    }
+    },
+    q7_7: {
+  pl: 'Czy były diagnozowane choroby jelit (IBS, SIBO, celiakia)?',
+  en: 'Have you been diagnosed with bowel diseases (IBS, SIBO, celiac)?',
+  es: '¿Le han diagnosticado enfermedades intestinales (SII, SIBO, celiaquía)?',
+  fr: 'Avez-vous été diagnostiqué(e) avec des maladies intestinales (SII, SIBO, maladie cœliaque) ?',
+  de: 'Wurden bei Ihnen Darmerkrankungen diagnostiziert (IBS, SIBO, Zöliakie)?',
+  ua: 'Чи було у вас діагностовано захворювання кишечника (IBS, SIBO, целіакія)?',
+  ru: 'Диагностировали ли у вас заболевания кишечника (СРК, SIBO, целиакия)?',
+  zh: '您是否被诊断患有肠道疾病（IBS、SIBO、乳糜泻）？',
+  hi: 'क्या आपके आंतों के रोगों (IBS, SIBO, सीलिएक) का निदान हुआ है?',
+  ar: 'هل تم تشخيصك بأمراض الأمعاء (IBS، SIBO، السيلياك)؟',
+  he: 'האם אובחנת עם מחלות מעיים (IBS, SIBO, צליאק)?'
+},
+
   } as const;
   
   export type Section7Key = keyof typeof section7;

@@ -1,82 +1,43 @@
-import { LangKey, getTranslation } from '../utils/i18n';
-import { section5 } from '../components/utils/translations/interview/section5';
-
-interface Section5PreferencesData {
-  likedFoods: string;
-  dislikedFoods: string;
-  intolerances: string;
-  allergies: string;
-  supplements: string;
-  medications: string;
-}
+import React from 'react';
+import { LangKey } from '../utils/i18n';
+import { section5 } from './utils/translations/interview/section5';
 
 interface Props {
-  data: Section5PreferencesData;
-  onChange: (key: keyof Section5PreferencesData, value: string) => void;
+  data: { [key: string]: string };
+  onChange: (key: string, value: string) => void;
   lang: LangKey;
 }
 
 export default function SectionPreferences({ data, onChange, lang }: Props) {
-  const t = (key: keyof typeof section5) => getTranslation(section5, key, lang);
+  const t = (key: keyof typeof section5): string =>
+    section5[key]?.[lang] ?? section5[key]?.pl ?? key;
+
+  const keys: (keyof typeof section5)[] = [
+    'q5_1',
+    'q5_2',
+    'q5_3',
+    'q5_4',
+    'q5_5'
+  ];
 
   return (
-    <div className="space-y-4 mt-6">
-      <h3 className="text-lg font-bold">{t('section5_title')}</h3>
+    <div className="space-y-4 bg-[#f7f7f7] p-4 rounded shadow mt-4">
+      <h3 className="text-xl font-semibold border-b pb-2">5. {t('section5_title')}</h3>
 
-      <div>
-        <label className="block font-semibold">{t('q5_1')}</label>
-        <textarea
-          className="w-full border px-2 py-1"
-          value={data.likedFoods}
-          onChange={(e) => onChange('likedFoods', e.target.value)}
-        />
-      </div>
-
-      <div>
-        <label className="block font-semibold">{t('q5_2')}</label>
-        <textarea
-          className="w-full border px-2 py-1"
-          value={data.dislikedFoods}
-          onChange={(e) => onChange('dislikedFoods', e.target.value)}
-        />
-      </div>
-
-      <div>
-        <label className="block font-semibold">{t('q5_3')}</label>
-        <input
-          type="text"
-          className="w-full border px-2 py-1"
-          value={data.intolerances}
-          onChange={(e) => onChange('intolerances', e.target.value)}
-        />
-      </div>
-
-      <div>
-        <label className="block font-semibold">{t('q5_4')}</label>
-        <input
-          type="text"
-          className="w-full border px-2 py-1"
-          value={data.allergies}
-          onChange={(e) => onChange('allergies', e.target.value)}
-        />
-      </div>
-
-      <div>
-        <label className="block font-semibold">{t('q5_5')}</label>
-        <textarea
-          className="w-full border px-2 py-1"
-          value={data.supplements}
-          onChange={(e) => onChange('supplements', e.target.value)}
-        />
-      </div>
-
-      <div>
-        <label className="block font-semibold">{t('q5_6')}</label>
-        <textarea
-          className="w-full border px-2 py-1"
-          value={data.medications}
-          onChange={(e) => onChange('medications', e.target.value)}
-        />
+      <div className="grid grid-cols-1 gap-4">
+        {keys.map((key) => (
+          <div key={key}>
+            <label className="block font-medium text-sm mb-1 text-gray-700">
+              {t(key)}
+            </label>
+            <textarea
+              rows={2}
+              className="w-full border rounded px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={data[key] || ''}
+              onChange={(e) => onChange(key, e.target.value)}
+            />
+          </div>
+        ))}
       </div>
     </div>
   );

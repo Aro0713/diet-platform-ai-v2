@@ -1,6 +1,4 @@
-﻿// /pages/api/generate-diet.ts
-
-import type { NextApiRequest, NextApiResponse } from 'next';
+﻿import type { NextApiRequest, NextApiResponse } from 'next';
 import { OpenAI } from 'openai';
 
 const openai = new OpenAI({
@@ -8,23 +6,12 @@ const openai = new OpenAI({
 });
 
 const languageMap: Record<string, string> = {
-  pl: 'polski',
-  en: 'English',
-  es: 'espanol',
-  fr: 'français',
-  de: 'Deutsch',
-  ua: 'українська',
-  ru: 'русский',
-  zh: '中文',
-  hi: 'हिन्दी',
-  ar: 'العربية',
-  he: 'עברית',
+  pl: 'polski', en: 'English', es: 'español', fr: 'français', de: 'Deutsch',
+  ua: 'українська', ru: 'русский', zh: '中文', hi: 'हिन्दी', ar: 'العربية', he: 'עברית'
 };
 
 export const config = {
-  api: {
-    bodyParser: true,
-  },
+  api: { bodyParser: true }
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -32,20 +19,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Only POST requests are allowed' });
   }
 
-  const { form, interviewData, lang = 'pl' } = req.body;
+  const { form, interviewData, lang = 'pl', goalExplanation = '' } = req.body;
   const selectedLang = languageMap[lang] || 'polski';
 
-  const bmi =
-    form.weight && form.height
-      ? parseFloat((form.weight / ((form.height / 100) ** 2)).toFixed(1))
-      : null;
+  const bmi = form.weight && form.height
+    ? parseFloat((form.weight / ((form.height / 100) ** 2)).toFixed(1))
+    : null;
+
+  const pal = form.pal || 1.6;
+  const cpm = Math.round(form.weight * 24 * pal);
 
   const patientData = {
     ...form,
     ...interviewData,
     bmi,
+    pal,
+    cpm,
+    goalExplanation,
     language: selectedLang,
-    mealsPerDay: interviewData.mealsPerDay,
+    mealsPerDay: interviewData.mealsPerDay
   };
 
   const prompt = `
@@ -55,30 +47,35 @@ You are an expert clinical dietitian AI with advanced knowledge in:
 - drug-nutrient and supplement interactions,
 - culturally sensitive nutrition and therapeutic food design.
 
-Your task is to generate a complete, 7-day, medically sound and evidence-based diet plan for a real patient. All information provided must be analyzed carefully and individually.
+Your task:
+Generate a medically sound, 7-day, individualized diet plan based on full analysis of the patient's data.
 
-Your diet must:
-- match the patient's age, sex, BMI, medical conditions and test results,
-- support therapeutic goals (e.g. insulin resistance, lipid profile, inflammation),
-- adjust for lifestyle (work, stress, sleep, activity, appetite),
-- avoid allergens, intolerances and patient-excluded products,
-- include correct kcal, macronutrient balance and glycemic index (if needed),
-- contain realistic, home-preparable meals — culturally appropriate and seasonally adjusted.
+Strict requirements:
+- Reflect patient's age, sex, BMI, PAL, and total energy expenditure (CPM)
+- Respect their therapeutic goal: "${goalExplanation}"
+- Adapt to patient's region, activity, stress, appetite, habits, allergies, conditions, and test results
+- Include adequate kcal and macronutrients, optional glycemic index
+- Avoid allergens, restricted ingredients, and repeated meals (no repetition for 2 days)
 
-Strict rules:
-- Return JSON only — no explanation, notes or markdown.
-- Always generate exactly 7 days (Monday to Sunday).
-- Each day must contain exactly ${interviewData.mealsPerDay} meals (as prescribed by the physician).
-- Vary ingredients — do not repeat meals or products more than once every 2 days.
-- Use UTF-8 and write everything in: ${selectedLang}.
+Meals per day:
+- Physician preference: ${interviewData.mealsPerDay || 'not provided'}
+- Acceptable range: 2–6 meals/day
+- If the physician has selected mealsPerDay, you must follow it
+- If not, choose a medically justified number (based on BMI, goal, appetite, clinical needs)
+- Never generate fewer than 2 or more than 6 meals per day
 
-Sources:
-- Follow ESPEN, EASO, ADA, DRI, USDA, EFSA, IŻŻ, PubMed and Cochrane-reviewed clinical evidence.
+Output:
+- Perfect JSON (UTF-8), no notes, markdown, or explanation
+- Write all content in: ${selectedLang}
+- Always return 7 full days (Monday to Sunday)
 
+Sources to follow:
+ESPEN, EASO, IŻŻ, ADA, USDA, EFSA, DRI, PubMed, Cochrane.
 
-Patient data:
+Patient Data:
 ${JSON.stringify(patientData, null, 2)}
 `;
+
 
   try {
     const stream = await openai.chat.completions.create({
@@ -92,11 +89,10 @@ ${JSON.stringify(patientData, null, 2)}
     res.writeHead(200, {
       'Content-Type': 'text/plain; charset=utf-8',
       'Cache-Control': 'no-cache',
-      'Transfer-Encoding': 'chunked',
+      'Transfer-Encoding': 'chunked'
     });
 
     const encoder = new TextEncoder();
-
     for await (const chunk of stream) {
       const text = chunk.choices?.[0]?.delta?.content;
       if (text) {

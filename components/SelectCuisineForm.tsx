@@ -1,5 +1,5 @@
 import React from 'react';
-import { LangKey, getTranslation, translations} from '../utils/i18n';
+import { LangKey } from '../utils/i18n';
 import { tUI } from '../utils/i18n';
 
 interface Props {
@@ -235,12 +235,11 @@ const cuisineLabels: Record<string, Record<LangKey, string>> = {
 const cuisineKeys = Object.keys(cuisineLabels);
 
 export default function SelectCuisineForm({ onChange, lang }: Props) {
-  const t = (key: keyof typeof translations) =>
-    getTranslation(translations, key, lang);
-
   return (
     <div className="mt-4">
-      <label className="block font-semibold mb-1">{tUI('selectCuisine', lang)}</label>
+      <label className="block font-semibold mb-1">
+        {tUI('selectCuisine', lang)}
+      </label>
       <select
         className="w-full border px-2 py-1"
         defaultValue=""

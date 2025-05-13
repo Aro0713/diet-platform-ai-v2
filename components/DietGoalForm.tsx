@@ -119,8 +119,8 @@ const goalTranslations = {
 export default function DietGoalForm({ onChange, lang }: Props) {
   const [selectedGroup, setSelectedGroup] = useState<keyof typeof goalTranslations.groups | ''>('');
 
-  const t = (key: keyof typeof goalTranslations.label): string =>
-    goalTranslations.label[key] || goalTranslations.label.pl;
+  const t = (): string =>
+    goalTranslations.label[lang] || goalTranslations.label.pl;
 
   const tGoal = (key: keyof typeof goalTranslations.groups): string =>
     goalTranslations.groups[key][lang] || goalTranslations.groups[key].pl || key;
@@ -137,19 +137,19 @@ export default function DietGoalForm({ onChange, lang }: Props) {
   return (
     <div className="bg-white p-4 rounded shadow mt-6 space-y-4">
       <label className="block font-semibold mb-1">
-        {t(lang)}
+        {t()}
       </label>
 
       <SelectDietGoalForm
-  selectedGoals={[selectedGroup]}
-  setSelectedGoals={(groups) => {
-    const selected = groups[0] as keyof typeof goalTranslations.groups;
-    setSelectedGroup(selected);
-    onChange(selected);
-  }}
-  groupedDietGoals={translatedGoals}
-/>
-
+        selectedGoals={[selectedGroup]}
+        setSelectedGoals={(groups) => {
+          const selected = groups[0] as keyof typeof goalTranslations.groups;
+          setSelectedGroup(selected);
+          onChange(selected);
+        }}
+        groupedDietGoals={translatedGoals}
+        placeholder="--"
+      />
     </div>
   );
 }
