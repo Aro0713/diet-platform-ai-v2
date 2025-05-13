@@ -35,6 +35,7 @@ import fallbackDiets from '../utils/fallbackDiets';
 
 function Panel() {
   const [lang, setLang] = useState<LangKey>('pl');
+  const [mealPlan, setMealPlan] = useState<Record<string, Meal[]>>({});
 
   const t = (key: keyof typeof translationsUI): string =>
   tUI(key, lang);
@@ -226,190 +227,138 @@ const handleSubmit = async (e: React.FormEvent) => {
   setIsGenerating(true);
 
   try {
-    const goalMap: Record<string, string> = {
-      lose: 'The goal is weight reduction.',
-      gain: 'The goal is to gain muscle mass.',
-      maintain: 'The goal is to maintain current weight.',
-      detox: 'The goal is detoxification and cleansing.',
-      regen: 'The goal is regeneration of the body and immune system.',
-      liver: 'The goal is to support liver function and reduce toxin load.',
-      kidney: 'The goal is to support kidney function and manage fluid/sodium balance.'
-    };
+  const goalMap: Record<string, string> = {
+    lose: 'The goal is weight reduction.',
+    gain: 'The goal is to gain muscle mass.',
+    maintain: 'The goal is to maintain current weight.',
+    detox: 'The goal is detoxification and cleansing.',
+    regen: 'The goal is regeneration of the body and immune system.',
+    liver: 'The goal is to support liver function and reduce toxin load.',
+    kidney: 'The goal is to support kidney function and manage fluid/sodium balance.'
+  };
 
-if (!interviewData.mealsPerDay) {
-  interviewData.mealsPerDay = getRecommendedMealsPerDay(form, interviewData);
-}
+  if (!interviewData.mealsPerDay) {
+    interviewData.mealsPerDay = getRecommendedMealsPerDay(form, interviewData);
+  }
 
-const recommendation = interviewData.recommendation?.trim();
+  const recommendation = interviewData.recommendation?.trim();
+  const goalExplanation = goalMap[interviewData.goal] || '';
 
-const goalExplanation = goalMap[interviewData.goal] || '';
+  const res = await fetch('/api/generate-diet', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      form,
+      interviewData,
+      lang,
+      goalExplanation,
+      recommendation
+    })
+  });
 
-const res = await fetch('/api/generate-diet', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    form,
-    interviewData,
-    lang,
-    goalExplanation,
-    recommendation
-  })
-});
+  if (!res.body) throw new Error('Brak treści w odpowiedzi serwera.');
 
-    if (!res.body) throw new Error('Brak treści w odpowiedzi serwera.');
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder('utf-8');
+  let rawText = '';
+  let done = false;
 
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder('utf-8');
-    let rawText = '';
-    let done = false;
+  while (!done) {
+    const { value, done: doneReading } = await reader.read();
+    done = doneReading;
+    const chunk = decoder.decode(value, { stream: true });
+    rawText += chunk;
+    setStreamingText(rawText);
 
-    while (!done) {
-      const { value, done: doneReading } = await reader.read();
-      done = doneReading;
-      const chunk = decoder.decode(value, { stream: true });
-      rawText += chunk;
-      setStreamingText(rawText);
-
-      // 🔁 Próbuj parsować częściowy JSON i narysuj podgląd na żywo
-      try {
-        let cleaned = rawText
-          .replace(/```json/g, '')
-          .replace(/```/g, '')
-          .replace(/\r?\n/g, '')
-          .trim();
-
-        const start = cleaned.indexOf('{');
-        const end = cleaned.lastIndexOf('}');
-        if (start === -1 || end === -1) continue;
-
-        cleaned = cleaned.slice(start, end + 1);
-        const partial = JSON.parse(cleaned);
-
-        const preview = parseMealPlanPreview(partial);
-        setEditableDiet(preview);
-      } catch {
-        // Ignoruj błędy częściowego JSON – to normalne w streamie
-      }
-    }
-
-    console.log('🔍 rawText z GPT:', rawText);
-
+    // 🔁 Parsuj częściowy JSON – podgląd
     try {
       let cleaned = rawText
         .replace(/```json/g, '')
         .replace(/```/g, '')
+        .replace(/^\s*AI\s*[:\-]?\s*/gi, '')
         .replace(/\r?\n/g, '')
         .trim();
 
       const startIndex = cleaned.indexOf('{');
       const endIndex = cleaned.lastIndexOf('}');
 
-      if (startIndex === -1 || endIndex === -1) {
-        throw new Error('Brak nawiasów JSON w odpowiedzi GPT');
-      }
+      if (startIndex === -1 || endIndex === -1) continue;
 
       cleaned = cleaned.slice(startIndex, endIndex + 1);
-      console.log('✅ Cleaned JSON:', cleaned);
-
       const parsed = JSON.parse(cleaned);
 
-      const converted: Record<string, Meal[]> = {};
-      if (!parsed.mealPlan || !Array.isArray(parsed.mealPlan)) {
-        throw new Error('Brak pola mealPlan w odpowiedzi AI');
-      }
-
-      for (const entry of parsed.mealPlan) {
-        const { day, meals } = entry;
-        converted[day] = meals.map((m: any) => ({
-          name: m.meal,
-          description: m.dish,
-          ingredients: [{ product: m.dish, weight: 0 }],
-          calories: m.macros?.kcal || 0,
-          glycemicIndex: 0
-        }));
-      }
-
-      const translatedDiet = mapDaysToPolish(converted);
-      const normalizedDiet = normalizeDiet(translatedDiet);
-
-      setDiet(normalizedDiet);
-      setEditableDiet(normalizedDiet);
-    } catch (err) {
-      console.error('❌ Błąd parsowania JSON:', err);
-      alert('Błąd przy analizie odpowiedzi AI. Odpowiedź nie jest prawidłowym JSON-em.');
+      const preview = parseMealPlanPreview(parsed);
+      setEditableDiet(preview);
+    } catch {
+      // ignoruj błędy przy częściowym parsowaniu
     }
-  } catch (err: any) {
-    console.error('❌ Błąd generowania diety (frontend):', err.message || err);
-    alert('Wystąpił błąd podczas generowania diety. Spróbuj ponownie.');
-  } finally {
-    setIsGenerating(false);
   }
+
+  // 🔁 Końcowy, pełny JSON
+  try {
+    let cleaned = rawText
+      .replace(/```json/g, '')
+      .replace(/```/g, '')
+      .replace(/^\s*AI\s*[:\-]?\s*/gi, '')
+      .replace(/\r?\n/g, '')
+      .trim();
+
+    const startIndex = cleaned.indexOf('{');
+    const endIndex = cleaned.lastIndexOf('}');
+
+    if (startIndex === -1 || endIndex === -1) {
+      throw new Error('Brak nawiasów JSON w odpowiedzi GPT');
+    }
+
+    cleaned = cleaned.slice(startIndex, endIndex + 1);
+    console.log('✅ Cleaned JSON:', cleaned);
+
+    const parsed = JSON.parse(cleaned);
+
+    if (!parsed.mealPlan || !Array.isArray(parsed.mealPlan)) {
+      throw new Error('Brak pola mealPlan w odpowiedzi AI');
+    }
+
+    const converted: Record<string, Meal[]> = {};
+
+    for (const entry of parsed.mealPlan) {
+      const { day, meals } = entry;
+      converted[day] = meals.map((m: any) => ({
+        name: m.meal,
+        description: m.dish,
+        ingredients: [{ product: m.dish, weight: 0 }],
+        calories: m.macros?.kcal || 0,
+        glycemicIndex: 0
+      }));
+    }
+
+    setMealPlan(converted);
+  } catch (e) {
+    console.error('❌ Błąd parsowania JSON:', e);
+    alert('Błąd przy analizie odpowiedzi AI. Odpowiedź nie jest prawidłowym JSON-em.');
+  }
+
+} catch (err) {
+  console.error('❌ Błąd zapytania do API:', err);
+  alert('Wystąpił błąd podczas komunikacji z API.');
+}
 };
-  const handleSendToPatient = () => {
-    alert('?? Dieta została wysłana pacjentowi (symulacja).')
-  }
+// 📨 Funkcja pomocnicza
+const handleSendToPatient = () => {
+  alert('📤 Dieta została wysłana pacjentowi (symulacja).');
+};
+
 console.log('🧪 tUI medicalData:', tUI('medicalData', lang));
 console.log('🌍 LANG:', lang);
 
-  return (
+   return (
     <div className="min-h-screen bg-[url('/background.jpg')] bg-cover bg-center bg-no-repeat backdrop-blur-sm p-4">
       {/* Główna sekcja – dwie kolumny */}
       <div className="flex flex-col md:flex-row w-full max-w-[1400px] mx-auto gap-6 px-4">
         {/* Kolumna 1 – dane medyczne pacjenta */}
         <form onSubmit={handleSubmit} className="w-full md:w-1/2 space-y-4">
-          <h1 className="text-3xl font-bold">{t('title')}</h1>
-          <p className="text-sm text-gray-600">{t('subtitle')}</p>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block mb-1">{t('age')}</label>
-              <input name="age" type="number" className="w-full border px-2 py-1" onChange={handleChange} required />
-            </div>
-            <div>
-              <label className="block mb-1">{t('sex')}</label>
-              <select name="sex" className="w-full border px-2 py-1" onChange={handleChange} required>
-                <option value="">{t('sex')}</option>
-                <option value="Kobieta">{t('female')}</option>
-                <option value="Mężczyzna">{t('male')}</option>
-              </select>
-            </div>
-            <div>
-              <label className="block mb-1">{t('weight')}</label>
-              <input name="weight" type="number" className="w-full border px-2 py-1" onChange={handleChange} required />
-            </div>
-            <div>
-              <label className="block mb-1">{t('height')}</label>
-              <input name="height" type="number" className="w-full border px-2 py-1" onChange={handleChange} required />
-            </div>
-          </div>
-
-          <div>
-            <label className="block mb-1">{tUI('region', lang)}</label>
-            <select
-              name="region"
-              className="w-full border px-2 py-1"
-              value={form.region}
-              onChange={handleChange}
-              required
-            >
-              <option value="">{`-- ${tUI('selectRegion', lang)} --`}</option>
-              <option value="Europa Środkowa">Europa Środkowa</option>
-              <option value="Europa Północna">Europa Północna</option>
-              <option value="Europa Południowa">Europa Południowa</option>
-              <option value="Azja Wschodnia">Azja Wschodnia</option>
-              <option value="Azja Południowa">Azja Południowa</option>
-              <option value="Ameryka Północna">Ameryka Północna</option>
-              <option value="Ameryka Południowa">Ameryka Południowa</option>
-              <option value="Afryka Subsaharyjska">Afryka Subsaharyjska</option>
-              <option value="Bliski Wschód">Bliski Wschód</option>
-              <option value="Regiony polarne">Regiony polarne</option>
-            </select>
-          </div>
-
-          <div className="mt-6">
-            <h2 className="text-lg font-semibold">{tUI('medicalData', lang)}</h2>
-            <MedicalForm onChange={handleMedicalChange} lang={lang} />
-          </div>
+          {/* ... dane pacjenta ... */}
+          {/* ... pozostawiasz bez zmian ... */}
         </form>
 
         {/* Kolumna 2 – wywiad pacjenta */}
@@ -530,4 +479,5 @@ console.log('🌍 LANG:', lang);
     </div>
   );
 }
+
 export default Panel;
