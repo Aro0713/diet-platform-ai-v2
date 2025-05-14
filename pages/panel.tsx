@@ -356,9 +356,38 @@ const handleSendToPatient = () => {
       <div className="flex flex-col md:flex-row w-full max-w-[1400px] mx-auto gap-6 px-4">
         {/* Kolumna 1 – dane medyczne pacjenta */}
         <form onSubmit={handleSubmit} className="w-full md:w-1/2 space-y-4">
-          {/* ... dane pacjenta ... */}
-          {/* ... pozostawiasz bez zmian ... */}
+          <h1 className="text-3xl font-bold">{t('title')}</h1>
+          <p className="text-sm text-gray-600">{t('subtitle')}</p>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block mb-1">{t('age')}</label>
+              <input name="age" type="number" className="w-full border px-2 py-1" onChange={handleChange} required />
+            </div>
+            <div>
+              <label className="block mb-1">{t('sex')}</label>
+              <select name="sex" className="w-full border px-2 py-1" onChange={handleChange} required>
+                <option value="">{t('sex')}</option>
+                <option value="Kobieta">{t('female')}</option>
+                <option value="Mężczyzna">{t('male')}</option>
+              </select>
+            </div>
+            <div>
+              <label className="block mb-1">{t('weight')}</label>
+              <input name="weight" type="number" className="w-full border px-2 py-1" onChange={handleChange} required />
+            </div>
+            <div>
+              <label className="block mb-1">{t('height')}</label>
+              <input name="height" type="number" className="w-full border px-2 py-1" onChange={handleChange} required />
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <h2 className="text-lg font-semibold">{tUI('medicalData', lang)}</h2>
+            <MedicalForm onChange={handleMedicalChange} lang={lang} />
+          </div>
         </form>
+S
 
         {/* Kolumna 2 – wywiad pacjenta */}
         <div className="w-full md:w-1/2 max-h-[90vh] overflow-y-auto space-y-6 pr-2">
