@@ -302,14 +302,14 @@ const handleSubmit = async (e: React.FormEvent) => {
     const converted: Record<string, Meal[]> = {};
     const sourcePlan = parsed.mealPlan || parsed.week_plan;
 
-    if (sourcePlan && Array.isArray(sourcePlan)) {
+      if (sourcePlan && Array.isArray(sourcePlan)) {
       for (const entry of sourcePlan) {
         const { day, meals } = entry;
         converted[day] = meals.map((m: any) => ({
-          name: '',
-          description: m.description,
+          name: m.name || '',
+          description: m.description || '',
           ingredients: [],
-          calories: 0,
+          calories: m.kcal || 0,
           glycemicIndex: 0
         }));
       }
@@ -318,9 +318,9 @@ const handleSubmit = async (e: React.FormEvent) => {
         const meals: Meal[] = Object.entries(mealsObj as any).map(
           ([name, meal]: [string, any]) => ({
             name,
-            description: meal.menu,
+            description: meal.menu || '',
             ingredients: [],
-            calories: 0,
+            calories: meal.kcal || 0,
             glycemicIndex: 0
           })
         );
@@ -334,7 +334,10 @@ const handleSubmit = async (e: React.FormEvent) => {
     setDiet(converted);
     setEditableDiet(converted);
 
-  } catch (err) {
+      // ✅ WŁAŚCIWE MIEJSCE DO LOGA — tuż po finalnym ustawieniu tabeli
+      console.log("✅ Parsed mealPlan being sent to table:", converted);
+ 
+} catch (err) {
     console.error('❌ Błąd główny:', err);
     alert('Wystąpił błąd przy generowaniu diety.');
   }
@@ -484,7 +487,7 @@ S
           </div>
         )}
 
-                {diet && (
+          {editableDiet && Object.keys(editableDiet).length > 0 && (
           <div className="w-full px-8 mt-10">
             <DietTable
               editableDiet={editableDiet}
