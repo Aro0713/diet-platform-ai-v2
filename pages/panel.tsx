@@ -203,6 +203,26 @@ const getRecommendedMealsPerDay = (form: PatientData, interviewData: any): numbe
   // Domyślnie – 4
   return 4;
 };
+const tryParseJSON = (raw: string): any | null => {
+  try {
+    let cleaned = raw
+      .replace(/```json/g, '')
+      .replace(/```/g, '')
+      .replace(/^\s*AI\s*[:\-]?\s*/gi, '')
+      .replace(/\r?\n/g, '')
+      .trim();
+
+    const start = cleaned.indexOf('{');
+    const end = cleaned.lastIndexOf('}');
+    if (start === -1 || end === -1) return null;
+
+    cleaned = cleaned.slice(start, end + 1);
+    console.log('✅ Cleaned JSON:', cleaned);
+    return JSON.parse(cleaned);
+  } catch {
+    return null;
+  }
+};
 
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
@@ -227,126 +247,84 @@ const handleSubmit = async (e: React.FormEvent) => {
   setIsGenerating(true);
 
   try {
-  const goalMap: Record<string, string> = {
-    lose: 'The goal is weight reduction.',
-    gain: 'The goal is to gain muscle mass.',
-    maintain: 'The goal is to maintain current weight.',
-    detox: 'The goal is detoxification and cleansing.',
-    regen: 'The goal is regeneration of the body and immune system.',
-    liver: 'The goal is to support liver function and reduce toxin load.',
-    kidney: 'The goal is to support kidney function and manage fluid/sodium balance.'
-  };
+    const goalMap: Record<string, string> = {
+      lose: 'The goal is weight reduction.',
+      gain: 'The goal is to gain muscle mass.',
+      maintain: 'The goal is to maintain current weight.',
+      detox: 'The goal is detoxification and cleansing.',
+      regen: 'The goal is regeneration of the body and immune system.',
+      liver: 'The goal is to support liver function and reduce toxin load.',
+      kidney: 'The goal is to support kidney function and manage fluid/sodium balance.'
+    };
 
-  if (!interviewData.mealsPerDay) {
-    interviewData.mealsPerDay = getRecommendedMealsPerDay(form, interviewData);
-  }
-
-  const recommendation = interviewData.recommendation?.trim();
-  const goalExplanation = goalMap[interviewData.goal] || '';
-
-  const res = await fetch('/api/generate-diet', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      form,
-      interviewData,
-      lang,
-      goalExplanation,
-      recommendation
-    })
-  });
-
-  if (!res.body) throw new Error('Brak treści w odpowiedzi serwera.');
-
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder('utf-8');
-  let rawText = '';
-  let done = false;
-
-  while (!done) {
-    const { value, done: doneReading } = await reader.read();
-    done = doneReading;
-    const chunk = decoder.decode(value, { stream: true });
-    rawText += chunk;
-    setStreamingText(rawText);
-
-    // 🔁 Parsuj częściowy JSON – podgląd
-    try {
-      let cleaned = rawText
-        .replace(/```json/g, '')
-        .replace(/```/g, '')
-        .replace(/^\s*AI\s*[:\-]?\s*/gi, '')
-        .replace(/\r?\n/g, '')
-        .trim();
-
-      const startIndex = cleaned.indexOf('{');
-      const endIndex = cleaned.lastIndexOf('}');
-
-      if (startIndex === -1 || endIndex === -1) continue;
-
-      cleaned = cleaned.slice(startIndex, endIndex + 1);
-      const parsed = JSON.parse(cleaned);
-
-      const preview = parseMealPlanPreview(parsed);
-      setEditableDiet(preview);
-    } catch {
-      // ignoruj błędy przy częściowym parsowaniu
-    }
-  }
-
-  // 🔁 Końcowy, pełny JSON
-  try {
-    let cleaned = rawText
-      .replace(/```json/g, '')
-      .replace(/```/g, '')
-      .replace(/^\s*AI\s*[:\-]?\s*/gi, '')
-      .replace(/\r?\n/g, '')
-      .trim();
-
-    const startIndex = cleaned.indexOf('{');
-    const endIndex = cleaned.lastIndexOf('}');
-
-    if (startIndex === -1 || endIndex === -1) {
-      throw new Error('Brak nawiasów JSON w odpowiedzi GPT');
+    if (!interviewData.mealsPerDay) {
+      interviewData.mealsPerDay = getRecommendedMealsPerDay(form, interviewData);
     }
 
-    cleaned = cleaned.slice(startIndex, endIndex + 1);
-    console.log('✅ Cleaned JSON:', cleaned);
+    const recommendation = interviewData.recommendation?.trim();
+    const goalExplanation = goalMap[interviewData.goal] || '';
 
-    const parsed = JSON.parse(cleaned);
+    const res = await fetch('/api/generate-diet', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ form, interviewData, lang, goalExplanation, recommendation })
+    });
 
-    if (!parsed.mealPlan || !Array.isArray(parsed.mealPlan)) {
-      throw new Error('Brak pola mealPlan w odpowiedzi AI');
+    if (!res.body) throw new Error('Brak treści w odpowiedzi serwera.');
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let rawText = '';
+    let done = false;
+
+    while (!done) {
+      const { value, done: doneReading } = await reader.read();
+      done = doneReading;
+      const chunk = decoder.decode(value, { stream: true });
+      rawText += chunk;
+      setStreamingText(rawText);
+
+      try {
+        const partial = tryParseJSON(rawText);
+        if (partial) {
+          const preview = parseMealPlanPreview(partial);
+          setEditableDiet(preview);
+        }
+      } catch {
+        // Ignorujemy błędy parsowania częściowego
+      }
+    }
+
+    // Parsowanie końcowej odpowiedzi
+    const parsed = tryParseJSON(rawText);
+    if (!parsed) throw new Error('Nie można sparsować odpowiedzi AI.');
+
+    const sourcePlan = parsed.mealPlan || parsed.week_plan;
+    if (!sourcePlan || !Array.isArray(sourcePlan)) {
+      throw new Error('Brak poprawnego planu posiłków (mealPlan / week_plan) w odpowiedzi AI');
     }
 
     const converted: Record<string, Meal[]> = {};
-
-    for (const entry of parsed.mealPlan) {
+    for (const entry of sourcePlan) {
       const { day, meals } = entry;
       converted[day] = meals.map((m: any) => ({
-        name: m.meal,
-        description: m.dish,
-        ingredients: [{ product: m.dish, weight: 0 }],
-        calories: m.macros?.kcal || 0,
+        name: '', // można później generować z description
+        description: m.description,
+        ingredients: [],
+        calories: 0,
         glycemicIndex: 0
       }));
     }
 
-         setMealPlan(converted);
-    setDiet(converted);         // ← renderuje DietTable
-    setEditableDiet(converted); // ← zasila edytowalną tabelę
-  } catch (e) {
-    console.error('❌ Błąd parsowania JSON:', e);
-    alert('Błąd przy analizie odpowiedzi AI. Odpowiedź nie jest prawidłowym JSON-em.');
-  }
-
+    setMealPlan(converted);
+    setDiet(converted);
+    setEditableDiet(converted);
 
   } catch (err) {
-    console.error('❌ Błąd zapytania do API:', err);
-    alert('Wystąpił błąd podczas komunikacji z API.');
+    console.error('❌ Błąd główny:', err);
+    alert('Wystąpił błąd przy generowaniu diety.');
   }
 };
-
 const handleSendToPatient = () => {
   alert('📤 Dieta została wysłana pacjentowi (symulacja).');
 };
@@ -491,7 +469,7 @@ S
           </div>
         )}
 
-        {diet && (
+                {diet && (
           <div className="w-full px-8 mt-10">
             <DietTable
               editableDiet={editableDiet}
@@ -506,6 +484,6 @@ S
       </div>
     </div>
   );
-
 }
+
 export default Panel;
