@@ -348,14 +348,17 @@ const handleSubmit = async (e: React.FormEvent) => {
     setMealPlan(converted);
     setDiet(converted);
     setEditableDiet(converted);
-
+    
       // ✅ WŁAŚCIWE MIEJSCE DO LOGA — tuż po finalnym ustawieniu tabeli
       console.log("✅ Parsed mealPlan being sent to table:", converted);
- 
+    
+    setIsGenerating(false);
+
 } catch (err) {
-    console.error('❌ Błąd główny:', err);
-    alert('Wystąpił błąd przy generowaniu diety.');
-  }
+  console.error('❌ Błąd główny:', err);
+  setIsGenerating(false); // ⬅️ TUTAJ TEŻ
+  alert('Wystąpił błąd przy generowaniu diety.');
+}
 };
 
 const handleSendToPatient = () => {
