@@ -245,6 +245,8 @@ const handleSubmit = async (e: React.FormEvent) => {
   const bmiCalc = form.weight / ((form.height / 100) ** 2);
   setBmi(parseFloat(bmiCalc.toFixed(1)));
   setIsGenerating(true);
+  setStreamingText('');
+  setDietApproved(false);
 
   try {
     const goalMap: Record<string, string> = {
@@ -291,11 +293,10 @@ const handleSubmit = async (e: React.FormEvent) => {
           setEditableDiet(preview);
         }
       } catch {
-        // Ignorujemy błędy parsowania częściowego
+        // ignorujemy błędy parsowania częściowego
       }
     }
 
-    // Parsowanie końcowej odpowiedzi
     console.log("🟡 RAW AI TEXT:", rawText);
     let parsed = tryParseJSON(rawText);
     console.log("🟢 Parsed JSON:", parsed);
@@ -305,7 +306,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     const converted: Record<string, Meal[]> = {};
     const sourcePlan = parsed.mealPlan || parsed.week_plan;
 
-      if (sourcePlan && Array.isArray(sourcePlan)) {
+    if (sourcePlan && Array.isArray(sourcePlan)) {
       for (const entry of sourcePlan) {
         const { day, meals } = entry;
         converted[day] = meals.map((m: any) => ({
@@ -317,48 +318,43 @@ const handleSubmit = async (e: React.FormEvent) => {
         }));
       }
     } else if (parsed.dietPlan && typeof parsed.dietPlan === 'object') {
-  // istniejący kod – zostaw
-  for (const [day, mealsObj] of Object.entries(parsed.dietPlan)) {
-    const meals: Meal[] = Object.entries(mealsObj as any).map(
-      ([name, meal]: [string, any]) => ({
-        name,
-        description: meal.menu || '',
-        ingredients: [],
-        calories: meal.kcal || 0,
-        glycemicIndex: 0
-      })
-    );
-    converted[day] = meals;
-  }
-} else if (parsed.weekPlan && Array.isArray(parsed.weekPlan)) {
-  // ⬅️ NOWY KOD – obsługa weekPlan
-  for (const { day, meals } of parsed.weekPlan) {
-    converted[day] = meals.map((meal: any) => ({
-      name: meal.name || '',
-      description: meal.menu || '',
-      ingredients: [],
-      calories: 0,
-      glycemicIndex: 0
-    }));
-  }
-} else {
-  throw new Error('Brak poprawnego planu posiłków w odpowiedzi AI (mealPlan, week_plan, dietPlan lub weekPlan)');
-}
+      for (const [day, mealsObj] of Object.entries(parsed.dietPlan)) {
+        const meals: Meal[] = Object.entries(mealsObj as any).map(
+          ([name, meal]: [string, any]) => ({
+            name,
+            description: meal.menu || '',
+            ingredients: [],
+            calories: meal.kcal || 0,
+            glycemicIndex: 0
+          })
+        );
+        converted[day] = meals;
+      }
+    } else if (parsed.weekPlan && Array.isArray(parsed.weekPlan)) {
+      for (const { day, meals } of parsed.weekPlan) {
+        converted[day] = meals.map((meal: any) => ({
+          name: meal.name || '',
+          description: meal.menu || '',
+          ingredients: [],
+          calories: 0,
+          glycemicIndex: 0
+        }));
+      }
+    } else {
+      throw new Error('Brak poprawnego planu posiłków w odpowiedzi AI (mealPlan, week_plan, dietPlan lub weekPlan)');
+    }
 
     setMealPlan(converted);
     setDiet(converted);
     setEditableDiet(converted);
-    
-      // ✅ WŁAŚCIWE MIEJSCE DO LOGA — tuż po finalnym ustawieniu tabeli
-      console.log("✅ Parsed mealPlan being sent to table:", converted);
-    
-    setIsGenerating(false);
 
-} catch (err) {
-  console.error('❌ Błąd główny:', err);
-  setIsGenerating(false); // ⬅️ TUTAJ TEŻ
-  alert('Wystąpił błąd przy generowaniu diety.');
-}
+    console.log("✅ FINAL editableDiet being sent to table:", converted);
+  } catch (err) {
+    console.error('❌ Błąd główny:', err);
+    alert('Wystąpił błąd przy generowaniu diety.');
+  } finally {
+    setIsGenerating(false);
+  }
 };
 
 const handleSendToPatient = () => {

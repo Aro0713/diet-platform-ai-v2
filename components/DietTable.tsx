@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Meal } from '@/types';
 
 interface DietTableProps {
@@ -13,9 +13,15 @@ const DAYS = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobot
 const DietTable: React.FC<DietTableProps> = ({ editableDiet, setEditableDiet, setConfirmedDiet, isEditable }) => {
   const [saveMessage, setSaveMessage] = useState('');
 
-  const maxMeals = Math.max(
-    ...DAYS.map((day) => editableDiet[day]?.length || 0)
-  );
+  useEffect(() => {
+    if (saveMessage) {
+      const timeout = setTimeout(() => setSaveMessage(''), 3000);
+      return () => clearTimeout(timeout);
+    }
+  }, [editableDiet]);
+
+  const allMealCounts = DAYS.map((day) => editableDiet[day]?.length || 0);
+  const uniformMealCount = allMealCounts.every((count) => count === allMealCounts[0]) ? allMealCounts[0] : Math.max(...allMealCounts);
 
   const handleInputChange = (day: string, mealIndex: number, field: keyof Meal, value: string) => {
     const updatedDayMeals = [...(editableDiet[day] || [])];
@@ -37,12 +43,15 @@ const DietTable: React.FC<DietTableProps> = ({ editableDiet, setEditableDiet, se
     }
 
     updatedDayMeals[mealIndex] = meal;
+    console.log('🛠️ updatedDayMeals:', updatedDayMeals);
     setEditableDiet({ ...editableDiet, [day]: updatedDayMeals });
   };
 
   const validateDiet = () => {
     for (const day of DAYS) {
-      for (const meal of editableDiet[day] || []) {
+      const meals = editableDiet[day] || [];
+      if (meals.length !== uniformMealCount) return false;
+      for (const meal of meals) {
         if (!meal.name || meal.name.trim() === '') return false;
         for (const ing of meal.ingredients) {
           if (!ing.product || ing.product.trim() === '') return false;
@@ -57,10 +66,8 @@ const DietTable: React.FC<DietTableProps> = ({ editableDiet, setEditableDiet, se
     if (validateDiet()) {
       setConfirmedDiet(editableDiet);
       setSaveMessage('✅ Zapisano zmiany');
-      setTimeout(() => setSaveMessage(''), 3000);
     } else {
       setSaveMessage('❌ Uzupełnij wszystkie pola');
-      setTimeout(() => setSaveMessage(''), 4000);
     }
   };
 
@@ -76,7 +83,7 @@ const DietTable: React.FC<DietTableProps> = ({ editableDiet, setEditableDiet, se
           </tr>
         </thead>
         <tbody>
-          {Array.from({ length: maxMeals }).map((_, mealIndex) => (
+          {Array.from({ length: uniformMealCount }).map((_, mealIndex) => (
             <tr key={mealIndex}>
               <td className="border border-gray-400 bg-white px-2 py-1 font-semibold">Posiłek {mealIndex + 1}</td>
               {DAYS.map((day) => {
@@ -127,12 +134,11 @@ const DietTable: React.FC<DietTableProps> = ({ editableDiet, setEditableDiet, se
                           <>
                             <div className="font-semibold">{meal.name}</div>
                             {meal.description && (
-                            <div className="text-sm italic mb-1 animate-typewriter relative whitespace-pre-wrap overflow-hidden border-r-2 border-gray-500">
-                            {meal.description}
-                            <span className="ml-1 inline-block w-1 h-5 bg-gray-700 animate-cursor"></span>
-                          </div>
-                        )}
-
+                              <div className="text-sm italic mb-1 animate-typewriter relative whitespace-pre-wrap overflow-hidden border-r-2 border-gray-500">
+                                {meal.description}
+                                <span className="ml-1 inline-block w-1 h-5 bg-gray-700 animate-cursor"></span>
+                              </div>
+                            )}
                             <ul className="text-sm list-disc list-inside">
                               {meal.ingredients.map((i, idx) => (
                                 <li key={idx}>{i.product} ({i.weight}g)</li>
@@ -172,4 +178,5 @@ const DietTable: React.FC<DietTableProps> = ({ editableDiet, setEditableDiet, se
   );
 };
 
-export default DietTable;
+export default React.memo(DietTable);
+
