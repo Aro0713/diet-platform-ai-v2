@@ -296,7 +296,10 @@ const handleSubmit = async (e: React.FormEvent) => {
     }
 
     // Parsowanie końcowej odpowiedzi
+    console.log("🟡 RAW AI TEXT:", rawText);
     let parsed = tryParseJSON(rawText);
+    console.log("🟢 Parsed JSON:", parsed);
+
     if (!parsed) throw new Error('Nie można sparsować odpowiedzi AI.');
 
     const converted: Record<string, Meal[]> = {};
