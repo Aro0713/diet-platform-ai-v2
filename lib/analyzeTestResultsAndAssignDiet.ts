@@ -14,6 +14,8 @@ export function analyzeTestResultsAndAssignDiet({ conditions, results, goals, mo
   // 🥣 Zawsze zdrowe śniadanie
   diet.push({
     name: 'Śniadanie bazowe',
+    description: '',
+    time: '',
     ingredients: [
       { product: 'Owsianka na mleku roślinnym', weight: 200 },
       { product: 'Jagody', weight: 50 },
@@ -35,6 +37,8 @@ export function analyzeTestResultsAndAssignDiet({ conditions, results, goals, mo
   if (cukrzyca || hba1c > 6.5) {
     diet.push({
       name: 'Obiad cukrzycowy',
+      description: '',
+      time: '',
       ingredients: [
         { product: 'Kurczak grillowany', weight: 150 },
         { product: 'Warzywa duszone', weight: 200 },
@@ -46,6 +50,8 @@ export function analyzeTestResultsAndAssignDiet({ conditions, results, goals, mo
   } else if (niewydolnośćNerek) {
     diet.push({
       name: 'Obiad nerkowy',
+      description: '',
+      time: '',
       ingredients: [
         { product: 'Dorsz pieczony', weight: 120 },
         { product: 'Ryż biały', weight: 150 },
@@ -57,6 +63,8 @@ export function analyzeTestResultsAndAssignDiet({ conditions, results, goals, mo
   } else if (nadciśnienie || cholesterol > 200) {
     diet.push({
       name: 'Obiad dla nadciśnienia',
+      description: '',
+      time: '',
       ingredients: [
         { product: 'Indyk gotowany', weight: 150 },
         { product: 'Kasza jęczmienna', weight: 100 },
@@ -68,6 +76,8 @@ export function analyzeTestResultsAndAssignDiet({ conditions, results, goals, mo
   } else {
     diet.push({
       name: 'Obiad standardowy',
+      description: '',
+      time: '',
       ingredients: [
         { product: 'Kurczak grillowany', weight: 150 },
         { product: 'Ryż basmati', weight: 100 },
@@ -82,6 +92,8 @@ export function analyzeTestResultsAndAssignDiet({ conditions, results, goals, mo
   if (goals?.includes('Odchudzające (redukcja)') || otyłość) {
     diet.push({
       name: 'Kolacja redukcyjna',
+      description: '',
+      time: '',
       ingredients: [
         { product: 'Twaróg półtłusty', weight: 100 },
         { product: 'Ogórek', weight: 100 },
@@ -92,6 +104,8 @@ export function analyzeTestResultsAndAssignDiet({ conditions, results, goals, mo
   } else {
     diet.push({
       name: 'Kolacja standardowa',
+      description: '',
+      time: '',
       ingredients: [
         { product: 'Kanapka pełnoziarnista', weight: 150 },
         { product: 'Pomidor', weight: 100 },

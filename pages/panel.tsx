@@ -18,13 +18,13 @@ import DietTable from '@/components/DietTable';
 import type { Meal, PatientData, MedicalData, ConditionWithTests } from '../types';
 import type { LangKey } from '../utils/i18n';
 
-// Utils – funkcje
+// Utils � funkcje
 import { generateDietPdf } from '../utils/generateDietPdf';
 import { generateInterviewPdf } from '../utils/generateInterviewPdf';
 import { validateDiet } from '../utils/validateDiet';
 import { parseMealPlanPreview } from '../utils/parseMealPlanPreview';
 
-// Utils – tłumaczenia
+// Utils � t�umaczenia
 import { getTranslation, tUI, languageLabels } from '../utils/i18n';
 import { translations } from '../utils/translations';
 import { translationsUI } from '../utils/translationsUI';
@@ -132,11 +132,11 @@ function Panel() {
   };
 
   const dayMap = {
-    Monday: 'Poniedziałek',
+    Monday: 'Poniedzia�ek',
     Tuesday: 'Wtorek',
-    Wednesday: 'Środa',
+    Wednesday: '�roda',
     Thursday: 'Czwartek',
-    Friday: 'Piątek',
+    Friday: 'Pi�tek',
     Saturday: 'Sobota',
     Sunday: 'Niedziela'
   };
@@ -150,30 +150,31 @@ function Panel() {
     return translated;
   };
 
-  const normalizeDiet = (diet: Record<string, Meal[]>): Record<string, Meal[]> => {
-    const result: Record<string, Meal[]> = {};
-    const defaultMeal: Meal = {
-      name: '',
-      ingredients: [],
-      calories: 0,
-      glycemicIndex: 0,
-      description: ''
-    };
+ const normalizeDiet = (diet: Record<string, Meal[]>): Record<string, Meal[]> => {
+  const result: Record<string, Meal[]> = {};
+  const defaultMeal: Meal = {
+  name: '',
+  description: '',
+  ingredients: [],
+  calories: 0,
+  glycemicIndex: 0,
+  time: ''
+};
 
-    for (const day in diet) {
-      const dayMeals = Array.isArray(diet[day]) ? diet[day] : [];
-      const expectedMeals = interviewData.mealsPerDay || dayMeals.length;
-      const meals: Meal[] = [...dayMeals];
 
-      while (meals.length < expectedMeals) {
-        meals.push({ ...defaultMeal });
-      }
+  for (const day of Object.keys(diet)) {
+    const meals = Array.isArray(diet[day]) ? [...diet[day]] : [];
 
-      result[day] = meals;
+    while (meals.length < 6) {
+      meals.push({ ...defaultMeal });
     }
 
-    return result;
-  };
+    result[day] = meals;
+  }
+
+  return result;
+};
+
 const getRecommendedMealsPerDay = (form: PatientData, interviewData: any): number => {
   const conditions = form.conditions || [];
   const goal = interviewData.goal || '';
@@ -181,7 +182,7 @@ const getRecommendedMealsPerDay = (form: PatientData, interviewData: any): numbe
     ? form.weight / ((form.height / 100) ** 2)
     : null;
 
-  // Cukrzyca, insulinooporność, wrzody, PCOS, refluks, IBS – 5 posiłków
+  // Cukrzyca, insulinooporno��, wrzody, PCOS, refluks, IBS � 5 posi�k�w
   if (
     conditions.some(c =>
       ['diabetes', 'insulin', 'pcos', 'ibs', 'reflux', 'ulcer'].includes(c)
@@ -190,17 +191,17 @@ const getRecommendedMealsPerDay = (form: PatientData, interviewData: any): numbe
     return 5;
   }
 
-  // Regeneracyjne, przyrost masy, niedowaga – 5–6
+  // Regeneracyjne, przyrost masy, niedowaga � 5�6
   if (goal === 'gain' || goal === 'regen' || (bmi && bmi < 18.5)) {
     return 5;
   }
 
-  // Redukcja lub siedzący tryb życia – 3
+  // Redukcja lub siedz�cy tryb �ycia � 3
   if (goal === 'lose' || (bmi && bmi > 30)) {
     return 3;
   }
 
-  // Domyślnie – 4
+  // Domy�lnie � 4
   return 4;
 };
 const tryParseJSON = (raw: string): any | null => {
@@ -217,7 +218,7 @@ const tryParseJSON = (raw: string): any | null => {
     if (start === -1 || end === -1) return null;
 
     cleaned = cleaned.slice(start, end + 1);
-    console.log('✅ Cleaned JSON:', cleaned);
+    console.log('? Cleaned JSON:', cleaned);
     return JSON.parse(cleaned);
   } catch {
     return null;
@@ -272,7 +273,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       body: JSON.stringify({ form, interviewData, lang, goalExplanation, recommendation })
     });
 
-    if (!res.body) throw new Error('Brak treści w odpowiedzi serwera.');
+    if (!res.body) throw new Error('Brak tre�ci w odpowiedzi serwera.');
 
     const reader = res.body.getReader();
     const decoder = new TextDecoder('utf-8');
@@ -293,15 +294,15 @@ const handleSubmit = async (e: React.FormEvent) => {
           setEditableDiet(preview);
         }
       } catch {
-        // ignorujemy błędy parsowania częściowego
+        // ignorujemy b��dy parsowania cz��ciowego
       }
     }
 
-    console.log("🟡 RAW AI TEXT:", rawText);
+    console.log("?? RAW AI TEXT:", rawText);
     let parsed = tryParseJSON(rawText);
-    console.log("🟢 Parsed JSON:", parsed);
+    console.log("?? Parsed JSON:", parsed);
 
-    if (!parsed) throw new Error('Nie można sparsować odpowiedzi AI.');
+    if (!parsed) throw new Error('Nie mo�na sparsowa� odpowiedzi AI.');
 
     const converted: Record<string, Meal[]> = {};
     const sourcePlan = parsed.mealPlan || parsed.week_plan;
@@ -314,7 +315,7 @@ const handleSubmit = async (e: React.FormEvent) => {
           description: m.description || '',
           ingredients: [],
           calories: m.kcal || 0,
-          glycemicIndex: 0
+          glycemicIndex: m.glycemicIndex || 0, time: m.time || ""
         }));
       }
     } else if (parsed.dietPlan && typeof parsed.dietPlan === 'object') {
@@ -325,7 +326,7 @@ const handleSubmit = async (e: React.FormEvent) => {
             description: meal.menu || '',
             ingredients: [],
             calories: meal.kcal || 0,
-            glycemicIndex: 0
+            glycemicIndex: meal.glycemicIndex || 0, time: meal.time || ""
           })
         );
         converted[day] = meals;
@@ -337,34 +338,34 @@ const handleSubmit = async (e: React.FormEvent) => {
           description: meal.menu || '',
           ingredients: [],
           calories: 0,
-          glycemicIndex: 0
+          glycemicIndex: meal.glycemicIndex || 0, time: meal.time || ""
         }));
       }
     } else {
-      throw new Error('Brak poprawnego planu posiłków w odpowiedzi AI (mealPlan, week_plan, dietPlan lub weekPlan)');
+      throw new Error('Brak poprawnego planu posi�k�w w odpowiedzi AI (mealPlan, week_plan, dietPlan lub weekPlan)');
     }
 
     setMealPlan(converted);
     setDiet(converted);
     setEditableDiet(converted);
 
-    console.log("✅ FINAL editableDiet being sent to table:", converted);
+    console.log("? FINAL editableDiet being sent to table:", converted);
   } catch (err) {
-    console.error('❌ Błąd główny:', err);
-    alert('Wystąpił błąd przy generowaniu diety.');
+    console.error('? B��d g��wny:', err);
+    alert('Wyst�pi� b��d przy generowaniu diety.');
   } finally {
     setIsGenerating(false);
   }
 };
 
 const handleSendToPatient = () => {
-  alert('📤 Dieta została wysłana pacjentowi (symulacja).');
+  alert('?? Dieta zosta�a wys�ana pacjentowi (symulacja).');
 };
    return (
     <div className="min-h-screen bg-[url('/background.jpg')] bg-cover bg-center bg-no-repeat backdrop-blur-sm p-4">
-      {/* Główna sekcja – dwie kolumny */}
+      {/* G��wna sekcja � dwie kolumny */}
       <div className="flex flex-col md:flex-row w-full max-w-[1400px] mx-auto gap-6 px-4">
-        {/* Kolumna 1 – dane medyczne pacjenta */}
+        {/* Kolumna 1 � dane medyczne pacjenta */}
         <form onSubmit={handleSubmit} className="w-full md:w-1/2 space-y-4">
           <h1 className="text-3xl font-bold">{t('title')}</h1>
           <p className="text-sm text-gray-600">{t('subtitle')}</p>
@@ -379,7 +380,7 @@ const handleSendToPatient = () => {
               <select name="sex" className="w-full border px-2 py-1" onChange={handleChange} required>
                 <option value="">{t('sex')}</option>
                 <option value="Kobieta">{t('female')}</option>
-                <option value="Mężczyzna">{t('male')}</option>
+                <option value="M��czyzna">{t('male')}</option>
               </select>
             </div>
             <div>
@@ -399,7 +400,7 @@ const handleSendToPatient = () => {
         </form>
 S
 
-        {/* Kolumna 2 – wywiad pacjenta */}
+        {/* Kolumna 2 � wywiad pacjenta */}
         <div className="w-full md:w-1/2 max-h-[90vh] overflow-y-auto space-y-6 pr-2">
           <InterviewForm
             onChange={(data) => setInterviewData({ ...interviewData, ...data })}
@@ -454,7 +455,7 @@ S
             className="flex-1 bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
             disabled={isGenerating}
           >
-            {isGenerating ? '✍️ Piszę dietę...' : tUI('generate', lang)}
+            {isGenerating ? '?? Pisz� diet�...' : tUI('generate', lang)}
           </button>
 
           <button
@@ -463,7 +464,7 @@ S
             onClick={() => setDietApproved(true)}
             disabled={isGenerating || !confirmedDiet}
           >
-            {isGenerating ? '🔒 Czekaj...' : `✅ ${tUI('approvedDiet', lang)}`}
+            {isGenerating ? '?? Czekaj...' : `? ${tUI('approvedDiet', lang)}`}
           </button>
 
           <button
@@ -471,18 +472,18 @@ S
             className="flex-1 bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 disabled:opacity-50"
             onClick={() => {
               if (isGenerating) {
-                alert('⏳ Dieta nie została jeszcze w pełni wygenerowana. Poczekaj na zakończenie.');
+                alert('? Dieta nie zosta�a jeszcze w pe�ni wygenerowana. Poczekaj na zako�czenie.');
                 return;
               }
               if (!confirmedDiet) {
-                alert('⚠️ Najpierw zatwierdź dietę, zanim pobierzesz PDF.');
+                alert('?? Najpierw zatwierd� diet�, zanim pobierzesz PDF.');
                 return;
               }
               generateDietPdf(form, bmi, confirmedDiet, dietApproved);
             }}
             disabled={isGenerating || !confirmedDiet}
           >
-            {isGenerating ? '🔒 Czekaj...' : `🧾 ${tUI('pdf', lang)}`}
+            {isGenerating ? '?? Czekaj...' : `?? ${tUI('pdf', lang)}`}
           </button>
 
           <button
@@ -491,13 +492,13 @@ S
             onClick={handleSendToPatient}
             disabled={isGenerating}
           >
-            {isGenerating ? '🔒 Czekaj...' : `📤 ${tUI('sendToPatient', lang)}`}
+            {isGenerating ? '?? Czekaj...' : `?? ${tUI('sendToPatient', lang)}`}
           </button>
         </div>
 
         {isGenerating && (
           <div className="w-full px-8 mt-4 text-sm text-gray-600 italic animate-pulse">
-            ✍️ Piszę dietę... {streamingText.length > 20 && ' (czekaj, trwa generowanie)'}
+            ?? Pisz� diet�... {streamingText.length > 20 && ' (czekaj, trwa generowanie)'}
           </div>
         )}
 

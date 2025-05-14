@@ -9,29 +9,14 @@ interface DietTableProps {
 }
 
 const DAYS = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota', 'Niedziela'];
-
-const defaultMeal: Meal = {
-  name: '',
-  description: '',
-  ingredients: [],
-  calories: 0,
-  glycemicIndex: 0
-};
+const MEAL_NAMES = ['Śniadanie', 'Drugie śniadanie', 'Obiad', 'Podwieczorek', 'Kolacja', 'Posiłek dodatkowy'];
 
 const DietTable: React.FC<DietTableProps> = ({ editableDiet, setEditableDiet, setConfirmedDiet, isEditable }) => {
   const [saveMessage, setSaveMessage] = useState('');
 
-  // Stała liczba posiłków w tygodniu
-  const uniformMealCount = 6;
-
-  const getOrDefaultMeal = (day: string, index: number): Meal => {
-    const meals = editableDiet[day] || [];
-    return meals[index] || { ...defaultMeal };
-  };
-
   const handleInputChange = (day: string, mealIndex: number, field: keyof Meal, value: string) => {
     const updatedDayMeals = [...(editableDiet[day] || [])];
-    const meal = { ...getOrDefaultMeal(day, mealIndex) };
+    const meal = { ...updatedDayMeals[mealIndex] };
 
     if (field === 'calories' || field === 'glycemicIndex') {
       (meal as any)[field] = Number(value);
@@ -49,10 +34,6 @@ const DietTable: React.FC<DietTableProps> = ({ editableDiet, setEditableDiet, se
     }
 
     updatedDayMeals[mealIndex] = meal;
-    while (updatedDayMeals.length < uniformMealCount) {
-      updatedDayMeals.push({ ...defaultMeal });
-    }
-
     setEditableDiet({ ...editableDiet, [day]: updatedDayMeals });
   };
 
@@ -93,75 +74,85 @@ const DietTable: React.FC<DietTableProps> = ({ editableDiet, setEditableDiet, se
           </tr>
         </thead>
         <tbody>
-          {Array.from({ length: uniformMealCount }).map((_, mealIndex) => (
+          {MEAL_NAMES.map((mealLabel, mealIndex) => (
             <tr key={mealIndex}>
-              <td className="border border-gray-400 bg-white px-2 py-1 font-semibold">Posiłek {mealIndex + 1}</td>
+              <td className="border border-gray-400 bg-white px-2 py-1 font-semibold">{mealLabel}</td>
               {DAYS.map((day) => {
-                const meal = getOrDefaultMeal(day, mealIndex);
-                const isEmpty = !meal.name && !meal.description && meal.ingredients.length === 0 && meal.calories === 0 && meal.glycemicIndex === 0;
+                const meal = editableDiet[day]?.[mealIndex] ?? {
+                  name: '',
+                  time: '',
+                  description: '',
+                  ingredients: [],
+                  calories: 0,
+                  glycemicIndex: 0
+                };
                 return (
                   <td key={day + mealIndex} className="border border-gray-400 bg-white px-2 py-1 align-top text-black">
-                    {isEmpty && !isEditable ? (
-                      <span className="text-gray-400 italic">—</span>
-                    ) : (
-                      <div className="space-y-1">
-                        {isEditable ? (
-                          <>
-                            <input
-                              type="text"
-                              className="w-full border rounded px-1 py-0.5 mb-1"
-                              value={meal.name ?? ''}
-                              onChange={(e) => handleInputChange(day, mealIndex, 'name', e.target.value)}
-                              placeholder="Nazwa"
-                            />
-                            <textarea
-                              className="w-full border rounded px-1 py-0.5 mb-1 text-sm"
-                              rows={2}
-                              value={meal.description ?? ''}
-                              onChange={(e) => handleInputChange(day, mealIndex, 'description', e.target.value)}
-                              placeholder="Opis (AI)"
-                            />
-                            <textarea
-                              className="w-full border rounded px-1 py-0.5 mb-1 text-sm"
-                              rows={2}
-                              value={meal.ingredients?.map(i => `${i.product} (${i.weight}g)`).join(', ') ?? ''}
-                              onChange={(e) => handleInputChange(day, mealIndex, 'ingredients', e.target.value)}
-                              placeholder="Składniki"
-                            />
-                            <input
-                              type="number"
-                              className="w-full border rounded px-1 py-0.5 mb-1 text-xs"
-                              value={meal.calories ?? 0}
-                              onChange={(e) => handleInputChange(day, mealIndex, 'calories', e.target.value)}
-                              placeholder="Kalorie"
-                            />
-                            <input
-                              type="number"
-                              className="w-full border rounded px-1 py-0.5 mb-1 text-xs"
-                              value={meal.glycemicIndex ?? 0}
-                              onChange={(e) => handleInputChange(day, mealIndex, 'glycemicIndex', e.target.value)}
-                              placeholder="IG"
-                            />
-                          </>
-                        ) : (
-                          <>
-                            <div className="font-semibold">{meal.name}</div>
-                            {meal.description && (
-                              <div className="text-sm italic mb-1 animate-typewriter relative whitespace-pre-wrap overflow-hidden border-r-2 border-gray-500">
-                                {meal.description}
-                                <span className="ml-1 inline-block w-1 h-5 bg-gray-700 animate-cursor"></span>
-                              </div>
-                            )}
-                            <ul className="text-sm list-disc list-inside">
-                              {meal.ingredients.map((i, idx) => (
-                                <li key={idx}>{i.product} ({i.weight}g)</li>
-                              ))}
-                            </ul>
-                            <div className="text-xs">Kalorie: {meal.calories} | IG: {meal.glycemicIndex}</div>
-                          </>
-                        )}
-                      </div>
-                    )}
+                    <div className="space-y-1">
+                      {isEditable ? (
+                        <>
+                          <input
+                            type="text"
+                            className="w-full border rounded px-1 py-0.5 mb-1"
+                            value={meal.time}
+                            onChange={(e) => handleInputChange(day, mealIndex, 'time', e.target.value)}
+                            placeholder="Godzina"
+                          />
+                          <input
+                            type="text"
+                            className="w-full border rounded px-1 py-0.5 mb-1"
+                            value={meal.name}
+                            onChange={(e) => handleInputChange(day, mealIndex, 'name', e.target.value)}
+                            placeholder="Nazwa"
+                          />
+                          <textarea
+                            className="w-full border rounded px-1 py-0.5 mb-1 text-sm"
+                            rows={2}
+                            value={meal.description}
+                            onChange={(e) => handleInputChange(day, mealIndex, 'description', e.target.value)}
+                            placeholder="Opis (AI)"
+                          />
+                          <textarea
+                            className="w-full border rounded px-1 py-0.5 mb-1 text-sm"
+                            rows={2}
+                            value={meal.ingredients.map(i => `${i.product} (${i.weight}g)`).join(', ')}
+                            onChange={(e) => handleInputChange(day, mealIndex, 'ingredients', e.target.value)}
+                            placeholder="Składniki"
+                          />
+                          <input
+                            type="number"
+                            className="w-full border rounded px-1 py-0.5 mb-1 text-xs"
+                            value={meal.calories}
+                            onChange={(e) => handleInputChange(day, mealIndex, 'calories', e.target.value)}
+                            placeholder="Kalorie"
+                          />
+                          <input
+                            type="number"
+                            className="w-full border rounded px-1 py-0.5 mb-1 text-xs"
+                            value={meal.glycemicIndex}
+                            onChange={(e) => handleInputChange(day, mealIndex, 'glycemicIndex', e.target.value)}
+                            placeholder="IG"
+                          />
+                        </>
+                      ) : (
+                        <>
+                          <div className="text-xs italic">{meal.time}</div>
+                          <div className="font-semibold">{meal.name}</div>
+                          {meal.description && (
+                            <div className="text-sm italic mb-1 animate-typewriter relative whitespace-pre-wrap overflow-hidden border-r-2 border-gray-500">
+                              {meal.description}
+                              <span className="ml-1 inline-block w-1 h-5 bg-gray-700 animate-cursor"></span>
+                            </div>
+                          )}
+                          <ul className="text-sm list-disc list-inside">
+                            {meal.ingredients.map((i, idx) => (
+                              <li key={idx}>{i.product} ({i.weight}g)</li>
+                            ))}
+                          </ul>
+                          <div className="text-xs">Kalorie: {meal.calories} | IG: {meal.glycemicIndex}</div>
+                        </>
+                      )}
+                    </div>
                   </td>
                 );
               })}

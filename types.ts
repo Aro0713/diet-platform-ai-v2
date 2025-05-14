@@ -3,14 +3,15 @@ export type Ingredient = {
   weight: number;
 };
 
-export type Meal = {
+export interface Meal {
   name: string;
+  description: string;
   ingredients: Ingredient[];
   calories: number;
   glycemicIndex: number;
-  description?: string;     // 🆕 opis posiłku (np. wygenerowany przez AI)
-  errors?: string[];        // opcjonalne błędy walidacyjne
-};
+  time?: string; // <== teraz jest opcjonalne
+}
+
 
 export type TestResult = {
   name: string;
