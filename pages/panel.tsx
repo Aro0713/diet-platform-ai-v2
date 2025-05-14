@@ -296,24 +296,38 @@ const handleSubmit = async (e: React.FormEvent) => {
     }
 
     // Parsowanie końcowej odpowiedzi
-    const parsed = tryParseJSON(rawText);
+    let parsed = tryParseJSON(rawText);
     if (!parsed) throw new Error('Nie można sparsować odpowiedzi AI.');
 
-    const sourcePlan = parsed.mealPlan || parsed.week_plan;
-    if (!sourcePlan || !Array.isArray(sourcePlan)) {
-      throw new Error('Brak poprawnego planu posiłków (mealPlan / week_plan) w odpowiedzi AI');
-    }
-
     const converted: Record<string, Meal[]> = {};
-    for (const entry of sourcePlan) {
-      const { day, meals } = entry;
-      converted[day] = meals.map((m: any) => ({
-        name: '', // można później generować z description
-        description: m.description,
-        ingredients: [],
-        calories: 0,
-        glycemicIndex: 0
-      }));
+    const sourcePlan = parsed.mealPlan || parsed.week_plan;
+
+    if (sourcePlan && Array.isArray(sourcePlan)) {
+      for (const entry of sourcePlan) {
+        const { day, meals } = entry;
+        converted[day] = meals.map((m: any) => ({
+          name: '',
+          description: m.description,
+          ingredients: [],
+          calories: 0,
+          glycemicIndex: 0
+        }));
+      }
+    } else if (parsed.dietPlan && typeof parsed.dietPlan === 'object') {
+      for (const [day, mealsObj] of Object.entries(parsed.dietPlan)) {
+        const meals: Meal[] = Object.entries(mealsObj as any).map(
+          ([name, meal]: [string, any]) => ({
+            name,
+            description: meal.menu,
+            ingredients: [],
+            calories: 0,
+            glycemicIndex: 0
+          })
+        );
+        converted[day] = meals;
+      }
+    } else {
+      throw new Error('Brak poprawnego planu posiłków w odpowiedzi AI (mealPlan, week_plan lub dietPlan)');
     }
 
     setMealPlan(converted);
@@ -325,6 +339,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     alert('Wystąpił błąd przy generowaniu diety.');
   }
 };
+
 const handleSendToPatient = () => {
   alert('📤 Dieta została wysłana pacjentowi (symulacja).');
 };
