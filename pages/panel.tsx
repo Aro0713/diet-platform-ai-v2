@@ -141,39 +141,41 @@ function Panel() {
     Sunday: 'Niedziela'
   };
 
-  const mapDaysToPolish = (diet: Record<string, Meal[]>): Record<string, Meal[]> => {
-    const translated: Record<string, Meal[]> = {};
-    for (const day in diet) {
-      const translatedDay = dayMap[day as keyof typeof dayMap] || day;
-      translated[translatedDay] = diet[day];
-    }
-    return translated;
-  };
-
- const normalizeDiet = (diet: Record<string, Meal[]>): Record<string, Meal[]> => {
-  const result: Record<string, Meal[]> = {};
-  const defaultMeal: Meal = {
-  name: '',
-  description: '',
-  ingredients: [],
-  calories: 0,
-  glycemicIndex: 0,
-  time: ''
+  const mapDaysToPolish: Record<string, string> = {
+  Monday: 'Poniedziałek',
+  Tuesday: 'Wtorek',
+  Wednesday: 'Środa',
+  Thursday: 'Czwartek',
+  Friday: 'Piątek',
+  Saturday: 'Sobota',
+  Sunday: 'Niedziela',
 };
 
+const normalizeDiet = (raw: any): Record<string, Meal[]> => {
+  const result: Record<string, Meal[]> = {};
+  const data = raw.dietPlan || raw.weekPlan;
 
-  for (const day of Object.keys(diet)) {
-    const meals = Array.isArray(diet[day]) ? [...diet[day]] : [];
+  if (!data) {
+    throw new Error('Brak dietPlan ani weekPlan w odpowiedzi AI');
+  }
 
-    while (meals.length < 6) {
-      meals.push({ ...defaultMeal });
-    }
+  for (const dayKey in data) {
+    const translatedDay = mapDaysToPolish[dayKey] || dayKey;
+    const mealsForDay = data[dayKey];
 
-    result[day] = meals;
+    result[translatedDay] = Object.entries(mealsForDay).map(([mealName, mealData]: any) => ({
+      name: mealName,
+      description: mealData.menu || '',
+      ingredients: [],
+      calories: mealData.kcal || 0,
+      glycemicIndex: 0,
+      time: mealData.time || '',
+    }));
   }
 
   return result;
 };
+
 
 const getRecommendedMealsPerDay = (form: PatientData, interviewData: any): number => {
   const conditions = form.conditions || [];
@@ -228,6 +230,16 @@ const tryParseJSON = (raw: string): any | null => {
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
+  const mapDaysToPolish: Record<string, string> = {
+    Monday: 'Poniedziałek',
+    Tuesday: 'Wtorek',
+    Wednesday: 'Środa',
+    Thursday: 'Czwartek',
+    Friday: 'Piątek',
+    Saturday: 'Sobota',
+    Sunday: 'Niedziela',
+  };
+
   const missing: string[] = [];
   if (!form.age) missing.push(t('age'));
   if (!form.sex) missing.push(t('sex'));
@@ -273,7 +285,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       body: JSON.stringify({ form, interviewData, lang, goalExplanation, recommendation })
     });
 
-    if (!res.body) throw new Error('Brak tre�ci w odpowiedzi serwera.');
+    if (!res.body) throw new Error('Brak treści w odpowiedzi serwera.');
 
     const reader = res.body.getReader();
     const decoder = new TextDecoder('utf-8');
@@ -294,15 +306,15 @@ const handleSubmit = async (e: React.FormEvent) => {
           setEditableDiet(preview);
         }
       } catch {
-        // ignorujemy b��dy parsowania cz��ciowego
+        // ignorujemy błędy parsowania częściowego
       }
     }
 
-    console.log("?? RAW AI TEXT:", rawText);
+    console.log("📦 RAW AI TEXT:", rawText);
     let parsed = tryParseJSON(rawText);
-    console.log("?? Parsed JSON:", parsed);
+    console.log("✅ Parsed JSON:", parsed);
 
-    if (!parsed) throw new Error('Nie mo�na sparsowa� odpowiedzi AI.');
+    if (!parsed) throw new Error('Nie można sparsować odpowiedzi AI.');
 
     const converted: Record<string, Meal[]> = {};
     const sourcePlan = parsed.mealPlan || parsed.week_plan;
@@ -310,12 +322,13 @@ const handleSubmit = async (e: React.FormEvent) => {
     if (sourcePlan && Array.isArray(sourcePlan)) {
       for (const entry of sourcePlan) {
         const { day, meals } = entry;
-        converted[day] = meals.map((m: any) => ({
+        converted[mapDaysToPolish[day] || day] = meals.map((m: any) => ({
           name: m.name || '',
           description: m.description || '',
           ingredients: [],
           calories: m.kcal || 0,
-          glycemicIndex: m.glycemicIndex || 0, time: m.time || ""
+          glycemicIndex: m.glycemicIndex || 0,
+          time: m.time || ''
         }));
       }
     } else if (parsed.dietPlan && typeof parsed.dietPlan === 'object') {
@@ -326,33 +339,35 @@ const handleSubmit = async (e: React.FormEvent) => {
             description: meal.menu || '',
             ingredients: [],
             calories: meal.kcal || 0,
-            glycemicIndex: meal.glycemicIndex || 0, time: meal.time || ""
+            glycemicIndex: meal.glycemicIndex || 0,
+            time: meal.time || ''
           })
         );
-        converted[day] = meals;
+        converted[mapDaysToPolish[day] || day] = meals;
       }
     } else if (parsed.weekPlan && Array.isArray(parsed.weekPlan)) {
       for (const { day, meals } of parsed.weekPlan) {
-        converted[day] = meals.map((meal: any) => ({
+        converted[mapDaysToPolish[day] || day] = meals.map((meal: any) => ({
           name: meal.name || '',
           description: meal.menu || '',
           ingredients: [],
-          calories: 0,
-          glycemicIndex: meal.glycemicIndex || 0, time: meal.time || ""
+          calories: meal.kcal || 0,
+          glycemicIndex: meal.glycemicIndex || 0,
+          time: meal.time || ''
         }));
       }
     } else {
-      throw new Error('Brak poprawnego planu posi�k�w w odpowiedzi AI (mealPlan, week_plan, dietPlan lub weekPlan)');
+      throw new Error('Brak poprawnego planu posiłków w odpowiedzi AI (mealPlan, week_plan, dietPlan lub weekPlan)');
     }
 
     setMealPlan(converted);
     setDiet(converted);
     setEditableDiet(converted);
 
-    console.log("? FINAL editableDiet being sent to table:", converted);
+    console.log("📤 FINAL editableDiet sent to table:", converted);
   } catch (err) {
-    console.error('? B��d g��wny:', err);
-    alert('Wyst�pi� b��d przy generowaniu diety.');
+    console.error('❌ Błąd główny:', err);
+    alert('Wystąpił błąd przy generowaniu diety.');
   } finally {
     setIsGenerating(false);
   }
