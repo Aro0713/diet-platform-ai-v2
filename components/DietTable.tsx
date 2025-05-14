@@ -42,7 +42,7 @@ const DietTable: React.FC<DietTableProps> = ({ editableDiet, setEditableDiet, se
       const meals = editableDiet[day] || [];
       for (const meal of meals) {
         if (!meal.name || meal.name.trim() === '') return false;
-        for (const ing of meal.ingredients) {
+        for (const ing of meal.ingredients || []) {
           if (!ing.product || ing.product.trim() === '') return false;
           if (!ing.weight || ing.weight <= 0) return false;
         }
@@ -80,11 +80,11 @@ const DietTable: React.FC<DietTableProps> = ({ editableDiet, setEditableDiet, se
               {DAYS.map((day) => {
                 const meal = editableDiet[day]?.[mealIndex] ?? {
                   name: '',
-                  time: '',
                   description: '',
                   ingredients: [],
                   calories: 0,
-                  glycemicIndex: 0
+                  glycemicIndex: 0,
+                  time: ''
                 };
                 return (
                   <td key={day + mealIndex} className="border border-gray-400 bg-white px-2 py-1 align-top text-black">
@@ -94,16 +94,16 @@ const DietTable: React.FC<DietTableProps> = ({ editableDiet, setEditableDiet, se
                           <input
                             type="text"
                             className="w-full border rounded px-1 py-0.5 mb-1"
-                            value={meal.time}
-                            onChange={(e) => handleInputChange(day, mealIndex, 'time', e.target.value)}
-                            placeholder="Godzina"
-                          />
-                          <input
-                            type="text"
-                            className="w-full border rounded px-1 py-0.5 mb-1"
                             value={meal.name}
                             onChange={(e) => handleInputChange(day, mealIndex, 'name', e.target.value)}
                             placeholder="Nazwa"
+                          />
+                          <input
+                            type="text"
+                            className="w-full border rounded px-1 py-0.5 mb-1 text-xs"
+                            value={meal.time}
+                            onChange={(e) => handleInputChange(day, mealIndex, 'time', e.target.value)}
+                            placeholder="Godzina"
                           />
                           <textarea
                             className="w-full border rounded px-1 py-0.5 mb-1 text-sm"
@@ -115,7 +115,7 @@ const DietTable: React.FC<DietTableProps> = ({ editableDiet, setEditableDiet, se
                           <textarea
                             className="w-full border rounded px-1 py-0.5 mb-1 text-sm"
                             rows={2}
-                            value={meal.ingredients.map(i => `${i.product} (${i.weight}g)`).join(', ')}
+                            value={(meal.ingredients || []).map(i => `${i.product} (${i.weight}g)`).join(', ')}
                             onChange={(e) => handleInputChange(day, mealIndex, 'ingredients', e.target.value)}
                             placeholder="Składniki"
                           />
@@ -136,8 +136,8 @@ const DietTable: React.FC<DietTableProps> = ({ editableDiet, setEditableDiet, se
                         </>
                       ) : (
                         <>
-                          <div className="text-xs italic">{meal.time}</div>
                           <div className="font-semibold">{meal.name}</div>
+                          {meal.time && <div className="text-xs">🕒 {meal.time}</div>}
                           {meal.description && (
                             <div className="text-sm italic mb-1 animate-typewriter relative whitespace-pre-wrap overflow-hidden border-r-2 border-gray-500">
                               {meal.description}
@@ -145,7 +145,7 @@ const DietTable: React.FC<DietTableProps> = ({ editableDiet, setEditableDiet, se
                             </div>
                           )}
                           <ul className="text-sm list-disc list-inside">
-                            {meal.ingredients.map((i, idx) => (
+                            {(meal.ingredients || []).map((i, idx) => (
                               <li key={idx}>{i.product} ({i.weight}g)</li>
                             ))}
                           </ul>
