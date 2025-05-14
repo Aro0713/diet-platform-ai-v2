@@ -317,21 +317,33 @@ const handleSubmit = async (e: React.FormEvent) => {
         }));
       }
     } else if (parsed.dietPlan && typeof parsed.dietPlan === 'object') {
-      for (const [day, mealsObj] of Object.entries(parsed.dietPlan)) {
-        const meals: Meal[] = Object.entries(mealsObj as any).map(
-          ([name, meal]: [string, any]) => ({
-            name,
-            description: meal.menu || '',
-            ingredients: [],
-            calories: meal.kcal || 0,
-            glycemicIndex: 0
-          })
-        );
-        converted[day] = meals;
-      }
-    } else {
-      throw new Error('Brak poprawnego planu posiłków w odpowiedzi AI (mealPlan, week_plan lub dietPlan)');
-    }
+  // istniejący kod – zostaw
+  for (const [day, mealsObj] of Object.entries(parsed.dietPlan)) {
+    const meals: Meal[] = Object.entries(mealsObj as any).map(
+      ([name, meal]: [string, any]) => ({
+        name,
+        description: meal.menu || '',
+        ingredients: [],
+        calories: meal.kcal || 0,
+        glycemicIndex: 0
+      })
+    );
+    converted[day] = meals;
+  }
+} else if (parsed.weekPlan && Array.isArray(parsed.weekPlan)) {
+  // ⬅️ NOWY KOD – obsługa weekPlan
+  for (const { day, meals } of parsed.weekPlan) {
+    converted[day] = meals.map((meal: any) => ({
+      name: meal.name || '',
+      description: meal.menu || '',
+      ingredients: [],
+      calories: 0,
+      glycemicIndex: 0
+    }));
+  }
+} else {
+  throw new Error('Brak poprawnego planu posiłków w odpowiedzi AI (mealPlan, week_plan, dietPlan lub weekPlan)');
+}
 
     setMealPlan(converted);
     setDiet(converted);

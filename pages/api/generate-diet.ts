@@ -19,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Only POST requests are allowed' });
   }
 
-  const { form, interviewData, lang = 'pl', goalExplanation = '' } = req.body;
+  const { form, interviewData, lang = 'pl', goalExplanation = '', recommendation = '' } = req.body;
   const selectedLang = languageMap[lang] || 'polski';
 
   const bmi = form.weight && form.height
@@ -36,46 +36,47 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     pal,
     cpm,
     goalExplanation,
+    recommendation,
     language: selectedLang,
     mealsPerDay: interviewData.mealsPerDay
   };
 
   const prompt = `
-You are an expert clinical dietitian AI with advanced knowledge in:
-- human metabolism, endocrine and GI systems,
-- chronic and diet-related diseases,
-- drug-nutrient and supplement interactions,
-- culturally sensitive nutrition and therapeutic food design.
+You are a clinical dietitian AI. Generate a 7-day individualized medical diet plan in perfect JSON format.
 
-Your task:
-Generate a medically sound, 7-day, individualized diet plan based on full analysis of the patient's data.
+Return the output **only** as raw JSON object like this:
+{
+  "dietPlan": {
+    "Monday": {
+      "Śniadanie": { "time": "07:30", "menu": "...", "kcal": 400 },
+      "Drugie śniadanie": { "time": "10:00", "menu": "...", "kcal": 250 },
+      "Obiad": { "time": "16:00", "menu": "...", "kcal": 650 },
+      "Podwieczorek": { "time": "17:30", "menu": "...", "kcal": 150 },
+      "Kolacja": { "time": "19:30", "menu": "...", "kcal": 350 }
+    },
+    ...
+  }
+}
 
-Strict requirements:
-- Reflect patient's age, sex, BMI, PAL, and total energy expenditure (CPM)
-- Respect their therapeutic goal: "${goalExplanation}"
-- Adapt to patient's region, activity, stress, appetite, habits, allergies, conditions, and test results
-- Include adequate kcal and macronutrients, optional glycemic index
-- Avoid allergens, restricted ingredients, and repeated meals (no repetition for 2 days)
+Strict rules:
+- Top-level key must be "dietPlan"
+- Exactly 7 days: Monday to Sunday
+- Days in English: Monday, Tuesday, ...
+- Meal names in Polish: Śniadanie, Drugie śniadanie, Obiad, Podwieczorek, Kolacja
+- Each meal must have: "time", "menu", "kcal"
+- JSON only – no markdown, comments, explanations, code blocks or notes
 
-Meals per day:
-- Physician preference: ${interviewData.mealsPerDay || 'not provided'}
-- Acceptable range: 2–6 meals/day
-- If the physician has selected mealsPerDay, you must follow it
-- If not, choose a medically justified number (based on BMI, goal, appetite, clinical needs)
-- Never generate fewer than 2 or more than 6 meals per day
+Language of meal descriptions: ${selectedLang}
+Adapt the content to:
+- patient's goal: ${goalExplanation}
+- doctor's notes: ${recommendation}
+- allergies, health conditions, test results, stress, appetite, culture
+- daily kcal and macronutrients matched to CPM
+- mealsPerDay: ${interviewData.mealsPerDay || 'not provided'}
 
-Output:
-- Perfect JSON (UTF-8), no notes, markdown, or explanation
-- Write all content in: ${selectedLang}
-- Always return 7 full days (Monday to Sunday)
-
-Sources to follow:
-ESPEN, EASO, IŻŻ, ADA, USDA, EFSA, DRI, PubMed, Cochrane.
-
-Patient Data:
+All patient data:
 ${JSON.stringify(patientData, null, 2)}
 `;
-
 
   try {
     const stream = await openai.chat.completions.create({
