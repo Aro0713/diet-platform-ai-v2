@@ -1,12 +1,12 @@
 ﻿const next = require('eslint-config-next');
 
 module.exports = [
-  ...next(),
+  ...next,
   {
     rules: {
       'react/jsx-key': 'warn',
-      '@next/next/no-html-link-for-pages': 'off'
-    }
-  }
+      '@next/next/no-html-link-for-pages': 'off',
+    },
+    ignores: ['**/node_modules/**', '**/.next/**']
+  },
 ];
-

@@ -332,25 +332,24 @@ const handleSubmit = async (e: React.FormEvent) => {
       }));
     }
 
-    setMealPlan(converted);
+         setMealPlan(converted);
+    setDiet(converted);         // ← renderuje DietTable
+    setEditableDiet(converted); // ← zasila edytowalną tabelę
   } catch (e) {
     console.error('❌ Błąd parsowania JSON:', e);
     alert('Błąd przy analizie odpowiedzi AI. Odpowiedź nie jest prawidłowym JSON-em.');
   }
 
-} catch (err) {
-  console.error('❌ Błąd zapytania do API:', err);
-  alert('Wystąpił błąd podczas komunikacji z API.');
-}
+
+  } catch (err) {
+    console.error('❌ Błąd zapytania do API:', err);
+    alert('Wystąpił błąd podczas komunikacji z API.');
+  }
 };
-// 📨 Funkcja pomocnicza
+
 const handleSendToPatient = () => {
   alert('📤 Dieta została wysłana pacjentowi (symulacja).');
 };
-
-console.log('🧪 tUI medicalData:', tUI('medicalData', lang));
-console.log('🌍 LANG:', lang);
-
    return (
     <div className="min-h-screen bg-[url('/background.jpg')] bg-cover bg-center bg-no-repeat backdrop-blur-sm p-4">
       {/* Główna sekcja – dwie kolumny */}
@@ -478,6 +477,6 @@ console.log('🌍 LANG:', lang);
       </div>
     </div>
   );
-}
 
+}
 export default Panel;
