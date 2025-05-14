@@ -526,6 +526,7 @@ S
                 handleDietSave(Object.values(diet).flat());
               }}
               isEditable={!dietApproved}
+              lang={lang}
             />
           </div>
         )}

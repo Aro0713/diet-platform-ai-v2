@@ -1,18 +1,30 @@
 import React, { useState } from 'react';
 import { Meal } from '@/types';
+import { LangKey } from '@/utils/i18n';
+import { translationsUI } from '@/utils/translationsUI';
 
 interface DietTableProps {
   editableDiet: Record<string, Meal[]>;
   setEditableDiet: (diet: Record<string, Meal[]>) => void;
   setConfirmedDiet: (diet: Record<string, Meal[]>) => void;
   isEditable: boolean;
+  lang: LangKey;
 }
 
-const DAYS = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota', 'Niedziela'];
-const MEAL_NAMES = ['Śniadanie', 'Drugie śniadanie', 'Obiad', 'Podwieczorek', 'Kolacja', 'Posiłek dodatkowy'];
+const RAW_DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+const RAW_MEALS = ['breakfast', 'secondBreakfast', 'lunch', 'snack', 'dinner', 'extra'];
 
-const DietTable: React.FC<DietTableProps> = ({ editableDiet, setEditableDiet, setConfirmedDiet, isEditable }) => {
+const DietTable: React.FC<DietTableProps> = ({
+  editableDiet,
+  setEditableDiet,
+  setConfirmedDiet,
+  isEditable,
+  lang,
+}) => {
   const [saveMessage, setSaveMessage] = useState('');
+
+  const translatedDays = RAW_DAYS.map((dayKey) => translationsUI[dayKey]?.[lang] || dayKey);
+  const translatedMeals = RAW_MEALS.map((mealKey) => translationsUI[mealKey]?.[lang] || mealKey);
 
   const handleInputChange = (day: string, mealIndex: number, field: keyof Meal, value: string) => {
     const updatedDayMeals = [...(editableDiet[day] || [])];
@@ -38,7 +50,7 @@ const DietTable: React.FC<DietTableProps> = ({ editableDiet, setEditableDiet, se
   };
 
   const validateDiet = () => {
-    for (const day of DAYS) {
+    for (const day of translatedDays) {
       const meals = editableDiet[day] || [];
       for (const meal of meals) {
         if (!meal.name || meal.name.trim() === '') return false;
@@ -68,16 +80,16 @@ const DietTable: React.FC<DietTableProps> = ({ editableDiet, setEditableDiet, se
         <thead>
           <tr>
             <th className="border border-gray-500 bg-gray-200 text-sm font-semibold text-black px-2 py-1 text-left">#</th>
-            {DAYS.map((day) => (
+            {translatedDays.map((day) => (
               <th key={day} className="border border-gray-500 bg-gray-200 text-sm font-semibold text-black px-2 py-1 text-center">{day}</th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {MEAL_NAMES.map((mealLabel, mealIndex) => (
+          {translatedMeals.map((mealLabel, mealIndex) => (
             <tr key={mealIndex}>
               <td className="border border-gray-400 bg-white px-2 py-1 font-semibold">{mealLabel}</td>
-              {DAYS.map((day) => {
+              {translatedDays.map((day) => {
                 const meal = editableDiet[day]?.[mealIndex] ?? {
                   name: '',
                   description: '',
