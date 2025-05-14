@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Meal } from '@/types';
 
 interface DietTableProps {
@@ -10,22 +10,28 @@ interface DietTableProps {
 
 const DAYS = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota', 'Niedziela'];
 
+const defaultMeal: Meal = {
+  name: '',
+  description: '',
+  ingredients: [],
+  calories: 0,
+  glycemicIndex: 0
+};
+
 const DietTable: React.FC<DietTableProps> = ({ editableDiet, setEditableDiet, setConfirmedDiet, isEditable }) => {
   const [saveMessage, setSaveMessage] = useState('');
 
-  useEffect(() => {
-    if (saveMessage) {
-      const timeout = setTimeout(() => setSaveMessage(''), 3000);
-      return () => clearTimeout(timeout);
-    }
-  }, [editableDiet]);
+  // Stała liczba posiłków w tygodniu
+  const uniformMealCount = 6;
 
-  const allMealCounts = DAYS.map((day) => editableDiet[day]?.length || 0);
-  const uniformMealCount = allMealCounts.every((count) => count === allMealCounts[0]) ? allMealCounts[0] : Math.max(...allMealCounts);
+  const getOrDefaultMeal = (day: string, index: number): Meal => {
+    const meals = editableDiet[day] || [];
+    return meals[index] || { ...defaultMeal };
+  };
 
   const handleInputChange = (day: string, mealIndex: number, field: keyof Meal, value: string) => {
     const updatedDayMeals = [...(editableDiet[day] || [])];
-    const meal = { ...updatedDayMeals[mealIndex] };
+    const meal = { ...getOrDefaultMeal(day, mealIndex) };
 
     if (field === 'calories' || field === 'glycemicIndex') {
       (meal as any)[field] = Number(value);
@@ -43,14 +49,16 @@ const DietTable: React.FC<DietTableProps> = ({ editableDiet, setEditableDiet, se
     }
 
     updatedDayMeals[mealIndex] = meal;
-    console.log('🛠️ updatedDayMeals:', updatedDayMeals);
+    while (updatedDayMeals.length < uniformMealCount) {
+      updatedDayMeals.push({ ...defaultMeal });
+    }
+
     setEditableDiet({ ...editableDiet, [day]: updatedDayMeals });
   };
 
   const validateDiet = () => {
     for (const day of DAYS) {
       const meals = editableDiet[day] || [];
-      if (meals.length !== uniformMealCount) return false;
       for (const meal of meals) {
         if (!meal.name || meal.name.trim() === '') return false;
         for (const ing of meal.ingredients) {
@@ -66,8 +74,10 @@ const DietTable: React.FC<DietTableProps> = ({ editableDiet, setEditableDiet, se
     if (validateDiet()) {
       setConfirmedDiet(editableDiet);
       setSaveMessage('✅ Zapisano zmiany');
+      setTimeout(() => setSaveMessage(''), 3000);
     } else {
       setSaveMessage('❌ Uzupełnij wszystkie pola');
+      setTimeout(() => setSaveMessage(''), 4000);
     }
   };
 
@@ -87,10 +97,13 @@ const DietTable: React.FC<DietTableProps> = ({ editableDiet, setEditableDiet, se
             <tr key={mealIndex}>
               <td className="border border-gray-400 bg-white px-2 py-1 font-semibold">Posiłek {mealIndex + 1}</td>
               {DAYS.map((day) => {
-                const meal = editableDiet[day]?.[mealIndex];
+                const meal = getOrDefaultMeal(day, mealIndex);
+                const isEmpty = !meal.name && !meal.description && meal.ingredients.length === 0 && meal.calories === 0 && meal.glycemicIndex === 0;
                 return (
                   <td key={day + mealIndex} className="border border-gray-400 bg-white px-2 py-1 align-top text-black">
-                    {meal ? (
+                    {isEmpty && !isEditable ? (
+                      <span className="text-gray-400 italic">—</span>
+                    ) : (
                       <div className="space-y-1">
                         {isEditable ? (
                           <>
@@ -148,8 +161,6 @@ const DietTable: React.FC<DietTableProps> = ({ editableDiet, setEditableDiet, se
                           </>
                         )}
                       </div>
-                    ) : (
-                      <span className="text-gray-400 italic">—</span>
                     )}
                   </td>
                 );
@@ -179,4 +190,3 @@ const DietTable: React.FC<DietTableProps> = ({ editableDiet, setEditableDiet, se
 };
 
 export default React.memo(DietTable);
-
