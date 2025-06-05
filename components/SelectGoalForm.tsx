@@ -1,5 +1,6 @@
 import React from 'react';
 import { LangKey } from '../utils/translations';
+import PanelCard from './PanelCard'; // ✅ upewnij się, że importujesz swój PanelCard
 
 interface Props {
   selectedGoals: string[];
@@ -212,23 +213,24 @@ export default function SelectGoalForm({ selectedGoals, setSelectedGoals, lang }
   };
 
   return (
-    <div className="mt-4">
-  <label className="block font-semibold mb-1">
-    {lang === 'pl' ? 'Wybierz cele diety:' : 'Select diet goals:'}
-  </label>
-  <select
-    multiple
-    className="w-full border px-2 py-1"
-    value={selectedGoals}
-    onChange={handleChange}
-  >
-    {Object.entries(goalLabels).map(([key, labels]) => (
-      <option key={key} value={key}>
-        {labels[lang] || labels.pl}
-      </option>
-    ))}
-  </select>
-</div>
+    <PanelCard title="🎯 Cele diety" className="bg-[#0d1117] text-white border border-gray-600">
+      <label className="block text-sm font-medium mb-2">
+        {lang === 'pl' ? 'Wybierz cele diety:' : 'Select diet goals:'}
+      </label>
 
+      <select
+        multiple
+        className="w-full rounded-md px-3 py-2 bg-[#1e293b] text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        value={selectedGoals}
+        onChange={handleChange}
+        size={Math.min(8, Object.keys(goalLabels).length)}
+      >
+        {Object.entries(goalLabels).map(([key, labels]) => (
+          <option key={key} value={key}>
+            {labels[lang] || labels.pl}
+          </option>
+        ))}
+      </select>
+    </PanelCard>
   );
 }

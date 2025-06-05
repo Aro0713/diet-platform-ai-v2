@@ -3,11 +3,33 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { tUI, LangKey } from '@/utils/i18n';
+import { tUI, LangKey, languageLabels } from '@/utils/i18n';
 
 export default function Home() {
   const [lang, setLang] = useState<LangKey>('pl');
+  const [darkMode, setDarkMode] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
+  // 🌓 Ustawienie darkMode i mounted po stronie klienta
+  useEffect(() => {
+    const theme = localStorage.getItem('theme');
+    setDarkMode(theme === 'dark');
+    setMounted(true);
+  }, []);
+
+  // 🔁 Synchronizacja z klasą HTML i localStorage
+  useEffect(() => {
+    if (!mounted) return;
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [darkMode, mounted]);
+
+  // 🌐 Wykrywanie języka
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const supportedLangs: LangKey[] = ['pl', 'en', 'ua', 'es', 'fr', 'de', 'ru', 'zh', 'hi', 'ar', 'he'];
@@ -18,45 +40,78 @@ export default function Home() {
     }
   }, []);
 
+  // ⛔️ Unikamy renderowania przed mounted
+  if (!mounted) return null;
+
   return (
-    <div
-      className="relative min-h-screen bg-cover bg-center bg-no-repeat flex flex-col justify-start items-center pt-10"
-      style={{ backgroundImage: 'url(/background.jpg)' }}
+    <main
+      className="relative min-h-screen bg-cover bg-center bg-no-repeat flex flex-col justify-start items-center pt-10 transition-colors"
+      style={{
+        backgroundImage:
+          'linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url(/background.jpg)',
+      }}
     >
       <Head>
         <title>Diet Care Platform</title>
       </Head>
 
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-white/70 backdrop-blur-sm z-[-1]" />
+      {/* 🌐 Pasek języka i pstryczek */}
+      <nav className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between px-4">
+        {/* 🌍 Wybór języka */}
+        <div className="flex items-center gap-2">
+          <label htmlFor="language-select" className="sr-only">Wybierz język</label>
+          <select
+            id="language-select"
+            value={lang}
+            onChange={(e) => {
+              const selected = e.target.value as LangKey;
+              setLang(selected);
+              localStorage.setItem('platformLang', selected);
+            }}
+            className="border rounded px-3 py-1 shadow bg-white/80 backdrop-blur dark:bg-gray-800 dark:text-white"
+            aria-label="Language selection"
+          >
+            {Object.entries(languageLabels).map(([key, label]) => (
+              <option key={key} value={key}>{label}</option>
+            ))}
+          </select>
+        </div>
 
-      {/* Language Selector */}
-      <div className="absolute top-4 left-6 z-50">
-        <select
-          className="text-lg font-semibold bg-white/80 border border-gray-300 rounded px-4 py-2 shadow-md"
-          value={lang}
-          onChange={(e) => {
-            const selected = e.target.value as LangKey;
-            setLang(selected);
-            localStorage.setItem('platformLang', selected);
-          }}
-        >
-          <option value="pl">Polski</option>
-          <option value="en">English</option>
-          <option value="ua">Українська</option>
-          <option value="es">Español</option>
-          <option value="fr">Français</option>
-          <option value="de">Deutsch</option>
-          <option value="ru">Русский</option>
-          <option value="zh">中文</option>
-          <option value="hi">हिन्दी</option>
-          <option value="ar">العربية</option>
-          <option value="he">עברית</option>
-        </select>
-      </div>
+        {/* 🔘 Tryb ciemny */}
+        <div className="flex items-center gap-2 group" title={darkMode ? tUI('lightMode', lang) : tUI('darkMode', lang)}>
+          <span className="text-xs text-black dark:text-white">{tUI('toggleContrast', lang)}</span>
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className={`relative inline-flex items-center h-6 w-11 rounded-full transition-colors ${
+              darkMode ? 'bg-gray-700' : 'bg-yellow-400'
+            }`}
+            aria-label={tUI('toggleContrast', lang)}
+          >
+            <span
+              className={`absolute left-1 text-sm transition-opacity duration-200 ${
+                darkMode ? 'opacity-0' : 'opacity-100'
+              }`}
+            >
+              ☀️
+            </span>
+            <span
+              className={`absolute right-1 text-sm transition-opacity duration-200 ${
+                darkMode ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
+              🌙
+            </span>
+            <span
+              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-300 ${
+                darkMode ? 'translate-x-5' : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
+      </nav>
 
-      {/* Content */}
-      <div className="z-10 flex flex-col items-center justify-start text-center px-4 mt-6 w-full max-w-5xl">
+      {/* 📦 Główna zawartość */}
+      <div className="z-10 flex flex-col items-center justify-start text-center px-4 mt-6 w-full max-w-5xl bg-white/30 backdrop-blur-md rounded-2xl shadow-xl p-10 dark:bg-gray-900/30 dark:text-white transition-colors">
         {/* Logo */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
@@ -66,8 +121,8 @@ export default function Home() {
           <Image
             src="/logo-dietcare.png"
             alt="Logo Diet Care Platform"
-            width={280}
-            height={90}
+            width={260}
+            height={80}
             className="mx-auto"
             priority
           />
@@ -78,7 +133,7 @@ export default function Home() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.0, duration: 1 }}
-          className="text-5xl md:text-6xl font-bold text-gray-900 mt-4 capitalize"
+          className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mt-4 capitalize drop-shadow-xl"
         >
           {tUI('welcome', lang)}
         </motion.h1>
@@ -88,7 +143,7 @@ export default function Home() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.5, duration: 1 }}
-          className="mt-6 text-2xl md:text-[1.7rem] font-serif text-gray-800 max-w-4xl leading-relaxed whitespace-pre-line"
+          className="mt-6 text-2xl md:text-[1.7rem] font-serif text-gray-800 dark:text-gray-300 max-w-4xl leading-relaxed whitespace-pre-line"
         >
           {tUI('slogan', lang)}
         </motion.p>
@@ -101,13 +156,13 @@ export default function Home() {
           className="mt-10 flex flex-col md:flex-row gap-4"
         >
           <Link
-            href="/panel"
+            href={{ pathname: '/register', query: { mode: 'doctor' } }}
             className="bg-blue-600 text-white px-6 py-3 rounded-lg text-lg shadow hover:bg-blue-700 transition text-center"
           >
             {tUI('enterAsDoctor', lang)}
           </Link>
           <Link
-            href="/pacjent"
+            href={{ pathname: '/register', query: { mode: 'patient' } }}
             className="bg-green-600 text-white px-6 py-3 rounded-lg text-lg shadow hover:bg-green-700 transition text-center"
           >
             {tUI('enterAsPatient', lang)}
@@ -115,16 +170,16 @@ export default function Home() {
         </motion.div>
       </div>
 
-      {/* Signature */}
+      {/* ✍️ Podpis */}
       <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 3.5, duration: 1 }}
-        className="absolute bottom-[220px] right-[40px] text-[2.8rem] font-handwriting text-[#0d1b2a] tracking-wide"
-        style={{ transform: 'rotate(-30deg)' }}
+        className="absolute bottom-[160px] right-[40px] text-[2.6rem] font-handwriting text-[#0d1b2a] tracking-wide drop-shadow-xl"
+        style={{ transform: 'rotate(-28deg)' }}
       >
         {tUI('signature', lang)}
       </motion.p>
-    </div>
+    </main>
   );
 }

@@ -1,11 +1,15 @@
-import { PatientData, Meal, MedicalData, TestResult } from '@/types';
+import { PatientData, Meal } from '@/types';
 import { stampBase64 } from '@/utils/stamp';
+import { LangKey } from '@/utils/i18n';
+import { tUI } from '@/utils/i18n';
 
 export async function generateDietPdf(
   patient: PatientData,
   bmi: number | null,
   diet: Meal[],
   approved: boolean = false,
+  notes: Record<string, string> = {},
+  lang: LangKey = 'pl',
   logoBase64?: string
 ) {
   const pdfMake = (await import('pdfmake/build/pdfmake')).default;
@@ -13,18 +17,21 @@ export async function generateDietPdf(
   pdfMake.vfs = pdfFonts.vfs;
 
   const content: any[] = [
-    { text: '📋 Plan żywieniowy pacjenta', style: 'header' },
-    { text: `Data: ${new Date().toLocaleString()}`, margin: [0, 0, 0, 10] },
+    { text: `📋 ${tUI('dietPlanTitle', lang)}`, style: 'header' },
+    { text: `${tUI('date', lang)}: ${new Date().toLocaleString()}`, margin: [0, 0, 0, 10] },
     {
-      text: `Dane pacjenta:\nWiek: ${patient.age} lat | Płeć: ${patient.sex} | Waga: ${patient.weight} kg | Wzrost: ${patient.height} cm | BMI: ${bmi ?? 'n/a'}`,
+      text: `${tUI('patientData', lang)}:
+${tUI('age', lang)}: ${patient.age} | ${tUI('sex', lang)}: ${tUI(patient.sex, lang)} | ${tUI('weight', lang)}: ${patient.weight} kg | ${tUI('height', lang)}: ${patient.height} cm | BMI: ${bmi ?? 'n/a'}`,
       margin: [0, 0, 0, 10]
     },
     {
-      text: `Schorzenia: ${patient.conditions?.join(', ') || 'brak'}\nAlergie: ${patient.allergies || 'brak'}\nRegion: ${patient.region || 'brak'}`,
+      text: `${tUI('conditions', lang)}: ${patient.conditions?.join(', ') || tUI('none', lang)}
+${tUI('allergies', lang)}: ${patient.allergies || tUI('none', lang)}
+${tUI('region', lang)}: ${patient.region || tUI('none', lang)}`,
       margin: [0, 0, 0, 10]
     },
     {
-      text: '🩺 Uwzględnione dane medyczne:',
+      text: `🩺 ${tUI('medicalDataIncluded', lang)}`,
       style: 'subheader',
       margin: [0, 10, 0, 4]
     },
@@ -35,25 +42,62 @@ export async function generateDietPdf(
         margin: [0, 0, 0, 2]
       }))
     ]),
-    
     {
-      text: '🍴 Zalecana dieta:',
+      text: `🍴 ${tUI('recommendedDiet', lang)}`,
       style: 'subheader',
       margin: [0, 10, 0, 6]
-    },
-    ...diet.map((meal: Meal) => ({
+    }
+  ];
+
+  // Grupowanie posiłków per dzień
+  const groupedByDay: Record<string, Meal[]> = {};
+  diet.forEach((meal) => {
+    const day = (meal as any).day || tUI('other', lang);
+    if (!groupedByDay[day]) groupedByDay[day] = [];
+    groupedByDay[day].push(meal);
+  });
+
+  Object.entries(groupedByDay).forEach(([day, meals]) => {
+    content.push({
+      text: `📅 ${day}`,
+      style: 'subheader',
+      margin: [0, 10, 0, 4]
+    });
+
+    const mealTable = {
       table: {
-        widths: ['*'],
+        widths: ['*', 'auto', 'auto', '*'],
         body: [
-          [{ text: `🍽️ ${meal.name}`, style: 'mealTitle' }],
-          [{ text: meal.ingredients.map(i => `• ${i.product} – ${i.weight} g`).join('\n') }],
-          [{ text: `Kalorie: ${meal.calories} kcal | IG: ${meal.glycemicIndex}`, style: 'mealInfo' }]
+          [
+            { text: tUI('mealName', lang), style: 'tableHeader' },
+            { text: tUI('time', lang), style: 'tableHeader' },
+            { text: `${tUI('calories', lang)} / IG`, style: 'tableHeader' },
+            { text: tUI('ingredients', lang), style: 'tableHeader' }
+          ],
+          ...meals.map((meal) => [
+            { text: meal.name, bold: true },
+            meal.time || '–',
+            `🔥 ${meal.calories} kcal\n💉 IG: ${meal.glycemicIndex}`,
+            meal.ingredients.map(i => `• ${i.product} – ${i.weight} g`).join('\n')
+          ])
         ]
       },
       layout: 'lightHorizontalLines',
       margin: [0, 0, 0, 10]
-    }))
-  ];
+    };
+
+    content.push(mealTable);
+
+    if (notes[day]) {
+      content.push({
+        text: `📝 ${tUI('note', lang)}: ${notes[day]}`,
+        italics: true,
+        fontSize: 10,
+        color: 'gray',
+        margin: [0, 0, 0, 10]
+      });
+    }
+  });
 
   if (approved) {
     content.push({
@@ -76,22 +120,14 @@ export async function generateDietPdf(
     styles: {
       header: { fontSize: 18, bold: true, margin: [0, 0, 0, 10] },
       subheader: { fontSize: 14, bold: true },
-      mealTitle: { bold: true, fillColor: '#eeeeee' },
-      mealInfo: { italics: true, fontSize: 10, color: '#333333' },
+      tableHeader: { bold: true, fillColor: '#f2f2f2', alignment: 'center' },
       footer: { fontSize: 9, color: 'gray' }
     },
     defaultStyle: {
       fontSize: 11
     },
     background: logoBase64
-      ? [
-          {
-            image: logoBase64,
-            width: 300,
-            opacity: 0.06,
-            absolutePosition: { x: 100, y: 200 }
-          }
-        ]
+      ? [{ image: logoBase64, width: 300, opacity: 0.06, absolutePosition: { x: 100, y: 200 } }]
       : undefined
   };
 

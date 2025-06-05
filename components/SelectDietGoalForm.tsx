@@ -4,14 +4,14 @@ interface Props {
   selectedGoals: string[];
   setSelectedGoals: (goals: string[]) => void;
   groupedDietGoals: Record<string, string>; // key = value, value = translated label
-  placeholder?: string; // ⬅ dodajemy placeholder
+  placeholder?: string; // np. "-- Wybierz cel diety --"
 }
 
 export default function SelectDietGoalForm({
   selectedGoals,
   setSelectedGoals,
   groupedDietGoals,
-  placeholder = '–' // ⬅ domyślny placeholder
+  placeholder = '--',
 }: Props) {
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedGoals([e.target.value]);
@@ -19,7 +19,7 @@ export default function SelectDietGoalForm({
 
   return (
     <select
-      className="w-full border px-2 py-1 rounded"
+      className="w-full border rounded-md px-3 py-2 bg-white dark:bg-gray-800 text-black dark:text-white border-gray-300 dark:border-gray-600 transition"
       value={selectedGoals[0] || ''}
       onChange={handleChange}
     >
@@ -32,3 +32,4 @@ export default function SelectDietGoalForm({
     </select>
   );
 }
+

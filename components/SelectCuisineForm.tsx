@@ -1,6 +1,6 @@
 import React from 'react';
-import { LangKey } from '../utils/i18n';
-import { tUI } from '../utils/i18n';
+import { LangKey, tUI } from '../utils/i18n';
+import PanelCard from './PanelCard';
 
 interface Props {
   onChange: (value: string) => void;
@@ -232,26 +232,46 @@ const cuisineLabels: Record<string, Record<LangKey, string>> = {
   
 };
 
+const cuisineTitle: Record<LangKey, string> = {
+  pl: 'Kuchnia świata',
+  en: 'World cuisine',
+  ua: 'Кухні світу',
+  es: 'Cocina del mundo',
+  fr: 'Cuisine du monde',
+  de: 'Weltküche',
+  ru: 'Кухни мира',
+  zh: '世界美食',
+  hi: 'दुनिया के व्यंजन',
+  ar: 'مأكولات عالمية',
+  he: 'מטבח עולמי'
+};
+
 const cuisineKeys = Object.keys(cuisineLabels);
 
 export default function SelectCuisineForm({ onChange, lang }: Props) {
+  const tLabel = tUI('selectCuisine', lang);
+  const tTitle = cuisineTitle[lang] || cuisineTitle.pl;
+
   return (
-    <div className="mt-4">
-      <label className="block font-semibold mb-1">
-        {tUI('selectCuisine', lang)}
-      </label>
-      <select
-        className="w-full border px-2 py-1"
-        defaultValue=""
-        onChange={(e) => onChange(e.target.value)}
-      >
-        <option value="">{`-- ${tUI('selectCuisine', lang)} --`}</option>
-        {cuisineKeys.map((key) => (
-          <option key={key} value={key}>
-            {cuisineLabels[key]?.[lang] || cuisineLabels[key]?.pl || key}
-          </option>
-        ))}
-      </select>
-    </div>
+    <PanelCard title={`🌍 ${tTitle}`} className="h-full">
+      <div className="flex flex-col space-y-2">
+        <label className="text-sm font-medium text-black dark:text-white">
+          {tLabel}
+        </label>
+
+        <select
+          className="w-full rounded-md px-3 py-2 bg-white dark:bg-gray-800 text-black dark:text-white border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          defaultValue=""
+          onChange={(e) => onChange(e.target.value)}
+        >
+          <option value="">{`-- ${tLabel} --`}</option>
+          {cuisineKeys.map((key) => (
+            <option key={key} value={key}>
+              {cuisineLabels[key]?.[lang] || cuisineLabels[key]?.pl || key}
+            </option>
+          ))}
+        </select>
+      </div>
+    </PanelCard>
   );
 }

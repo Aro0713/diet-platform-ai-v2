@@ -1,13 +1,25 @@
-import React from 'react';
-import { LangKey } from '../utils/i18n';
-import { translationsUI } from '../utils/translationsUI';
-
+import React, { useState } from 'react';
+import PanelCard from './PanelCard';
+import { LangKey, tUI } from '../utils/i18n';
 
 interface Props {
   onChange: (model: string) => void;
   lang: LangKey;
 }
 
+const modelTitle: Record<LangKey, string> = {
+  pl: 'Model diety',
+  en: 'Diet model',
+  ua: 'Модель дієти',
+  es: 'Modelo de dieta',
+  fr: 'Modèle de régime',
+  de: 'Diätmodell',
+  ru: 'Модель диеты',
+  zh: '饮食模型',
+  hi: 'आहार मॉडल',
+  ar: 'نموذج النظام الغذائي',
+  he: 'מודל תזונה'
+};
 const models: Record<string, Record<LangKey, string>> = {
   diabetic: { 
     pl: 'Dieta cukrzycowa',
@@ -326,28 +338,35 @@ const models: Record<string, Record<LangKey, string>> = {
   };
 
 export default function SelectModelForm({ onChange, lang }: Props) {
-  const t = (key: keyof typeof translationsUI): string =>
-  translationsUI[key]?.[lang] || translationsUI[key]?.pl || key;
+  const [selected, setSelected] = useState('');
 
+  const tLabel = tUI('selectModel', lang);
+  const tTitle = modelTitle[lang] || modelTitle.pl;
 
   return (
-    <div className="bg-white p-4 rounded shadow space-y-2">
-      <label className="block font-semibold mb-1">
-        {t('selectModel')}
-      </label>
+    <PanelCard title={`🍽️ ${tTitle}`} className="h-full">
+      <div className="flex flex-col space-y-2">
+        <label className="text-sm font-medium text-black dark:text-white">
+          {tLabel}
+        </label>
 
-      <select
-        className="w-full border px-2 py-1 rounded"
-        defaultValue=""
-        onChange={(e) => onChange(e.target.value)}
-      >
-        <option value="">--</option>
-        {Object.entries(models).map(([key, labels]) => (
-          <option key={key} value={key}>
-            {labels[lang] || labels.pl}
-          </option>
-        ))}
-      </select>
-    </div>
+        <select
+          className="w-full rounded-md px-3 py-2 bg-white dark:bg-gray-800 text-black dark:text-white border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          value={selected}
+          onChange={(e) => {
+            setSelected(e.target.value);
+            onChange(e.target.value);
+          }}
+        >
+          <option value="">{`-- ${tLabel} --`}</option>
+          {Object.entries(models).map(([key, labels]) => (
+            <option key={key} value={key}>
+              {labels[lang] || labels.pl}
+            </option>
+          ))}
+        </select>
+      </div>
+    </PanelCard>
   );
 }
+

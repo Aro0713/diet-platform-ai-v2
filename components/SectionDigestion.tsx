@@ -1,6 +1,6 @@
 import React from 'react';
-import { LangKey } from '../utils/i18n';
-import { section7 } from './utils/translations/interview/section7';
+import { LangKey, tUI } from '@/utils/i18n'; // 🔧 używamy aliasu i tłumaczenia interfejsu
+import { section7 } from '@/utils/translations/interview/section7';
 
 interface Props {
   data: { [key: string]: string };
@@ -9,28 +9,25 @@ interface Props {
 }
 
 export default function SectionDigestion({ data, onChange, lang }: Props) {
-  const t = (key: keyof typeof section7): string =>
-    section7[key]?.[lang] ?? section7[key]?.pl ?? key;
+  const t = (key: keyof typeof section7): string => {
+    const val = section7[key]?.[lang] ?? section7[key]?.pl ?? key;
+    return Array.isArray(val) ? val.join(' / ') : val;
+  };
 
-  const keys: (keyof typeof section7)[] = [
-    'q7_1',
-    'q7_2',
-    'q7_3',
-    'q7_4',
-    'q7_5',
-    'q7_6',
-    'q7_7'
-  ];
+  // ✅ tylko klucze typu 'q7_...', bez section7_title
+  const keys = Object.keys(section7).filter(
+    (k) => typeof k === 'string' && k.startsWith('q7_')
+  );
 
   return (
     <div className="space-y-4 bg-[#f7f7f7] p-4 rounded shadow mt-4">
-      <h3 className="text-xl font-semibold border-b pb-2">7. {t('section7_title')}</h3>
+      <h3 className="text-xl font-semibold border-b pb-2">7. {tUI('section7_title', lang)}</h3>
 
       <div className="grid grid-cols-1 gap-4">
         {keys.map((key) => (
-          <div key={key}>
+          <div key={key.toString()}>
             <label className="block font-medium text-sm mb-1 text-gray-700">
-              {t(key)}
+              {t(key as keyof typeof section7)}
             </label>
             <textarea
               rows={2}

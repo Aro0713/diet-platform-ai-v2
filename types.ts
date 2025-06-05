@@ -30,22 +30,38 @@ export type ConditionWithTests = {
   tests: TestResult[];
 };
 
-export type PatientData = {
+export interface PatientData {
   name: string;
   age: number;
-  sex: 'female' | 'male';        // zgodnie z InterviewForm
+  sex: 'male' | 'female';
   weight: number;
   height: number;
-  allergies?: string;
-  region?: string;
-  goal?: string;
-  cuisine?: string;
-  model?: string;
-  phone?: string;
-  email?: string;
+  phone: string;
+  email: string;
+  region: string;
+  allergies: string;
+  goal: string;
+  cuisine: string;
+  model: string;
+
+  // Choroby i badania
   conditions: string[];
-  medical: ConditionWithTests[];
+  conditionGroups?: string[];
+  testResults?: Record<string, string>;
+  medical?: {
+    condition: string;
+    tests: {
+      name: string;
+      value: string;
+    }[];
+  }[];
+
+  // 🔽 Wskaźniki z kalkulatora
+  pal?: number | null;
+  bmi?: number | null;
+  cpm?: number | null;
 };
+
 export interface InterviewData {
   section1: Record<string, string>;
   section2: Record<string, string>;

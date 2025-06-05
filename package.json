@@ -5,25 +5,30 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "lint": "eslint \"**/*.{ts,tsx}\""
   },
   "dependencies": {
     "@fontsource/dancing-script": "^5.2.5",
+    "@supabase/supabase-js": "^2.49.4",
     "canvas": "^3.1.0",
     "ethers": "^6.13.5",
     "framer-motion": "^12.10.0",
-    "next": "^13.5.11",
+    "lucide-react": "^0.511.0",
+    "next": "^15.3.2",
     "next-i18next": "^13.1.6",
-    "openai": "^4.96.0",
+    "openai": "^4.103.0",
     "pdfmake": "^0.2.19",
+    "process": "^0.11.10",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-select": "^5.10.1"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@tailwindcss/postcss": "^4.1.7",
     "@types/jest": "^29.5.14",
-    "@types/node": "^22.14.1",
+    "@types/node": "^18.19.101",
     "@types/pdfmake": "^0.2.11",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.3",

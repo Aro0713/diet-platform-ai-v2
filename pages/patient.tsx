@@ -1,27 +1,40 @@
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/router'
-import { generateDietPdf } from '../utils/generateDietPdf'
-import ProductScanner from '../components/ProductScanner'
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
+import { generateDietPdf } from '../utils/generateDietPdf';
+import ProductScanner from '../components/ProductScanner';
 
 export default function PatientPanel() {
-  const router = useRouter()
-  const [patient, setPatient] = useState<any>(null)
-  const [daysLeft, setDaysLeft] = useState<number | null>(null)
-  const [selectedRegion, setSelectedRegion] = useState('')
-  const [selectedCuisine, setSelectedCuisine] = useState('')
+  const router = useRouter();
+  const [patient, setPatient] = useState<any>(null);
+  const [daysLeft, setDaysLeft] = useState<number | null>(null);
+  const [selectedRegion, setSelectedRegion] = useState('');
+  const [selectedCuisine, setSelectedCuisine] = useState('');
 
   useEffect(() => {
-    const history = JSON.parse(localStorage.getItem('dietHistory') || '[]')
-    if (history.length > 0) {
-      const last = history[history.length - 1]
-      setPatient(last)
-
-      const now = new Date()
-      const expiry = new Date(last.expiresAt)
-      const diff = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-      setDaysLeft(diff)
+    const id = localStorage.getItem('currentUserID');
+    if (!id) {
+      alert('Nie jesteś zalogowany.');
+      router.push('/register');
+      return;
     }
-  }, [])
+
+    const data = localStorage.getItem(id);
+    if (!data) {
+      alert('Nie znaleziono danych pacjenta.');
+      router.push('/register');
+      return;
+    }
+
+    const parsed = JSON.parse(data);
+    setPatient(parsed);
+
+    const now = new Date();
+    const expiry = new Date(parsed.expiresAt);
+    const diff = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    setDaysLeft(diff);
+  }, [router]);
+
+  if (!patient) return null;
 
   return (
     <div className='min-h-screen bg-gray-100 p-6'>
@@ -35,12 +48,12 @@ export default function PatientPanel() {
         </div>
       )}
 
-      {!patient ? (
+      {!patient.diet ? (
         <p>Brak zapisanej diety. Skontaktuj się z lekarzem lub dietetykiem.</p>
       ) : (
         <>
           <p className='mb-2 text-sm text-gray-600'>
-            Dieta z dnia: {patient.date} | BMI: {patient.bmi} | Zatwierdzona przez: {patient.approvedBy || '—'}
+            Dieta z dnia: {patient.date || '—'} | BMI: {patient.bmi || '—'} | Zatwierdzona przez: {patient.approvedBy || '—'}
           </p>
 
           {patient.diet.map((meal: any, idx: number) => (
@@ -113,5 +126,5 @@ export default function PatientPanel() {
         </>
       )}
     </div>
-  )
+  );
 }

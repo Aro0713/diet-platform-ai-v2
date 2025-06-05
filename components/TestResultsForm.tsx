@@ -1,7 +1,7 @@
-import { diseaseTestsMap, TestDefinition } from '../lib/diseaseTestsMap';
+'use client';
 
+import PanelCard from './PanelCard';
 
-// Mapa badań przypisanych do chorób
 export const testsByCondition: { [key: string]: string[] } = {
   "Cukrzyca typu 2": ["HbA1c", "Glukoza na czczo", "Insulina"],
   "Cukrzyca typu 1": ["HbA1c", "Glukoza na czczo"],
@@ -65,28 +65,26 @@ const TestResultsForm: React.FC<TestResultsFormProps> = ({ selectedTests, testRe
   };
 
   return (
-    <div className="my-4">
-      <label className="block mb-2 font-semibold">Wyniki badań pacjenta</label>
-
+    <PanelCard title="🧪 Wyniki badań" className="bg-[#0d1117] text-white border border-gray-600">
       {selectedTests.map((condition) => (
-        <div key={condition} className="border p-4 mb-4 rounded shadow-sm bg-white">
-          <h3 className="font-bold mb-2">{condition}</h3>
+        <div key={condition} className="border border-gray-600 p-4 mb-4 rounded-md bg-[#1e293b]">
+          <h3 className="font-semibold text-white mb-3">{condition}</h3>
 
           {(testsByCondition[condition] || ["Opis choroby"]).map((testName) => (
-            <div key={testName} className="mb-2">
-              <label className="block text-sm mb-1">{testName}</label>
+            <div key={testName} className="mb-3">
+              <label className="block text-sm text-white mb-1">{testName}</label>
               <input
                 type="text"
                 value={testResults[testName] || ''}
                 onChange={(e) => handleResultChange(testName, e.target.value)}
-                className="w-full p-2 border rounded"
-                placeholder={`Wpisz wynik badania: ${testName}`}
+                placeholder={`Wpisz wynik: ${testName}`}
+                className="w-full rounded-md px-3 py-2 bg-[#0f172a] text-white border border-gray-500 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           ))}
         </div>
       ))}
-    </div>
+    </PanelCard>
   );
 };
 

@@ -1,4 +1,5 @@
 // ✅ i18n.ts – tylko typy i funkcje
+
 import { translationsUI } from './translationsUI';
 
 export type LangKey =
@@ -19,16 +20,70 @@ export const languageLabels: Record<LangKey, string> = {
   he: 'עברית'
 };
 
-export function getTranslation<
-  T extends Record<string, Record<LangKey, string>>,
-  K extends keyof T
->(source: T, key: K, lang: LangKey): string {
-  return source[key]?.[lang] || source[key]?.['pl'] || (key as string);
+// 🔁 Do formularzy rejestracji, UI itd.
+export function getTranslation(
+  source: Record<string, Record<LangKey, string>>,
+  key: string,
+  lang: LangKey
+): string {
+  if (!source || !source[key]) return key;
+  return source[key][lang] || source[key]['pl'] || key;
 }
 
+// 🔁 Do tłumaczeń wywiadu (InterviewWizard, section1–10)
+export function getInterviewTranslation<T extends string | string[]>(
+  source: Record<LangKey, Record<string, T>>,
+  key: string,
+  lang: LangKey
+): T {
+  if (!source || !source[lang] || !(key in source[lang])) return key as T;
+  return source[lang][key];
+}
+
+// 🔒 UI tłumaczenia systemowe
 export function tUI(
   key: keyof typeof translationsUI,
   lang: LangKey
 ): string {
-  return translationsUI[key]?.[lang] || translationsUI[key]?.['pl'] || key;
+  const entry = translationsUI[key];
+  if (!entry) {
+    console.warn(`🔍 Brak tłumaczenia UI dla klucza: "${key}"`);
+    return key;
+  }
+
+  return entry[lang] || entry['pl'] || key;
+}
+
+// 🧠 Uniwersalne sprawdzenie braków w wielu źródłach
+type SourceGroup = {
+  name: string;
+  source: Record<string, Record<LangKey, string>>;
+};
+
+export function checkMissingInSources(sources: SourceGroup[]): void {
+  const langs = Object.keys(languageLabels) as LangKey[];
+
+  for (const { name, source } of sources) {
+    const missing = Object.entries(source)
+      .filter(([_, values]) => langs.some((lang) => !values[lang]))
+      .map(([key]) => key);
+
+    if (missing.length > 0) {
+      console.warn(`❗ Braki w "${name}":`, missing);
+    } else {
+      console.log(`✅ "${name}" — kompletne tłumaczenia`);
+    }
+  }
+}
+
+// 🔁 Wywołanie w trybie dev (np. w _app.tsx lub tu od razu)
+import { translationsRegister } from '@/components/utils/translations/register';
+import { medicalUI } from '@/utils/translations/translationsConditions';
+
+if (process.env.NODE_ENV === 'development') {
+  checkMissingInSources([
+    { name: 'translationsUI', source: translationsUI },
+    { name: 'translationsRegister', source: translationsRegister },
+    { name: 'medicalUI', source: medicalUI }
+  ]);
 }

@@ -1,40 +1,62 @@
-﻿// Next.js & React
+﻿// 🔁 React / Next
 import Head from 'next/head';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import LangAndThemeToggle from '@/components/LangAndThemeToggle';
+import PanelCard from '@/components/PanelCard';
+import { translatedTitles } from '@/utils/translatedTitles';
 
-// Komponenty
-import DietEditor from '../components/DietEditor';
-import MedicalForm from '../components/MedicalForm';
-import InterviewForm from '../components/InterviewForm';
-import SelectCuisineForm from '../components/SelectCuisineForm';
-import DietGoalForm from '../components/DietGoalForm';
-import SelectModelForm from '../components/SelectModelForm';
-import CalculationBlock from '../components/CalculationBlock';
-import ConfirmationModal from '@/components/ConfirmationModal';
+// 🔌 Supabase
+import { supabase } from '@/lib/supabaseClient';
+
+// 🧩 Komponenty - główne bloki UI
+import PatientPanelSection from '@/components/PatientPanelSection';
+import PatientDataForm from '@/components/PatientDataForm'; // 
+import MedicalForm from '@/components/MedicalForm';
+import SelectConditionForm from '@/components/SelectConditionForm';
+import InterviewWizard from '@/components/InterviewWizard'; 
+import DietGoalForm from '@/components/DietGoalForm';
+import SelectCuisineForm from '@/components/SelectCuisineForm';
+import SelectModelForm from '@/components/SelectModelForm';
+import CalculationBlock from '@/components/CalculationBlock';
 import DietTable from '@/components/DietTable';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
-// Typy
-import type { Meal, PatientData, MedicalData, ConditionWithTests } from '../types';
-import type { LangKey } from '../utils/i18n';
+// 📊 Typy danych
+import type { Meal, PatientData, MedicalData, ConditionWithTests } from '@/types';
+import type { LangKey } from '@/utils/i18n';
 
-// Utils � funkcje
-import { generateDietPdf } from '../utils/generateDietPdf';
-import { generateInterviewPdf } from '../utils/generateInterviewPdf';
-import { validateDiet } from '../utils/validateDiet';
-import { parseMealPlanPreview } from '../utils/parseMealPlanPreview';
+// 🧠 Utils – AI, walidacja, PDF
+import { generateDietPdf } from '@/utils/generateDietPdf';
+import { generateInterviewPdf } from '@/utils/generateInterviewPdf';
+import { validateDiet } from '@/utils/validateDiet';
+import { parseMealPlanPreview } from '@/utils/parseMealPlanPreview';
 
-// Utils � t�umaczenia
-import { getTranslation, tUI, languageLabels } from '../utils/i18n';
-import { translations } from '../utils/translations';
-import { translationsUI } from '../utils/translationsUI';
+// 🌍 Tłumaczenia
+import { getTranslation, tUI, languageLabels } from '@/utils/i18n';
+import { translations } from '@/utils/translations';
+import { translationsUI } from '@/utils/translationsUI';
 
-// Dane zapasowe
-import fallbackDiets from '../utils/fallbackDiets';
+// 🔙 Dane awaryjne
+import fallbackDiets from '@/utils/fallbackDiets';
 
 
 function Panel() {
   const [lang, setLang] = useState<LangKey>('pl');
+  useEffect(() => {
+  const langStorage = localStorage.getItem('platformLang') as LangKey | null;
+  if (langStorage) setLang(langStorage);
+}, []);
+useEffect(() => {
+  const storedTheme = localStorage.getItem('theme');
+  if (storedTheme === 'dark') {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
+}, []);
+
+  const [userData, setUserData] = useState<any>(null);
   const [mealPlan, setMealPlan] = useState<Record<string, Meal[]>>({});
 
   const t = (key: keyof typeof translationsUI): string =>
@@ -76,6 +98,36 @@ function Panel() {
   const [dietApproved, setDietApproved] = useState(false);
 
   const router = useRouter();
+  useEffect(() => {
+  const fetchUserData = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+
+    if (data) {
+      setUserData(data);
+      setForm((prev) => ({
+        ...prev,
+        name: data.name || '',
+        email: data.email || '',
+        phone: data.phone || '',
+        region: data.jurisdiction || '',
+      }));
+    }
+
+    if (error) console.error('Błąd pobierania danych użytkownika:', error.message);
+  };
+
+  fetchUserData();
+}, []);
 
   const mapSex = (s: string): 'female' | 'male' =>
     s.toLowerCase().startsWith('k') ? 'female' : 'male';
@@ -90,37 +142,25 @@ function Panel() {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleMedicalChange = (data: any) => {
-    const testResults: Record<string, string> = {};
-    const selectedGroups: string[] = [];
+const handleMedicalChange = (data: {
+  selectedGroups: string[];
+  selectedConditions: string[];
+  testResults: { [testName: string]: string };
+}) => {
+  const convertedMedical = data.selectedConditions.map((condition) => ({
+    condition,
+    tests: Object.entries(data.testResults).map(([name, value]) => ({ name, value }))
+  }));
 
-    if (!Array.isArray(data)) return;
+  setForm((prev) => ({
+    ...prev,
+    conditionGroups: data.selectedGroups,
+    conditions: data.selectedConditions,
+    testResults: data.testResults,
+    medical: convertedMedical,
+  }));
+};
 
-    for (const entry of data) {
-      if (entry?.condition) {
-        selectedGroups.push(entry.condition);
-      }
-
-      if (Array.isArray(entry?.tests)) {
-        for (const test of entry.tests) {
-          if (test?.name && typeof test.value === 'string') {
-            testResults[test.name] = test.value;
-          }
-        }
-      }
-    }
-
-    const convertedMedical: ConditionWithTests[] = selectedGroups.map((condition) => ({
-      condition,
-      tests: Object.entries(testResults).map(([name, value]) => ({ name, value }))
-    }));
-
-    setForm((prev) => ({
-      ...prev,
-      medical: convertedMedical,
-      conditions: selectedGroups
-    }));
-  };
 
   const handleDietSave = (meals: Meal[]) => {
     const errors = validateDiet(meals);
@@ -208,25 +248,39 @@ const getRecommendedMealsPerDay = (form: PatientData, interviewData: any): numbe
 };
 const tryParseJSON = (raw: string): any | null => {
   try {
-    let cleaned = raw
-      .replace(/```json/g, '')
-      .replace(/```/g, '')
-      .replace(/^\s*AI\s*[:\-]?\s*/gi, '')
-      .replace(/\r?\n/g, '')
-      .trim();
+  let cleaned = raw
+    .replace(/```json/g, '')
+    .replace(/```/g, '')
+    .replace(/^\s*AI\s*[:\-]?\s*/gi, '')
+    .replace(/\r?\n/g, '')
+    .trim();
 
-    const start = cleaned.indexOf('{');
-    const end = cleaned.lastIndexOf('}');
-    if (start === -1 || end === -1) return null;
+  const start = cleaned.indexOf('{');
+  const end = cleaned.lastIndexOf('}');
 
-    cleaned = cleaned.slice(start, end + 1);
-    console.log('? Cleaned JSON:', cleaned);
-    return JSON.parse(cleaned);
-  } catch {
+  if (start === -1 || end === -1 || start >= end) {
+    console.warn('⚠️ Nie znaleziono poprawnych nawiasów w JSON:', cleaned);
     return null;
   }
-};
 
+  cleaned = cleaned.slice(start, end + 1);
+
+  // 🔍 Wstępna walidacja przed parsowaniem
+  if (
+    !(cleaned.startsWith('{') && cleaned.endsWith('}')) &&
+    !(cleaned.startsWith('[') && cleaned.endsWith(']'))
+  ) {
+    console.warn('⚠️ Nie wygląda na poprawny JSON:', cleaned);
+    return null;
+  }
+
+  console.log('? Cleaned JSON:', cleaned);
+  return JSON.parse(cleaned);
+} catch (err) {
+  console.error('❌ Błąd parsowania JSON:', err, '\nŹródło:', raw);
+  return null;
+}
+};
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
@@ -376,163 +430,233 @@ const handleSubmit = async (e: React.FormEvent) => {
 const handleSendToPatient = () => {
   alert('?? Dieta zosta�a wys�ana pacjentowi (symulacja).');
 };
-   return (
-    <div className="min-h-screen bg-[url('/background.jpg')] bg-cover bg-center bg-no-repeat backdrop-blur-sm p-4">
-      {/* G��wna sekcja � dwie kolumny */}
-      <div className="flex flex-col md:flex-row w-full max-w-[1400px] mx-auto gap-6 px-4">
-        {/* Kolumna 1 � dane medyczne pacjenta */}
-        <form onSubmit={handleSubmit} className="w-full md:w-1/2 space-y-4">
-          <h1 className="text-3xl font-bold">{t('title')}</h1>
-          <p className="text-sm text-gray-600">{t('subtitle')}</p>
+const [notes, setNotes] = useState<Record<string, string>>({});
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block mb-1">{t('age')}</label>
-              <input name="age" type="number" className="w-full border px-2 py-1" onChange={handleChange} required />
-            </div>
-            <div>
-              <label className="block mb-1">{t('sex')}</label>
-              <select name="sex" className="w-full border px-2 py-1" onChange={handleChange} required>
-                <option value="">{t('sex')}</option>
-                <option value="Kobieta">{t('female')}</option>
-                <option value="M��czyzna">{t('male')}</option>
-              </select>
-            </div>
-            <div>
-              <label className="block mb-1">{t('weight')}</label>
-              <input name="weight" type="number" className="w-full border px-2 py-1" onChange={handleChange} required />
-            </div>
-            <div>
-              <label className="block mb-1">{t('height')}</label>
-              <input name="height" type="number" className="w-full border px-2 py-1" onChange={handleChange} required />
-            </div>
-          </div>
+const handleCalculationResult = ({ suggestedModel, ...rest }: any) => {
+  setInterviewData((prev: any) => ({
+    ...prev,
+    ...rest,
+    model: suggestedModel,
+  }));
+};
+return (
+  <div
+  className="min-h-screen bg-cover bg-center bg-no-repeat bg-fixed py-10 px-4"
+  style={{
+    backgroundImage: "url('/background.jpg')",
+    backgroundSize: 'cover',
+  }}
+>
 
-          <div className="mt-6">
-            <h2 className="text-lg font-semibold">{tUI('medicalData', lang)}</h2>
-            <MedicalForm onChange={handleMedicalChange} lang={lang} />
-          </div>
-        </form>
-S
 
-        {/* Kolumna 2 � wywiad pacjenta */}
-        <div className="w-full md:w-1/2 max-h-[90vh] overflow-y-auto space-y-6 pr-2">
-          <InterviewForm
-            onChange={(data) => setInterviewData({ ...interviewData, ...data })}
-            form={form}
-            bmi={bmi}
-            editableDiet={editableDiet}
-            lang={lang}
-          />
+{/* Pasek z nagłówkiem i przełącznikiem */}
+<div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between px-4">
+  <div className="flex flex-col">
+    {userData?.name && (
+      <span className="text-sm font-medium text-gray-800">
+        {/* Tytuł naukowy */}
+        {userData?.title && translatedTitles[userData.title as 'dr' | 'drhab' | 'prof']
+          ? `${translatedTitles[userData.title as 'dr' | 'drhab' | 'prof'][lang]} `
+          : ''}
+        {/* Imię i nazwisko */}
+        {userData.name}
+        {/* Rola */}
+        {userData?.role && translationsUI[userData.role as 'doctor' | 'dietitian']
+          ? ` – ${translationsUI[userData.role as 'doctor' | 'dietitian'][lang]}`
+          : ''}
+      </span>
+    )}
+    <h1 className="text-2xl font-bold text-gray-800">
+      {tUI('doctorPanelTitle', lang)}
+    </h1>s
+  </div>
+  <LangAndThemeToggle />
+</div>
 
-          <div className="mt-2">
-            <DietGoalForm
-              onChange={(goal) => setInterviewData({ ...interviewData, goal })}
-              lang={lang}
-            />
-          </div>
 
-          <div className="mt-4">
-            <SelectModelForm
-              onChange={(model) => setInterviewData({ ...interviewData, model })}
-              lang={lang}
-            />
-          </div>
+    {/* Główna zawartość */}
+    <div className="z-10 flex flex-col w-full max-w-[1400px] mx-auto gap-6 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 mt-20 dark:text-white transition-colors">
 
-          <div className="mt-4">
-            <SelectCuisineForm
-              onChange={(cuisine) => setInterviewData({ ...interviewData, cuisine })}
-              lang={lang}
-            />
+      {/* Sekcja 1: Dane pacjenta */}
+      <PanelCard>
+        <PatientPanelSection form={form} setForm={setForm} lang={lang} />
+      </PanelCard>
+
+      {/* Sekcja 2: Dane medyczne */}
+      <PanelCard className="z-30">
+        <MedicalForm onChange={handleMedicalChange} lang={lang} />
+      </PanelCard>
+
+      {/* Sekcja 3: Wywiad pacjenta */}
+      <PanelCard title={`🧠 ${tUI('interviewTitle', lang)}`}>
+        <InterviewWizard
+          form={form}
+          onFinish={(data) => setInterviewData(data)}
+          lang={lang}
+        />
+      </PanelCard>
+{/* Sekcja 3.1: Rekomendacje lekarza i liczba posiłków */}
+<PanelCard className="h-full">
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    {/* Zalecenia lekarza */}
+    <div className="flex flex-col space-y-2">
+      <label className="text-sm font-medium text-black dark:text-white">
+        {tUI('doctorRecommendation', lang)}
+      </label>
+      <textarea
+        rows={4}
+        className="w-full border rounded px-3 py-2 text-sm text-gray-800 dark:text-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+        value={interviewData.recommendation || ''}
+        onChange={(e) =>
+          setInterviewData({ ...interviewData, recommendation: e.target.value })
+        }
+      />
+    </div>
+
+          {/* Liczba posiłków */}
+          <div className="flex flex-col space-y-2">
+            <label className="text-sm font-medium text-black dark:text-white">
+              {tUI('mealsPerDay', lang)}
+            </label>
+            <select
+              className="w-full border rounded px-3 py-2 text-sm text-gray-800 dark:text-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+              value={interviewData.mealsPerDay || ''}
+              onChange={(e) =>
+                setInterviewData({ ...interviewData, mealsPerDay: parseInt(e.target.value) })
+              }
+            >
+              <option value="">{`-- ${tUI('selectOption', lang)} --`}</option>
+              {[2, 3, 4, 5, 6].map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
+      </PanelCard>
+
+      {/* Sekcja 4: Cel diety, model i kuchnia */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 items-start">
+        <PanelCard className="h-full">
+          <DietGoalForm
+            onChange={(goal) => setInterviewData({ ...interviewData, goal })}
+            lang={lang}
+          />
+        </PanelCard>
+
+       <PanelCard className="h-full">
+          <SelectModelForm
+            onChange={(model) => setInterviewData({ ...interviewData, model })}
+            lang={lang}
+          />
+        </PanelCard>
+
+        <PanelCard className="h-full">
+          <SelectCuisineForm
+            onChange={(cuisine) => setInterviewData({ ...interviewData, cuisine })}
+            lang={lang}
+          />
+        </PanelCard>
       </div>
 
-      {/* Sekcja kalkulatora + przyciski i tabela */}
-      <div className="w-full px-4 mt-6">
+      {/* Sekcja 5: Kalkulator */}
+      <PanelCard title={`🧮 ${tUI('patientInNumbers', lang)}`} className="h-full">
         <CalculationBlock
           form={form}
           interview={interviewData}
           lang={lang}
-          onResult={({ suggestedModel, ...rest }) => {
-            setInterviewData((prev: any) => ({
-              ...prev,
-              ...rest,
-              model: suggestedModel,
-            }));
-          }}
+          onResult={handleCalculationResult}
         />
+      </PanelCard>
 
-        <div className="w-full flex flex-wrap justify-between gap-4 px-8 mt-6">
+     {/* Sekcja 6: Przyciski akcji */}
+<PanelCard title={tUI('actions', lang)} className="mt-2">
+  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+    <button
+      type="button"
+      onClick={handleSubmit}
+      className="w-full bg-blue-600 text-white px-4 py-3 rounded-md font-medium hover:bg-blue-700 disabled:opacity-50"
+      disabled={isGenerating}
+    >
+      {isGenerating ? (
+        <span className="flex items-center gap-2">
+          <span className="animate-spin">⚙️</span>
+          {tUI('writingDiet', lang)}
+        </span>
+      ) : tUI('generate', lang)}
+    </button>
+
+    <button
+      type="button"
+      className="w-full bg-purple-700 text-white px-4 py-3 rounded-md font-medium hover:bg-purple-800 disabled:opacity-50"
+      onClick={() => setDietApproved(true)}
+      disabled={isGenerating || !confirmedDiet}
+    >
+      {isGenerating ? '⏳ Czekaj...' : `✅ ${tUI('approvedDiet', lang)}`}
+    </button>
+
+    <button
+      type="button"
+      className="w-full bg-green-700 text-white px-4 py-3 rounded-md font-medium hover:bg-green-800 disabled:opacity-50"
+      onClick={() => {
+        if (isGenerating) {
+          alert('⏳ Dieta nie została jeszcze w pełni wygenerowana.');
+          return;
+        }
+        if (!confirmedDiet) {
+          alert('❗ Najpierw zatwierdź dietę, zanim pobierzesz PDF.');
+          return;
+        }
+        generateDietPdf(form, bmi, confirmedDiet, dietApproved, notes);
+      }}
+      disabled={isGenerating || !confirmedDiet}
+    >
+      {isGenerating ? '⏳ Czekaj...' : `📄 ${tUI('pdf', lang)}`}
+    </button>
+
+
           <button
             type="button"
-            onClick={handleSubmit}
-            className="flex-1 bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
-            disabled={isGenerating}
-          >
-            {isGenerating ? '?? Pisz� diet�...' : tUI('generate', lang)}
-          </button>
-
-          <button
-            type="button"
-            className="flex-1 bg-purple-700 text-white px-4 py-2 rounded hover:bg-purple-800 disabled:opacity-50"
-            onClick={() => setDietApproved(true)}
-            disabled={isGenerating || !confirmedDiet}
-          >
-            {isGenerating ? '?? Czekaj...' : `? ${tUI('approvedDiet', lang)}`}
-          </button>
-
-          <button
-            type="button"
-            className="flex-1 bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 disabled:opacity-50"
-            onClick={() => {
-              if (isGenerating) {
-                alert('? Dieta nie zosta�a jeszcze w pe�ni wygenerowana. Poczekaj na zako�czenie.');
-                return;
-              }
-              if (!confirmedDiet) {
-                alert('?? Najpierw zatwierd� diet�, zanim pobierzesz PDF.');
-                return;
-              }
-              generateDietPdf(form, bmi, confirmedDiet, dietApproved);
-            }}
-            disabled={isGenerating || !confirmedDiet}
-          >
-            {isGenerating ? '?? Czekaj...' : `?? ${tUI('pdf', lang)}`}
-          </button>
-
-          <button
-            type="button"
-            className="flex-1 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
+            className="w-full bg-blue-500 text-white px-4 py-3 rounded-md font-medium hover:bg-blue-600 disabled:opacity-50"
             onClick={handleSendToPatient}
             disabled={isGenerating}
           >
-            {isGenerating ? '?? Czekaj...' : `?? ${tUI('sendToPatient', lang)}`}
+            {isGenerating ? '⏳ Czekaj...' : `📤 ${tUI('sendToPatient', lang)}`}
           </button>
         </div>
 
+        {/* Pasek ładowania */}
         {isGenerating && (
-          <div className="w-full px-8 mt-4 text-sm text-gray-600 italic animate-pulse">
-            ?? Pisz� diet�... {streamingText.length > 20 && ' (czekaj, trwa generowanie)'}
+          <div className="text-sm text-gray-600 italic mt-4 animate-pulse">
+            ⏳ Piszę dietę... {streamingText.length > 20 && '(czekaj, trwa generowanie)'}
           </div>
         )}
+      </PanelCard>
 
-          {editableDiet && Object.keys(editableDiet).length > 0 && (
-          <div className="w-full px-8 mt-10">
-            <DietTable
-              editableDiet={editableDiet}
-              setEditableDiet={setEditableDiet}
-              setConfirmedDiet={(diet) => {
-                handleDietSave(Object.values(diet).flat());
-              }}
-              isEditable={!dietApproved}
-              lang={lang}
-            />
-          </div>
-        )}
-      </div>
+      <pre className="text-xs bg-gray-100 p-2 rounded overflow-x-auto">
+        {JSON.stringify(Object.keys(editableDiet), null, 2)}
+      </pre>
+
+      {/* Sekcja 7: Tabela z dietą */}
+      {editableDiet && Object.keys(editableDiet).length > 0 && (
+        <PanelCard>
+          <DietTable
+            editableDiet={editableDiet}
+            setEditableDiet={setEditableDiet}
+            setConfirmedDiet={(diet) => {
+              handleDietSave(Object.values(diet).flat());
+            }}
+            isEditable={!dietApproved}
+            lang={lang}
+            notes={notes}
+            setNotes={setNotes}
+          />
+        </PanelCard>
+      )}
     </div>
-  );
+  </div>
+);
 }
 
 export default Panel;

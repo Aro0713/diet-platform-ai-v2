@@ -9,10 +9,9 @@ interface DietTableProps {
   setConfirmedDiet: (diet: Record<string, Meal[]>) => void;
   isEditable: boolean;
   lang: LangKey;
+  notes: Record<string, string>;
+  setNotes: React.Dispatch<React.SetStateAction<Record<string, string>>>;
 }
-
-const RAW_DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-const RAW_MEALS = ['breakfast', 'secondBreakfast', 'lunch', 'snack', 'dinner', 'extra'];
 
 const DietTable: React.FC<DietTableProps> = ({
   editableDiet,
@@ -20,15 +19,48 @@ const DietTable: React.FC<DietTableProps> = ({
   setConfirmedDiet,
   isEditable,
   lang,
+  notes,
+  setNotes,
 }) => {
   const [saveMessage, setSaveMessage] = useState('');
 
-  const translatedDays = RAW_DAYS.map((dayKey) => translationsUI[dayKey]?.[lang] || dayKey);
-  const translatedMeals = RAW_MEALS.map((mealKey) => translationsUI[mealKey]?.[lang] || mealKey);
+  const getFoodIcon = (product: string): string | null => {
+    const p = product.toLowerCase();
+    if (p.includes('brokuł') || p.includes('marchew') || p.includes('sałata') || p.includes('pomidor')) return '🥦';
+    if (p.includes('kurczak') || p.includes('indyk')) return '🐓';
+    if (p.includes('wołowina') || p.includes('wieprzowina') || p.includes('jagnięcina')) return '🐄';
+    if (p.includes('ryba') || p.includes('łosoś') || p.includes('tuńczyk')) return '🐟';
+    if (p.includes('ser') || p.includes('mozarella') || p.includes('feta')) return '🧀';
+    if (p.includes('szynka') || p.includes('kiełbasa') || p.includes('boczek')) return '🥩';
+    if (p.includes('napój') || p.includes('herbata') || p.includes('sok') || p.includes('kawa')) return '☕';
+    if (p.includes('ciasto') || p.includes('deser') || p.includes('lody') || p.includes('czekolada')) return '🍰';
+    return null;
+  };
 
-  const handleInputChange = (day: string, mealIndex: number, field: keyof Meal, value: string) => {
+  const dayKeys = Object.keys(editableDiet);
+  const translatedDays = dayKeys.map((dayKey) =>
+    translationsUI[dayKey.toLowerCase()]?.[lang] || dayKey || '???'
+  );
+
+  const uniqueMealNames = Array.from(
+    new Set(
+      Object.values(editableDiet)
+        .flat()
+        .map((meal) => meal.name || '')
+        .filter(Boolean)
+    )
+  );
+
+  const translatedMeals = uniqueMealNames.map((mealName) => ({
+    label: translationsUI[mealName.toLowerCase()]?.[lang] || mealName || '???',
+    key: mealName,
+  }));
+
+  const handleInputChange = (day: string, mealName: string, field: keyof Meal, value: string) => {
     const updatedDayMeals = [...(editableDiet[day] || [])];
-    const meal = { ...updatedDayMeals[mealIndex] };
+    const index = updatedDayMeals.findIndex((m) => m.name === mealName);
+    if (index === -1) return;
+    const meal = { ...updatedDayMeals[index] };
 
     if (field === 'calories' || field === 'glycemicIndex') {
       (meal as any)[field] = Number(value);
@@ -45,12 +77,12 @@ const DietTable: React.FC<DietTableProps> = ({
       (meal as any)[field] = value;
     }
 
-    updatedDayMeals[mealIndex] = meal;
+    updatedDayMeals[index] = meal;
     setEditableDiet({ ...editableDiet, [day]: updatedDayMeals });
   };
 
   const validateDiet = () => {
-    for (const day of translatedDays) {
+    for (const day of dayKeys) {
       const meals = editableDiet[day] || [];
       for (const meal of meals) {
         if (!meal.name || meal.name.trim() === '') return false;
@@ -76,92 +108,101 @@ const DietTable: React.FC<DietTableProps> = ({
 
   return (
     <div className="overflow-auto">
-      <table className="min-w-full border border-gray-500 bg-white text-black shadow-md">
+      <table className="min-w-full border border-gray-600 bg-[#1a1e2c]/90 text-white shadow-md rounded-md overflow-hidden">
         <thead>
           <tr>
-            <th className="border border-gray-500 bg-gray-200 text-sm font-semibold text-black px-2 py-1 text-left">#</th>
-            {translatedDays.map((day) => (
-              <th key={day} className="border border-gray-500 bg-gray-200 text-sm font-semibold text-black px-2 py-1 text-center">{day}</th>
+            <th className="border border-gray-600 bg-gray-800 text-sm font-semibold text-white px-4 py-2 text-center">#</th>
+            {translatedDays.map((day, idx) => (
+              <th
+                key={day + idx}
+                className="border border-gray-600 bg-gray-800 text-sm font-semibold text-white px-4 py-2 text-center"
+              >
+                {day}
+              </th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {translatedMeals.map((mealLabel, mealIndex) => (
+          {translatedMeals.map(({ label, key }, mealIndex) => (
             <tr key={mealIndex}>
-              <td className="border border-gray-400 bg-white px-2 py-1 font-semibold">{mealLabel}</td>
-              {translatedDays.map((day) => {
-                const meal = editableDiet[day]?.[mealIndex] ?? {
-                  name: '',
-                  description: '',
-                  ingredients: [],
-                  calories: 0,
-                  glycemicIndex: 0,
-                  time: ''
+              <td className="border border-gray-600 bg-[#0d1117] px-3 py-2 align-top font-medium">
+                {label}
+              </td>
+              {dayKeys.map((day) => {
+                const meal = (editableDiet[day] || []).find((m) => m.name === key) ?? {
+                  name: '', description: '', ingredients: [], calories: 0, glycemicIndex: 0, time: ''
                 };
                 return (
-                  <td key={day + mealIndex} className="border border-gray-400 bg-white px-2 py-1 align-top text-black">
-                    <div className="space-y-1">
+                  <td key={day + key} className="border border-gray-600 bg-[#0d1117] px-3 py-2 align-top text-white">
+                    <div className="space-y-2">
                       {isEditable ? (
                         <>
                           <input
                             type="text"
-                            className="w-full border rounded px-1 py-0.5 mb-1"
+                            className="w-full border rounded-md px-2 py-1 mb-1 font-semibold text-base bg-[#0d1117] text-white border-gray-600"
                             value={meal.name}
-                            onChange={(e) => handleInputChange(day, mealIndex, 'name', e.target.value)}
+                            onChange={(e) => handleInputChange(day, key, 'name', e.target.value)}
                             placeholder="Nazwa"
                           />
                           <input
                             type="text"
-                            className="w-full border rounded px-1 py-0.5 mb-1 text-xs"
+                            className="w-full border rounded-md px-2 py-1 mb-1 text-xs bg-[#0d1117] text-white border-gray-600"
                             value={meal.time}
-                            onChange={(e) => handleInputChange(day, mealIndex, 'time', e.target.value)}
+                            onChange={(e) => handleInputChange(day, key, 'time', e.target.value)}
                             placeholder="Godzina"
                           />
                           <textarea
-                            className="w-full border rounded px-1 py-0.5 mb-1 text-sm"
+                            className="w-full border rounded-md px-2 py-1 mb-1 text-sm bg-[#0d1117] text-white border-gray-600"
                             rows={2}
-                            value={meal.description}
-                            onChange={(e) => handleInputChange(day, mealIndex, 'description', e.target.value)}
+                            value={meal.description || ''}
+                            onChange={(e) => handleInputChange(day, key, 'description', e.target.value)}
                             placeholder="Opis (AI)"
                           />
                           <textarea
-                            className="w-full border rounded px-1 py-0.5 mb-1 text-sm"
+                            className="w-full border rounded-md px-2 py-1 mb-1 text-sm bg-[#0d1117] text-white border-gray-600"
                             rows={2}
-                            value={(meal.ingredients || []).map(i => `${i.product} (${i.weight}g)`).join(', ')}
-                            onChange={(e) => handleInputChange(day, mealIndex, 'ingredients', e.target.value)}
+                            value={(meal.ingredients ?? []).map(i => `${i.product} (${i.weight}g)`).join(', ')}
+                            onChange={(e) => handleInputChange(day, key, 'ingredients', e.target.value)}
                             placeholder="Składniki"
                           />
                           <input
                             type="number"
-                            className="w-full border rounded px-1 py-0.5 mb-1 text-xs"
+                            className="w-full border rounded-md px-2 py-1 mb-1 text-xs bg-[#0d1117] text-white border-gray-600"
                             value={meal.calories}
-                            onChange={(e) => handleInputChange(day, mealIndex, 'calories', e.target.value)}
+                            onChange={(e) => handleInputChange(day, key, 'calories', e.target.value)}
                             placeholder="Kalorie"
                           />
                           <input
                             type="number"
-                            className="w-full border rounded px-1 py-0.5 mb-1 text-xs"
+                            className="w-full border rounded-md px-2 py-1 mb-1 text-xs bg-[#0d1117] text-white border-gray-600"
                             value={meal.glycemicIndex}
-                            onChange={(e) => handleInputChange(day, mealIndex, 'glycemicIndex', e.target.value)}
+                            onChange={(e) => handleInputChange(day, key, 'glycemicIndex', e.target.value)}
                             placeholder="IG"
                           />
                         </>
                       ) : (
                         <>
-                          <div className="font-semibold">{meal.name}</div>
-                          {meal.time && <div className="text-xs">🕒 {meal.time}</div>}
+                          <div className="font-semibold text-base">{meal.name}</div>
+                          {meal.time && <div className="text-xs text-gray-400">🕒 {meal.time}</div>}
                           {meal.description && (
-                            <div className="text-sm italic mb-1 animate-typewriter relative whitespace-pre-wrap overflow-hidden border-r-2 border-gray-500">
+                            <div className="text-sm italic mb-1 whitespace-pre-wrap border-l-2 border-gray-600 pl-2">
                               {meal.description}
-                              <span className="ml-1 inline-block w-1 h-5 bg-gray-700 animate-cursor"></span>
                             </div>
                           )}
-                          <ul className="text-sm list-disc list-inside">
-                            {(meal.ingredients || []).map((i, idx) => (
-                              <li key={idx}>{i.product} ({i.weight}g)</li>
-                            ))}
+                          <ul className="text-sm list-inside space-y-1">
+                            {(meal.ingredients || []).map((i, idx) => {
+                              const icon = getFoodIcon(i.product);
+                              return (
+                                <li key={idx} className="flex items-center gap-2">
+                                  {icon && <span className="text-lg">{icon}</span>}
+                                  <span>{i.product} ({i.weight}g)</span>
+                                </li>
+                              );
+                            })}
                           </ul>
-                          <div className="text-xs">Kalorie: {meal.calories} | IG: {meal.glycemicIndex}</div>
+                          <div className="text-xs mt-1 text-gray-400">
+                            Kalorie: {meal.calories} | IG: {meal.glycemicIndex}
+                          </div>
                         </>
                       )}
                     </div>
@@ -170,6 +211,26 @@ const DietTable: React.FC<DietTableProps> = ({
               })}
             </tr>
           ))}
+          <tr>
+            <td className="font-semibold bg-gray-800 border border-gray-600 px-2 py-1">Uwagi</td>
+            {dayKeys.map((day) => (
+              <td key={day + '_note'} className="border border-gray-600 px-2 py-1 bg-[#0d1117] text-white align-top">
+                {isEditable ? (
+                  <textarea
+                    className="w-full border rounded-md px-2 py-1 text-sm bg-[#0d1117] text-white border-gray-600"
+                    rows={2}
+                    value={notes[day] || ''}
+                    onChange={(e) => setNotes({ ...notes, [day]: e.target.value })}
+                    placeholder="Uwagi dietetyczne / indywidualne"
+                  />
+                ) : (
+                  <div className="text-sm italic text-gray-400 whitespace-pre-wrap">
+                    {notes[day] || '–'}
+                  </div>
+                )}
+              </td>
+            ))}
+          </tr>
         </tbody>
       </table>
 
@@ -177,12 +238,12 @@ const DietTable: React.FC<DietTableProps> = ({
         <div className="mt-4 text-center">
           <button
             onClick={handleSave}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+            className="bg-green-600 text-white px-4 py-2 rounded-md font-medium hover:bg-green-700"
           >
             Zatwierdź dietę
           </button>
           {saveMessage && (
-            <p className="mt-2 text-sm text-green-600 dark:text-green-400">
+            <p className="mt-2 text-sm text-green-500 dark:text-green-400 font-medium">
               {saveMessage}
             </p>
           )}
@@ -193,3 +254,4 @@ const DietTable: React.FC<DietTableProps> = ({
 };
 
 export default React.memo(DietTable);
+

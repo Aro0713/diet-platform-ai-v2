@@ -1,6 +1,22 @@
-﻿@tailwind base;
+﻿@import '@fontsource/dancing-script';
+
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* 🌗 Obsługa dark mode */
+html.dark {
+  background-color: #121212;
+  color: white;
+}
+
+body {
+  @apply transition-colors duration-300;
+}
+
+input, select, textarea, button {
+  @apply transition-colors duration-200;
+}
 
 /* ✍️ Animacje pisania do tabeli */
 @keyframes blink {
@@ -19,4 +35,21 @@
 
 .animate-cursor {
   animation: blink 0.8s step-start infinite;
+}
+
+/* ✒️ Font stylizowany (Dancing Script) */
+h1, h2.dancing {
+  font-family: 'Dancing Script', cursive;
+}
+
+/* 🖱️ Scrollbar (opcjonalnie) */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background-color: rgba(100, 100, 100, 0.5);
+  border-radius: 4px;
+}
+html.dark ::-webkit-scrollbar-thumb {
+  background-color: rgba(200, 200, 200, 0.3);
 }

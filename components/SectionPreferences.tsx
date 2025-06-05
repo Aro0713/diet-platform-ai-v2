@@ -1,6 +1,6 @@
 import React from 'react';
-import { LangKey } from '../utils/i18n';
-import { section5 } from './utils/translations/interview/section5';
+import { LangKey, tUI } from '../utils/i18n';
+import { section5 } from '@/utils/translations/interview/section5';
 
 interface Props {
   data: { [key: string]: string };
@@ -9,20 +9,20 @@ interface Props {
 }
 
 export default function SectionPreferences({ data, onChange, lang }: Props) {
-  const t = (key: keyof typeof section5): string =>
-    section5[key]?.[lang] ?? section5[key]?.pl ?? key;
+  const t = (key: keyof typeof section5): string => {
+    const val = section5[key]?.[lang] ?? section5[key]?.pl;
+    return Array.isArray(val) ? (val.join(' / ') as string) : (val as string) ?? key;
+  };
 
-  const keys: (keyof typeof section5)[] = [
-    'q5_1',
-    'q5_2',
-    'q5_3',
-    'q5_4',
-    'q5_5'
-  ];
+  const keys = (Object.keys(section5) as string[])
+    .filter((k): k is keyof typeof section5 =>
+      k.startsWith('q5_') && !k.endsWith('_options')
+    )
+    .sort();
 
   return (
     <div className="space-y-4 bg-[#f7f7f7] p-4 rounded shadow mt-4">
-      <h3 className="text-xl font-semibold border-b pb-2">5. {t('section5_title')}</h3>
+      <h3 className="text-xl font-semibold border-b pb-2">5. {tUI('section5_title', lang)}</h3>
 
       <div className="grid grid-cols-1 gap-4">
         {keys.map((key) => (

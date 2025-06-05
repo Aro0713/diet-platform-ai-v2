@@ -1,0 +1,7 @@
+project_id = "diet-platform"
+
+[api]
+port = 54321
+
+[functions]
+jwt_verification = { enabled = false }

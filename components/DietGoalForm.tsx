@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
-import SelectDietGoalForm from './SelectDietGoalForm';
-import { LangKey } from '../utils/translations';
+import PanelCard from './PanelCard';
+import { LangKey, tUI } from '../utils/i18n';
 
 interface Props {
   onChange: (value: string) => void;
   lang: LangKey;
 }
 
-const goalTranslations = {
+const goalOptions: {
+  label: Record<LangKey, string>;
+  title: Record<LangKey, string>;
+  groups: Record<string, Record<LangKey, string>>;
+} = {
   label: {
     pl: 'Wybierz cel diety:',
     en: 'Select a diet goal:',
@@ -20,6 +24,19 @@ const goalTranslations = {
     hi: 'आहार लक्ष्य चुनें:',
     ar: 'اختر هدف النظام الغذائي:',
     he: 'בחר מטרה תזונתית:',
+  },
+  title: {
+    pl: 'Cel diety',
+    en: 'Diet goal',
+    de: 'Diätziel',
+    ua: 'Ціль дієти',
+    ru: 'Цель диеты',
+    es: 'Objetivo dietético',
+    fr: 'Objectif diététique',
+    zh: '饮食目标',
+    hi: 'आहार लक्ष्य',
+    ar: 'هدف النظام الغذائي',
+    he: 'מטרת תזונה',
   },
   groups: {
     lose: {
@@ -117,39 +134,31 @@ const goalTranslations = {
 };
 
 export default function DietGoalForm({ onChange, lang }: Props) {
-  const [selectedGroup, setSelectedGroup] = useState<keyof typeof goalTranslations.groups | ''>('');
+  const [selected, setSelected] = useState('');
 
-  const t = (): string =>
-    goalTranslations.label[lang] || goalTranslations.label.pl;
-
-  const tGoal = (key: keyof typeof goalTranslations.groups): string =>
-    goalTranslations.groups[key][lang] || goalTranslations.groups[key].pl || key;
-
-  const translatedGoals: Record<string, string> = Object.keys(goalTranslations.groups).reduce(
-    (acc, key) => {
-      const goalKey = key as keyof typeof goalTranslations.groups;
-      acc[key] = tGoal(goalKey);
-      return acc;
-    },
-    {} as Record<string, string>
-  );
+  const tTitle = goalOptions.title[lang] || goalOptions.title.pl;
+  const tLabel = goalOptions.label[lang] || goalOptions.label.pl;
 
   return (
-    <div className="bg-white p-4 rounded shadow mt-6 space-y-4">
-      <label className="block font-semibold mb-1">
-        {t()}
-      </label>
-
-      <SelectDietGoalForm
-        selectedGoals={[selectedGroup]}
-        setSelectedGoals={(groups) => {
-          const selected = groups[0] as keyof typeof goalTranslations.groups;
-          setSelectedGroup(selected);
-          onChange(selected);
-        }}
-        groupedDietGoals={translatedGoals}
-        placeholder="--"
-      />
-    </div>
+    <PanelCard title={`🎯 ${tTitle}`} className="h-full">
+      <div className="flex flex-col space-y-2">
+        <label className="text-sm font-medium text-black dark:text-white">{tLabel}</label>
+        <select
+          className="w-full rounded-md px-3 py-2 bg-white dark:bg-gray-800 text-black dark:text-white border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          value={selected}
+          onChange={(e) => {
+            setSelected(e.target.value);
+            onChange(e.target.value);
+          }}
+        >
+          <option value="">{`-- ${tLabel} --`}</option>
+          {Object.entries(goalOptions.groups).map(([key, labels]) => (
+            <option key={key} value={key}>
+              {labels[lang] || labels.pl}
+            </option>
+          ))}
+        </select>
+      </div>
+    </PanelCard>
   );
 }

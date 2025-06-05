@@ -1,0 +1,9 @@
+export { section1reg } from './section1reg';
+export { section2reg } from './section2reg';
+export { section3reg } from './section3reg';
+export { section4reg } from './section4reg';
+export { section5reg } from './section5reg';
+export { section6reg } from './section6reg';
+export { section7reg } from './section7reg';
+export { section8reg } from './section8reg';
+export { section9reg } from './section9reg';

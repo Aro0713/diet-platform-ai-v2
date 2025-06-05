@@ -9,8 +9,8 @@ export async function generateInterviewPdf(
   logoBase64?: string
 ) {
   const pdfMake = (await import('pdfmake/build/pdfmake')).default;
-const pdfFonts = (await import('pdfmake/build/vfs_fonts')).default;
-pdfMake.vfs = pdfFonts.vfs; // ✅ Poprawnie
+  const pdfFonts = (await import('pdfmake/build/vfs_fonts')).default;
+  pdfMake.vfs = pdfFonts.vfs;
 
   const content: any[] = [
     { text: '📝 Wywiad dietetyczny', style: 'header' },
@@ -98,5 +98,5 @@ pdfMake.vfs = pdfFonts.vfs; // ✅ Poprawnie
       : undefined,
   };
 
-  pdfMake.createPdf(docDefinition).download(`wywiad_${new Date().toISOString().slice(0, 10)}.pdf`);
+  pdfMake.createPdf(docDefinition).open();
 }
