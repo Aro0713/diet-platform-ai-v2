@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { regulamin } from '@/utils/translations/legal/regulamin';
 import {
@@ -14,16 +14,24 @@ import {
 } from '../components/utils/translations/legal/sections/indexReg';
 import { LangKey } from '@/utils/i18n';
 
-
 type TermsKey = keyof typeof regulamin;
 
 export default function RegulaminPage() {
-  const lang: LangKey = typeof window !== 'undefined'
-    ? (localStorage.getItem('platformLang') as LangKey) || 'pl'
-    : 'pl';
+  const [lang, setLang] = useState<LangKey>('pl');
+  const [langReady, setLangReady] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedLang = localStorage.getItem('platformLang') as LangKey;
+      setLang(storedLang || 'pl');
+      setLangReady(true);
+    }
+  }, []);
 
   const t = (key: TermsKey): string =>
     regulamin[key]?.[lang] ?? regulamin[key]?.['pl'];
+
+  if (!langReady) return null;
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">

@@ -39,6 +39,7 @@ useEffect(() => {
 
   const [userType, setUserType] = useState<'doctor' | 'dietitian' | 'patient' | null>(null);
   const [login, setLogin] = useState({ email: '', password: '' });
+  const [loginConsent, setLoginConsent] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '' });
   const [jurisdiction, setJurisdiction] = useState('');
   const [licenseNumber, setLicenseNumber] = useState('');
@@ -306,7 +307,7 @@ return (
     </div>
   </nav>
 
-   {/* 🔐 Login i Rejestracja */}
+           {/* 🔐 Login i Rejestracja */}
 <section className="z-10 grid grid-cols-1 md:grid-cols-2 gap-8 mt-12 max-w-6xl mx-auto bg-white/30 dark:bg-gray-900/30 backdrop-blur-md p-10 rounded-2xl shadow-xl transition-colors dark:text-white">
 
   <h1 id="auth-section" className="sr-only">Logowanie i rejestracja</h1>
@@ -337,7 +338,19 @@ return (
         placeholder={t('password')}
         aria-label={t('password')}
       />
-      <button type="submit" className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded w-full transition">
+      <label className="inline-flex items-center">
+        <input
+          type="checkbox"
+          checked={loginConsent}
+          onChange={(e) => setLoginConsent(e.target.checked)}
+          className="mr-2"
+        />
+        {consentPrefix}{' '}
+        <a href="/regulamin" className="text-blue-600 underline" target="_blank" rel="noopener noreferrer">{termsLinkText}</a>{' '}
+        {t('and')}{' '}
+        <a href="/polityka-prywatnosci" className="text-blue-600 underline" target="_blank" rel="noopener noreferrer">{privacyLinkText}</a>
+      </label>
+      <button type="submit" className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded w-full transition disabled:opacity-50" disabled={!loginConsent}>
         {t('loginTitle')}
       </button>
     </form>
@@ -364,145 +377,133 @@ return (
     </div>
   </article>
 
-     {/* ✅ Rejestracja */}
+  {/* ✅ Rejestracja */}
   <article className="z-10 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 transition-colors dark:text-white" aria-labelledby="register-form">
     <h2 id="register-form" className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
       {t('registerTitle')}
     </h2>
 
     <div className="flex gap-3 mb-4" role="radiogroup" aria-label={t('selectRole')}>
-    {router.isReady && (
-      <>
-        {(router.query.mode === 'doctor' || router.query.mode === 'dietitian') && (
-          <>
+      {router.isReady && (
+        <>
+          {(router.query.mode === 'doctor' || router.query.mode === 'dietitian') && (
+            <>
+              <button
+                onClick={() => setUserType('doctor')}
+                className={`px-4 py-2 rounded ${userType === 'doctor' ? 'bg-blue-700 text-white' : 'bg-blue-100 text-blue-700'}`}
+                role="radio"
+                aria-checked={userType === 'doctor'}
+                aria-label={t('roleDoctor')}
+              >
+                {t('roleDoctor')}
+              </button>
+
+              <button
+                onClick={() => setUserType('dietitian')}
+                className={`px-4 py-2 rounded ${userType === 'dietitian' ? 'bg-purple-700 text-white' : 'bg-purple-100 text-purple-700'}`}
+                role="radio"
+                aria-checked={userType === 'dietitian'}
+                aria-label={t('roleDietitian')}
+              >
+                {t('roleDietitian')}
+              </button>
+            </>
+          )}
+
+          {(!router.query.mode || router.query.mode === 'register' || router.query.mode === 'patient') && (
             <button
-              onClick={() => setUserType('doctor')}
-              className={`px-4 py-2 rounded ${userType === 'doctor' ? 'bg-blue-700 text-white' : 'bg-blue-100 text-blue-700'}`}
+              onClick={() => setUserType('patient')}
+              className={`px-4 py-2 rounded ${userType === 'patient' ? 'bg-green-700 text-white' : 'bg-green-100 text-green-700'}`}
               role="radio"
-              aria-checked={userType === 'doctor'}
-              aria-label={t('roleDoctor')}
+              aria-checked={userType === 'patient'}
+              aria-label={rolePatientLabel}
             >
-              {t('roleDoctor')}
+              {rolePatientLabel}
             </button>
-
-            <button
-              onClick={() => setUserType('dietitian')}
-              className={`px-4 py-2 rounded ${userType === 'dietitian' ? 'bg-purple-700 text-white' : 'bg-purple-100 text-purple-700'}`}
-              role="radio"
-              aria-checked={userType === 'dietitian'}
-              aria-label={t('roleDietitian')}
-            >
-              {t('roleDietitian')}
-            </button>
-          </>
-        )}
-
-        {(!router.query.mode || router.query.mode === 'register' || router.query.mode === 'patient') && (
-          <button
-            onClick={() => setUserType('patient')}
-            className={`px-4 py-2 rounded ${userType === 'patient' ? 'bg-green-700 text-white' : 'bg-green-100 text-green-700'}`}
-            role="radio"
-            aria-checked={userType === 'patient'}
-            aria-label={rolePatientLabel}
-          >
-            {rolePatientLabel}
-          </button>
-        )}
-      </>
-    )}
-  </div>
-
-  <form onSubmit={handleRegister} className="space-y-4">
-    <div>
-      <label htmlFor="fullName" className="sr-only">{t('fullName')}</label>
-      <input
-        id="fullName"
-        type="text"
-        required
-        onChange={(e) => setForm({ ...form, name: e.target.value })}
-        className="w-full bg-white text-black border border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 rounded px-3 py-2"
-        placeholder={t('fullName')}
-        aria-label={t('fullName')}
-      />
+          )}
+        </>
+      )}
     </div>
 
-    <div>
-      <label htmlFor="email" className="sr-only">{t('email')}</label>
-      <input
-        id="email"
-        type="email"
-        required
-        onChange={(e) => setForm({ ...form, email: e.target.value })}
-        className="w-full bg-white text-black border border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 rounded px-3 py-2"
-        placeholder={t('email')}
-        aria-label={t('email')}
-      />
-    </div>
-
-    <div>
-      <label htmlFor="phone" className="sr-only">{t('phone')}</label>
-      <input
-        id="phone"
-        type="tel"
-        required
-        onChange={(e) => setForm({ ...form, phone: e.target.value })}
-        className="w-full bg-white text-black border border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 rounded px-3 py-2"
-        placeholder={t('phone')}
-        aria-label={t('phone')}
-      />
-    </div>
-
-    <div>
-      <label htmlFor="password" className="sr-only">{t('password')}</label>
-      <input
-        id="password"
-        type="password"
-        required
-        value={form.password}
-        onChange={(e) => setForm({ ...form, password: e.target.value })}
-        className="w-full bg-white text-black border border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 rounded px-3 py-2"
-        placeholder={t('password')}
-        aria-label={t('password')}
-      />
-    </div>
-
-    {userType === 'doctor' && (
-      <MedicalJurisdiction
-        lang={lang}
-        jurisdiction={jurisdiction}
-        licenseNumber={licenseNumber}
-        onJurisdictionChange={setJurisdiction}
-        onLicenseChange={setLicenseNumber}
-      />
-    )}
-
-    {userType === 'dietitian' && (
+    <form onSubmit={handleRegister} className="space-y-4">
       <div>
-        <label htmlFor="diplomaNumber" className="sr-only">{t('diplomaNumber')}</label>
+        <label htmlFor="fullName" className="sr-only">{t('fullName')}</label>
         <input
-          id="diplomaNumber"
+          id="fullName"
           type="text"
           required
-          value={licenseNumber}
-          onChange={(e) => setLicenseNumber(e.target.value)}
-         className="w-full bg-white text-black border border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 rounded px-3 py-2"
-          placeholder={t('diplomaNumber')}
-          aria-label={t('diplomaNumber')}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
+          className="w-full bg-white text-black border border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 rounded px-3 py-2"
+          placeholder={t('fullName')}
+          aria-label={t('fullName')}
         />
       </div>
-    )}
 
-    <button
-      type="submit"
-      className="bg-green-700 text-white px-4 py-2 rounded w-full hover:bg-green-800 transition"
-    >
-      {t('registerTitle')}
-    </button>
-  </form>
+      <div>
+        <label htmlFor="email" className="sr-only">{t('email')}</label>
+        <input
+          id="email"
+          type="email"
+          required
+          onChange={(e) => setForm({ ...form, email: e.target.value })}
+          className="w-full bg-white text-black border border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 rounded px-3 py-2"
+          placeholder={t('email')}
+          aria-label={t('email')}
+        />
+      </div>
 
-  {userType === 'patient' && (
-    <div className="mt-6 text-sm text-gray-600 dark:text-gray-300 text-center">
-      <p className="italic mb-2">{disclaimer}</p>
+      <div>
+        <label htmlFor="phone" className="sr-only">{t('phone')}</label>
+        <input
+          id="phone"
+          type="tel"
+          required
+          onChange={(e) => setForm({ ...form, phone: e.target.value })}
+          className="w-full bg-white text-black border border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 rounded px-3 py-2"
+          placeholder={t('phone')}
+          aria-label={t('phone')}
+        />
+      </div>
+
+      <div>
+        <label htmlFor="password" className="sr-only">{t('password')}</label>
+        <input
+          id="password"
+          type="password"
+          required
+          value={form.password}
+          onChange={(e) => setForm({ ...form, password: e.target.value })}
+          className="w-full bg-white text-black border border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 rounded px-3 py-2"
+          placeholder={t('password')}
+          aria-label={t('password')}
+        />
+      </div>
+
+      {userType === 'doctor' && (
+        <MedicalJurisdiction
+          lang={lang}
+          jurisdiction={jurisdiction}
+          licenseNumber={licenseNumber}
+          onJurisdictionChange={setJurisdiction}
+          onLicenseChange={setLicenseNumber}
+        />
+      )}
+
+      {userType === 'dietitian' && (
+        <div>
+          <label htmlFor="diplomaNumber" className="sr-only">{t('diplomaNumber')}</label>
+          <input
+            id="diplomaNumber"
+            type="text"
+            required
+            value={licenseNumber}
+            onChange={(e) => setLicenseNumber(e.target.value)}
+            className="w-full bg-white text-black border border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 rounded px-3 py-2"
+            placeholder={t('diplomaNumber')}
+            aria-label={t('diplomaNumber')}
+          />
+        </div>
+      )}
 
       <label className="inline-flex items-center">
         <input
@@ -510,31 +511,39 @@ return (
           checked={consentGiven}
           onChange={(e) => setConsentGiven(e.target.checked)}
           className="mr-2"
-          aria-label={`${consentPrefix} ${termsLinkText} i ${privacyLinkText}`}
         />
         {consentPrefix}{' '}
-        <a href="/regulamin" className="text-blue-600 underline" target="_blank" rel="noopener noreferrer">
-          {termsLinkText}
-        </a>{' '}
-        i{' '}
-        <a href="/polityka-prywatnosci" className="text-blue-600 underline" target="_blank" rel="noopener noreferrer">
-          {privacyLinkText}
-        </a>
+        <a href="/regulamin" className="text-blue-600 underline" target="_blank" rel="noopener noreferrer">{termsLinkText}</a>{' '}
+        {t('and')}{' '}
+        <a href="/polityka-prywatnosci" className="text-blue-600 underline" target="_blank" rel="noopener noreferrer">{privacyLinkText}</a>
       </label>
 
-      <div className="mt-4">
-        <button
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          onClick={() => router.push('/patient')}
-          disabled={!consentGiven}
-        >
-          {continueWithoutRegister}
-        </button>
+      <button
+        type="submit"
+        className="bg-green-700 text-white px-4 py-2 rounded w-full hover:bg-green-800 transition disabled:opacity-50"
+        disabled={!consentGiven}
+      >
+        {t('registerTitle')}
+      </button>
+    </form>
+
+    {userType === 'patient' && (
+      <div className="mt-6 text-sm text-gray-600 dark:text-gray-300 text-center">
+        <p className="italic mb-2">{disclaimer}</p>
+        <div className="mt-4">
+          <button
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={() => router.push('/patient')}
+            disabled={!consentGiven}
+          >
+            {continueWithoutRegister}
+          </button>
+        </div>
       </div>
-    </div>
-  )}
-</article>
-    </section>
+    )}
+  </article>
+</section>
+
 
     {/* 🔐 Przycisk ADMIN */}
     <button

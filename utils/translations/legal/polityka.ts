@@ -15,18 +15,19 @@ export const privacyPolicy: Record<string, Record<LangKey, string | string[]>> =
     he: 'מדיניות פרטיות של פלטפורמת דיאט קייר',
   },
   intro: {
-    pl: 'Administratorem Platformy jest ALS sp. z o.o. z siedzibą w 47-330 Zdzieszowice...',
-    en: 'The Platform is operated by ALS sp. z o.o. with its registered office at...',
-    ua: 'Платформою керує ALS sp. z o.o., зареєстрована в...',
-    es: 'La plataforma está operada por ALS sp. z o.o. con sede en...',
-    fr: 'La plateforme est exploitée par ALS sp. z o.o. située à...',
-    de: 'Die Plattform wird von ALS sp. z o.o. mit Sitz in...',
-    ru: 'Платформой управляет ALS sp. z o.o. с офисом в...',
-    zh: '该平台由 ALS sp. z o.o. 运营，注册地为...',
-    hi: 'इस प्लेटफ़ॉर्म का संचालन ALS sp. z o.o. द्वारा किया जाता है, जिसका मुख्यालय...',
-    ar: 'تُدار المنصة من قبل ALS sp. z o.o. ومقرها في...',
-    he: 'הפלטפורמה מופעלת על ידי ALS sp. z o.o. שממוקמת ב...',
-  },
+  pl: 'Administratorem Diet Care Platform jest ALS sp. z o.o. wpisana do Krajowego Rejestru Sądowego RP pod nr 0000087600, numer identyfikacji podatkowej NIP: PL6252121456.',
+  en: 'The Diet Care Platform is operated by ALS sp. z o.o., registered in the National Court Register of Poland under number 0000087600, tax identification number NIP: PL6252121456.',
+  ua: 'Платформою Diet Care керує ALS sp. z o.o., зареєстрована в Державному судовому реєстрі Польщі під номером 0000087600, податковий номер NIP: PL6252121456.',
+  es: 'La plataforma Diet Care es operada por ALS sp. z o.o., registrada en el Registro Nacional de Polonia con el número 0000087600, NIP: PL6252121456.',
+  fr: 'La plateforme Diet Care est exploitée par ALS sp. z o.o., enregistrée au Registre national des entreprises en Pologne sous le numéro 0000087600, numéro fiscal NIP : PL6252121456.',
+  de: 'Die Diet Care Platform wird betrieben von ALS sp. z o.o., eingetragen im polnischen Landesgerichtsregister unter der Nummer 0000087600, Steuer-Nr.: PL6252121456.',
+  ru: 'Платформой Diet Care управляет ALS sp. z o.o., зарегистрированная в Национальном судебном реестре Польши под номером 0000087600, налоговый номер NIP: PL6252121456.',
+  zh: 'Diet Care 平台由 ALS sp. z o.o. 运营，在波兰国家法院注册编号为 0000087600，税号 NIP：PL6252121456。',
+  hi: 'Diet Care Platform का संचालन ALS sp. z o.o. द्वारा किया जाता है, जो पोलैंड के राष्ट्रीय न्यायालय रजिस्टर में संख्या 0000087600 के अंतर्गत पंजीकृत है, NIP: PL6252121456।',
+  ar: 'يتم تشغيل منصة Diet Care من قبل ALS sp. z o.o. المسجلة في السجل القضائي الوطني في بولندا تحت الرقم 0000087600، رقم التعريف الضريبي NIP: PL6252121456.',
+  he: 'את פלטפורמת Diet Care מפעילה ALS sp. z o.o., הרשומה ברשם החברות הפולני תחת מספר 0000087600, מספר עוסק מורשה: PL6252121456.'
+},
+
   section1Title: {
     pl: 'I. Administrator danych',
     en: 'I. Data Controller',
@@ -41,17 +42,27 @@ export const privacyPolicy: Record<string, Record<LangKey, string | string[]>> =
     he: 'I. מנהל הנתונים',
   },
   section1Content: {
-    pl: 'Administratorem danych osobowych jest ALS sp. z o.o. z siedzibą...',
-    en: 'The data controller is ALS sp. z o.o. with its registered office...',
-    ua: 'Адміністратором персональних даних є ALS sp. z o.o...',
-    es: 'El responsable de los datos personales es ALS sp. z o.o...',
-    fr: 'Le responsable des données personnelles est ALS sp. z o.o....',
-    de: 'Der Verantwortliche für personenbezogene Daten ist ALS sp. z o.o....',
-    ru: 'Оператором персональных данных является ALS sp. z o.o....',
-    zh: '个人数据控制者是 ALS sp. z o.o....',
-    hi: 'व्यक्तिगत डेटा नियंत्रक ALS sp. z o.o. है...',
-    ar: 'مسؤول البيانات الشخصية هو ALS sp. z o.o....',
-    he: 'מנהל המידע האישי הוא ALS sp. z o.o....',
+pl: 'Administratorem danych osobowych jest ALS sp. z o.o., wpisana do Krajowego Rejestru Sądowego (KRS) pod numerem 0000123456, posiadająca Numer Identyfikacji Podatkowej (NIP): PL6252121456 oraz numer REGON (Rejestr Gospodarki Narodowej): 276795439. W sprawach związanych z danymi osobowymi prosimy o kontakt: privacy@dcp.care.',
+
+  en: 'The data controller is ALS sp. z o.o., registered in the National Court Register (KRS) under number 0000123456, holding Tax Identification Number (NIP): PL6252121456 and National Business Registry Number (REGON): 276795439. For data-related matters, please contact: privacy@dcp.care.',
+
+  ua: 'Контролером персональних даних є ALS sp. z o.o., зареєстрована в Національному судовому реєстрі (KRS) під номером 0000123456, з ідентифікаційним податковим номером (NIP): PL6252121456 та номером REGON (Національний реєстр підприємств): 276795439. З питань, пов’язаних з персональними даними, звертайтеся на: privacy@dcp.care.',
+
+  es: 'El responsable del tratamiento de datos es ALS sp. z o.o., registrada en el Registro Nacional Judicial (KRS) con el número 0000123456, con Número de Identificación Fiscal (NIP): PL6252121456 y número REGON (Registro Nacional de Empresas): 276795439. Para cuestiones relacionadas con los datos personales, contacte con: privacy@dcp.care.',
+
+  fr: 'Le responsable du traitement des données est ALS sp. z o.o., enregistrée au Registre National Judiciaire (KRS) sous le numéro 0000123456, avec le numéro d’identification fiscale (NIP) : PL6252121456 et le numéro REGON (Registre national des entreprises) : 276795439. Pour toute question relative aux données personnelles, veuillez contacter : privacy@dcp.care.',
+
+  de: 'Verantwortlich für die Verarbeitung personenbezogener Daten ist ALS sp. z o.o., eingetragen im Nationalen Gerichtsregister (KRS) unter der Nummer 0000123456, mit der Steuernummer (NIP): PL6252121456 und der REGON-Nummer (Nationales Unternehmensregister): 276795439. Bei Fragen zum Datenschutz kontaktieren Sie uns bitte unter: privacy@dcp.care.',
+
+  ru: 'Оператором персональных данных является ALS sp. z o.o., внесённая в Национальный судебный реестр (KRS) под номером 0000123456, с налоговым идентификационным номером (NIP): PL6252121456 и номером REGON (Национальный реестр предприятий): 276795439. По вопросам, связанным с персональными данными, пишите на: privacy@dcp.care.',
+
+  zh: '个人数据控制者是 ALS sp. z o.o.，注册于国家法院登记处（KRS），编号为 0000123456，税号（NIP）：PL6252121456，国家商业登记号（REGON）：276795439。如有数据隐私相关问题，请联系：privacy@dcp.care。',
+
+  hi: 'व्यक्तिगत डेटा नियंत्रक ALS sp. z o.o. है, जो राष्ट्रीय न्यायालय रजिस्टर (KRS) में संख्या 0000123456 के अंतर्गत पंजीकृत है, टैक्स पहचान संख्या (NIP): PL6252121456 और राष्ट्रीय व्यवसाय रजिस्ट्रेशन संख्या (REGON): 276795439 के साथ। डेटा से संबंधित मामलों के लिए कृपया संपर्क करें: privacy@dcp.care।',
+
+  ar: 'المتحكم في البيانات هو ALS sp. z o.o.، المسجلة في السجل القضائي الوطني (KRS) تحت الرقم 0000123456، برقم التعريف الضريبي (NIP): PL6252121456 ورقم السجل التجاري الوطني (REGON): 276795439. للاستفسارات المتعلقة بالبيانات، يرجى التواصل عبر: privacy@dcp.care.',
+
+  he: 'מפעיל הנתונים הוא ALS sp. z o.o., הרשומה במרשם המשפטי הלאומי (KRS) תחת מספר 0000123456, עם מספר זיהוי מס (NIP): PL6252121456 ומספר רישום עסקים לאומי (REGON): 276795439. לפניות בנושא פרטיות, אנא צרו קשר: privacy@dcp.care.'
   },
    section2Title: {
   pl: 'II. Cele przetwarzania danych osobowych',
