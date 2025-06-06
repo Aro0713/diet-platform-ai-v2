@@ -197,7 +197,13 @@ const { data, error } = await supabase.auth.signUp({
   password: form.password,
 });
 
-if (error) return alert('Błąd rejestracji: ' + error.message);
+if (error) {
+ console.error('❌ Błąd rejestracji:', {
+  message: error.message,
+  status: error.status,
+});
+  return alert('Błąd rejestracji: ' + error.message);
+}
 
 if (data.user) {
   const insertResult = await supabase.from('users').insert([
