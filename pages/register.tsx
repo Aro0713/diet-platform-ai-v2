@@ -192,29 +192,46 @@ useEffect(() => {
       }
     }
 
-    const { data, error } = await supabase.auth.signUp({
+const { data, error } = await supabase.auth.signUp({
+  email: form.email,
+  password: form.password,
+});
+
+if (error) return alert('Błąd rejestracji: ' + error.message);
+
+if (data.user) {
+  const insertResult = await supabase.from('users').insert([
+    {
+      user_id: data.user.id,
+      name: form.name,
       email: form.email,
-      password: form.password,
-    });
+      phone: form.phone,
+      role: userType,
+      lang: lang,
+      jurisdiction:
+        userType === 'doctor' ? jurisdiction :
+        userType === 'dietitian' ? 'dietitian-default' :
+        userType === 'patient' ? null :
+        null, // fallback
 
-    if (error) return alert('Błąd rejestracji: ' + error.message);
+      license_number:
+        userType === 'doctor' ? licenseNumber :
+        userType === 'dietitian' ? licenseNumber :
+        userType === 'patient' ? null :
+        null, // fallback
+    },
+  ]);
 
-    if (data.user) {
-      await supabase.from('users').insert([
-        {
-          user_id: data.user.id,
-          name: form.name,
-          email: form.email,
-          phone: form.phone,
-          role: userType,
-          jurisdiction: userType === 'doctor' ? jurisdiction : null,
-          license_number: licenseNumber,
-        },
-      ]);
-      alert(t('registrationSuccess'));
-      router.push('/');
-    }
-  };
+  if (insertResult.error) {
+    console.error('❌ Insert error:', insertResult.error);
+    alert('Rejestracja nie została w pełni zakończona. Skontaktuj się z administratorem.');
+    return;
+  }
+
+  alert(t('registrationSuccess'));
+  router.push('/');
+}
+};
 
  // ⏳ Zatrzymanie renderu do momentu gotowości języka i routera
 

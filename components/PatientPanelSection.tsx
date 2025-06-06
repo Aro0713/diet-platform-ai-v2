@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { PatientData } from '@/types';
@@ -9,7 +10,7 @@ interface Props {
   lang: LangKey;
 }
 
-export default function PatientPanelSection({ form, setForm, lang }: Props) {
+const PatientPanelSection = ({ form, setForm, lang }: Props) => {
   const [mode, setMode] = useState<'lookup' | 'create'>('lookup');
   const [emailInput, setEmailInput] = useState('');
   const [status, setStatus] = useState('');
@@ -39,24 +40,58 @@ export default function PatientPanelSection({ form, setForm, lang }: Props) {
 
   const createPatientAccount = async () => {
     setStatus(tUI('sendingInvitation', lang));
-    const { error } = await supabase.auth.admin.createUser({
+
+    const tempPassword = crypto.randomUUID();
+
+    const { data, error } = await supabase.auth.admin.createUser({
       email: form.email,
       phone: form.phone,
-      user_metadata: { name: form.name, role: 'patient' },
+      password: tempPassword,
       email_confirm: true,
     });
 
-    if (error) {
-      console.error('Błąd tworzenia konta:', error);
+    if (error || !data?.user?.id) {
+      console.error('❌ Błąd tworzenia konta pacjenta:', error);
       setStatus(tUI('createAccountError', lang));
-    } else {
-      setStatus(tUI('invitationSent', lang));
+      return;
     }
+
+    const insertResult = await supabase.from('users').insert([
+      {
+        user_id: data.user.id,
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        role: 'patient',
+        lang: lang,
+        jurisdiction: null,
+        license_number: null,
+      },
+    ]);
+
+    if (insertResult.error) {
+      console.error('❌ Błąd zapisu do public.users:', insertResult.error);
+      setStatus(tUI('createAccountError', lang));
+      return;
+    }
+
+    const resetResult = await supabase.auth.resetPasswordForEmail(form.email, {
+      redirectTo: 'https://dcp.care/reset',
+    });
+
+    if (resetResult.error) {
+      console.error('❌ Błąd wysyłania linku resetującego hasło:', resetResult.error);
+      setStatus(tUI('createAccountError', lang));
+      return;
+    }
+
+    console.log('🔐 Tymczasowe hasło pacjenta:', tempPassword);
+    setStatus(tUI('invitationSent', lang));
   };
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold">{`👤 ${tUI('patientData', lang)}`}</h2>
+      <h2 className="text-lg font-semibold">{`\ud83d\udc64 ${tUI('patientData', lang)}`}</h2>
 
       <div className="flex gap-4">
         <label className="flex items-center gap-2">
@@ -167,3 +202,4 @@ export default function PatientPanelSection({ form, setForm, lang }: Props) {
     </div>
   );
 }
+export default PatientPanelSection;

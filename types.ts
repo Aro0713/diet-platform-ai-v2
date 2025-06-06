@@ -43,6 +43,7 @@ export interface PatientData {
   goal: string;
   cuisine: string;
   model: string;
+  password?: string;
 
   // Choroby i badania
   conditions: string[];
