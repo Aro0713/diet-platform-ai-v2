@@ -223,7 +223,11 @@ if (data.user) {
   ]);
 
   if (insertResult.error) {
-    console.error('❌ Insert error:', insertResult.error);
+    console.error('❌ Insert error:', {
+  message: insertResult.error.message,
+  code: insertResult.error.code,
+  details: insertResult.error.details,
+});
     alert('Rejestracja nie została w pełni zakończona. Skontaktuj się z administratorem.');
     return;
   }
