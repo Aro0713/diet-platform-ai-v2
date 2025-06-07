@@ -574,6 +574,19 @@ mustVerifyEmail: {
   ar: 'يجب عليك التحقق من بريدك الإلكتروني قبل تسجيل الدخول.',
   he: 'עליך לאמת את כתובת הדוא״ל שלך לפני ההתחברות.',
 },
+emailConfirmed: {
+  pl: 'Twój adres e-mail został potwierdzony. Możesz się teraz zalogować.',
+  en: 'Your email has been confirmed. You can now log in.',
+  ua: 'Вашу електронну пошту підтверджено. Тепер ви можете увійти.',
+  es: 'Tu correo electrónico ha sido confirmado. Ya puedes iniciar sesión.',
+  fr: 'Votre adresse e-mail a été confirmée. Vous pouvez maintenant vous connecter.',
+  de: 'Ihre E-Mail-Adresse wurde bestätigt. Sie können sich jetzt anmelden.',
+  ru: 'Ваш адрес электронной почты подтвержден. Теперь вы можете войти.',
+  zh: '您的电子邮件已确认。您现在可以登录。',
+  hi: 'आपका ईमेल पता पुष्टि हो गया है। अब आप लॉग इन कर सकते हैं।',
+  ar: 'تم تأكيد بريدك الإلكتروني. يمكنك الآن تسجيل الدخول.',
+  he: 'האימייל שלך אומת. כעת תוכל להתחבר.'
+}
 
 
 };

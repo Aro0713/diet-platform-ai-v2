@@ -9,7 +9,14 @@ import { type LangKey, languageLabels } from '@/utils/i18n';
 const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_KEY || '';
 
 export default function RegisterPage() {
-  const router = useRouter();
+const router = useRouter();
+const [confirmation, setConfirmation] = useState(false);
+
+useEffect(() => {
+  if (router.query.confirmed === 'true') {
+    setConfirmation(true);
+  }
+}, [router.query]);
 
   const [selectedRoleLabel, setSelectedRoleLabel] = useState('');
   const [showAdminPopup, setShowAdminPopup] = useState(false);
@@ -68,6 +75,12 @@ export default function RegisterPage() {
     setLangReady(true);
   }, []);
 
+    useEffect(() => {
+    if (router.query.confirmed === 'true') {
+      setConfirmation(true);
+    }
+  }, [router.query]);
+
   // ✅ FUNKCJA TŁUMACZEŃ Z WALIDACJĄ
   const t = (key: keyof typeof translationsRegister): string => {
     const entry = translationsRegister[key] as Record<LangKey, string>;
@@ -124,11 +137,17 @@ export default function RegisterPage() {
     if (error) return alert('Błąd logowania: ' + error.message);
     if (!data.user?.email_confirmed_at) return alert(t('mustVerifyEmail'));
 
-    const { data: userData } = await supabase
-      .from('users')
-      .select('role')
-      .eq('user_id', data.user.id)
-      .single();
+      const { data: userData, error: userError } = await supabase
+    .from('users')
+    .select('role, user_id, email')
+    .eq('user_id', data.user.id)
+    .single();
+
+    if (userError || !userData) {
+      console.error('❌ Nie można pobrać roli użytkownika:', userError);
+      alert('Nie można pobrać roli użytkownika. Skontaktuj się z administratorem.');
+      return;
+    }
 
     if (!userData) return alert('Nie można pobrać roli użytkownika.');
     localStorage.setItem('currentUserID', data.user.id);
@@ -189,9 +208,13 @@ export default function RegisterPage() {
     }
 
     const { data, error } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password,
-    });
+  email: form.email,
+  password: form.password,
+  options: {
+    emailRedirectTo: 'https://diet-platform-ai-v2.vercel.app/register?confirmed=true'
+  }
+});
+
 
     if (error) {
       console.error('❌ Błąd rejestracji:', {
@@ -330,9 +353,14 @@ return (
   </nav>
 
            {/* 🔐 Login i Rejestracja */}
-<section className="z-10 grid grid-cols-1 md:grid-cols-2 gap-8 mt-12 max-w-6xl mx-auto bg-white/30 dark:bg-gray-900/30 backdrop-blur-md p-10 rounded-2xl shadow-xl transition-colors dark:text-white">
+    <section className="z-10 grid grid-cols-1 md:grid-cols-2 gap-8 mt-12 max-w-6xl mx-auto bg-white/30 dark:bg-gray-900/30 backdrop-blur-md p-10 rounded-2xl shadow-xl transition-colors dark:text-white">
 
-  <h1 id="auth-section" className="sr-only">Logowanie i rejestracja</h1>
+      <h1 id="auth-section" className="sr-only">Logowanie i rejestracja</h1>
+    {confirmation && (
+      <div className="bg-green-100 text-green-800 px-4 py-2 rounded mb-4 shadow">
+        ✅ {t('emailConfirmed')}
+      </div>
+    )}
 
   {/* ✅ Login */}
   <article className="z-10 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 transition-colors dark:text-white" aria-labelledby="login-form">
