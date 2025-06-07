@@ -15,27 +15,26 @@ export default function RegisterPage() {
   const [showAdminPopup, setShowAdminPopup] = useState(false);
   const [adminPassword, setAdminPassword] = useState('');
 
- const [lang, setLang] = useState<LangKey>('pl');
-const [langReady, setLangReady] = useState(false);
+  const [lang, setLang] = useState<LangKey>('pl');
+  const [langReady, setLangReady] = useState(false);
 
-// 🌗 tryb ciemny (pamiętany w localStorage)
-const [darkMode, setDarkMode] = useState(() => {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('theme') === 'dark';
-  }
-  return false;
-});
+  // 🌗 tryb ciemny (pamiętany w localStorage)
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('theme') === 'dark';
+    }
+    return false;
+  });
 
-useEffect(() => {
-  if (darkMode) {
-    document.documentElement.classList.add('dark');
-    localStorage.setItem('theme', 'dark');
-  } else {
-    document.documentElement.classList.remove('dark');
-    localStorage.setItem('theme', 'light');
-  }
-}, [darkMode]);
-
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [darkMode]);
 
   const [userType, setUserType] = useState<'doctor' | 'dietitian' | 'patient' | null>(null);
   const [login, setLogin] = useState({ email: '', password: '' });
@@ -45,6 +44,7 @@ useEffect(() => {
   const [licenseNumber, setLicenseNumber] = useState('');
   const [recoveryID, setRecoveryID] = useState('');
   const [consentGiven, setConsentGiven] = useState(false);
+
   // 🔐 ADMIN ENTRY
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -69,28 +69,24 @@ useEffect(() => {
   }, []);
 
   // ✅ FUNKCJA TŁUMACZEŃ Z WALIDACJĄ
- const t = (key: keyof typeof translationsRegister): string => {
-  const entry = translationsRegister[key] as Record<LangKey, string>;
+  const t = (key: keyof typeof translationsRegister): string => {
+    const entry = translationsRegister[key] as Record<LangKey, string>;
+    if (!entry) {
+      console.warn(`❌ Brak klucza: "${key}"`);
+      return `[${key}]`;
+    }
+    const value = entry[lang];
+    if (!value) {
+      console.warn(`❌ Brak tłumaczenia dla języka "${lang}" w kluczu "${key}"`);
+    }
+    return value || entry.pl || `[${key}]`;
+  };
 
-  if (!entry) {
-    console.warn(`❌ Brak klucza: "${key}"`);
-    return `[${key}]`;
-  }
-
-  const value = entry[lang];
-  if (!value) {
-    console.warn(`❌ Brak tłumaczenia dla języka "${lang}" w kluczu "${key}"`);
-  }
-
-  return value || entry.pl || `[${key}]`;
-};
-
-
-    const tUI = (key: keyof typeof translationsUI): string => {
-      const entry = translationsUI[key];
-      if (!entry) return `[${key}]`;
-      return entry[lang] || entry.pl || `[${key}]`;
-};
+  const tUI = (key: keyof typeof translationsUI): string => {
+    const entry = translationsUI[key];
+    if (!entry) return `[${key}]`;
+    return entry[lang] || entry.pl || `[${key}]`;
+  };
 
   // 🌐 TRYB: doctor | dietitian | patient
   useEffect(() => {
@@ -111,11 +107,11 @@ useEffect(() => {
     console.log('🧪 t("continueWithoutRegister"):', t('continueWithoutRegister'));
   }, [lang]);
 
-  if (!langReady) {
+  if (!langReady || !router.isReady) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <span className="text-gray-500 text-sm">⏳ Ładowanie języka...</span>
-      </div>
+      <main className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-500 text-sm">⏳ Ładowanie języka...</p>
+      </main>
     );
   }
 
@@ -192,56 +188,55 @@ useEffect(() => {
       }
     }
 
-const { data, error } = await supabase.auth.signUp({
-  email: form.email,
-  password: form.password,
-});
-
-if (error) {
- console.error('❌ Błąd rejestracji:', {
-  message: error.message,
-  status: error.status,
-});
-  return alert('Błąd rejestracji: ' + error.message);
-}
-
-if (data.user) {
-  const insertResult = await supabase.from('users').insert([
-    {
-      user_id: data.user.id,
-      name: form.name,
+    const { data, error } = await supabase.auth.signUp({
       email: form.email,
-      phone: form.phone,
-      role: userType,
-      lang: lang,
-      jurisdiction:
-        userType === 'doctor' ? jurisdiction :
-        userType === 'dietitian' ? 'dietitian-default' :
-        userType === 'patient' ? null :
-        null, // fallback
+      password: form.password,
+    });
 
-      license_number:
-        userType === 'doctor' ? licenseNumber :
-        userType === 'dietitian' ? licenseNumber :
-        userType === 'patient' ? null :
-        null, // fallback
-    },
-  ]);
+    if (error) {
+      console.error('❌ Błąd rejestracji:', {
+        message: error.message,
+        status: error.status,
+      });
+      return alert('Błąd rejestracji: ' + error.message);
+    }
 
-  if (insertResult.error) {
-    console.error('❌ Insert error:', {
-  message: insertResult.error.message,
-  code: insertResult.error.code,
-  details: insertResult.error.details,
-});
-    alert('Rejestracja nie została w pełni zakończona. Skontaktuj się z administratorem.');
-    return;
-  }
+    if (data.user) {
+      const insertResult = await supabase.from('users').insert([
+        {
+          user_id: data.user.id,
+          name: form.name,
+          email: form.email,
+          phone: form.phone,
+          role: userType,
+          lang: lang,
+          jurisdiction:
+            userType === 'doctor' ? jurisdiction :
+            userType === 'dietitian' ? 'dietitian-default' :
+            userType === 'patient' ? null :
+            null,
+          license_number:
+            userType === 'doctor' ? licenseNumber :
+            userType === 'dietitian' ? licenseNumber :
+            userType === 'patient' ? null :
+            null,
+        },
+      ]);
 
-  alert(t('registrationSuccess'));
-  router.push('/');
-}
-};
+      if (insertResult.error) {
+        console.error('❌ Insert error:', {
+          message: insertResult.error.message,
+          code: insertResult.error.code,
+          details: insertResult.error.details,
+        });
+        alert('Rejestracja nie została w pełni zakończona. Skontaktuj się z administratorem.');
+        return;
+      }
+
+      alert(t('registrationSuccess'));
+      router.push('/');
+    }
+  };
 
  // ⏳ Zatrzymanie renderu do momentu gotowości języka i routera
 
