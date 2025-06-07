@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import { supabase } from '../lib/supabaseClient';
 import { generateDietPdf } from '../utils/generateDietPdf';
 import ProductScanner from '../components/ProductScanner';
 
@@ -9,30 +10,89 @@ export default function PatientPanel() {
   const [daysLeft, setDaysLeft] = useState<number | null>(null);
   const [selectedRegion, setSelectedRegion] = useState('');
   const [selectedCuisine, setSelectedCuisine] = useState('');
+  const [phone, setPhone] = useState('');
+  const [lang, setLang] = useState('');
 
   useEffect(() => {
-    const id = localStorage.getItem('currentUserID');
-    if (!id) {
-      alert('Nie jesteś zalogowany.');
-      router.push('/register');
-      return;
-    }
+    const fetchPatientData = async () => {
+      const userId = localStorage.getItem('currentUserID');
+      if (!userId) {
+        alert('Nie jesteś zalogowany.');
+        router.push('/register');
+        return;
+      }
 
-    const data = localStorage.getItem(id);
-    if (!data) {
-      alert('Nie znaleziono danych pacjenta.');
-      router.push('/register');
-      return;
-    }
+      const { data, error } = await supabase
+        .from('patients')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
 
-    const parsed = JSON.parse(data);
-    setPatient(parsed);
+      if (error || !data) {
+        console.error('Błąd pobierania danych pacjenta:', error);
+        alert('Nie znaleziono danych pacjenta.');
+        router.push('/register');
+        return;
+      }
 
-    const now = new Date();
-    const expiry = new Date(parsed.expiresAt);
-    const diff = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    setDaysLeft(diff);
+      setPatient(data);
+      setPhone(data.phone || '');
+      setLang(data.lang || '');
+
+      if (data.expiresAt) {
+        const now = new Date();
+        const expiry = new Date(data.expiresAt);
+        const diff = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        setDaysLeft(diff);
+      }
+    };
+
+    fetchPatientData();
   }, [router]);
+
+  const updatePatient = async () => {
+    const userId = localStorage.getItem('currentUserID');
+    const { error } = await supabase
+      .from('patients')
+      .update({ phone, lang })
+      .eq('user_id', userId);
+
+    if (error) {
+      alert('Błąd aktualizacji danych: ' + error.message);
+    } else {
+      alert('Dane zostały zapisane.');
+    }
+  };
+
+  const updateDiet = async () => {
+    const userId = localStorage.getItem('currentUserID');
+    const newDiet = {
+      date: new Date().toISOString().split('T')[0],
+      diet: [
+        {
+          name: `Nowa dieta: ${selectedRegion} / ${selectedCuisine}`,
+          calories: 1800,
+          glycemicIndex: 45,
+          ingredients: [
+            { product: 'Produkt A', weight: 100 },
+            { product: 'Produkt B', weight: 150 }
+          ]
+        }
+      ]
+    };
+
+    const { error } = await supabase
+      .from('patients')
+      .update(newDiet)
+      .eq('user_id', userId);
+
+    if (error) {
+      alert('Błąd zapisu diety: ' + error.message);
+    } else {
+      alert('Dieta została zaktualizowana.');
+      setPatient({ ...patient, ...newDiet });
+    }
+  };
 
   if (!patient) return null;
 
@@ -43,17 +103,32 @@ export default function PatientPanel() {
       {daysLeft !== null && (
         <div className={`p-3 mb-4 rounded ${daysLeft > 0 ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'}`}>
           {daysLeft > 0
-            ? `📅 Masz jeszcze ${daysLeft} dni dostępu (${patient?.premium ? 'Plan premium' : 'Plan podstawowy'})`
-            : '⛔ Twój dostęp wygasł. Skontaktuj się z administratorem lub opłać dostęp.'}
+            ? `📅 Masz jeszcze ${daysLeft} dni dostępu`
+            : '⛔ Twój dostęp wygasł.'}
         </div>
       )}
 
-      {!patient.diet ? (
-        <p>Brak zapisanej diety. Skontaktuj się z lekarzem lub dietetykiem.</p>
-      ) : (
+      <div className='bg-white p-4 rounded shadow mb-6'>
+        <h3 className='text-lg font-semibold mb-2'>📇 Twoje dane</h3>
+        <label className='block text-sm mb-1'>Telefon</label>
+        <input
+          className='w-full border px-3 py-1 mb-2'
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+        />
+        <label className='block text-sm mb-1'>Język</label>
+        <input
+          className='w-full border px-3 py-1 mb-2'
+          value={lang}
+          onChange={(e) => setLang(e.target.value)}
+        />
+        <button className='bg-blue-600 text-white px-4 py-2 rounded' onClick={updatePatient}>💾 Zapisz dane</button>
+      </div>
+
+      {patient.diet ? (
         <>
           <p className='mb-2 text-sm text-gray-600'>
-            Dieta z dnia: {patient.date || '—'} | BMI: {patient.bmi || '—'} | Zatwierdzona przez: {patient.approvedBy || '—'}
+            Dieta z dnia: {patient.date || '—'}
           </p>
 
           {patient.diet.map((meal: any, idx: number) => (
@@ -72,59 +147,55 @@ export default function PatientPanel() {
 
           <button
             className='bg-green-600 text-white px-4 py-2 rounded'
-            onClick={() => generateDietPdf(patient.patient, patient.bmi, patient.diet)}
+            onClick={() => generateDietPdf(patient, patient.bmi ?? null, patient.diet)}
           >
             📄 Pobierz dietę jako PDF
           </button>
-
-          <div className='mt-6 bg-white p-4 rounded shadow'>
-            <h3 className='text-lg font-semibold mb-2'>🔄 Zmień dietę</h3>
-
-            <div className='mb-2'>
-              <label className='block text-sm font-semibold'>Wybierz region</label>
-              <select
-                className='w-full border px-2 py-1'
-                value={selectedRegion}
-                onChange={(e) => setSelectedRegion(e.target.value)}
-              >
-                <option value=''>-- wybierz region --</option>
-                <option value='Polska'>Polska</option>
-                <option value='Azja'>Azja</option>
-                <option value='Afryka'>Afryka</option>
-                <option value='Ameryka'>Ameryka</option>
-                <option value='Europa'>Europa</option>
-              </select>
-            </div>
-
-            <div className='mb-2'>
-              <label className='block text-sm font-semibold'>Wybierz kuchnię</label>
-              <select
-                className='w-full border px-2 py-1'
-                value={selectedCuisine}
-                onChange={(e) => setSelectedCuisine(e.target.value)}
-              >
-                <option value=''>-- wybierz kuchnię --</option>
-                <option value='Japońska'>Japońska</option>
-                <option value='Śródziemnomorska'>Śródziemnomorska</option>
-                <option value='Meksykańska'>Meksykańska</option>
-                <option value='Francuska'>Francuska</option>
-                <option value='Włoska'>Włoska</option>
-              </select>
-            </div>
-
-            <button
-              className='bg-blue-600 text-white px-4 py-2 rounded mt-2'
-              onClick={() => alert(`🧠 AI wygeneruje nową dietę dla regionu ${selectedRegion} i kuchni ${selectedCuisine}`)}
-            >
-              🔁 Zmień dietę
-            </button>
-          </div>
-
-          {patient.premium && (
-            <ProductScanner patient={patient} />
-          )}
         </>
+      ) : (
+        <p>Brak przypisanej diety.</p>
       )}
+
+      <div className='mt-6 bg-white p-4 rounded shadow'>
+        <h3 className='text-lg font-semibold mb-2'>🔄 Zmień dietę</h3>
+
+        <label className='block text-sm font-semibold mb-1'>Region</label>
+        <select
+          className='w-full border px-2 py-1 mb-2'
+          value={selectedRegion}
+          onChange={(e) => setSelectedRegion(e.target.value)}
+        >
+          <option value=''>-- wybierz region --</option>
+          <option value='Polska'>Polska</option>
+          <option value='Azja'>Azja</option>
+          <option value='Afryka'>Afryka</option>
+          <option value='Ameryka'>Ameryka</option>
+          <option value='Europa'>Europa</option>
+        </select>
+
+        <label className='block text-sm font-semibold mb-1'>Kuchnia</label>
+        <select
+          className='w-full border px-2 py-1 mb-2'
+          value={selectedCuisine}
+          onChange={(e) => setSelectedCuisine(e.target.value)}
+        >
+          <option value=''>-- wybierz kuchnię --</option>
+          <option value='Japońska'>Japońska</option>
+          <option value='Środziemnomorska'>Środziemnomorska</option>
+          <option value='Meksykańska'>Meksykańska</option>
+          <option value='Francuska'>Francuska</option>
+          <option value='Włoska'>Włoska</option>
+        </select>
+
+        <button
+          className='bg-blue-600 text-white px-4 py-2 rounded'
+          onClick={updateDiet}
+        >
+          🧠 Wygeneruj nową dietę
+        </button>
+      </div>
+
+      {patient.premium && <ProductScanner patient={patient} />}
     </div>
   );
 }
