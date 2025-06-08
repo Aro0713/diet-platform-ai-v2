@@ -128,37 +128,57 @@ useEffect(() => {
     );
   }
 
-  const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: login.email,
-      password: login.password,
-    });
-    if (error) return alert('Błąd logowania: ' + error.message);
-    if (!data.user?.email_confirmed_at) return alert(t('mustVerifyEmail'));
+const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
+  event.preventDefault();
 
-      const { data: userData, error: userError } = await supabase
+  if (!loginConsent) {
+    alert('Aby się zalogować, musisz zaakceptować regulamin i politykę prywatności.');
+    return;
+  }
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: login.email,
+    password: login.password,
+  });
+
+  if (error) {
+    console.error('❌ Błąd logowania:', error.message);
+    alert('Błąd logowania: ' + error.message);
+    return;
+  }
+
+  if (!data.user?.email_confirmed_at) {
+    alert(t('mustVerifyEmail'));
+    return;
+  }
+
+  const { data: userData, error: userError } = await supabase
     .from('users')
     .select('role, user_id, email')
     .eq('user_id', data.user.id)
     .single();
 
-    if (userError || !userData) {
-      console.error('❌ Nie można pobrać roli użytkownika:', userError);
-      alert('Nie można pobrać roli użytkownika. Skontaktuj się z administratorem.');
-      return;
-    }
+  if (userError || !userData) {
+    console.error('❌ Brak danych w tabeli users dla:', data.user.id);
+    alert('Nie można pobrać roli użytkownika. Skontaktuj się z administratorem.');
+    return;
+  }
 
-    if (!userData) return alert('Nie można pobrać roli użytkownika.');
-    localStorage.setItem('currentUserID', data.user.id);
-    router.push(
-      userData.role === 'lekarz'
-        ? '/panel'
-        : userData.role === 'dietetyk'
-        ? '/panel-dietetyk'
-        : '/patient'
-    );
-  };
+  localStorage.setItem('currentUserID', data.user.id);
+
+  switch (userData.role) {
+    case 'doctor':
+    case 'dietitian':
+      router.push('/panel');
+      break;
+    case 'patient':
+      router.push('/patient');
+      break;
+    default:
+      console.error('⚠️ Nieznana rola użytkownika:', userData.role);
+      alert('Nieznana rola. Skontaktuj się z administratorem.');
+  }
+};
 
   const handleResetPassword = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -170,96 +190,111 @@ useEffect(() => {
     alert('Wysłano link do resetu hasła. Sprawdź skrzynkę e-mail.');
   };
 
-  const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
+  event.preventDefault();
 
-    if (userType === 'doctor' && !jurisdiction)
-      return alert('Wybierz jurysdykcję zawodową.');
-
-    if ((userType === 'doctor' || userType === 'dietitian') && !licenseNumber)
-      return alert('Wprowadź numer licencji lub dyplomu.');
-
-    if (jurisdiction === 'other') {
-      try {
-        const response = await fetch('https://formsubmit.co/ajax/a4p.email@gmail.com', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-          },
-          body: JSON.stringify({
-            typ: userType,
-            imie: form.name,
-            email: form.email,
-            phone: form.phone,
-            licencja: licenseNumber,
-            timestamp: new Date().toISOString(),
-          }),
-        });
-
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.message || 'Błąd połączenia z serwisem.');
-        alert('Twoja jurysdykcja wymaga ręcznej weryfikacji. Wysłano zgłoszenie.');
-        return;
-      } catch (err) {
-        alert('Nie udało się wysłać zgłoszenia: ' + (err as Error).message);
-        return;
-      }
-    }
-
-    const { data, error } = await supabase.auth.signUp({
-  email: form.email,
-  password: form.password,
-  options: {
-    emailRedirectTo: 'https://diet-platform-ai-v2.vercel.app/register?confirmed=true'
+  if (!consentGiven) {
+    alert('Aby się zarejestrować, musisz zaakceptować regulamin i politykę prywatności.');
+    return;
   }
-});
 
+  if (userType === 'doctor' && !jurisdiction)
+    return alert('Wybierz jurysdykcję zawodową.');
 
-    if (error) {
-      console.error('❌ Błąd rejestracji:', {
-        message: error.message,
-        status: error.status,
-      });
-      return alert('Błąd rejestracji: ' + error.message);
-    }
+  if ((userType === 'doctor' || userType === 'dietitian') && !licenseNumber)
+    return alert('Wprowadź numer licencji lub dyplomu.');
 
-    if (data.user) {
-      const insertResult = await supabase.from('users').insert([
-        {
-          user_id: data.user.id,
-          name: form.name,
+  // Jeśli jurysdykcja „inna” — wyślij zgłoszenie na mail
+  if (jurisdiction === 'other') {
+    try {
+      const response = await fetch('https://formsubmit.co/ajax/contact@dcp.care', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          typ: userType,
+          imie: form.name,
           email: form.email,
           phone: form.phone,
-          role: userType,
-          lang: lang,
-          jurisdiction:
-            userType === 'doctor' ? jurisdiction :
-            userType === 'dietitian' ? 'dietitian-default' :
-            userType === 'patient' ? null :
-            null,
-          license_number:
-            userType === 'doctor' ? licenseNumber :
-            userType === 'dietitian' ? licenseNumber :
-            userType === 'patient' ? null :
-            null,
-        },
-      ]);
+          licencja: licenseNumber,
+          timestamp: new Date().toISOString(),
+        }),
+      });
 
-      if (insertResult.error) {
-        console.error('❌ Insert error:', {
-          message: insertResult.error.message,
-          code: insertResult.error.code,
-          details: insertResult.error.details,
-        });
-        alert('Rejestracja nie została w pełni zakończona. Skontaktuj się z administratorem.');
-        return;
-      }
-
-      alert(t('registrationSuccess'));
-      router.push('/');
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || 'Błąd zgłoszenia.');
+      alert('Twoja jurysdykcja wymaga ręcznej weryfikacji. Wysłano zgłoszenie.');
+      return;
+    } catch (err) {
+      alert('Nie udało się wysłać zgłoszenia: ' + (err as Error).message);
+      return;
     }
-  };
+  }
+
+  // Rejestracja użytkownika
+  const { data, error } = await supabase.auth.signUp({
+    email: form.email,
+    password: form.password,
+    options: {
+      emailRedirectTo: 'https://diet-platform-ai-v2.vercel.app/register?confirmed=true',
+    },
+  });
+
+  if (error) {
+    console.error('❌ Błąd rejestracji:', error.message);
+    return alert('Błąd rejestracji: ' + error.message);
+  }
+
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !authData.user) {
+    console.error('❌ Nie udało się pobrać użytkownika po rejestracji:', authError);
+    alert('Rejestracja nie została zakończona. Spróbuj ponownie.');
+    return;
+  }
+
+  // Zabezpieczenie: czy wpis już istnieje?
+  const { data: existingUser } = await supabase
+    .from('users')
+    .select('id')
+    .eq('user_id', authData.user.id)
+    .maybeSingle();
+
+  if (existingUser) {
+    console.warn('ℹ️ Użytkownik już istnieje w tabeli users.');
+    router.push('/');
+    return;
+  }
+
+  // INSERT do tabeli users
+  const insertResult = await supabase.from('users').insert([
+    {
+      user_id: authData.user.id,
+      name: form.name,
+      email: form.email,
+      phone: form.phone,
+      role: userType,
+      lang: lang,
+      jurisdiction:
+        userType === 'doctor' ? jurisdiction :
+        userType === 'dietitian' ? 'dietitian-default' :
+        null,
+      license_number:
+        userType === 'doctor' || userType === 'dietitian' ? licenseNumber : null,
+    },
+  ]);
+
+  if (insertResult.error) {
+    console.error('❌ Insert error:', insertResult.error);
+    alert('Rejestracja nie została w pełni zakończona. Skontaktuj się z administratorem.');
+    return;
+  }
+
+  alert(t('registrationSuccess'));
+  router.push('/');
+};
 
  // ⏳ Zatrzymanie renderu do momentu gotowości języka i routera
 
@@ -356,11 +391,11 @@ return (
     <section className="z-10 grid grid-cols-1 md:grid-cols-2 gap-8 mt-12 max-w-6xl mx-auto bg-white/30 dark:bg-gray-900/30 backdrop-blur-md p-10 rounded-2xl shadow-xl transition-colors dark:text-white">
 
       <h1 id="auth-section" className="sr-only">Logowanie i rejestracja</h1>
-    {confirmation && (
-      <div className="bg-green-100 text-green-800 px-4 py-2 rounded mb-4 shadow">
+        {confirmation && (
+      <div className="fixed top-0 left-0 w-full z-50 bg-green-600 text-white text-center py-2 shadow-md animate-fadeOut">
         ✅ {t('emailConfirmed')}
       </div>
-    )}
+      )}
 
   {/* ✅ Login */}
   <article className="z-10 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 transition-colors dark:text-white" aria-labelledby="login-form">

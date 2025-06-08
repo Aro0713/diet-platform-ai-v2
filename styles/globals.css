@@ -17,6 +17,15 @@ body {
 input, select, textarea, button {
   @apply transition-colors duration-200;
 }
+@keyframes fadeOut {
+  0%   { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.animate-fadeOut {
+  animation: fadeOut 15s ease-in-out forwards;
+}
 
 /* ✍️ Animacje pisania do tabeli */
 @keyframes blink {
