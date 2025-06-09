@@ -282,53 +282,55 @@ const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
     return alert('Błąd rejestracji: ' + error.message);
   }
 
-  const { data: authData, error: authError } = await supabase.auth.getUser();
+const sessionRes = await supabase.auth.getSession();
+const session = sessionRes.data?.session;
 
-  if (authError || !authData.user) {
-    console.error('❌ Nie udało się pobrać użytkownika po rejestracji:', authError);
-    alert('Rejestracja nie została zakończona. Spróbuj ponownie.');
-    return;
-  }
+if (!session || !session.user) {
+  console.error('❌ Brak aktywnej sesji po potwierdzeniu e-maila.');
+  alert('Musisz się zalogować ręcznie.');
+  return;
+}
 
-  // Zabezpieczenie: czy wpis już istnieje?
-  const { data: existingUser } = await supabase
-    .from('users')
-    .select('id')
-    .eq('user_id', authData.user.id)
-    .maybeSingle();
+const user = session.user;
 
-  if (existingUser) {
-    console.warn('ℹ️ Użytkownik już istnieje w tabeli users.');
-    router.push('/');
-    return;
-  }
+// Zabezpieczenie: czy wpis już istnieje?
+const { data: existingUser } = await supabase
+  .from('users')
+  .select('id')
+  .eq('user_id', user.id)
+  .maybeSingle();
 
-  // INSERT do tabeli users
-  const insertResult = await supabase.from('users').insert([
-    {
-      user_id: authData.user.id,
-      name: form.name,
-      email: form.email,
-      phone: form.phone,
-      role: userType,
-      lang: lang,
-      jurisdiction:
-        userType === 'doctor' ? jurisdiction :
-        userType === 'dietitian' ? 'dietitian-default' :
-        null,
-      license_number:
-        userType === 'doctor' || userType === 'dietitian' ? licenseNumber : null,
-    },
-  ]);
-
-  if (insertResult.error) {
-    console.error('❌ Insert error:', insertResult.error);
-    alert('Rejestracja nie została w pełni zakończona. Skontaktuj się z administratorem.');
-    return;
-  }
-
-  alert(t('registrationSuccess'));
+if (existingUser) {
+  console.warn('ℹ️ Użytkownik już istnieje w tabeli users.');
   router.push('/');
+  return;
+}
+
+// INSERT do tabeli users
+const insertResult = await supabase.from('users').insert([{
+  user_id: user.id,
+  name: form.name,
+  email: form.email,
+  phone: form.phone,
+  role: userType,
+  lang: lang,
+  jurisdiction:
+    userType === 'doctor' ? jurisdiction :
+    userType === 'dietitian' ? 'dietitian-default' :
+    null,
+  license_number:
+    userType === 'doctor' || userType === 'dietitian' ? licenseNumber : null,
+}]);
+
+if (insertResult.error) {
+  console.error('❌ Insert error:', insertResult.error);
+  alert('Rejestracja nie została w pełni zakończona. Skontaktuj się z administratorem.');
+  return;
+}
+
+alert(t('registrationSuccess'));
+router.push('/');
+
 };
 
  // ⏳ Zatrzymanie renderu do momentu gotowości języka i routera
