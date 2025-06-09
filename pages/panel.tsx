@@ -399,16 +399,16 @@ const handleSubmit = async (e: React.FormEvent) => {
         );
         converted[mapDaysToPolish[day] || day] = meals;
       }
-    } else if (parsed.weekPlan && Array.isArray(parsed.weekPlan)) {
-      for (const { day, meals } of parsed.weekPlan) {
-        converted[mapDaysToPolish[day] || day] = meals.map((meal: any) => ({
-          name: meal.name || '',
-          description: meal.menu || '',
-          ingredients: [],
-          calories: meal.kcal || 0,
-          glycemicIndex: meal.glycemicIndex || 0,
-          time: meal.time || ''
-        }));
+      } else if (parsed.weekPlan && typeof parsed.weekPlan === 'object') {
+        for (const [day, meals] of Object.entries(parsed.weekPlan)) {
+          converted[mapDaysToPolish[day] || day] = (meals as any[]).map((meal: any) => ({
+            name: meal.name || '',
+            description: meal.description || '',
+            ingredients: Array.isArray(meal.ingredients) ? meal.ingredients : [],
+            calories: meal.calories || 0,
+            glycemicIndex: meal.glycemicIndex || 0,
+            time: meal.time || ''
+          }));
       }
     } else {
       throw new Error('Brak poprawnego planu posiłków w odpowiedzi AI (mealPlan, week_plan, dietPlan lub weekPlan)');
@@ -633,10 +633,6 @@ return (
           </div>
         )}
       </PanelCard>
-
-      <pre className="text-xs bg-gray-100 p-2 rounded overflow-x-auto">
-        {JSON.stringify(Object.keys(editableDiet), null, 2)}
-      </pre>
 
       {/* Sekcja 7: Tabela z dietą */}
       {editableDiet && Object.keys(editableDiet).length > 0 && (

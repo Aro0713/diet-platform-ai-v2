@@ -190,19 +190,23 @@ const DietTable: React.FC<DietTableProps> = ({
                             </div>
                           )}
                           <ul className="text-sm list-inside space-y-1">
-                            {(meal.ingredients || []).map((i, idx) => {
-                              const icon = getFoodIcon(i.product);
-                              return (
-                                <li key={idx} className="flex items-center gap-2">
-                                  {icon && <span className="text-lg">{icon}</span>}
-                                  <span>{i.product} ({i.weight}g)</span>
-                                </li>
-                              );
-                            })}
+                            {(meal.ingredients || []).length > 0 ? (
+                              meal.ingredients.map((i, idx) => {
+                                const icon = getFoodIcon(i.product);
+                                return (
+                                  <li key={idx} className="flex items-center gap-2">
+                                    {icon && <span className="text-lg">{icon}</span>}
+                                    <span>{i.product} ({i.weight}g)</span>
+                                  </li>
+                                );
+                              })
+                            ) : (
+                              <li className="text-gray-500 italic">Brak składników</li>
+                            )}
                           </ul>
                           <div className="text-xs mt-1 text-gray-400">
-                            Kalorie: {meal.calories} | IG: {meal.glycemicIndex}
-                          </div>
+                          Kalorie: {meal.calories > 0 ? meal.calories : '–'} | IG: {meal.glycemicIndex > 0 ? meal.glycemicIndex : '–'}
+                        </div>
                         </>
                       )}
                     </div>

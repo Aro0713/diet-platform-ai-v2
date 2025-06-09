@@ -191,7 +191,22 @@ const steps: Step[] = useMemo(() => {
 
   const next = () => setCurrentStep((prev) => prev + 1);
   const back = () => setCurrentStep((prev) => prev - 1);
-  const handleFinish = () => onFinish(answers);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const handleFinish = async () => {
+    setSaving(true);
+    try {
+      await onFinish(answers);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (e) {
+      console.error('❌ Błąd zapisu wywiadu:', e);
+      alert('Błąd zapisu wywiadu. Spróbuj ponownie.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
   <PanelCard className="z-10 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 dark:text-white transition-colors min-h-[550px]">
@@ -341,11 +356,13 @@ const steps: Step[] = useMemo(() => {
 
       {isLastStep ? (
         <button
-          className="ml-auto bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded"
-          onClick={handleFinish}
-        >
-          ✅ {tUI('saveInterview', lang)}
-        </button>
+      onClick={handleFinish}
+      disabled={saving}
+      className="ml-auto bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded disabled:opacity-50"
+    >
+      {saving ? 'Zapisywanie...' : saved ? 'Zapisano ✓' : `✅ ${tUI('saveInterview', lang)}`}
+    </button>
+
       ) : (
         <button
           className="ml-auto bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded"
