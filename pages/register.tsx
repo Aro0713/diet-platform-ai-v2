@@ -11,19 +11,46 @@ const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_KEY || '';
 export default function RegisterPage() {
 const router = useRouter();
 const [confirmation, setConfirmation] = useState(false);
+const [langReady, setLangReady] = useState(false);
 
 useEffect(() => {
-  if (router.query.confirmed === 'true') {
+  const runInsert = async () => {
+    if (!router.isReady || !langReady || router.query.confirmed !== 'true') return;
+
     setConfirmation(true);
-  }
-}, [router.query]);
+
+    const { data: authUser, error: authError } = await supabase.auth.getUser();
+    if (authError || !authUser?.user) return;
+
+    const { data: exists } = await supabase
+      .from('users')
+      .select('id')
+      .eq('user_id', authUser.user.id)
+      .maybeSingle();
+
+    if (!exists) {
+      const insertResult = await supabase.from('users').insert([{
+        user_id: authUser.user.id,
+        name: authUser.user.email?.split('@')[0] || 'Nieznany',
+        email: authUser.user.email,
+        role: 'patient',
+        lang: lang, // teraz lang jest bezpieczny, bo czekałeś na langReady
+      }]);
+
+      if (insertResult.error) {
+        console.error('❌ Insert error po confirm:', insertResult.error);
+      }
+    }
+  };
+
+  runInsert();
+}, [router.query.confirmed, langReady, router.isReady]);
 
   const [selectedRoleLabel, setSelectedRoleLabel] = useState('');
   const [showAdminPopup, setShowAdminPopup] = useState(false);
   const [adminPassword, setAdminPassword] = useState('');
-
   const [lang, setLang] = useState<LangKey>('pl');
-  const [langReady, setLangReady] = useState(false);
+
 
   // 🌗 tryb ciemny (pamiętany w localStorage)
   const [darkMode, setDarkMode] = useState(() => {
@@ -152,14 +179,15 @@ const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     return;
   }
 
+  // ✅ użycie maybeSingle zamiast single
   const { data: userData, error: userError } = await supabase
     .from('users')
     .select('role, user_id, email')
     .eq('user_id', data.user.id)
-    .single();
+    .maybeSingle();
 
   if (userError || !userData) {
-    console.error('❌ Brak danych w tabeli users dla:', data.user.id);
+    console.error('❌ Nie można pobrać roli użytkownika:', userError);
     alert('Nie można pobrać roli użytkownika. Skontaktuj się z administratorem.');
     return;
   }
@@ -175,8 +203,7 @@ const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
       router.push('/patient');
       break;
     default:
-      console.error('⚠️ Nieznana rola użytkownika:', userData.role);
-      alert('Nieznana rola. Skontaktuj się z administratorem.');
+      alert('Nieznana rola użytkownika.');
   }
 };
 
@@ -198,13 +225,21 @@ const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
     return;
   }
 
+  // ✅ SPRAWDZENIE MAILA: CZY UŻYTKOWNIK JUŻ ISTNIEJE
+  const { data: existingAuth } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
+  const alreadyExists = existingAuth?.users.some(u => u.email === form.email);
+
+  if (alreadyExists) {
+    alert('Konto z tym adresem e-mail już istnieje. Zaloguj się zamiast rejestrować.');
+    return;
+  }
+
   if (userType === 'doctor' && !jurisdiction)
     return alert('Wybierz jurysdykcję zawodową.');
 
   if ((userType === 'doctor' || userType === 'dietitian') && !licenseNumber)
     return alert('Wprowadź numer licencji lub dyplomu.');
 
-  // Jeśli jurysdykcja „inna” — wyślij zgłoszenie na mail
   if (jurisdiction === 'other') {
     try {
       const response = await fetch('https://formsubmit.co/ajax/contact@dcp.care', {
