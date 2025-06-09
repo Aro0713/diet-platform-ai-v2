@@ -53,19 +53,21 @@ export default function CalculationBlock({ form, interview, lang, onResult }: Pr
       : height - 100 - (height - 150) / 4
     : null;
 
-  useEffect(() => {
-    if (interview.section3) {
-      const all = Object.values(interview.section3).join(" ").toLowerCase();
-      const inferred =
-        all.includes("bardzo aktywny") || all.includes("intensywny") ? 2.0 :
-        all.includes("aktywny") || all.includes("ćwiczenia") ? 1.75 :
-        all.includes("umiarkowana") ? 1.6 :
-        all.includes("siedząca") ? 1.4 : 1.3;
+ useEffect(() => {
+  const raw = interview.section9?.q1?.toLowerCase?.() || '';
 
-      setPal(inferred);
-      setAutoPAL(inferred);
-    }
-  }, [interview.section3]);
+  const inferred =
+    raw.includes("brak") || raw.includes("nie podejmuję") || raw.includes("0") || raw.includes("1") ? 1.3 :
+    raw.includes("siedząc") || raw.includes("niska") || raw.includes("2") ? 1.4 :
+    raw.includes("umiarkowan") || raw.includes("3") || raw.includes("4") ? 1.6 :
+    raw.includes("aktywn") || raw.includes("5") || raw.includes("6") ? 1.75 :
+    raw.includes("bardzo") || raw.includes("7") || raw.includes("8") ? 2.0 :
+    1.3;
+
+  setPal(inferred);
+  setAutoPAL(inferred);
+}, [interview.section9?.q1]);
+
 
   useEffect(() => {
     let hint = "";
@@ -150,11 +152,10 @@ export default function CalculationBlock({ form, interview, lang, onResult }: Pr
       </div>
 
       <div className="space-y-1 text-xs">
-        <div className="font-semibold mb-1">📋 {tUI('interviewData', lang)}</div>
-        <div><strong>{tUI('physicalActivity', lang)}:</strong> {interview.section3?.q3_1 || tUI('noData', lang)}</div>
-        <div><strong>{tUI('sleepQuality', lang)}:</strong> {interview.section3?.q3_2 || tUI('noData', lang)}</div>
-        <div><strong>{tUI('stressLevel', lang)}:</strong> {interview.section3?.q3_3 || tUI('noData', lang)}</div>
-        <div><strong>{tUI('mealCount', lang)}:</strong> {mealCount ?? tUI('noData', lang)}</div>
+      <div><strong>{tUI('physicalActivity', lang)}:</strong> {interview.section9?.q1 || tUI('noData', lang)}</div>
+      <div><strong>{tUI('sleepQuality', lang)}:</strong> {interview.section2?.q14 || tUI('noData', lang)}</div>
+      <div><strong>{tUI('stressLevel', lang)}:</strong> {interview.section2?.q13 || tUI('noData', lang)}</div>
+      <div><strong>{tUI('mealCount', lang)}:</strong> {mealCount ?? tUI('noData', lang)}</div>
       </div>
     </div>
 

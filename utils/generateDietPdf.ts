@@ -10,7 +10,19 @@ export async function generateDietPdf(
   approved: boolean = false,
   notes: Record<string, string> = {},
   lang: LangKey = 'pl',
-  logoBase64?: string
+  logoBase64?: string,
+  interview?: any,
+  calc?: {
+    bmi: number;
+    ppm: number;
+    cpm: number;
+    pal: number;
+    kcalMaintain: number;
+    kcalReduce: number;
+    kcalGain: number;
+    nmcBroca: number;
+    nmcLorentz: number;
+  }
 ) {
   const pdfMake = (await import('pdfmake/build/pdfmake')).default;
   const pdfFonts = (await import('pdfmake/build/vfs_fonts')).default;
@@ -42,14 +54,54 @@ ${tUI('region', lang)}: ${patient.region || tUI('none', lang)}`,
         margin: [0, 0, 0, 2]
       }))
     ]),
-    {
-      text: `🍴 ${tUI('recommendedDiet', lang)}`,
-      style: 'subheader',
-      margin: [0, 10, 0, 6]
-    }
   ];
 
-  // Grupowanie posiłków per dzień
+  if (interview?.recommendation) {
+    content.push({
+      text: `📋 ${tUI('doctorRecommendation', lang)}:
+${interview.recommendation}`,
+      italics: true,
+      margin: [0, 10, 0, 4]
+    });
+  }
+
+  if (calc) {
+    content.push({ text: `📊 ${tUI('calculationBlockTitle', lang)}`, style: 'subheader', margin: [0, 10, 0, 4] });
+    content.push({
+      ul: [
+        `BMI: ${calc.bmi}`,
+        `PPM: ${calc.ppm} kcal`,
+        `CPM: ${calc.cpm} kcal`,
+        `PAL: ${calc.pal}`,
+        `Kcal (utrzymanie): ${calc.kcalMaintain} kcal`,
+        `Kcal (redukcja): ${calc.kcalReduce} kcal`,
+        `Kcal (przyrost): ${calc.kcalGain} kcal`,
+        `NMC Broca: ${calc.nmcBroca} kg`,
+        `NMC Lorentz: ${calc.nmcLorentz} kg`
+      ]
+    });
+  }
+
+  if (interview) {
+    content.push({ text: `🧠 ${tUI('interviewTitle', lang)}`, style: 'subheader', margin: [0, 10, 0, 4] });
+    Object.entries(interview || {}).forEach(([section, sectionValue]) => {
+      if (typeof sectionValue === 'object' && section !== 'recommendation') {
+        content.push({ text: `► ${section}`, bold: true, margin: [0, 6, 0, 2] });
+        Object.entries(sectionValue || {}).forEach(([qKey, qValue]) => {
+          if (typeof qValue === 'string' || typeof qValue === 'number') {
+            content.push({ text: `• ${qKey}: ${qValue}`, margin: [0, 0, 0, 2] });
+          }
+        });
+      }
+    });
+  }
+
+  content.push({
+    text: `🍽️ ${tUI('recommendedDiet', lang)}`,
+    style: 'subheader',
+    margin: [0, 10, 0, 6]
+  });
+
   const groupedByDay: Record<string, Meal[]> = {};
   diet.forEach((meal) => {
     const day = (meal as any).day || tUI('other', lang);
@@ -58,11 +110,7 @@ ${tUI('region', lang)}: ${patient.region || tUI('none', lang)}`,
   });
 
   Object.entries(groupedByDay).forEach(([day, meals]) => {
-    content.push({
-      text: `📅 ${day}`,
-      style: 'subheader',
-      margin: [0, 10, 0, 4]
-    });
+    content.push({ text: `🗓️ ${day}`, style: 'subheader', margin: [0, 10, 0, 4] });
 
     const mealTable = {
       table: {
@@ -109,7 +157,7 @@ ${tUI('region', lang)}: ${patient.region || tUI('none', lang)}`,
   }
 
   content.push({
-    text: '---\n© ALS sp. z o.o. | KRS 0000087600 | NIP 6252121456 | REGON 266795439\nEmail: a4p.email@gmail.com | tel. +48 500 720 242',
+    text: '---\n© Diet Care Platform\nEmail: contact@dcp.care |',
     style: 'footer',
     margin: [0, 30, 0, 0],
     alignment: 'center'

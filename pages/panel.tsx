@@ -31,6 +31,7 @@ import { generateDietPdf } from '@/utils/generateDietPdf';
 import { generateInterviewPdf } from '@/utils/generateInterviewPdf';
 import { validateDiet } from '@/utils/validateDiet';
 import { parseMealPlanPreview } from '@/utils/parseMealPlanPreview';
+import { sendToPatient } from '@/utils/sendToPatient';
 
 // 🌍 Tłumaczenia
 import { getTranslation, tUI, languageLabels } from '@/utils/i18n';
@@ -369,6 +370,11 @@ const handleSubmit = async (e: React.FormEvent) => {
     console.log("✅ Parsed JSON:", parsed);
 
     if (!parsed) throw new Error('Nie można sparsować odpowiedzi AI.');
+    const testMeal = parsed?.weekPlan?.["poniedziałek"]?.[0];
+    console.log('🔍 TESTOWY POSIŁEK (pon):', testMeal);
+    console.log('🍽️ Składniki:', testMeal?.ingredients);
+    console.log('🕒 Godzina:', testMeal?.time);
+    console.log('🔥 Kalorie:', testMeal?.calories);
 
     const converted: Record<string, Meal[]> = {};
     const sourcePlan = parsed.mealPlan || parsed.week_plan;
@@ -616,14 +622,57 @@ return (
     </button>
 
 
-          <button
-            type="button"
-            className="w-full bg-blue-500 text-white px-4 py-3 rounded-md font-medium hover:bg-blue-600 disabled:opacity-50"
-            onClick={handleSendToPatient}
-            disabled={isGenerating}
-          >
-            {isGenerating ? '⏳ Czekaj...' : `📤 ${tUI('sendToPatient', lang)}`}
-          </button>
+        <button
+  type="button"
+  className="w-full bg-blue-500 text-white px-4 py-3 rounded-md font-medium hover:bg-blue-600 disabled:opacity-50"
+  disabled={isGenerating}
+  onClick={async () => {
+    if (!form.email || !confirmedDiet) {
+      alert('❗ Najpierw zatwierdź dietę i upewnij się, że pacjent ma e-mail.');
+      return;
+    }
+
+    const pdfMake = (await import('pdfmake/build/pdfmake')).default;
+    const pdfFonts = (await import('pdfmake/build/vfs_fonts')).default;
+    pdfMake.vfs = pdfFonts.vfs;
+
+    const { generateDietPdf } = await import('@/utils/generateDietPdf');
+
+    const docDefinition = await generateDietPdf(
+      form,
+      bmi,
+      confirmedDiet,
+      dietApproved,
+      notes,
+      lang,
+      undefined,
+      interviewData,
+      {
+        bmi: interviewData.bmi,
+        ppm: interviewData.ppm,
+        cpm: interviewData.cpm,
+        pal: interviewData.pal,
+        kcalMaintain: interviewData.kcalMaintain,
+        kcalReduce: interviewData.kcalReduce,
+        kcalGain: interviewData.kcalGain,
+        nmcBroca: interviewData.nmcBroca,
+        nmcLorentz: interviewData.nmcLorentz
+      }
+    );
+
+    pdfMake.createPdf(docDefinition).getBlob(async (blob: Blob) => {
+      const success = await sendToPatient(form.email, blob, lang);
+      if (success) {
+        alert('📤 Dieta została wysłana pacjentowi!');
+      } else {
+        alert('❌ Wysyłka nie powiodła się. Sprawdź adres e-mail lub połączenie.');
+      }
+    });
+  }}
+>
+  {isGenerating ? '⏳ Czekaj...' : `📤 ${tUI('sendToPatient', lang)}`}
+</button>
+
         </div>
 
         {/* Pasek ładowania */}
@@ -640,8 +689,11 @@ return (
           <DietTable
             editableDiet={editableDiet}
             setEditableDiet={setEditableDiet}
-            setConfirmedDiet={(diet) => {
-              handleDietSave(Object.values(diet).flat());
+            setConfirmedDiet={(dietByDay) => {
+              const mealsWithDays = Object.entries(dietByDay).flatMap(([day, meals]) =>
+                meals.map((meal) => ({ ...meal, day }))
+              );
+              handleDietSave(mealsWithDays);
             }}
             isEditable={!dietApproved}
             lang={lang}
