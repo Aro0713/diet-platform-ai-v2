@@ -87,8 +87,8 @@ const DietTable: React.FC<DietTableProps> = ({
       for (const meal of meals) {
         if (!meal.name || meal.name.trim() === '') return false;
         for (const ing of meal.ingredients || []) {
-          if (!ing.product || ing.product.trim() === '') return false;
-          if (!ing.weight || ing.weight <= 0) return false;
+          if (!ing.product?.trim()) return false;
+        if (typeof ing.weight !== 'number' || ing.weight <= 0) return false;
         }
       }
     }
@@ -165,6 +165,7 @@ const DietTable: React.FC<DietTableProps> = ({
                             onChange={(e) => handleInputChange(day, key, 'ingredients', e.target.value)}
                             placeholder="Składniki"
                           />
+                         <div className="flex items-center gap-1">
                           <input
                             type="number"
                             className="w-full border rounded-md px-2 py-1 mb-1 text-xs bg-[#0d1117] text-white border-gray-600"
@@ -172,13 +173,20 @@ const DietTable: React.FC<DietTableProps> = ({
                             onChange={(e) => handleInputChange(day, key, 'calories', e.target.value)}
                             placeholder="Kalorie"
                           />
-                          <input
-                            type="number"
-                            className="w-full border rounded-md px-2 py-1 mb-1 text-xs bg-[#0d1117] text-white border-gray-600"
-                            value={meal.glycemicIndex}
-                            onChange={(e) => handleInputChange(day, key, 'glycemicIndex', e.target.value)}
-                            placeholder="IG"
-                          />
+                          <span className="text-xs text-gray-400">kcal</span>
+                        </div>
+
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="number"
+                              className="w-full border rounded-md px-2 py-1 mb-1 text-xs bg-[#0d1117] text-white border-gray-600"
+                              value={meal.glycemicIndex}
+                              onChange={(e) => handleInputChange(day, key, 'glycemicIndex', e.target.value)}
+                              placeholder="IG"
+                            />
+                            <span className="text-xs text-gray-400">IG</span>
+                          </div>
+
                         </>
                       ) : (
                         <>
@@ -204,9 +212,10 @@ const DietTable: React.FC<DietTableProps> = ({
                               <li className="text-gray-500 italic">Brak składników</li>
                             )}
                           </ul>
-                          <div className="text-xs mt-1 text-gray-400">
-                          Kalorie: {meal.calories > 0 ? meal.calories : '–'} | IG: {meal.glycemicIndex > 0 ? meal.glycemicIndex : '–'}
-                        </div>
+                            <div className="text-xs mt-1 text-gray-400">
+                            Kalorie: {meal.calories > 0 ? `${meal.calories} kcal` : '–'} | IG: {meal.glycemicIndex > 0 ? meal.glycemicIndex : '–'}
+                          </div>
+
                         </>
                       )}
                     </div>

@@ -102,28 +102,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     mealsPerDay
   };
 
-const prompt = `
-You are a professional clinical dietitian AI.
+  const prompt = `
+You are a clinical dietitian AI. Generate a 7-day individualized medical diet plan in perfect JSON format.
 
-Generate a 7-day personalized medical diet plan in raw JSON format.
-
-📦 JSON structure:
+Return the output **only** as raw JSON object like this:
 {
-  "weekPlan": {
-    "poniedziałek": [
-      {
-        "name": string,              // Polish name of the meal (e.g. Śniadanie)
-        "time": string,              // Time in HH:MM format
-        "description": string,       // Short description of the meal
-        "ingredients": [
-          { "product": string, "weight": number }  // List of products with weights in grams
-        ],
-        "calories": number,          // Total kcal
-        "glycemicIndex": number      // Glycemic index (0–100)
-      }
-    ],
+  "dietPlan": {
+    "Monday": {
+      "Śniadanie": { "time": "07:30", "menu": "...", "kcal": 400 },
+      "Drugie śniadanie": { "time": "10:00", "menu": "...", "kcal": 250 },
+      "Obiad": { "time": "16:00", "menu": "...", "kcal": 650 },
+      "Podwieczorek": { "time": "17:30", "menu": "...", "kcal": 150 },
+      "Kolacja": { "time": "19:30", "menu": "...", "kcal": 350 }
+    },
     ...
-    "niedziela": [ ... ]
   }
 }
 
