@@ -249,38 +249,41 @@ const getRecommendedMealsPerDay = (form: PatientData, interviewData: any): numbe
 };
 const tryParseJSON = (raw: string): any | null => {
   try {
-  let cleaned = raw
-    .replace(/```json/g, '')
-    .replace(/```/g, '')
-    .replace(/^\s*AI\s*[:\-]?\s*/gi, '')
-    .replace(/\r?\n/g, '')
-    .trim();
+    let cleaned = raw
+      .replace(/```json/g, '')
+      .replace(/```/g, '')
+      .replace(/^\s*AI\s*[:\-]?\s*/gi, '')
+      .trim();
 
-  const start = cleaned.indexOf('{');
-  const end = cleaned.lastIndexOf('}');
+    const start = cleaned.indexOf('{');
+    const end = cleaned.lastIndexOf('}');
 
-  if (start === -1 || end === -1 || start >= end) {
-    console.warn('⚠️ Nie znaleziono poprawnych nawiasów w JSON:', cleaned);
+    if (start === -1 || end === -1 || start >= end) {
+      console.warn('⚠️ Nie znaleziono poprawnych nawiasów w JSON:', cleaned.slice(0, 100));
+      return null;
+    }
+
+    cleaned = cleaned.substring(start, end + 1);
+
+    const opens = [...cleaned.matchAll(/{/g)].length;
+    const closes = [...cleaned.matchAll(/}/g)].length;
+
+    if (opens !== closes) {
+      console.warn('⚠️ Niezrównoważone nawiasy klamrowe w JSON. Pomijam parsowanie.');
+      return null;
+    }
+
+    const parsed = JSON.parse(cleaned);
+    if (!parsed || typeof parsed !== 'object') {
+      console.warn('⚠️ Sparsowany wynik nie jest obiektem:', parsed);
+      return null;
+    }
+
+    return parsed;
+  } catch (err) {
+    console.error('❌ Błąd parsowania JSON:', err);
     return null;
   }
-
-  cleaned = cleaned.slice(start, end + 1);
-
-  // 🔍 Wstępna walidacja przed parsowaniem
-  if (
-    !(cleaned.startsWith('{') && cleaned.endsWith('}')) &&
-    !(cleaned.startsWith('[') && cleaned.endsWith(']'))
-  ) {
-    console.warn('⚠️ Nie wygląda na poprawny JSON:', cleaned);
-    return null;
-  }
-
-  console.log('? Cleaned JSON:', cleaned);
-  return JSON.parse(cleaned);
-} catch (err) {
-  console.error('❌ Błąd parsowania JSON:', err, '\nŹródło:', raw);
-  return null;
-}
 };
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
