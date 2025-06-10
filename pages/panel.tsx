@@ -247,7 +247,7 @@ const getRecommendedMealsPerDay = (form: PatientData, interviewData: any): numbe
   // Domy�lnie � 4
   return 4;
 };
-const tryParseJSON = (raw: string): any | null => {
+const tryParseJSON = (raw: string, strict = true): any | null => {
   try {
     let cleaned = raw
       .replace(/```json/g, '')
@@ -259,7 +259,7 @@ const tryParseJSON = (raw: string): any | null => {
     const end = cleaned.lastIndexOf('}');
 
     if (start === -1 || end === -1 || start >= end) {
-      console.warn('⚠️ Nie znaleziono poprawnych nawiasów w JSON:', cleaned.slice(0, 100));
+      console.warn('⚠️ Nie znaleziono nawiasów w JSON:', cleaned.slice(0, 100));
       return null;
     }
 
@@ -268,16 +268,13 @@ const tryParseJSON = (raw: string): any | null => {
     const opens = [...cleaned.matchAll(/{/g)].length;
     const closes = [...cleaned.matchAll(/}/g)].length;
 
-    if (opens !== closes) {
-      console.warn('⚠️ Niezrównoważone nawiasy klamrowe w JSON. Pomijam parsowanie.');
+    if (strict && opens !== closes) {
+      console.warn('⚠️ Niezrównoważone nawiasy klamrowe. Pomijam.');
       return null;
     }
 
     const parsed = JSON.parse(cleaned);
-    if (!parsed || typeof parsed !== 'object') {
-      console.warn('⚠️ Sparsowany wynik nie jest obiektem:', parsed);
-      return null;
-    }
+    if (!parsed || typeof parsed !== 'object') return null;
 
     return parsed;
   } catch (err) {
@@ -285,6 +282,7 @@ const tryParseJSON = (raw: string): any | null => {
     return null;
   }
 };
+
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
@@ -348,17 +346,21 @@ const handleSubmit = async (e: React.FormEvent) => {
     const reader = res.body.getReader();
     const decoder = new TextDecoder('utf-8');
     let rawText = '';
+    let rawCompleteText = '';
     let done = false;
 
     while (!done) {
       const { value, done: doneReading } = await reader.read();
       done = doneReading;
+
       const chunk = decoder.decode(value, { stream: true });
       rawText += chunk;
+      rawCompleteText += chunk;
       setStreamingText(rawText);
 
+      // Podgląd (bezpiecznie)
       try {
-        const partial = tryParseJSON(rawText);
+        const partial = tryParseJSON(rawText, false); // ⬅️ bez wymogu pełnych nawiasów
         if (partial) {
           const preview = parseMealPlanPreview(partial);
           setEditableDiet(preview);
@@ -368,6 +370,12 @@ const handleSubmit = async (e: React.FormEvent) => {
       }
     }
 
+     // ✅ Parsujemy dopiero po zakończeniu
+        const partialParsed = tryParseJSON(rawText, false);
+    if (partialParsed) {
+      const preview = parseMealPlanPreview(partialParsed);
+      setEditableDiet(preview);
+    }
     console.log("📦 RAW AI TEXT:", rawText);
     let parsed = tryParseJSON(rawText);
     console.log("✅ Parsed JSON:", parsed);
