@@ -169,7 +169,7 @@ Each meal must include:
   { "product": string, "weight": number (in grams) }
 
 You must always return a complete and syntactically correct JSON object under the key "dietPlan".
-Do not exceed 4096 tokens — compress if needed (e.g. limit ingredients to 3–4).
+Do not exceed 3000 tokens — compress if needed (e.g. limit ingredients to 3–4).
 Never output incomplete, truncated or invalid JSON.
 
 All patient data:
@@ -181,7 +181,7 @@ ${JSON.stringify(patientData, null, 2)}
       model: 'gpt-4-turbo',
       stream: true,
       temperature: 0.7,
-      max_tokens: 4096,
+      max_tokens: 3000,
       messages: [{ role: 'user', content: prompt }],
     });
 
