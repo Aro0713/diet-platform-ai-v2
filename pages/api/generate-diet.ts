@@ -158,6 +158,11 @@ Adapt the contents intelligently to fit within the maximum token limit (4096).
 If needed, shorten descriptions or ingredient lists, but never leave open or truncated structures.
 Never generate invalid JSON. Never guess missing data. Always return fully closed syntax.
 
+Do not exceed your token budget.
+You must return a complete and closed JSON object under the key \"dietPlan\".
+If you run out of space, reduce the size of descriptions and ingredient lists.
+Never return an incomplete structure.
+
 All patient data:
 ${JSON.stringify(patientData, null, 2)}
 `;

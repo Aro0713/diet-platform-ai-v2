@@ -393,7 +393,12 @@ if (!parsed) {
   const meals = Object.entries(mealsObj as any).map(([name, meal]: [string, any]) => ({
     name,
     description: meal.menu || '',
-    ingredients: Array.isArray(meal.ingredients) ? meal.ingredients : [],
+    ingredients: Array.isArray(meal.ingredients)
+  ? meal.ingredients.map((item: any) =>
+      typeof item === 'string' ? { product: item, weight: 0 } : item
+    )
+  : [],
+
     calories: meal.kcal || 0,
     glycemicIndex: meal.glycemicIndex || 0,
     time: meal.time || ''
