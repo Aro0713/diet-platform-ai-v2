@@ -357,17 +357,6 @@ const handleSubmit = async (e: React.FormEvent) => {
       rawText += chunk;
       rawCompleteText += chunk;
       setStreamingText(rawText);
-
-      // Podgląd (bezpiecznie)
-      try {
-        const partial = tryParseJSON(rawText, false); // ⬅️ bez wymogu pełnych nawiasów
-        if (partial) {
-          const preview = parseMealPlanPreview(partial);
-          setEditableDiet(preview);
-        }
-      } catch {
-        // ignorujemy błędy parsowania częściowego
-      }
     }
 
      // ✅ Parsujemy dopiero po zakończeniu
