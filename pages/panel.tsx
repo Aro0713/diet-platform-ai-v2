@@ -358,15 +358,8 @@ const handleSubmit = async (e: React.FormEvent) => {
       rawCompleteText += chunk;
       setStreamingText(rawText);
     }
-
-     // ✅ Parsujemy dopiero po zakończeniu
-        const partialParsed = tryParseJSON(rawText, false);
-    if (partialParsed) {
-      const preview = parseMealPlanPreview(partialParsed);
-      setEditableDiet(preview);
-    }
     console.log("📦 RAW AI TEXT:", rawText);
-    let parsed = tryParseJSON(rawText);
+    let parsed = tryParseJSON(rawCompleteText);
     console.log("✅ Parsed JSON:", parsed);
 
     if (!parsed) throw new Error('Nie można sparsować odpowiedzi AI.');
@@ -392,19 +385,20 @@ const handleSubmit = async (e: React.FormEvent) => {
         }));
       }
     } else if (parsed.dietPlan && typeof parsed.dietPlan === 'object') {
-      for (const [day, mealsObj] of Object.entries(parsed.dietPlan)) {
-        const meals: Meal[] = Object.entries(mealsObj as any).map(
-          ([name, meal]: [string, any]) => ({
-            name,
-            description: meal.menu || '',
-            ingredients: [],
-            calories: meal.kcal || 0,
-            glycemicIndex: meal.glycemicIndex || 0,
-            time: meal.time || ''
-          })
-        );
-        converted[mapDaysToPolish[day] || day] = meals;
-      }
+    for (const [day, mealsObj] of Object.entries(parsed.dietPlan)) {
+  const translatedDay = mapDaysToPolish[day] || day;
+  const meals = Object.entries(mealsObj as any).map(([name, meal]: [string, any]) => ({
+    name,
+    description: meal.menu || '',
+    ingredients: Array.isArray(meal.ingredients) ? meal.ingredients : [],
+    calories: meal.kcal || 0,
+    glycemicIndex: meal.glycemicIndex || 0,
+    time: meal.time || ''
+  }));
+
+  converted[translatedDay] = meals;
+}
+
       } else if (parsed.weekPlan && typeof parsed.weekPlan === 'object') {
         for (const [day, meals] of Object.entries(parsed.weekPlan)) {
           converted[mapDaysToPolish[day] || day] = (meals as any[]).map((meal: any) => ({
