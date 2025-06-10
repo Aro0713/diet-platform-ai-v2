@@ -38,9 +38,6 @@ import { getTranslation, tUI, languageLabels } from '@/utils/i18n';
 import { translations } from '@/utils/translations';
 import { translationsUI } from '@/utils/translationsUI';
 
-// 🔙 Dane awaryjne
-import fallbackDiets from '@/utils/fallbackDiets';
-
 
 function Panel() {
   const [lang, setLang] = useState<LangKey>('pl');
@@ -362,7 +359,13 @@ const handleSubmit = async (e: React.FormEvent) => {
     let parsed = tryParseJSON(rawCompleteText);
     console.log("✅ Parsed JSON:", parsed);
 
-    if (!parsed) throw new Error('Nie można sparsować odpowiedzi AI.');
+if (!parsed) {
+  console.warn("❌ Parsowanie JSON nie powiodło się – dieta nie została wygenerowana.");
+  alert('❗ Nie udało się wygenerować diety. Spróbuj ponownie za chwilę lub skontaktuj się z administratorem.');
+  return;
+}
+
+
     const testMeal = parsed?.weekPlan?.["poniedziałek"]?.[0];
     console.log('🔍 TESTOWY POSIŁEK (pon):', testMeal);
     console.log('🍽️ Składniki:', testMeal?.ingredients);

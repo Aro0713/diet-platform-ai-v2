@@ -153,6 +153,11 @@ ${dataSources}
 
 If any source is inaccessible, invalid, or unclear, ignore it and continue using the remaining sources. Do not fail or stop.
 
+You must always return a fully valid, closed JSON object under the key "dietPlan".
+Adapt the contents intelligently to fit within the maximum token limit (4096).
+If needed, shorten descriptions or ingredient lists, but never leave open or truncated structures.
+Never generate invalid JSON. Never guess missing data. Always return fully closed syntax.
+
 All patient data:
 ${JSON.stringify(patientData, null, 2)}
 `;
@@ -162,7 +167,7 @@ ${JSON.stringify(patientData, null, 2)}
       model: 'gpt-4-turbo',
       stream: true,
       temperature: 0.7,
-      max_tokens: 3000,
+      max_tokens: 4096,
       messages: [{ role: 'user', content: prompt }],
     });
 
