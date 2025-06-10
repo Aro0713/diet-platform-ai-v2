@@ -24,43 +24,6 @@ const culturalContextMap: Record<string, string> = {
   he: 'Kosher food rules and Israeli cuisine'
 };
 
-const dataSources = `
-✅ Nutrient databases:
-- USDA FoodData Central (https://fdc.nal.usda.gov)
-- Polish Food Composition Tables (https://ncez.pzh.gov.pl)
-- Open Food Facts (https://world.openfoodfacts.org)
-
-✅ Clinical nutrition guidelines:
-- Polish Institute of Public Health (https://ncez.pzh.gov.pl)
-- USDA Recommended Dietary Allowances (https://www.nal.usda.gov)
-- EFSA (https://www.efsa.europa.eu)
-- ESPEN Guidelines (https://www.espen.org/guidelines)
-- NICE UK (https://www.nice.org.uk)
-- AND – Academy of Nutrition and Dietetics (https://www.eatrightpro.org)
-- ESMO (Oncology), IASO (Obesity), IBD Standards UK
-- PubMed & Cochrane Library (https://pubmed.ncbi.nlm.nih.gov, https://www.cochranelibrary.com)
-
-✅ Traditional & cultural food references:
-- TasteAtlas – global food map, authentic regional dishes (https://www.tasteatlas.com/)
-- EatYourWorld – cultural and regional food contexts (https://eatyourworld.com/)
-- Great British Chefs – expert recipes & culinary traditions (https://www.greatbritishchefs.com/)
-- The Spruce Eats – regional comfort food and BBQ (https://www.thespruceeats.com/)
-- BBC Good Food – trusted UK recipe archive (https://www.bbcgoodfood.com/)
-- Chefkoch.de – largest German recipe portal (https://www.chefkoch.de/)
-- BZfE – Bundeszentrum für Ernährung, Germany (https://www.bzfe.de/)
-- Just One Cookbook – step-by-step Japanese cooking (https://www.justonecookbook.com/)
-- MHLW Japan – official health ministry nutrition site (https://www.mhlw.go.jp/)
-- Veg Recipes of India – vegetarian Indian food (https://www.vegrecipesofindia.com/)
-- Sanjeev Kapoor – iconic Indian chef’s healthy recipes (https://www.sanjeevkapoor.com/)
-- NIN India – Dietary Guidelines for Indians (https://www.nin.res.in/)
-- Chinese Nutrition Society – dietary pyramid & research (http://www.cnsoc.org/)
-- ION Russia – Institute of Nutrition RAS (http://www.ion.ru/)
-- RBTH Russian Kitchen – traditional Russian cuisine (https://www.rbth.com/russian-kitchen)
-
-✅ International dietary frameworks:
-- Dietary Guidelines for Americans 2020–2025 (https://www.dietaryguidelines.gov/)
-`;
-
 export const config = {
   api: { bodyParser: true }
 };
@@ -102,7 +65,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     mealsPerDay
   };
 
-  const prompt = `
+  res.writeHead(200, {
+    'Content-Type': 'text/plain; charset=utf-8',
+    'Cache-Control': 'no-cache',
+    'Transfer-Encoding': 'chunked'
+  });
+
+  const encoder = new TextEncoder();
+
+  try {
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    res.write(encoder.encode('{"dietPlan":{'));
+
+    for (let i = 0; i < days.length; i++) {
+      const day = days[i];
+
+      const prompt = `
 You are a clinical dietitian AI. Generate a 7-day individualized medical diet plan in perfect JSON format.
 
 Return the output **only** as raw JSON object like this:
@@ -114,8 +92,7 @@ Return the output **only** as raw JSON object like this:
       "Obiad": { "time": "16:00", "menu": "...", "kcal": 650 },
       "Podwieczorek": { "time": "17:30", "menu": "...", "kcal": 150 },
       "Kolacja": { "time": "19:30", "menu": "...", "kcal": 350 }
-    },
-    ...
+    }
   }
 }
 
@@ -145,7 +122,6 @@ Adapt the content to:
 - mealsPerDay: ${mealsPerDay}
 
 Respect culinary and cultural preferences intelligently:
-
 - If the patient or doctor selected a specific cuisine (e.g. Indian, Japanese, Kosher), this cuisine takes precedence over cultural background inferred from language or region.
 - Preserve authentic preparation styles, ingredient combinations and regional identity of the selected cuisine.
 - However, when possible, adapt specific ingredients to what is locally accessible for the patient or doctor (e.g. replace paneer with cottage cheese if Indian cuisine is selected but patient is in Europe).
@@ -153,12 +129,6 @@ Respect culinary and cultural preferences intelligently:
 
 Selected cuisine: ${form.cuisine}
 Patient's cultural context: ${culturalContext}
-
-
-Use only evidence-based data sources:
-${dataSources}
-
-If any source is inaccessible, invalid, or unclear, ignore it and continue using the remaining sources.
 
 Each meal must include:
 - "time" – meal time in HH:mm
@@ -172,33 +142,31 @@ You must always return a complete and syntactically correct JSON object under th
 Do not exceed 3000 tokens — compress if needed (e.g. limit ingredients to 3–4).
 Never output incomplete, truncated or invalid JSON.
 
+Return only the value of the "${day}" property from dietPlan (no wrapper).
+
 All patient data:
 ${JSON.stringify(patientData, null, 2)}
 `;
 
-  try {
-    const stream = await openai.chat.completions.create({
-      model: 'gpt-4-turbo',
-      stream: true,
-      temperature: 0.7,
-      max_tokens: 3000,
-      messages: [{ role: 'user', content: prompt }],
-    });
+      const stream = await openai.chat.completions.create({
+        model: 'gpt-4-turbo',
+        stream: true,
+        temperature: 0.7,
+        max_tokens: 3000,
+        messages: [{ role: 'user', content: prompt }]
+      });
 
-    res.writeHead(200, {
-      'Content-Type': 'text/plain; charset=utf-8',
-      'Cache-Control': 'no-cache',
-      'Transfer-Encoding': 'chunked'
-    });
+      res.write(encoder.encode(`"${day}":`));
 
-    const encoder = new TextEncoder();
-    for await (const chunk of stream) {
-      const text = chunk.choices?.[0]?.delta?.content;
-      if (text) {
-        res.write(encoder.encode(text));
+      for await (const chunk of stream) {
+        const text = chunk.choices?.[0]?.delta?.content;
+        if (text) res.write(encoder.encode(text));
       }
+
+      if (i < days.length - 1) res.write(encoder.encode(','));
     }
 
+    res.write(encoder.encode('}}'));
     res.end();
   } catch (error: any) {
     console.error('❌ OpenAI error:', error);
