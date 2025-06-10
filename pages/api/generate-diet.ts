@@ -126,7 +126,14 @@ Strict rules:
 - Meal names in Polish: Śniadanie, Drugie śniadanie, Obiad, Podwieczorek, Kolacja
 - Each meal must also include: "glycemicIndex" as a number between 0 and 100
 - Each meal must have: "time", "menu", "kcal", "ingredients"
-- "ingredients" must be a list of food items used in the meal, e.g. ["eggs", "butter", "chives"]
+- "ingredients" must be a list of objects, each with:
+  { "product": string, "weight": number (in grams) }
+  Example:
+  "ingredients": [
+    { "product": "jogurt grecki", "weight": 150 },
+    { "product": "orzechy", "weight": 20 }
+  ]
+
 - JSON only – no markdown, comments, explanations, code blocks or notes
 
 Language of meal descriptions: ${selectedLang}
@@ -151,17 +158,19 @@ Patient's cultural context: ${culturalContext}
 Use only evidence-based data sources:
 ${dataSources}
 
-If any source is inaccessible, invalid, or unclear, ignore it and continue using the remaining sources. Do not fail or stop.
+If any source is inaccessible, invalid, or unclear, ignore it and continue using the remaining sources.
 
-You must always return a fully valid, closed JSON object under the key "dietPlan".
-Adapt the contents intelligently to fit within the maximum token limit (4096).
-If needed, shorten descriptions or ingredient lists, but never leave open or truncated structures.
-Never generate invalid JSON. Never guess missing data. Always return fully closed syntax.
+Each meal must include:
+- "time" – meal time in HH:mm
+- "menu" – short description
+- "kcal" – total calories
+- "glycemicIndex" – number between 0–100
+- "ingredients": array of objects like:
+  { "product": string, "weight": number (in grams) }
 
-Do not exceed your token budget.
-You must return a complete and closed JSON object under the key \"dietPlan\".
-If you run out of space, reduce the size of descriptions and ingredient lists.
-Never return an incomplete structure.
+You must always return a complete and syntactically correct JSON object under the key "dietPlan".
+Do not exceed 4096 tokens — compress if needed (e.g. limit ingredients to 3–4).
+Never output incomplete, truncated or invalid JSON.
 
 All patient data:
 ${JSON.stringify(patientData, null, 2)}
