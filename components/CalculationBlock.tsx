@@ -152,23 +152,39 @@ export default function CalculationBlock({ form, interview, lang, onResult }: Pr
       </div>
 
       <div className="space-y-1 text-xs">
-      <div>
-       <strong>{tUI('physicalActivity', lang)}:</strong>{' '}
-       {interview.section3?.q1 === 'Tak'
-       ? interview.section3?.q2 || tUI('yes', lang)
-      : interview.section3?.q1 || tUI('noData', lang)}
-      </div>
-      <div><strong>{tUI('sleepQuality', lang)}:</strong> <span className="text-blue-500">{interview.section2?.q14 || tUI('noData', lang)}</span></div>
-      <div><strong>{tUI('stressLevel', lang)}:</strong> <span className="text-red-500">{interview.section2?.q13 || tUI('noData', lang)}</span></div>
-      <div><strong>{tUI('mealCount', lang)}:</strong> {mealCount ?? tUI('noData', lang)}</div>
-      </div>
-    </div>
+  <div>
+    <strong>{tUI('physicalActivity', lang)}:</strong>{' '}
+    {interview.section3?.q1 === 'Tak'
+      ? interview.section3?.q2 || tUI('yes', lang)
+      : interview.section3?.q1 || <span className="text-red-500">{tUI('noData', lang)}</span>}
+  </div>
+
+  <div>
+    <strong>{tUI('sleepQuality', lang)}:</strong>{' '}
+    {interview.section2?.q7
+      ? interview.section2.q7
+      : <span className="text-blue-400">{tUI('noData', lang)}</span>}
+  </div>
+
+  <div>
+    <strong>{tUI('stressLevel', lang)}:</strong>{' '}
+    {interview.section2?.q8
+      ? interview.section2.q8
+      : <span className="text-red-500">{tUI('noData', lang)}</span>}
+  </div>
+
+  <div>
+    <strong>{tUI('mealCount', lang)}:</strong> {mealCount ?? tUI('noData', lang)}
+  </div>
+</div>
+
 
     {interpretation && (
       <div className="mt-4 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 rounded dark:bg-yellow-200 dark:border-yellow-500 dark:text-black">
         {interpretation}
       </div>
     )}
+       </div>
   </PanelCard>
 );
 }

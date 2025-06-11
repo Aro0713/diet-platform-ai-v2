@@ -149,6 +149,9 @@ Never output incomplete, truncated or invalid JSON.
 
 Return only the value of the "${day}" property from dietPlan (no wrapper).
 
+Important: make sure the response ends with a complete and valid closing brace '}'.
+Never return truncated or incomplete JSON.
+
 All patient data:
 ${JSON.stringify(patientData, null, 2)}
 `;

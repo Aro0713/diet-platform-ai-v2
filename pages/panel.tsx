@@ -266,10 +266,16 @@ const tryParseJSON = (raw: string, strict = true): any | null => {
     const opens = [...cleaned.matchAll(/{/g)].length;
     const closes = [...cleaned.matchAll(/}/g)].length;
 
-    if (strict && opens !== closes) {
-      console.warn('⚠️ Niezrównoważone nawiasy:', opens, 'vs', closes);
-      throw new Error('Nie można sparsować odpowiedzi AI – zła liczba nawiasów.');
-    }
+   if (strict && opens !== closes) {
+  const diff = opens - closes;
+  if (diff > 0) {
+    console.warn(`⚠️ Brakuje ${diff} zamykających nawiasów – uzupełniam.`);
+    cleaned += '}'.repeat(diff);
+  } else {
+    console.warn(`⚠️ Zbyt dużo zamykających nawiasów – obcinam ${-diff}.`);
+    cleaned = cleaned.slice(0, cleaned.length + diff);
+  }
+}
 
     const parsed = JSON.parse(cleaned);
     if (!parsed || typeof parsed !== 'object') {
