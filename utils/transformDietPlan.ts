@@ -1,32 +1,40 @@
 // utils/transformDietPlan.ts
-
 import { Meal } from '@/types';
 
-/**
- * Przekształca strukturę dietPlan z API (obiekt z posiłkami jako właściwościami)
- * na format akceptowany przez DietTable – tablicę posiłków na każdy dzień.
- */
+const standardOrder = ['Śniadanie', 'Drugie śniadanie', 'Obiad', 'Podwieczorek', 'Kolacja'];
+
 export function transformDietPlanToEditableFormat(dietPlan: Record<string, any>): Record<string, Meal[]> {
   const result: Record<string, Meal[]> = {};
 
   for (const day in dietPlan) {
     const mealsForDay = dietPlan[day];
-    const mealArray: Meal[] = [];
+    const normalizedDay: Meal[] = [];
 
-    for (const mealName in mealsForDay) {
-      const mealData = mealsForDay[mealName];
+    for (const mealName of standardOrder) {
+      const mealData = mealsForDay?.[mealName];
 
-      mealArray.push({
-        name: mealName,
-        time: mealData.time ?? '',
-        description: mealData.menu ?? '',
-        ingredients: mealData.ingredients ?? [],
-        calories: mealData.kcal ?? 0,
-        glycemicIndex: mealData.glycemicIndex ?? 0,
-      });
+      if (mealData) {
+        normalizedDay.push({
+          name: mealName,
+          time: mealData.time ?? '',
+          description: mealData.menu ?? '',
+          ingredients: Array.isArray(mealData.ingredients) ? mealData.ingredients : [],
+          calories: mealData.kcal ?? 0,
+          glycemicIndex: mealData.glycemicIndex ?? 0,
+        });
+      } else {
+        normalizedDay.push({
+          name: mealName,
+          time: '',
+          description: '',
+          ingredients: [],
+          calories: 0,
+          glycemicIndex: 0,
+        });
+      }
     }
 
-    result[day] = mealArray;
+    result[day] = normalizedDay;
   }
 
   return result;
