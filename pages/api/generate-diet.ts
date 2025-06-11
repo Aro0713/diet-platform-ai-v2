@@ -82,7 +82,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const day = days[i];
       const modelPrompt = modelRules[form.model] || '';
 
-      const prompt = `
+      let responseText = '';
+      let validJson = false;
+      let attempt = 0;
+
+      while (!validJson && attempt < 2) {
+        const prompt = `
 You are a clinical AI dietitian working for Diet Care Platform (DCP) — a premium, evidence-based digital platform designed for physicians, licensed dietitians, and clinical nutritionists.
 
 ⚠️ This is a professional medical environment, not a chatbot. You are bound to follow clinical-grade accuracy, cultural authenticity, nutritional safety, and strict international dietary standards.
@@ -129,103 +134,109 @@ Culinary Authenticity:
 - BBC Good Food: https://www.bbcgoodfood.com
 - BZfE & Chefkoch (Germany): https://www.bzfe.de / https://www.chefkoch.de
 
-Return the output **only** as raw JSON object like this:
+You are a clinical AI dietitian working for Diet Care Platform (DCP) — a premium, evidence-based digital platform designed for physicians, licensed dietitians, and clinical nutritionists.
+
+⚠️ This is a professional medical environment. You must follow:
+${modelPrompt}
+
+Use only valid JSON with this format:
 {
   "dietPlan": {
-    "Monday": {
-      "Śniadanie": { "time": "07:30", "menu": "...", "kcal": 400 },
-      "Drugie śniadanie": { "time": "10:00", "menu": "...", "kcal": 250 },
-      "Obiad": { "time": "16:00", "menu": "...", "kcal": 650 },
-      "Podwieczorek": { "time": "17:30", "menu": "...", "kcal": 150 },
-      "Kolacja": { "time": "19:30", "menu": "...", "kcal": 350 }
+    "${day}": {
+      "Śniadanie": { "time": "HH:mm", "menu": "...", "kcal": number, "glycemicIndex": number, "ingredients": [{ "product": "...", "weight": number }] },
+      ...
     }
   }
 }
 
 Strict rules:
-- Top-level key must be "dietPlan"
-- Exactly 7 days: Monday to Sunday
-- Days in English: Monday, Tuesday, ...
-- Meal names in Polish: Śniadanie, Drugie śniadanie, Obiad, Podwieczorek, Kolacja
-- Each meal must also include: "glycemicIndex" as a number between 0 and 100
-- Each meal must have: "time", "menu", "kcal", "ingredients"
-- "ingredients" must be a list of objects, each with:
-  { "product": string, "weight": number (in grams) }
-  Example:
-  "ingredients": [
-    { "product": "jogurt grecki", "weight": 150 },
-    { "product": "orzechy", "weight": 20 }
-  ]
+- Must return exactly 7 days (Monday to Sunday)
+- Each meal must be complete: time, menu, kcal, glycemicIndex, ingredients
+- JSON must be parsable and syntactically valid
+- Ingredient lists must be valid arrays: comma-separated, bracket closed
+- No markdown, no comments, no explanation — JSON only
 
-- JSON only – no markdown, comments, explanations, code blocks or notes
+Patient information:
+- Language: ${selectedLang}
+- Goal (as described by the patient): ${goalExplanation}
+- Doctor or dietitian notes: ${recommendation}
+- Known allergies: ${form.allergies || 'not specified'}
+- Known health conditions: ${form.conditions || 'not specified'}
+- Appetite description: ${form.appetite || 'not provided'}
+- Stress level or digestive concerns: ${form.symptoms || 'not provided'}
+- Dietary preferences or exclusions: ${form.dietPreferences || 'none'}
+- Selected cuisine: ${form.cuisine}
+- Cultural context: ${culturalContext}
+- Target daily calories (CPM): ${cpm}
+- Number of meals per day: ${mealsPerDay}
 
-Language of meal descriptions: ${selectedLang}
-Adapt the content to:
-- Patient's goal: ${goalExplanation}
-- Doctor's notes: ${recommendation}
-- Allergies, health conditions, test results, stress, appetite, culture
-- Daily energy target (CPM): ${cpm}
+Return ONLY the object for key "${day}" — no wrapping, no summaries.
+`; 
 
-Number of meals per day: ${mealsPerDay}.
-If mealsPerDay is a number, you must generate exactly that number of meals for every day — no more, no less.
+        let responseText = '';
+let validJson = false;
+let attempt = 0;
 
-If mealsPerDay is "not provided", infer the number of meals (3 to 6) based on patient's clinical and lifestyle data, appetite, goal, and conditions (e.g. diabetes → 5 meals).
+while (!validJson && attempt < 2) {
+  const stream = await openai.chat.completions.create({
+    model: 'gpt-4-turbo',
+    stream: true,
+    temperature: 0.7,
+    max_tokens: 3000,
+    messages: [{ role: 'user', content: prompt }]
+  });
 
-⚠️ All 7 days must have **exactly the same number of meals**. You may not vary the number of meals between days.
+        res.write(encoder.encode(`"${day}":`));
+        responseText = '';
 
-Each meal should be as concise as possible and include no more than 3–4 ingredients when possible.
+        for await (const chunk of stream) {
+  const text = chunk.choices?.[0]?.delta?.content;
+  if (text) {
+    res.write(encoder.encode(text));
+    responseText += text;
+  }
+}
+        }
 
-Respect culinary and cultural preferences intelligently:
-- If the patient or doctor selected a specific cuisine (e.g. Indian, Japanese, Kosher), this cuisine takes precedence over cultural background inferred from language or region.
-- Preserve authentic preparation styles, ingredient combinations and regional identity of the selected cuisine.
-- However, when possible, adapt specific ingredients to what is locally accessible for the patient or doctor (e.g. replace paneer with cottage cheese if Indian cuisine is selected but patient is in Europe).
-- You may retain core seasonings or spices typical to the patient's culture if they improve adherence and acceptance.
+        try {
+          JSON.parse(`{ "${day}": ${responseText} }`);
+          validJson = true;
+        } catch (e) {
+          attempt++;
+          if (attempt >= 2) {
+            res.write(encoder.encode(`"error_${day}":"Invalid JSON after 2 attempts"`));
+          } else {
+            console.warn(`Retrying generation for ${day} due to JSON parse error.`);
+          }
+        }
 
-Selected cuisine: ${form.cuisine}
-Patient's cultural context: ${culturalContext}
-
-Try to avoid repeating the same key ingredients more than 2 times across the 7 days.
-The meal plan must not repeat the same **main ingredient** in the same meal slot more than twice in a week.
-
-Each meal must include:
-- "time" – meal time in HH:mm
-- "menu" – short description
-- "kcal" – total calories
-- "glycemicIndex" – number between 0–100
-- "ingredients": array of objects like:
-  { "product": string, "weight": number (in grams) }
-
-You must always return a complete and syntactically correct JSON object under the key "dietPlan".
-Do not exceed 3000 tokens — compress if needed (e.g. limit ingredients to 3–4).
-Each day must have exactly the same number of meals (e.g. 3, 4, or 5) for all 7 days.
-If output becomes too long, reduce ingredients to max 3–4 per meal.
-Never output incomplete, truncated or invalid JSON.
-
-IMPORTANT: In "ingredients" array, every object must be separated by a comma, and the array must end with a closing bracket "]".
-Do NOT return invalid or incomplete ingredient lists.
-
-Return only the value of the "${day}" property from dietPlan (no wrapper).
-
-Important: make sure the response ends with a complete and valid closing brace '}'.
-Never return truncated or incomplete JSON.
-`;
-
-      const stream = await openai.chat.completions.create({
-        model: 'gpt-4-turbo',
-        stream: true,
-        temperature: 0.7,
-        max_tokens: 3000,
-        messages: [{ role: 'user', content: prompt }]
-      });
-
-      res.write(encoder.encode(`"${day}":`));
-
-      for await (const chunk of stream) {
-        const text = chunk.choices?.[0]?.delta?.content;
-        if (text) res.write(encoder.encode(text));
+        if (validJson || attempt >= 2) break;
       }
 
-      if (i < days.length - 1) res.write(encoder.encode(','));
+      const forbiddenRepeats = ['owsianka', 'pierś z kurczaka', 'jogurt naturalny'];
+const excessiveRepeat = forbiddenRepeats.find(ingredient => 
+  (responseText.toLowerCase().match(new RegExp(ingredient, 'g')) || []).length > 2
+);
+
+try {
+  JSON.parse(`{ "${day}": ${responseText} }`);
+  if (excessiveRepeat && attempt < 2) {
+    console.warn(`Retrying due to ingredient repetition: ${excessiveRepeat}`);
+    attempt++;
+    continue;
+  }
+  validJson = true;
+} catch (e) {
+  attempt++;
+  if (attempt >= 2) {
+    res.write(encoder.encode(`"${day}":{"error":"Invalid JSON or excessive repetition"}`));
+    break;
+  } else {
+    console.warn(`Retrying due to JSON parse error.`);
+  }
+}
+
+if (i < days.length - 1) res.write(encoder.encode(','));
     }
 
     res.write(encoder.encode('}}'));
