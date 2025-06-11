@@ -134,9 +134,7 @@ Culinary Authenticity:
 - BBC Good Food: https://www.bbcgoodfood.com
 - BZfE & Chefkoch (Germany): https://www.bzfe.de / https://www.chefkoch.de
 
-You are a clinical AI dietitian working for Diet Care Platform (DCP) — a premium, evidence-based digital platform designed for physicians, licensed dietitians, and clinical nutritionists.
-
-⚠️ This is a professional medical environment. You must follow:
+You must follow:
 ${modelPrompt}
 
 Use only valid JSON with this format:
@@ -170,41 +168,42 @@ Patient information:
 - Target daily calories (CPM): ${cpm}
 - Number of meals per day: ${mealsPerDay}
 
-Return ONLY the object for key "${day}" — no wrapping, no summaries.
-`; 
+Return ONLY the object for key "${day}" — no wrapping, no summaries.`;
 
-        let responseText = '';
-let validJson = false;
-let attempt = 0;
+        const stream = await openai.chat.completions.create({
+          model: 'gpt-4-turbo',
+          stream: true,
+          temperature: 0.7,
+          max_tokens: 3000,
+          messages: [{ role: 'user', content: prompt }]
+        });
 
-while (!validJson && attempt < 2) {
-  const stream = await openai.chat.completions.create({
-    model: 'gpt-4-turbo',
-    stream: true,
-    temperature: 0.7,
-    max_tokens: 3000,
-    messages: [{ role: 'user', content: prompt }]
-  });
-
-        res.write(encoder.encode(`"${day}":`));
         responseText = '';
-
         for await (const chunk of stream) {
-  const text = chunk.choices?.[0]?.delta?.content;
-  if (text) {
-    res.write(encoder.encode(text));
-    responseText += text;
-  }
-}
+          const text = chunk.choices?.[0]?.delta?.content;
+          if (text) responseText += text;
         }
+
+        const forbiddenRepeats = ['owsianka', 'pierś z kurczaka', 'jogurt naturalny'];
+        const excessiveRepeat = forbiddenRepeats.find(ingredient =>
+          (responseText.toLowerCase().match(new RegExp(ingredient, 'g')) || []).length > 2
+        );
 
         try {
           JSON.parse(`{ "${day}": ${responseText} }`);
+
+          if (excessiveRepeat) {
+            console.warn(`Retrying due to ingredient repetition: ${excessiveRepeat}`);
+            attempt++;
+            continue;
+          }
+
+          res.write(encoder.encode(`"${day}":${responseText}`));
           validJson = true;
         } catch (e) {
           attempt++;
           if (attempt >= 2) {
-            res.write(encoder.encode(`"error_${day}":"Invalid JSON after 2 attempts"`));
+            res.write(encoder.encode(`"${day}":{"error":"Invalid JSON or excessive repetition"}`));
           } else {
             console.warn(`Retrying generation for ${day} due to JSON parse error.`);
           }
@@ -213,30 +212,7 @@ while (!validJson && attempt < 2) {
         if (validJson || attempt >= 2) break;
       }
 
-      const forbiddenRepeats = ['owsianka', 'pierś z kurczaka', 'jogurt naturalny'];
-const excessiveRepeat = forbiddenRepeats.find(ingredient => 
-  (responseText.toLowerCase().match(new RegExp(ingredient, 'g')) || []).length > 2
-);
-
-try {
-  JSON.parse(`{ "${day}": ${responseText} }`);
-  if (excessiveRepeat && attempt < 2) {
-    console.warn(`Retrying due to ingredient repetition: ${excessiveRepeat}`);
-    attempt++;
-    continue;
-  }
-  validJson = true;
-} catch (e) {
-  attempt++;
-  if (attempt >= 2) {
-    res.write(encoder.encode(`"${day}":{"error":"Invalid JSON or excessive repetition"}`));
-    break;
-  } else {
-    console.warn(`Retrying due to JSON parse error.`);
-  }
-}
-
-if (i < days.length - 1) res.write(encoder.encode(','));
+      if (i < days.length - 1) res.write(encoder.encode(','));
     }
 
     res.write(encoder.encode('}}'));
