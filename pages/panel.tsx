@@ -2,6 +2,9 @@
 import Head from 'next/head';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import LangAndThemeToggle from '@/components/LangAndThemeToggle';
+import PanelCard from '@/components/PanelCard';
+import { translatedTitles } from '@/utils/translatedTitles';
 
 // 🔌 Supabase
 import { supabase } from '@/lib/supabaseClient';
@@ -25,17 +28,33 @@ import type { LangKey } from '@/utils/i18n';
 
 // 🧠 Utils – AI, walidacja, PDF
 import { generateDietPdf } from '@/utils/generateDietPdf';
+import { transformDietPlanToEditableFormat } from '@/utils/transformDietPlan';
 import { generateInterviewPdf } from '@/utils/generateInterviewPdf';
 import { validateDiet } from '@/utils/validateDiet';
 import { parseMealPlanPreview } from '@/utils/parseMealPlanPreview';
+import { sendToPatient } from '@/utils/sendToPatient';
 
 // 🌍 Tłumaczenia
 import { getTranslation, tUI, languageLabels } from '@/utils/i18n';
 import { translations } from '@/utils/translations';
 import { translationsUI } from '@/utils/translationsUI';
 
+
 function Panel() {
   const [lang, setLang] = useState<LangKey>('pl');
+  useEffect(() => {
+  const langStorage = localStorage.getItem('platformLang') as LangKey | null;
+  if (langStorage) setLang(langStorage);
+}, []);
+useEffect(() => {
+  const storedTheme = localStorage.getItem('theme');
+  if (storedTheme === 'dark') {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
+}, []);
+
   const [userData, setUserData] = useState<any>(null);
   const [mealPlan, setMealPlan] = useState<Record<string, Meal[]>>({});
 
@@ -226,41 +245,42 @@ const getRecommendedMealsPerDay = (form: PatientData, interviewData: any): numbe
   // Domy�lnie � 4
   return 4;
 };
-const tryParseJSON = (raw: string): any | null => {
+const tryParseJSON = (raw: string, strict = true): any | null => {
   try {
-  let cleaned = raw
-    .replace(/```json/g, '')
-    .replace(/```/g, '')
-    .replace(/^\s*AI\s*[:\-]?\s*/gi, '')
-    .replace(/\r?\n/g, '')
-    .trim();
+    let cleaned = raw
+      .replace(/```json/g, '')
+      .replace(/```/g, '')
+      .replace(/^\s*AI\s*[:\-]?\s*/gi, '')
+      .trim();
 
-  const start = cleaned.indexOf('{');
-  const end = cleaned.lastIndexOf('}');
+    const start = cleaned.indexOf('{');
+    const end = cleaned.lastIndexOf('}');
 
-  if (start === -1 || end === -1 || start >= end) {
-    console.warn('⚠️ Nie znaleziono poprawnych nawiasów w JSON:', cleaned);
+    if (start === -1 || end === -1 || start >= end) {
+      console.warn('⚠️ Nie znaleziono nawiasów w JSON:', cleaned.slice(0, 100));
+      return null;
+    }
+
+    cleaned = cleaned.substring(start, end + 1);
+
+    const opens = [...cleaned.matchAll(/{/g)].length;
+    const closes = [...cleaned.matchAll(/}/g)].length;
+
+    if (strict && opens !== closes) {
+      console.warn('⚠️ Niezrównoważone nawiasy klamrowe. Pomijam.');
+      return null;
+    }
+
+    const parsed = JSON.parse(cleaned);
+    if (!parsed || typeof parsed !== 'object') return null;
+
+    return parsed;
+  } catch (err) {
+    console.error('❌ Błąd parsowania JSON:', err);
     return null;
   }
-
-  cleaned = cleaned.slice(start, end + 1);
-
-  // 🔍 Wstępna walidacja przed parsowaniem
-  if (
-    !(cleaned.startsWith('{') && cleaned.endsWith('}')) &&
-    !(cleaned.startsWith('[') && cleaned.endsWith(']'))
-  ) {
-    console.warn('⚠️ Nie wygląda na poprawny JSON:', cleaned);
-    return null;
-  }
-
-  console.log('? Cleaned JSON:', cleaned);
-  return JSON.parse(cleaned);
-} catch (err) {
-  console.error('❌ Błąd parsowania JSON:', err, '\nŹródło:', raw);
-  return null;
-}
 };
+
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
@@ -324,90 +344,41 @@ const handleSubmit = async (e: React.FormEvent) => {
     const reader = res.body.getReader();
     const decoder = new TextDecoder('utf-8');
     let rawText = '';
+    let rawCompleteText = '';
     let done = false;
 
     while (!done) {
       const { value, done: doneReading } = await reader.read();
       done = doneReading;
+
       const chunk = decoder.decode(value, { stream: true });
       rawText += chunk;
+      rawCompleteText += chunk;
       setStreamingText(rawText);
-
-      try {
-        const partial = tryParseJSON(rawText);
-        if (partial) {
-          const preview = parseMealPlanPreview(partial);
-          setEditableDiet(preview);
-        }
-      } catch {
-        // ignorujemy błędy parsowania częściowego
-      }
     }
-
     console.log("📦 RAW AI TEXT:", rawText);
-    let parsed = tryParseJSON(rawText);
+    let parsed = tryParseJSON(rawCompleteText);
     console.log("✅ Parsed JSON:", parsed);
 
-    if (!parsed) throw new Error('Nie można sparsować odpowiedzi AI.');
+if (!parsed) {
+  console.warn("❌ Parsowanie JSON nie powiodło się – dieta nie została wygenerowana.");
+  alert('❗ Nie udało się wygenerować diety. Spróbuj ponownie za chwilę lub skontaktuj się z administratorem.');
+  return;
+}
 
-    const converted: Record<string, Meal[]> = {};
-    const sourcePlan = parsed.mealPlan || parsed.week_plan;
-
-    if (sourcePlan && Array.isArray(sourcePlan)) {
-      for (const entry of sourcePlan) {
-        const { day, meals } = entry;
-        converted[mapDaysToPolish[day] || day] = meals.map((m: any) => ({
-          name: m.name || '',
-          description: m.description || '',
-          ingredients: [],
-          calories: m.kcal || 0,
-          glycemicIndex: m.glycemicIndex || 0,
-          time: m.time || ''
-        }));
-      }
-    } else if (parsed.dietPlan && typeof parsed.dietPlan === 'object') {
-      for (const [day, mealsObj] of Object.entries(parsed.dietPlan)) {
-        const meals: Meal[] = Object.entries(mealsObj as any).map(
-          ([name, meal]: [string, any]) => ({
-            name,
-            description: meal.menu || '',
-            ingredients: [],
-            calories: meal.kcal || 0,
-            glycemicIndex: meal.glycemicIndex || 0,
-            time: meal.time || ''
-          })
-        );
-        converted[mapDaysToPolish[day] || day] = meals;
-      }
-    } else if (parsed.weekPlan && Array.isArray(parsed.weekPlan)) {
-      for (const { day, meals } of parsed.weekPlan) {
-        converted[mapDaysToPolish[day] || day] = meals.map((meal: any) => ({
-          name: meal.name || '',
-          description: meal.menu || '',
-          ingredients: [],
-          calories: meal.kcal || 0,
-          glycemicIndex: meal.glycemicIndex || 0,
-          time: meal.time || ''
-        }));
-      }
-    } else {
-      throw new Error('Brak poprawnego planu posiłków w odpowiedzi AI (mealPlan, week_plan, dietPlan lub weekPlan)');
-    }
-
-    setMealPlan(converted);
-    setDiet(converted);
-    setEditableDiet(converted);
-
-    console.log("📤 FINAL editableDiet sent to table:", converted);
-  } catch (err) {
-    console.error('❌ Błąd główny:', err);
-    alert('Wystąpił błąd przy generowaniu diety.');
-  } finally {
-    setIsGenerating(false);
-  }
-};
+const converted = transformDietPlanToEditableFormat(parsed.dietPlan);
+setMealPlan(converted);
+setDiet(converted);
+setEditableDiet(converted);
+} catch (err) {
+  console.error('❌ Błąd główny:', err);
+  alert('Wystąpił błąd przy generowaniu diety.');
+} finally {
+  setIsGenerating(false);
+}
 
 const handleSendToPatient = () => {
+
   alert('?? Dieta zosta�a wys�ana pacjentowi (symulacja).');
 };
 const [notes, setNotes] = useState<Record<string, string>>({});
@@ -420,138 +391,233 @@ const handleCalculationResult = ({ suggestedModel, ...rest }: any) => {
   }));
 };
 return (
-  <div className="min-h-screen bg-[url('/background.jpg')] bg-cover bg-center bg-no-repeat backdrop-blur-sm py-10 px-4">
-    <h1 className="text-2xl font-bold text-center mb-6">
-      {tUI('doctorPanelTitle', lang)}
-    </h1>
+  <div
+  className="min-h-screen bg-cover bg-center bg-no-repeat bg-fixed py-10 px-4"
+  style={{
+    backgroundImage: "url('/background.jpg')",
+    backgroundSize: 'cover',
+  }}
+>
 
-    <div className="flex flex-col w-full max-w-[1400px] mx-auto gap-6 bg-white/90 rounded-xl shadow-lg p-8 backdrop-blur-sm">
+
+{/* Pasek z nagłówkiem i przełącznikiem */}
+<div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between px-4">
+  <div className="flex flex-col">
+    {userData?.name && (
+      <span className="text-sm font-medium text-gray-800">
+        {/* Tytuł naukowy */}
+        {userData?.title && translatedTitles[userData.title as 'dr' | 'drhab' | 'prof']
+          ? `${translatedTitles[userData.title as 'dr' | 'drhab' | 'prof'][lang]} `
+          : ''}
+        {/* Imię i nazwisko */}
+        {userData.name}
+        {/* Rola */}
+        {userData?.role && translationsUI[userData.role as 'doctor' | 'dietitian']
+          ? ` – ${translationsUI[userData.role as 'doctor' | 'dietitian'][lang]}`
+          : ''}
+      </span>
+    )}
+    <h1 className="text-2xl font-bold text-gray-800">
+      {tUI('doctorPanelTitle', lang)}
+    </h1>s
+  </div>
+  <LangAndThemeToggle />
+</div>
+
+
+    {/* Główna zawartość */}
+    <div className="z-10 flex flex-col w-full max-w-[1400px] mx-auto gap-6 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 mt-20 dark:text-white transition-colors">
 
       {/* Sekcja 1: Dane pacjenta */}
-      <PatientPanelSection form={form} setForm={setForm} lang={lang} />
+      <PanelCard>
+        <PatientPanelSection form={form} setForm={setForm} lang={lang} />
+      </PanelCard>
 
       {/* Sekcja 2: Dane medyczne */}
-      <MedicalForm onChange={handleMedicalChange} lang={lang} />
+      <PanelCard className="z-30">
+        <MedicalForm onChange={handleMedicalChange} lang={lang} />
+      </PanelCard>
 
- 
       {/* Sekcja 3: Wywiad pacjenta */}
-      <div className="bg-white/90 rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
-          <span className="text-xl">🧠</span> {tUI('interviewTitle', lang)}
-        </h3>
+      <PanelCard title={`🧠 ${tUI('interviewTitle', lang)}`}>
         <InterviewWizard
           form={form}
           onFinish={(data) => setInterviewData(data)}
           lang={lang}
         />
-      </div>
-
-
-      {/* Sekcja 4: Cel diety, model i kuchnia */}
-<div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 items-start">
-
-  {/* 🎯 Cel diety */}
-  <div className="bg-white rounded-md shadow-sm p-3 flex flex-col h-full">
-    <h3 className="text-base font-semibold text-gray-700 mb-2 flex items-center gap-2">
-      <span className="text-xl">🎯</span> {tUI('goal', lang)}
-    </h3>
-    <DietGoalForm
-      onChange={(goal) => setInterviewData({ ...interviewData, goal })}
-      lang={lang}
-    />
-  </div>
-
-  {/* 🍽️ Model diety */}
-  <div className="bg-white rounded-md shadow-sm p-3 flex flex-col h-full">
-    <h3 className="text-base font-semibold text-gray-700 mb-2 flex items-center gap-2">
-      <span className="text-xl">🍽️</span> {tUI('model', lang)}
-    </h3>
-    <SelectModelForm
-      onChange={(model) => setInterviewData({ ...interviewData, model })}
-      lang={lang}
-    />
-  </div>
-
-  {/* 🌍 Kuchnia świata */}
-  <div className="bg-white rounded-md shadow-sm p-3 flex flex-col h-full">
-    <h3 className="text-base font-semibold text-gray-700 mb-2 flex items-center gap-2">
-      <span className="text-xl">🌍</span> {tUI('cuisine', lang)}
-    </h3>
-    <SelectCuisineForm
-      onChange={(cuisine) => setInterviewData({ ...interviewData, cuisine })}
-      lang={lang}
-    />
-  </div>
-
-</div>
-
-              {/* 🔢 Sekcja 5: Kalkulator*/}
-    <div className="bg-white/90 rounded-lg shadow-md p-6">
-      <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
-        <span className="text-xl">📊</span> {tUI('calculator', lang)}
-      </h3>
-
-      <CalculationBlock
-        form={form}
-        interview={interviewData}
-        lang={lang}
-        onResult={handleCalculationResult}
+      </PanelCard>
+{/* Sekcja 3.1: Rekomendacje lekarza i liczba posiłków */}
+<PanelCard className="h-full">
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    {/* Zalecenia lekarza */}
+    <div className="flex flex-col space-y-2">
+      <label className="text-sm font-medium text-black dark:text-white">
+        {tUI('doctorRecommendation', lang)}
+      </label>
+      <textarea
+        rows={4}
+        className="w-full border rounded px-3 py-2 text-sm text-gray-800 dark:text-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+        value={interviewData.recommendation || ''}
+        onChange={(e) =>
+          setInterviewData({ ...interviewData, recommendation: e.target.value })
+        }
       />
     </div>
 
-
-      {/* Sekcja 6: Przyciski akcji */}
-      <div className="bg-white/90 rounded-lg shadow-md p-6 mt-2">
-        <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
-          <span className="text-xl">⚙️</span> {tUI('actions', lang)}
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-          <button
-            type="button"
-            onClick={handleSubmit}
-            className="w-full bg-blue-600 text-white px-4 py-3 rounded-md font-medium hover:bg-blue-700 disabled:opacity-50"
-            disabled={isGenerating}
-          >
-            {isGenerating ? tUI('writingDiet', lang) : tUI('generate', lang)}
-          </button>
-
-          <button
-            type="button"
-            className="w-full bg-purple-700 text-white px-4 py-3 rounded-md font-medium hover:bg-purple-800 disabled:opacity-50"
-            onClick={() => setDietApproved(true)}
-            disabled={isGenerating || !confirmedDiet}
-          >
-            {isGenerating ? '⏳ Czekaj...' : `✅ ${tUI('approvedDiet', lang)}`}
-          </button>
-
-          <button
-            type="button"
-            className="w-full bg-green-700 text-white px-4 py-3 rounded-md font-medium hover:bg-green-800 disabled:opacity-50"
-            onClick={() => {
-              if (isGenerating) {
-                alert('⏳ Dieta nie została jeszcze w pełni wygenerowana.');
-                return;
+          {/* Liczba posiłków */}
+          <div className="flex flex-col space-y-2">
+            <label className="text-sm font-medium text-black dark:text-white">
+              {tUI('mealsPerDay', lang)}
+            </label>
+            <select
+              className="w-full border rounded px-3 py-2 text-sm text-gray-800 dark:text-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+              value={interviewData.mealsPerDay || ''}
+              onChange={(e) =>
+                setInterviewData({ ...interviewData, mealsPerDay: parseInt(e.target.value) })
               }
-              if (!confirmedDiet) {
-                alert('❗ Najpierw zatwierdź dietę, zanim pobierzesz PDF.');
-                return;
-              }
-              generateDietPdf(form, bmi, confirmedDiet, dietApproved, notes);
-            }}
-            disabled={isGenerating || !confirmedDiet}
-          >
-            {isGenerating ? '⏳ Czekaj...' : `📄 ${tUI('pdf', lang)}`}
-          </button>
+            >
+              <option value="">{`-- ${tUI('selectOption', lang)} --`}</option>
+              {[2, 3, 4, 5, 6].map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </PanelCard>
 
-          <button
-            type="button"
-            className="w-full bg-blue-500 text-white px-4 py-3 rounded-md font-medium hover:bg-blue-600 disabled:opacity-50"
-            onClick={handleSendToPatient}
-            disabled={isGenerating}
-          >
-            {isGenerating ? '⏳ Czekaj...' : `📤 ${tUI('sendToPatient', lang)}`}
-          </button>
+      {/* Sekcja 4: Cel diety, model i kuchnia */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 items-start">
+        <PanelCard className="h-full">
+          <DietGoalForm
+            onChange={(goal) => setInterviewData({ ...interviewData, goal })}
+            lang={lang}
+          />
+        </PanelCard>
+
+       <PanelCard className="h-full">
+          <SelectModelForm
+            onChange={(model) => setInterviewData({ ...interviewData, model })}
+            lang={lang}
+          />
+        </PanelCard>
+
+        <PanelCard className="h-full">
+          <SelectCuisineForm
+            onChange={(cuisine) => setInterviewData({ ...interviewData, cuisine })}
+            lang={lang}
+          />
+        </PanelCard>
+      </div>
+
+      {/* Sekcja 5: Kalkulator */}
+      <PanelCard title={`🧮 ${tUI('patientInNumbers', lang)}`} className="h-full">
+        <CalculationBlock
+          form={form}
+          interview={interviewData}
+          lang={lang}
+          onResult={handleCalculationResult}
+        />
+      </PanelCard>
+
+     {/* Sekcja 6: Przyciski akcji */}
+<PanelCard title={tUI('actions', lang)} className="mt-2">
+  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+    <button
+      type="button"
+      onClick={handleSubmit}
+      className="w-full bg-blue-600 text-white px-4 py-3 rounded-md font-medium hover:bg-blue-700 disabled:opacity-50"
+      disabled={isGenerating}
+    >
+      {isGenerating ? (
+        <span className="flex items-center gap-2">
+          <span className="animate-spin">⚙️</span>
+          {tUI('writingDiet', lang)}
+        </span>
+      ) : tUI('generate', lang)}
+    </button>
+
+    <button
+      type="button"
+      className="w-full bg-purple-700 text-white px-4 py-3 rounded-md font-medium hover:bg-purple-800 disabled:opacity-50"
+      onClick={() => setDietApproved(true)}
+      disabled={isGenerating || !confirmedDiet}
+    >
+      {isGenerating ? '⏳ Czekaj...' : `✅ ${tUI('approvedDiet', lang)}`}
+    </button>
+
+    <button
+      type="button"
+      className="w-full bg-green-700 text-white px-4 py-3 rounded-md font-medium hover:bg-green-800 disabled:opacity-50"
+      onClick={() => {
+        if (isGenerating) {
+          alert('⏳ Dieta nie została jeszcze w pełni wygenerowana.');
+          return;
+        }
+        if (!confirmedDiet) {
+          alert('❗ Najpierw zatwierdź dietę, zanim pobierzesz PDF.');
+          return;
+        }
+        generateDietPdf(form, bmi, confirmedDiet, dietApproved, notes);
+      }}
+      disabled={isGenerating || !confirmedDiet}
+    >
+      {isGenerating ? '⏳ Czekaj...' : `📄 ${tUI('pdf', lang)}`}
+    </button>
+
+
+        <button
+  type="button"
+  className="w-full bg-blue-500 text-white px-4 py-3 rounded-md font-medium hover:bg-blue-600 disabled:opacity-50"
+  disabled={isGenerating}
+  onClick={async () => {
+    if (!form.email || !confirmedDiet) {
+      alert('❗ Najpierw zatwierdź dietę i upewnij się, że pacjent ma e-mail.');
+      return;
+    }
+
+    const pdfMake = (await import('pdfmake/build/pdfmake')).default;
+    const pdfFonts = (await import('pdfmake/build/vfs_fonts')).default;
+    pdfMake.vfs = pdfFonts.vfs;
+
+    const { generateDietPdf } = await import('@/utils/generateDietPdf');
+
+    const docDefinition = await generateDietPdf(
+      form,
+      bmi,
+      confirmedDiet,
+      dietApproved,
+      notes,
+      lang,
+      undefined,
+      interviewData,
+      {
+        bmi: interviewData.bmi,
+        ppm: interviewData.ppm,
+        cpm: interviewData.cpm,
+        pal: interviewData.pal,
+        kcalMaintain: interviewData.kcalMaintain,
+        kcalReduce: interviewData.kcalReduce,
+        kcalGain: interviewData.kcalGain,
+        nmcBroca: interviewData.nmcBroca,
+        nmcLorentz: interviewData.nmcLorentz
+      }
+    );
+
+    pdfMake.createPdf(docDefinition).getBlob(async (blob: Blob) => {
+      const success = await sendToPatient(form.email, blob, lang);
+      if (success) {
+        alert('📤 Dieta została wysłana pacjentowi!');
+      } else {
+        alert('❌ Wysyłka nie powiodła się. Sprawdź adres e-mail lub połączenie.');
+      }
+    });
+  }}
+>
+  {isGenerating ? '⏳ Czekaj...' : `📤 ${tUI('sendToPatient', lang)}`}
+</button>
+
         </div>
 
         {/* Pasek ładowania */}
@@ -560,32 +626,30 @@ return (
             ⏳ Piszę dietę... {streamingText.length > 20 && '(czekaj, trwa generowanie)'}
           </div>
         )}
-      </div>
-            
-      <pre className="text-xs bg-gray-100 p-2 rounded overflow-x-auto">
-        {JSON.stringify(Object.keys(editableDiet), null, 2)}
-      </pre>
+      </PanelCard>
 
       {/* Sekcja 7: Tabela z dietą */}
       {editableDiet && Object.keys(editableDiet).length > 0 && (
-        <div className="mt-6">
+        <PanelCard>
           <DietTable
             editableDiet={editableDiet}
             setEditableDiet={setEditableDiet}
-            setConfirmedDiet={(diet) => {
-              handleDietSave(Object.values(diet).flat());
+            setConfirmedDiet={(dietByDay) => {
+              const mealsWithDays = Object.entries(dietByDay).flatMap(([day, meals]) =>
+                meals.map((meal) => ({ ...meal, day }))
+              );
+              handleDietSave(mealsWithDays);
             }}
             isEditable={!dietApproved}
             lang={lang}
             notes={notes}
             setNotes={setNotes}
           />
-        </div>
+        </PanelCard>
       )}
-
     </div>
   </div>
 );
-
+}
 }
 export default Panel;
