@@ -257,8 +257,8 @@ const tryParseJSON = (raw: string, strict = true): any | null => {
     const end = cleaned.lastIndexOf('}');
 
     if (start === -1 || end === -1 || start >= end) {
-      console.warn('⚠️ Nie znaleziono nawiasów w JSON:', cleaned.slice(0, 100));
-      return null;
+      console.warn('⛔ Brak nawiasów klamrowych:', cleaned.slice(0, 200));
+      throw new Error('Nie można sparsować odpowiedzi AI – brak nawiasów.');
     }
 
     cleaned = cleaned.substring(start, end + 1);
@@ -267,17 +267,19 @@ const tryParseJSON = (raw: string, strict = true): any | null => {
     const closes = [...cleaned.matchAll(/}/g)].length;
 
     if (strict && opens !== closes) {
-      console.warn('⚠️ Niezrównoważone nawiasy klamrowe. Pomijam.');
-      return null;
+      console.warn('⚠️ Niezrównoważone nawiasy:', opens, 'vs', closes);
+      throw new Error('Nie można sparsować odpowiedzi AI – zła liczba nawiasów.');
     }
 
     const parsed = JSON.parse(cleaned);
-    if (!parsed || typeof parsed !== 'object') return null;
+    if (!parsed || typeof parsed !== 'object') {
+      throw new Error('Odpowiedź nie jest obiektem JSON');
+    }
 
     return parsed;
   } catch (err) {
-    console.error('❌ Błąd parsowania JSON:', err);
-    return null;
+    console.error('❌ JSON.parse() failed:', err);
+    throw new Error('Nie można sparsować odpowiedzi AI.');
   }
 };
 
@@ -383,7 +385,16 @@ const handleSubmit = async (e: React.FormEvent) => {
           ([name, meal]: [string, any]) => ({
             name,
             description: meal.menu || '',
-            ingredients: [],
+            ingredients: Array.isArray(meal.ingredients)
+            ? meal.ingredients
+            : typeof meal.ingredients === 'string'
+            ? meal.ingredients.split(',').map((item: string) => {
+            const match = item.trim().match(/(.+?)\\s*\\((\\d+)g\\)/);
+            return match
+          ? { product: match[1].trim(), weight: parseInt(match[2]) }
+          : { product: item.trim(), weight: 0 };
+            })
+          : [],
             calories: meal.kcal || 0,
             glycemicIndex: meal.glycemicIndex || 0,
             time: meal.time || ''
@@ -691,6 +702,8 @@ return (
       )}
     </div>
   </div>
+  
 );
 }
+
 export default Panel;
