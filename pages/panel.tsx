@@ -360,22 +360,64 @@ const handleSubmit = async (e: React.FormEvent) => {
     let parsed = tryParseJSON(rawCompleteText);
     console.log("✅ Parsed JSON:", parsed);
 
-if (!parsed) {
-  console.warn("❌ Parsowanie JSON nie powiodło się – dieta nie została wygenerowana.");
-  alert('❗ Nie udało się wygenerować diety. Spróbuj ponownie za chwilę lub skontaktuj się z administratorem.');
-  return;
-}
+  if (!parsed) throw new Error('Nie można sparsować odpowiedzi AI.');
 
-const converted = transformDietPlanToEditableFormat(parsed.dietPlan);
-setMealPlan(converted);
-setDiet(converted);
-setEditableDiet(converted);
-} catch (err) {
-  console.error('❌ Błąd główny:', err);
-  alert('Wystąpił błąd przy generowaniu diety.');
-} finally {
-  setIsGenerating(false);
-}
+    const converted: Record<string, Meal[]> = {};
+    const sourcePlan = parsed.mealPlan || parsed.week_plan;
+
+    if (sourcePlan && Array.isArray(sourcePlan)) {
+      for (const entry of sourcePlan) {
+        const { day, meals } = entry;
+        converted[mapDaysToPolish[day] || day] = meals.map((m: any) => ({
+          name: m.name || '',
+          description: m.description || '',
+          ingredients: [],
+          calories: m.kcal || 0,
+          glycemicIndex: m.glycemicIndex || 0,
+          time: m.time || ''
+        }));
+      }
+    } else if (parsed.dietPlan && typeof parsed.dietPlan === 'object') {
+      for (const [day, mealsObj] of Object.entries(parsed.dietPlan)) {
+        const meals: Meal[] = Object.entries(mealsObj as any).map(
+          ([name, meal]: [string, any]) => ({
+            name,
+            description: meal.menu || '',
+            ingredients: [],
+            calories: meal.kcal || 0,
+            glycemicIndex: meal.glycemicIndex || 0,
+            time: meal.time || ''
+          })
+        );
+        converted[mapDaysToPolish[day] || day] = meals;
+      }
+    } else if (parsed.weekPlan && Array.isArray(parsed.weekPlan)) {
+      for (const { day, meals } of parsed.weekPlan) {
+        converted[mapDaysToPolish[day] || day] = meals.map((meal: any) => ({
+          name: meal.name || '',
+          description: meal.menu || '',
+          ingredients: [],
+          calories: meal.kcal || 0,
+          glycemicIndex: meal.glycemicIndex || 0,
+          time: meal.time || ''
+        }));
+      }
+    } else {
+      throw new Error('Brak poprawnego planu posiłków w odpowiedzi AI (mealPlan, week_plan, dietPlan lub weekPlan)');
+    }
+
+    setMealPlan(converted);
+    setDiet(converted);
+    setEditableDiet(converted);
+
+    console.log("📤 FINAL editableDiet sent to table:", converted);
+  } catch (err) {
+    console.error('❌ Błąd główny:', err);
+    alert('Wystąpił błąd przy generowaniu diety.');
+  } finally {
+    setIsGenerating(false);
+  }
+};
 
 const handleSendToPatient = () => {
 
@@ -419,7 +461,7 @@ return (
     )}
     <h1 className="text-2xl font-bold text-gray-800">
       {tUI('doctorPanelTitle', lang)}
-    </h1>s
+    </h1>
   </div>
   <LangAndThemeToggle />
 </div>
@@ -650,6 +692,5 @@ return (
     </div>
   </div>
 );
-}
 }
 export default Panel;
