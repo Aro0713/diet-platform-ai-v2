@@ -152,9 +152,14 @@ export default function CalculationBlock({ form, interview, lang, onResult }: Pr
       </div>
 
       <div className="space-y-1 text-xs">
-      <div><strong>{tUI('physicalActivity', lang)}:</strong> {interview.section9?.q1 || tUI('noData', lang)}</div>
-      <div><strong>{tUI('sleepQuality', lang)}:</strong> {interview.section2?.q14 || tUI('noData', lang)}</div>
-      <div><strong>{tUI('stressLevel', lang)}:</strong> {interview.section2?.q13 || tUI('noData', lang)}</div>
+      <div>
+       <strong>{tUI('physicalActivity', lang)}:</strong>{' '}
+       {interview.section3?.q1 === 'Tak'
+       ? interview.section3?.q2 || tUI('yes', lang)
+      : interview.section3?.q1 || tUI('noData', lang)}
+      </div>
+      <div><strong>{tUI('sleepQuality', lang)}:</strong> <span className="text-blue-500">{interview.section2?.q14 || tUI('noData', lang)}</span></div>
+      <div><strong>{tUI('stressLevel', lang)}:</strong> <span className="text-red-500">{interview.section2?.q13 || tUI('noData', lang)}</span></div>
       <div><strong>{tUI('mealCount', lang)}:</strong> {mealCount ?? tUI('noData', lang)}</div>
       </div>
     </div>

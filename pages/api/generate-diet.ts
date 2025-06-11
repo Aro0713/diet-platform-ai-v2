@@ -115,11 +115,15 @@ Strict rules:
 
 Language of meal descriptions: ${selectedLang}
 Adapt the content to:
-- patient's goal: ${goalExplanation}
-- doctor's notes: ${recommendation}
-- allergies, health conditions, test results, stress, appetite, culture
-- daily kcal and macronutrients matched to CPM
-- mealsPerDay: ${mealsPerDay}
+- Patient's goal: ${goalExplanation}
+- Doctor's notes: ${recommendation}
+- Allergies, health conditions, test results, stress, appetite, culture
+- Daily energy target (CPM): ${cpm}
+
+Number of meals per day: ${mealsPerDay}.
+Use this value to generate the correct number of meals.
+If missing, determine mealsPerDay based on medical and lifestyle data.
+You may choose 3, 4, 5 or 6 meals depending on patient's condition, goal and adherence.
 
 Respect culinary and cultural preferences intelligently:
 - If the patient or doctor selected a specific cuisine (e.g. Indian, Japanese, Kosher), this cuisine takes precedence over cultural background inferred from language or region.
@@ -140,6 +144,7 @@ Each meal must include:
 
 You must always return a complete and syntactically correct JSON object under the key "dietPlan".
 Do not exceed 3000 tokens — compress if needed (e.g. limit ingredients to 3–4).
+If output becomes too long, reduce ingredients to max 3–4 per meal.
 Never output incomplete, truncated or invalid JSON.
 
 Return only the value of the "${day}" property from dietPlan (no wrapper).
