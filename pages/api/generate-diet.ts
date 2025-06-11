@@ -80,10 +80,54 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     for (let i = 0; i < days.length; i++) {
       const day = days[i];
-    
       const modelPrompt = modelRules[form.model] || '';
+
       const prompt = `
-You are a clinical dietitian AI. Generate a 7-day individualized medical diet plan in perfect JSON format.
+You are a clinical AI dietitian working for Diet Care Platform (DCP) — a premium, evidence-based digital platform designed for physicians, licensed dietitians, and clinical nutritionists.
+
+⚠️ This is a professional medical environment, not a chatbot. You are bound to follow clinical-grade accuracy, cultural authenticity, nutritional safety, and strict international dietary standards.
+
+You MUST base your entire output on the latest guidelines, data sources, and culinary authenticity. Apply the following resources directly:
+
+---
+
+Nutrition Composition and Food Databases:
+- USDA FoodData Central: https://fdc.nal.usda.gov
+- Polish IŻŻ Tables: https://ncez.pzh.gov.pl
+- Open Food Facts: https://world.openfoodfacts.org
+
+Nutritional Guidelines and RDA:
+- Dietary Guidelines USA 2020–2025: https://www.dietaryguidelines.gov
+- Polish Dietary Norms (PZH): https://ncez.pzh.gov.pl
+- EFSA Reference Values: https://www.efsa.europa.eu
+- WHO Nutrition Targets: https://www.who.int
+- Japan MHLW Guidelines: https://www.mhlw.go.jp
+- India NIN Guidelines: https://www.nin.res.in
+- China CNS Reports: http://www.cnsoc.org
+- Russia ION Guidelines: http://www.ion.ru
+
+Clinical Guidelines:
+- Oncology: https://www.esmo.org
+- Obesity: https://www.worldobesity.org
+- IBD: https://ibdstandards.org.uk
+- Cardiology: https://www.escardio.org
+- ESPEN: https://www.espen.org/guidelines
+- AND (USA): https://www.eatrightpro.org
+- NICE UK: https://www.nice.org.uk
+- EFAD: https://www.efad.org
+- Evidence & Research: https://pubmed.ncbi.nlm.nih.gov, https://www.cochranelibrary.com
+
+Culinary Authenticity:
+- TasteAtlas: https://www.tasteatlas.com
+- EatYourWorld: https://eatyourworld.com
+- Great British Chefs: https://www.greatbritishchefs.com
+- Sanjeev Kapoor: https://www.sanjeevkapoor.com
+- Veg Recipes of India: https://www.vegrecipesofindia.com
+- Just One Cookbook (Japan): https://www.justonecookbook.com
+- RBTH Russian Kitchen: https://www.rbth.com/russian-kitchen
+- TheSpruceEats (USA): https://www.thespruceeats.com
+- BBC Good Food: https://www.bbcgoodfood.com
+- BZfE & Chefkoch (Germany): https://www.bzfe.de / https://www.chefkoch.de
 
 Return the output **only** as raw JSON object like this:
 {
@@ -140,6 +184,9 @@ Respect culinary and cultural preferences intelligently:
 Selected cuisine: ${form.cuisine}
 Patient's cultural context: ${culturalContext}
 
+Try to avoid repeating the same key ingredients more than 2 times across the 7 days.
+The meal plan must not repeat the same **main ingredient** in the same meal slot more than twice in a week.
+
 Each meal must include:
 - "time" – meal time in HH:mm
 - "menu" – short description
@@ -161,9 +208,6 @@ Return only the value of the "${day}" property from dietPlan (no wrapper).
 
 Important: make sure the response ends with a complete and valid closing brace '}'.
 Never return truncated or incomplete JSON.
-
-All patient data:
-${JSON.stringify(patientData, null, 2)}
 `;
 
       const stream = await openai.chat.completions.create({
@@ -191,4 +235,3 @@ ${JSON.stringify(patientData, null, 2)}
     res.status(500).json({ error: 'Błąd generowania diety przez AI.' });
   }
 }
-
