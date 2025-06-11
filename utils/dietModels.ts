@@ -1,96 +1,99 @@
 export const modelRules: Record<string, string> = {
   'Dieta ketogeniczna': `
-    This is a strict ketogenic diet.
-    - Total daily carbohydrates must be below 50g
-    - No grains, no oats, no bread, no pasta
-    - Avoid high-carb fruits (only berries allowed)
-    - Focus on fat sources: avocado, olive oil, coconut oil
-    - Moderate protein: eggs, meat, fish
-    - Meals must be high-fat, moderate-protein, ultra-low-carb
-  `,
+You are generating a strict clinical ketogenic diet.
+- You MUST stay below 50g of carbohydrates per day.
+- You MUST use high-fat ingredients in every meal (e.g. avocado, eggs, coconut oil).
+- You ABSOLUTELY CANNOT include oats, bread, rice, potatoes, bananas, or sugar.
+- Moderate protein only: use meat, fish, eggs.
+- Meals MUST be keto-adapted individually — not just the daily sum.
+`,
 
   'Dieta niskowęglowodanowa': `
-    This is a low-carbohydrate diet.
-    - Total daily carbs should be 80–120g
-    - Limit sugar, sweets, fruit juice, bread, pasta
-    - Focus on proteins, vegetables, and healthy fats
-  `,
+This is a low-carbohydrate diet for blood sugar control or weight management.
+- You MUST limit carbs to 80–120g/day.
+- You MUST limit bread, sugar, pasta, rice, juice.
+- You MUST emphasize vegetables, protein and fats.
+- Avoid ultra-processed foods.
+`,
 
   'Dieta wysokobiałkowa': `
-    This is a high-protein diet.
-    - At least 1.6g of protein per kg of body weight per day
-    - Every meal should include a protein source
-    - Avoid excessive carbs and ultra-processed foods
-  `,
+This is a high-protein clinical diet.
+- You MUST provide at least 1.6g protein per kg body weight.
+- You MUST include a protein source in EVERY meal.
+- You MUST limit simple carbohydrates and sugars.
+- You CANNOT omit protein in any meal.
+`,
 
   'Dieta wątrobowa': `
-    This is a liver-friendly diet.
-    - Low fat, low sugar
-    - Avoid alcohol, fried food, processed meats
-    - Emphasize vegetables, lean protein, complex carbs
-    - Avoid saturated fats and fructose
-  `,
+This is a liver-friendly diet for hepatic protection.
+- You MUST use low-fat, low-sugar ingredients.
+- You MUST AVOID alcohol, fried food, fructose and processed meat.
+- Meals should be vegetable-based with complex carbs.
+`,
 
   'Dieta nerkowa': `
-    This is a renal diet.
-    - Limit phosphorus, potassium, and sodium
-    - Reduce dairy, bananas, beans, processed foods
-    - Limit protein to 0.6–0.8g/kg/day (unless on dialysis)
-  `,
+This is a renal diet for chronic kidney disease.
+- You MUST limit sodium, phosphorus and potassium.
+- You ABSOLUTELY CANNOT include bananas, dairy, beans, nuts or processed foods.
+- Protein MUST be limited to 0.6–0.8g/kg unless dialysis is active.
+`,
 
   'Dieta FODMAP (przy IBS)': `
-    This is a low-FODMAP diet for IBS.
-    - Avoid fermentable sugars: onion, garlic, apples, wheat, legumes
-    - Prefer rice, potatoes, carrots, spinach, bananas (ripe), strawberries
-    - Use lactose-free dairy only
-  `,
+You are generating a low-FODMAP diet for IBS symptom control.
+- You MUST exclude onion, garlic, apples, wheat, legumes.
+- Use only tolerated foods: rice, potatoes, spinach, carrots, ripe banana.
+- Use lactose-free or plant-based dairy ONLY.
+`,
 
   'Dieta bezglutenowa': `
-    This is a gluten-free diet.
-    - Absolutely avoid wheat, rye, barley, spelt
-    - Only use gluten-free grains like rice, quinoa, buckwheat
-  `,
+This is a strict gluten-free diet.
+- You ABSOLUTELY CANNOT include any wheat, rye, barley or spelt.
+- You MUST use gluten-free grains (e.g. rice, quinoa, buckwheat).
+- Avoid all hidden gluten sources.
+`,
 
   'Dieta DASH': `
-    This is a DASH diet (for hypertension).
-    - High in potassium, magnesium, calcium
-    - Low in sodium (<1500mg/day)
-    - Emphasize fruits, vegetables, whole grains, lean meats
-    - Avoid salt, red meat, and processed foods
-  `,
+You are generating a DASH diet for hypertension prevention.
+- You MUST prioritize potassium, magnesium, calcium-rich foods.
+- You MUST stay below 1500mg sodium/day.
+- You MUST emphasize vegetables, fruits, whole grains, legumes.
+- You CANNOT include processed meats, salty snacks or sugary drinks.
+`,
 
   'Dieta śródziemnomorska': `
-    This is a Mediterranean diet.
-    - Base meals on vegetables, legumes, whole grains, and olive oil
-    - Include fish and moderate dairy
-    - Limit red meat and sweets
-  `,
+This is a Mediterranean clinical diet.
+- You MUST use vegetables, legumes, whole grains and olive oil as the core.
+- You SHOULD include fish and fermented dairy.
+- You MUST limit red meat and sweets.
+- You SHOULD include herbs like basil, thyme, oregano.
+`,
 
   'Dieta wegańska': `
-    This is a vegan diet.
-    - Exclude all animal products: meat, dairy, eggs, honey
-    - Use legumes, tofu, grains, nuts and seeds as protein sources
-    - Ensure B12, iron and omega-3 intake
-  `,
+This is a strict vegan diet.
+- You ABSOLUTELY CANNOT include any animal product: meat, dairy, eggs, honey.
+- You MUST use legumes, tofu, soy, grains, nuts, seeds.
+- You MUST ensure B12, iron and omega-3 presence.
+`,
 
   'Dieta eliminacyjna': `
-    This is an elimination diet.
-    - Remove common allergens: dairy, eggs, gluten, soy, nuts, seafood
-    - Use simple, hypoallergenic foods (e.g. rice, zucchini, turkey)
-    - Meals must be limited in variety
-  `,
+This is a short-term elimination diet for allergy identification.
+- You MUST remove common allergens: dairy, eggs, gluten, soy, nuts, seafood.
+- You MUST use simple hypoallergenic ingredients.
+- You CANNOT include processed foods or sauces.
+- Meals MUST be repetitive and minimal.
+`,
 
   'Dieta lekkostrawna': `
-    This is an easy-to-digest (light) diet.
-    - Avoid raw vegetables, fried and fatty foods
-    - Prefer boiled, steamed, baked meals
-    - No legumes, nuts, seeds, cabbage, or spicy seasoning
-  `,
+You are generating an easy-to-digest diet for GI sensitivity.
+- You MUST avoid raw vegetables, fried foods, legumes, cabbage, spicy seasoning.
+- You MUST use boiled, baked or steamed ingredients.
+- Meals MUST be soft-textured and low-residue.
+`,
 
   'Dieta przeciwzapalna': `
-    This is an anti-inflammatory diet.
-    - Avoid processed meat, refined sugar, trans fats
-    - Use turmeric, ginger, green vegetables, berries, olive oil
-    - Include omega-3 fats (fish, flaxseed)
-  `
+This is an anti-inflammatory diet.
+- You MUST exclude processed meat, sugar, refined oils, trans fats.
+- You MUST include turmeric, ginger, leafy greens, berries, olive oil.
+- You SHOULD include omega-3 fats from fish, flax, chia.
+`
 };

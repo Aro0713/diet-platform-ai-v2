@@ -1,4 +1,5 @@
 import { Meal } from '../types';
+import { dietModelMeta } from '../utils/dietModelMeta';
 
 export function validateDiet(diet: Meal[]): Record<number, string[]> {
   const errors: Record<number, string[]> = {};
@@ -37,4 +38,46 @@ export function validateDiet(diet: Meal[]): Record<number, string[]> {
   });
 
   return errors;
+}
+
+export function validateDietWithModel(diet: Meal[], modelName: string): string[] {
+  const issues: string[] = [];
+  const meta = dietModelMeta[modelName];
+
+  if (!meta) {
+    issues.push(`Brak definicji modelu dla: ${modelName}`);
+    return issues;
+  }
+
+  if (meta.minMeals && diet.length < meta.minMeals) {
+    issues.push(`Zbyt mało posiłków (min. ${meta.minMeals})`);
+  }
+  if (meta.maxMeals && diet.length > meta.maxMeals) {
+    issues.push(`Zbyt dużo posiłków (max. ${meta.maxMeals})`);
+  }
+
+  if (meta.forbiddenIngredients) {
+    diet.forEach((meal, dayIndex) => {
+      meal.ingredients.forEach(ing => {
+        if (meta.forbiddenIngredients!.some(f => ing.product.toLowerCase().includes(f.toLowerCase()))) {
+          issues.push(`Zakazany składnik "${ing.product}" w posiłku dnia ${dayIndex + 1}: ${meal.name}`);
+        }
+      });
+    });
+  }
+
+  const ingredientFrequency: Record<string, number> = {};
+  diet.forEach(meal => {
+    meal.ingredients.forEach(ing => {
+      const key = ing.product.toLowerCase();
+      ingredientFrequency[key] = (ingredientFrequency[key] || 0) + 1;
+    });
+  });
+  Object.entries(ingredientFrequency).forEach(([product, count]) => {
+    if (count > 2) {
+      issues.push(`Składnik "${product}" występuje ${count} razy – przekroczony limit (max 2x)`);
+    }
+  });
+
+  return issues;
 }
