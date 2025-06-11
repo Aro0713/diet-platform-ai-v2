@@ -121,9 +121,13 @@ Adapt the content to:
 - Daily energy target (CPM): ${cpm}
 
 Number of meals per day: ${mealsPerDay}.
-Use this value to generate the correct number of meals.
-If missing, determine mealsPerDay based on medical and lifestyle data.
-You may choose 3, 4, 5 or 6 meals depending on patient's condition, goal and adherence.
+If mealsPerDay is a number, you must generate exactly that number of meals for every day — no more, no less.
+
+If mealsPerDay is "not provided", infer the number of meals (3 to 6) based on patient's clinical and lifestyle data, appetite, goal, and conditions (e.g. diabetes → 5 meals).
+
+⚠️ All 7 days must have **exactly the same number of meals**. You may not vary the number of meals between days.
+
+Each meal should be as concise as possible and include no more than 3–4 ingredients when possible.
 
 Respect culinary and cultural preferences intelligently:
 - If the patient or doctor selected a specific cuisine (e.g. Indian, Japanese, Kosher), this cuisine takes precedence over cultural background inferred from language or region.
@@ -144,8 +148,12 @@ Each meal must include:
 
 You must always return a complete and syntactically correct JSON object under the key "dietPlan".
 Do not exceed 3000 tokens — compress if needed (e.g. limit ingredients to 3–4).
+Each day must have exactly the same number of meals (e.g. 3, 4, or 5) for all 7 days.
 If output becomes too long, reduce ingredients to max 3–4 per meal.
 Never output incomplete, truncated or invalid JSON.
+
+IMPORTANT: In "ingredients" array, every object must be separated by a comma, and the array must end with a closing bracket "]".
+Do NOT return invalid or incomplete ingredient lists.
 
 Return only the value of the "${day}" property from dietPlan (no wrapper).
 

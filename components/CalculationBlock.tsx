@@ -3,13 +3,13 @@
 import React, { useEffect, useState } from "react";
 import PanelCard from './PanelCard';
 import { tUI, LangKey } from "@/utils/i18n";
-import { PatientData, InterviewData } from "@/types";
+import { PatientData } from "@/types";
 import { activityLevels } from '@/utils/translations/activityLevels';
 import { calculationBlock } from '@/utils/translations/calculationBlock';
 
 interface Props {
   form: PatientData;
-  interview: InterviewData;
+  interview: Record<string, string>; // poprawiony typ
   lang: LangKey;
   onResult: (data: {
     bmi: number;
@@ -54,7 +54,7 @@ export default function CalculationBlock({ form, interview, lang, onResult }: Pr
     : null;
 
  useEffect(() => {
-  const raw = interview.section9?.q1?.toLowerCase?.() || '';
+  const raw = interview.q1?.toLowerCase?.() || '';
 
   const inferred =
     raw.includes("brak") || raw.includes("nie podejmuję") || raw.includes("0") || raw.includes("1") ? 1.3 :
@@ -66,59 +66,61 @@ export default function CalculationBlock({ form, interview, lang, onResult }: Pr
 
   setPal(inferred);
   setAutoPAL(inferred);
-}, [interview.section9?.q1]);
+}, [interview.q1]);
 
 
-  useEffect(() => {
-    let hint = "";
-    let suggestedModel = "";
+ useEffect(() => {
+  let hint = "";
+  let suggestedModel = "";
 
-    if (pal <= 1.4 && isValid(cpm) && cpm > 2600) {
-      hint = tCalc('alertHighCPMLowPAL', lang);
-      suggestedModel = "lowcal";
-    } else if (isValid(bmi) && isValid(ppm) && bmi > 30 && ppm < 1300) {
-      hint = "⚠️ Wysoki BMI i niskie PPM – możliwa niska masa mięśniowa.";
-      suggestedModel = "high-protein";
-    } else if (mealCount && mealCount < 3) {
-      hint = "❗ Pacjent spożywa mniej niż 3 posiłki dziennie – możliwe problemy z utrzymaniem sytości.";
-    } else if (interview.section8?.q8_4?.toLowerCase().includes("redukcja") && isValid(cpm) && cpm > 2700) {
-      hint = "🔥 CPM wysokie przy celu redukcji – zalecany model niskokaloryczny.";
-      suggestedModel = "lowcal";
-    } else if (isValid(bmi) && bmi < 18.5) {
-      hint = "🔺 Niedowaga – rozważ dietę wysokokaloryczną.";
-      suggestedModel = "highcal";
-    }
+  const mealCountNum = Number(mealCount); // 🟢 konwersja na number
 
-    setInterpretation(hint);
+  if (pal <= 1.4 && isValid(cpm) && cpm > 2600) {
+    hint = tCalc('alertHighCPMLowPAL', lang);
+    suggestedModel = "lowcal";
+  } else if (isValid(bmi) && isValid(ppm) && bmi > 30 && ppm < 1300) {
+    hint = "⚠️ Wysoki BMI i niskie PPM – możliwa niska masa mięśniowa.";
+    suggestedModel = "high-protein";
+  } else if (mealCountNum && mealCountNum < 3) {
+    hint = "❗ Pacjent spożywa mniej niż 3 posiłki dziennie – możliwe problemy z utrzymaniem sytości.";
+  } else if (interview.q8_4?.toLowerCase().includes("redukcja") && isValid(cpm) && cpm > 2700) {
+    hint = "🔥 CPM wysokie przy celu redukcji – zalecany model niskokaloryczny.";
+    suggestedModel = "lowcal";
+  } else if (isValid(bmi) && bmi < 18.5) {
+    hint = "🔺 Niedowaga – rozważ dietę wysokokaloryczną.";
+    suggestedModel = "highcal";
+  }
 
-    if (typeof onResult === "function") {
-      onResult({
-        bmi: isValid(bmi) ? Math.round(bmi * 10) / 10 : 0,
-        ppm: isValid(ppm) ? Math.round(ppm) : 0,
-        cpm: isValid(cpm) ? Math.round(cpm) : 0,
-        pal,
-        kcalMaintain: isValid(kcalMaintain) ? Math.round(kcalMaintain) : 0,
-        kcalReduce: isValid(kcalReduce) ? Math.round(kcalReduce) : 0,
-        kcalGain: isValid(kcalGain) ? Math.round(kcalGain) : 0,
-        nmcBroca: isValid(nmcBroca) ? Math.round(nmcBroca * 10) / 10 : 0,
-        nmcLorentz: isValid(nmcLorentz) ? Math.round(nmcLorentz * 10) / 10 : 0,
-        suggestedModel,
-      });
-    }
-  }, [
-    bmi,
-    ppm,
-    cpm,
-    pal,
-    kcalMaintain,
-    kcalReduce,
-    kcalGain,
-    nmcBroca,
-    nmcLorentz,
-    mealCount,
-    lang,
-    interview.section8?.q8_4
-  ]);
+  setInterpretation(hint);
+
+  if (typeof onResult === "function") {
+    onResult({
+      bmi: isValid(bmi) ? Math.round(bmi * 10) / 10 : 0,
+      ppm: isValid(ppm) ? Math.round(ppm) : 0,
+      cpm: isValid(cpm) ? Math.round(cpm) : 0,
+      pal,
+      kcalMaintain: isValid(kcalMaintain) ? Math.round(kcalMaintain) : 0,
+      kcalReduce: isValid(kcalReduce) ? Math.round(kcalReduce) : 0,
+      kcalGain: isValid(kcalGain) ? Math.round(kcalGain) : 0,
+      nmcBroca: isValid(nmcBroca) ? Math.round(nmcBroca * 10) / 10 : 0,
+      nmcLorentz: isValid(nmcLorentz) ? Math.round(nmcLorentz * 10) / 10 : 0,
+      suggestedModel,
+    });
+  }
+}, [
+  bmi,
+  ppm,
+  cpm,
+  pal,
+  kcalMaintain,
+  kcalReduce,
+  kcalGain,
+  nmcBroca,
+  nmcLorentz,
+  mealCount,
+  lang,
+  interview.q8_4
+]);
 
   return (
  <PanelCard title={`🧮 ${tUI('calculator', lang)}`} className="h-full">
@@ -152,39 +154,38 @@ export default function CalculationBlock({ form, interview, lang, onResult }: Pr
       </div>
 
       <div className="space-y-1 text-xs">
-  <div>
-    <strong>{tUI('physicalActivity', lang)}:</strong>{' '}
-    {interview.section3?.q1 === 'Tak'
-      ? interview.section3?.q2 || tUI('yes', lang)
-      : interview.section3?.q1 || <span className="text-red-500">{tUI('noData', lang)}</span>}
-  </div>
+        <div>
+          <strong>{tUI('physicalActivity', lang)}:</strong>{' '}
+          {interview.q1 === 'Tak'
+            ? interview.q2 || tUI('yes', lang)
+            : interview.q1 || <span className="text-red-500">{tUI('noData', lang)}</span>}
+        </div>
 
-  <div>
-    <strong>{tUI('sleepQuality', lang)}:</strong>{' '}
-    {interview.section2?.q7
-      ? interview.section2.q7
-      : <span className="text-blue-400">{tUI('noData', lang)}</span>}
-  </div>
+        <div>
+          <strong>{tUI('sleepQuality', lang)}:</strong>{' '}
+          {interview.q7
+            ? interview.q7
+            : <span className="text-blue-400">{tUI('noData', lang)}</span>}
+        </div>
 
-  <div>
-    <strong>{tUI('stressLevel', lang)}:</strong>{' '}
-    {interview.section2?.q8
-      ? interview.section2.q8
-      : <span className="text-red-500">{tUI('noData', lang)}</span>}
-  </div>
+        <div>
+          <strong>{tUI('stressLevel', lang)}:</strong>{' '}
+          {interview.q8
+            ? interview.q8
+            : <span className="text-red-500">{tUI('noData', lang)}</span>}
+        </div>
 
-  <div>
-    <strong>{tUI('mealCount', lang)}:</strong> {mealCount ?? tUI('noData', lang)}
-  </div>
-</div>
-
+        <div>
+          <strong>{tUI('mealCount', lang)}:</strong> {mealCount ?? tUI('noData', lang)}
+        </div>
+      </div>
+    </div>
 
     {interpretation && (
       <div className="mt-4 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 rounded dark:bg-yellow-200 dark:border-yellow-500 dark:text-black">
         {interpretation}
       </div>
     )}
-       </div>
   </PanelCard>
 );
 }
