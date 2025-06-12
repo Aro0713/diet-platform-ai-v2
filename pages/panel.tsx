@@ -189,14 +189,28 @@ const normalizeDiet = (raw: any): Record<string, Meal[]> => {
     throw new Error('Brak planu posiłków w odpowiedzi AI');
   }
 
-  for (const [dayPL, rawDay] of Object.entries(data)) {
-    const rawDayObj = rawDay as Record<string, any>;
+  for (const [outerKey, outerValue] of Object.entries(data)) {
+    let innerKey: string;
+    let mealsObj: any;
 
-    // szukamy wewnętrznego dnia, np. "Monday" w { "Poniedziałek": { "Monday": { Breakfast... } } }
-    const dayEN = Object.keys(rawDayObj)[0];
-    const mealsObj = rawDayObj[dayEN];
+    if (
+      typeof outerValue === 'object' &&
+      outerValue !== null &&
+      Object.keys(outerValue).length === 1 &&
+      Object.values(outerValue)[0] &&
+      typeof Object.values(outerValue)[0] === 'object' &&
+      Object.keys(Object.values(outerValue)[0]).some(k => typeof k === 'string')
+    ) {
+      // Przypadek: { "Piątek": { "Friday": { Breakfast, ... } } }
+      innerKey = Object.keys(outerValue)[0];
+      mealsObj = (outerValue as Record<string, any>)[innerKey];
+    } else {
+      // Przypadek: { "Friday": { Breakfast, ... } }
+      innerKey = outerKey;
+      mealsObj = outerValue;
+    }
 
-    const translatedDay = mapDaysToPolish[dayEN] || mapDaysToPolish[dayPL] || dayPL;
+    const translatedDay = mapDaysToPolish[innerKey] || outerKey;
 
     result[translatedDay] = Object.entries(mealsObj).map(([mealName, meal]: any) => ({
       name: mealName,
@@ -212,6 +226,7 @@ const normalizeDiet = (raw: any): Record<string, Meal[]> => {
 
   return result;
 };
+
 
 
 const getRecommendedMealsPerDay = (form: PatientData, interviewData: any): number => {
