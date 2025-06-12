@@ -208,23 +208,22 @@ const normalizeDiet = (raw: any): Record<string, Meal[]> => {
     throw new Error('Brak dietPlan, weekPlan lub mealPlan w odpowiedzi AI');
   }
 
- for (const [dayKey, rawDay] of Object.entries(data)) {
+for (const [dayKey, rawDay] of Object.entries(data)) {
   const rawDayObj = rawDay as Record<string, any>;
 
-  const dayEN = Object.keys(rawDayObj).length === 1 && typeof rawDayObj === 'object'
-    ? Object.keys(rawDayObj)[0]
-    : dayKey;
+  const innerDay = Object.keys(rawDayObj).length === 1 && typeof rawDayObj === 'object'
+    ? rawDayObj[Object.keys(rawDayObj)[0]]
+    : rawDayObj;
 
-  const mealsObj = rawDayObj[dayEN] || rawDayObj;
-  const translatedDay = mapDaysToPolish[dayEN] || mapDaysToPolish[dayKey] || dayKey;
+  const translatedDay = mapDaysToPolish[dayKey] || dayKey;
 
-  result[translatedDay] = Object.entries(mealsObj).map(([mealName, meal]: any) => ({
+  result[translatedDay] = Object.entries(innerDay).map(([mealName, meal]: any) => ({
     name: mealName,
     time: meal.time || '',
     description: meal.menu || '',
     ingredients: Array.isArray(meal.ingredients)
       ? meal.ingredients
-      : [{ product: meal.menu || 'brak', weight: 0 }],
+      : [],
     calories: meal.kcal || 0,
     glycemicIndex: meal.glycemicIndex ?? 0
   }));
