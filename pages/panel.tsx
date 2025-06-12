@@ -180,13 +180,13 @@ const normalizeDiet = (raw: any): Record<string, Meal[]> => {
     Thursday: 'Czwartek',
     Friday: 'Piątek',
     Saturday: 'Sobota',
-    Sunday: 'Niedziela',
+    Sunday: 'Niedziela'
   };
 
-  const data = raw.dietPlan || raw.mealPlan || raw.week_plan;
+  const data = raw.dietPlan || raw.weekPlan || raw.mealPlan;
 
   if (!data) {
-    throw new Error('Brak planu posiłków w odpowiedzi AI');
+    throw new Error('Brak danych dietPlan/weekPlan/mealPlan');
   }
 
   for (const [outerKey, outerValue] of Object.entries(data)) {
@@ -197,28 +197,24 @@ const normalizeDiet = (raw: any): Record<string, Meal[]> => {
       typeof outerValue === 'object' &&
       outerValue !== null &&
       Object.keys(outerValue).length === 1 &&
-      Object.values(outerValue)[0] &&
-      typeof Object.values(outerValue)[0] === 'object' &&
-      Object.keys(Object.values(outerValue)[0]).some(k => typeof k === 'string')
+      typeof Object.values(outerValue)[0] === 'object'
     ) {
-      // Przypadek: { "Piątek": { "Friday": { Breakfast, ... } } }
+      // np. "Niedziela": { "Sunday": {...} }
       innerKey = Object.keys(outerValue)[0];
       mealsObj = (outerValue as Record<string, any>)[innerKey];
     } else {
-      // Przypadek: { "Friday": { Breakfast, ... } }
+      // np. "Sunday": {...}
       innerKey = outerKey;
       mealsObj = outerValue;
     }
 
-    const translatedDay = mapDaysToPolish[innerKey] || outerKey;
+    const translatedDay = mapDaysToPolish[innerKey] || mapDaysToPolish[outerKey] || outerKey;
 
-    result[translatedDay] = Object.entries(mealsObj).map(([mealName, meal]: any) => ({
+    result[translatedDay] = Object.entries(mealsObj as Record<string, any>).map(([mealName, meal]) => ({
       name: mealName,
       time: meal.time || '',
       description: meal.menu || '',
-      ingredients: Array.isArray(meal.ingredients)
-        ? meal.ingredients
-        : [],
+      ingredients: Array.isArray(meal.ingredients) ? meal.ingredients : [],
       calories: meal.kcal || 0,
       glycemicIndex: meal.glycemicIndex ?? 0
     }));
@@ -226,8 +222,6 @@ const normalizeDiet = (raw: any): Record<string, Meal[]> => {
 
   return result;
 };
-
-
 
 const getRecommendedMealsPerDay = (form: PatientData, interviewData: any): number => {
   const conditions = form.conditions || [];
