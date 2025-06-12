@@ -14,23 +14,20 @@ export function transformDietPlanToEditableFormat(dietPlan: Record<string, any>)
       const mealData = mealsForDay?.[mealName];
 
       if (mealData) {
-        normalizedDay.push({
-          name: mealName,
-          time: mealData.time ?? '',
-          description: mealData.menu ?? '',
-          ingredients: Array.isArray(mealData.ingredients) ? mealData.ingredients : [],
-          calories: mealData.kcal ?? 0,
-          glycemicIndex: mealData.glycemicIndex ?? 0,
-        });
-      } else {
-        normalizedDay.push({
-          name: mealName,
-          time: '',
-          description: '',
-          ingredients: [],
-          calories: 0,
-          glycemicIndex: 0,
-        });
+normalizedDay.push({
+  name: mealName,
+  time: mealData.time ?? '',
+  description: mealData.menu ?? '',
+  ingredients: Array.isArray(mealData.ingredients) ? mealData.ingredients : [],
+  calories: mealData.kcal ?? 0,
+  glycemicIndex: mealData.glycemicIndex ?? 0,
+  macros: {
+    protein: mealData.macros?.protein ?? 0,
+    carbs: mealData.macros?.carbs ?? 0,
+    fat: mealData.macros?.fat ?? 0,
+    sodium: mealData.macros?.sodium ?? 0
+  }
+});
       }
     }
 

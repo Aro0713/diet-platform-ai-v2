@@ -6,24 +6,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const languageMap: Record<string, string> = {
-  pl: 'polski', en: 'English', es: 'español', fr: 'français', de: 'Deutsch',
-  ua: 'українська', ru: 'русский', zh: '中文', hi: 'हिन्दी', ar: 'العربية', he: 'עברית'
-};
 
-const culturalContextMap: Record<string, string> = {
-  pl: 'Polish and Central European dietary traditions',
-  en: 'Anglo-American dietary habits',
-  es: 'Mediterranean and Latin American dietary culture',
-  fr: 'French and Western European cuisine',
-  de: 'Germanic and Central European dietary preferences',
-  ua: 'Ukrainian and Eastern European food culture',
-  ru: 'Russian and Slavic food heritage',
-  zh: 'Chinese and East Asian culinary traditions',
-  hi: 'Indian dietary principles and traditional spices',
-  ar: 'Arabic and Middle Eastern dietary customs',
-  he: 'Kosher food rules and Israeli cuisine'
-};
 
 export const config = {
   api: { bodyParser: true }
@@ -35,8 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const { form, interviewData, lang = 'pl', goalExplanation = '', recommendation = '' } = req.body;
-  const selectedLang = languageMap[lang] || 'polski';
-  const culturalContext = culturalContextMap[lang] || 'general international dietary style';
+  
 
   const bmi = form.bmi ?? (
     form.weight && form.height
@@ -62,7 +44,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     cpm,
     goalExplanation,
     recommendation,
-    language: selectedLang,
     mealsPerDay
   };
 
@@ -155,7 +136,8 @@ Strict rules:
 - No markdown, no comments, no explanation — JSON only
 
 Patient information:
-- Language: ${selectedLang}
+- Preferred products or cuisines: ${form.dietPreferences || 'not specified'}
+- Disliked or excluded products: ${form.dislikedProducts || 'not specified'}
 - Goal (as described by the patient): ${goalExplanation}
 - Doctor or dietitian notes: ${recommendation}
 - Known allergies: ${form.allergies || 'not specified'}
@@ -164,9 +146,10 @@ Patient information:
 - Stress level or digestive concerns: ${form.symptoms || 'not provided'}
 - Dietary preferences or exclusions: ${form.dietPreferences || 'none'}
 - Selected cuisine: ${form.cuisine}
-- Cultural context: ${culturalContext}
 - Target daily calories (CPM): ${cpm}
 - Number of meals per day: ${mealsPerDay}
+
+All culinary decisions must be based strictly on patient preferences, not assumptions. If the patient dislikes an ingredient or cuisine, do not include it in any meal.
 
 Return ONLY the object for key "${day}" — no wrapping, no summaries.`;
 

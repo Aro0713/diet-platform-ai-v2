@@ -5,12 +5,19 @@ export type Ingredient = {
 
 export interface Meal {
   name: string;
+  time: string;
   description: string;
-  ingredients: Ingredient[];
+  ingredients: { product: string; weight: number }[];
   calories: number;
   glycemicIndex: number;
-  time?: string; // <== teraz jest opcjonalne
+  macros?: {
+    protein?: number;
+    carbs?: number;
+    fat?: number;
+    sodium?: number;
+  };
 }
+
 
 
 export type TestResult = {
