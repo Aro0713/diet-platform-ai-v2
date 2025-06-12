@@ -1,10 +1,13 @@
 ﻿import type { NextApiRequest, NextApiResponse } from 'next';
 import OpenAI from 'openai';
 import { modelRules } from '@/utils/dietModels';
+import { validateDietWithModel } from '@/utils/validateDiet';
+import { transformDietPlanToEditableFormat } from '@/utils/transformDietPlan';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
 const languageMap: Record<string, string> = {
   pl: 'Polish',
   en: 'English',
@@ -29,7 +32,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const { form, interviewData, lang = 'pl', goalExplanation = '', recommendation = '' } = req.body;
-  
 
   const bmi = form.bmi ?? (
     form.weight && form.height
@@ -47,24 +49,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const mealsPerDay = interviewData.mealsPerDay ?? 'not provided';
 
-  const patientData = {
-    ...form,
-    ...interviewData,
-    bmi,
-    pal,
-    cpm,
-    goalExplanation,
-    recommendation,
-    mealsPerDay
-  };
+  const encoder = new TextEncoder();
 
   res.writeHead(200, {
     'Content-Type': 'text/plain; charset=utf-8',
     'Cache-Control': 'no-cache',
     'Transfer-Encoding': 'chunked'
   });
-
-  const encoder = new TextEncoder();
 
   try {
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -187,7 +178,16 @@ Return ONLY the object for key "${day}" — no wrapping, no summaries.`;
         );
 
         try {
-          JSON.parse(`{ "${day}": ${responseText} }`);
+          const parsed = JSON.parse(`{ "${day}": ${responseText} }`);
+
+          const editableDay = transformDietPlanToEditableFormat({ [day]: parsed[day] })[day];
+          const modelErrors = validateDietWithModel(editableDay, form.model);
+
+          if (modelErrors.length > 0) {
+            console.warn(`Retrying due to model violations on ${day}:`, modelErrors);
+            attempt++;
+            continue;
+          }
 
           if (excessiveRepeat) {
             console.warn(`Retrying due to ingredient repetition: ${excessiveRepeat}`);
