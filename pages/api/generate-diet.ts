@@ -1,8 +1,7 @@
-﻿import type { NextApiRequest, NextApiResponse } from 'next';
+﻿// Zaktualizowana wersja generate-diet.ts bez zależności od validateDiet.ts, dietModelMeta.ts, dietModels.ts i transformDietPlan
+
+import type { NextApiRequest, NextApiResponse } from 'next';
 import OpenAI from 'openai';
-import { modelRules } from '@/utils/dietModels';
-import { validateDietWithModel } from '@/utils/validateDiet';
-import { transformDietPlanToEditableFormat } from '@/utils/transformDietPlan';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -48,6 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   );
 
   const mealsPerDay = interviewData.mealsPerDay ?? 'not provided';
+  const modelPrompt = form.model || '';
 
   const encoder = new TextEncoder();
 
@@ -63,7 +63,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     for (let i = 0; i < days.length; i++) {
       const day = days[i];
-      const modelPrompt = modelRules[form.model] || '';
 
       let responseText = '';
       let validJson = false;
@@ -81,7 +80,7 @@ You MUST base your entire output on the latest guidelines, data sources, and cul
 
 Nutrition Composition and Food Databases:
 - USDA FoodData Central: https://fdc.nal.usda.gov
-- Polish IŻŻ Tables: https://ncez.pzh.gov.pl
+- Polish Iżż Tables: https://ncez.pzh.gov.pl
 - Open Food Facts: https://world.openfoodfacts.org
 
 Nutritional Guidelines and RDA:
@@ -178,16 +177,7 @@ Return ONLY the object for key "${day}" — no wrapping, no summaries.`;
         );
 
         try {
-          const parsed = JSON.parse(`{ "${day}": ${responseText} }`);
-
-          const editableDay = transformDietPlanToEditableFormat({ [day]: parsed[day] })[day];
-          const modelErrors = validateDietWithModel(editableDay, form.model);
-
-          if (modelErrors.length > 0) {
-            console.warn(`Retrying due to model violations on ${day}:`, modelErrors);
-            attempt++;
-            continue;
-          }
+          JSON.parse(`{ "${day}": ${responseText} }`);
 
           if (excessiveRepeat) {
             console.warn(`Retrying due to ingredient repetition: ${excessiveRepeat}`);
