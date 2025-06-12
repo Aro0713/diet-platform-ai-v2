@@ -192,29 +192,46 @@ const handleMedicalChange = (data: {
 
 const normalizeDiet = (raw: any): Record<string, Meal[]> => {
   const result: Record<string, Meal[]> = {};
-  const data = raw.dietPlan || raw.weekPlan;
+  const data = raw.dietPlan || raw.weekPlan || raw.mealPlan;
+
+  const mapDaysToPolish: Record<string, string> = {
+    Monday: 'Poniedziałek',
+    Tuesday: 'Wtorek',
+    Wednesday: 'Środa',
+    Thursday: 'Czwartek',
+    Friday: 'Piątek',
+    Saturday: 'Sobota',
+    Sunday: 'Niedziela',
+  };
 
   if (!data) {
-    throw new Error('Brak dietPlan ani weekPlan w odpowiedzi AI');
+    throw new Error('Brak dietPlan, weekPlan lub mealPlan w odpowiedzi AI');
   }
 
-  for (const dayKey in data) {
-    const translatedDay = mapDaysToPolish[dayKey] || dayKey;
-    const mealsForDay = data[dayKey];
+ for (const [dayKey, rawDay] of Object.entries(data)) {
+  const rawDayObj = rawDay as Record<string, any>;
 
-    result[translatedDay] = Object.entries(mealsForDay).map(([mealName, mealData]: any) => ({
-      name: mealName,
-      description: mealData.menu || '',
-      ingredients: [],
-      calories: mealData.kcal || 0,
-      glycemicIndex: 0,
-      time: mealData.time || '',
-    }));
-  }
+  const dayEN = Object.keys(rawDayObj).length === 1 && typeof rawDayObj === 'object'
+    ? Object.keys(rawDayObj)[0]
+    : dayKey;
+
+  const mealsObj = rawDayObj[dayEN] || rawDayObj;
+  const translatedDay = mapDaysToPolish[dayEN] || mapDaysToPolish[dayKey] || dayKey;
+
+  result[translatedDay] = Object.entries(mealsObj).map(([mealName, meal]: any) => ({
+    name: mealName,
+    time: meal.time || '',
+    description: meal.menu || '',
+    ingredients: Array.isArray(meal.ingredients)
+      ? meal.ingredients
+      : [{ product: meal.menu || 'brak', weight: 0 }],
+    calories: meal.kcal || 0,
+    glycemicIndex: meal.glycemicIndex ?? 0
+  }));
+}
 
   return result;
 };
-
 
 const getRecommendedMealsPerDay = (form: PatientData, interviewData: any): number => {
   const conditions = form.conditions || [];
@@ -245,7 +262,7 @@ const getRecommendedMealsPerDay = (form: PatientData, interviewData: any): numbe
   // Domy�lnie � 4
   return 4;
 };
-const tryParseJSON = (raw: string, strict = true): any | null => {
+const tryParseJSON = (raw: string, strict = true): Record<string, any> => {
   try {
     let cleaned = raw
       .replace(/```json/g, '')
@@ -266,23 +283,24 @@ const tryParseJSON = (raw: string, strict = true): any | null => {
     const opens = [...cleaned.matchAll(/{/g)].length;
     const closes = [...cleaned.matchAll(/}/g)].length;
 
-   if (strict && opens !== closes) {
-  const diff = opens - closes;
-  if (diff > 0) {
-    console.warn(`⚠️ Brakuje ${diff} zamykających nawiasów – uzupełniam.`);
-    cleaned += '}'.repeat(diff);
-  } else {
-    console.warn(`⚠️ Zbyt dużo zamykających nawiasów – obcinam ${-diff}.`);
-    cleaned = cleaned.slice(0, cleaned.length + diff);
-  }
-}
+    if (strict && opens !== closes) {
+      const diff = opens - closes;
+      if (diff > 0) {
+        console.warn(`⚠️ Brakuje ${diff} zamykających nawiasów – uzupełniam.`);
+        cleaned += '}'.repeat(diff);
+      } else {
+        console.warn(`⚠️ Zbyt dużo zamykających nawiasów – obcinam ${-diff}.`);
+        cleaned = cleaned.slice(0, cleaned.length + diff);
+      }
+    }
 
     const parsed = JSON.parse(cleaned);
+
     if (!parsed || typeof parsed !== 'object') {
       throw new Error('Odpowiedź nie jest obiektem JSON');
     }
 
-    return parsed;
+    return parsed as Record<string, any>;
   } catch (err) {
     console.error('❌ JSON.parse() failed:', err);
     throw new Error('Nie można sparsować odpowiedzi AI.');

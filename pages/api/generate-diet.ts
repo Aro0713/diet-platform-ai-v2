@@ -1,4 +1,4 @@
-﻿// Rozszerzona wersja generate-diet.ts z pełnym modelemPrompt i normalizeDiet()
+﻿// Wersja generate-diet.ts z podziałem modeli na naukowe i manualne zasady
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 import OpenAI from 'openai';
@@ -12,20 +12,23 @@ const languageMap: Record<string, string> = {
 
 export const config = { api: { bodyParser: true } };
 
-const modelPrompts: Record<string, string> = {
-  'Dieta ketogeniczna': `Exclude oats, rice, pasta, potatoes, bread, sugar, fruit juices, honey, bananas, apples, milk, and quinoa. Focus on fat-based ingredients. Limit carbs to <50g/day.`,
-  'Dieta niskowęglowodanowa': `Limit total carbohydrate intake to 120g/day. Avoid sugar, sweetened drinks, white bread, and pasta. Focus on protein and non-starchy vegetables.`,
-  'Dieta wysokobiałkowa': `Ensure protein intake exceeds 1.6g/kg/day. Use lean meats, eggs, legumes, dairy. Spread protein across meals.`,
-  'Dieta wątrobowa': `Exclude alcohol, saturated fats, fructose, and processed meats. Use light meals with lean proteins, vegetables, and whole grains.`,
-  'Dieta nerkowa': `Avoid potassium- and phosphorus-rich foods: bananas, dairy, beans, nuts. Limit protein to ~0.6g/kg. Avoid added salt.`,
-  'Dieta FODMAP (przy IBS)': `Exclude high-FODMAP foods: garlic, onion, apples, wheat, legumes, lactose. Use lactose-free dairy, gluten-free grains, low-fructose fruits.`,
-  'Dieta bezglutenowa': `Exclude wheat, rye, barley, spelt. Use gluten-free grains: rice, buckwheat, quinoa, corn. Check sauces and labels.`,
-  'Dieta DASH': `Limit sodium to 1500mg/day. Avoid red meat, processed food. Prioritize vegetables, legumes, fruits, low-fat dairy.`,
-  'Dieta śródziemnomorska': `Use olive oil, fish, legumes, whole grains, fruits, nuts. Avoid butter, red meat, and sugar.`,
-  'Dieta wegańska': `Exclude all animal products. Use legumes, tofu, grains, vegetables, fruit, nuts. Supplement B12.`,
-  'Dieta eliminacyjna': `Eliminate dairy, eggs, gluten, soy, nuts, seafood. Use neutral oils, safe vegetables, rice, and proteins.`,
-  'Dieta lekkostrawna': `Avoid raw vegetables, legumes, spicy or fatty foods. Use cooked vegetables, white rice, lean meats.`,
-  'Dieta przeciwzapalna': `Avoid processed meats, sugar, trans fats. Use turmeric, ginger, leafy greens, berries, flax oil, oily fish.`
+const scientificModels = [
+  'Dieta ketogeniczna',
+  'Dieta DASH',
+  'Dieta śródziemnomorska',
+  'Dieta wegańska',
+  'Dieta wysokobiałkowa',
+  'Dieta niskowęglowodanowa'
+];
+
+const manualModelPrompts: Record<string, string> = {
+  'Dieta wątrobowa': 'No alcohol, fried food, fatty meats. Use soft vegetables, white rice, lean protein.',
+  'Dieta nerkowa': 'No bananas, dairy, beans, nuts. Low protein, low salt.',
+  'Dieta FODMAP (przy IBS)': 'No garlic, onion, wheat, apples, legumes, lactose. Use gluten-free and low-fructose items.',
+  'Dieta bezglutenowa': 'No wheat, rye, barley. Use gluten-free grains.',
+  'Dieta eliminacyjna': 'No dairy, gluten, eggs, soy, nuts, seafood.',
+  'Dieta lekkostrawna': 'No raw vegetables, spicy food, fried dishes. Use boiled rice, lean meat, soft veggies.',
+  'Dieta przeciwzapalna': 'No sugar, processed meat, trans fats. Use greens, turmeric, berries, olive oil, oily fish.'
 };
 
 const mapDaysToPolish: Record<string, string> = {
@@ -35,7 +38,7 @@ const mapDaysToPolish: Record<string, string> = {
   Thursday: 'Czwartek',
   Friday: 'Piątek',
   Saturday: 'Sobota',
-  Sunday: 'Niedziela',
+  Sunday: 'Niedziela'
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -47,7 +50,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const cpm = form.cpm ?? (form.weight && form.pal ? Math.round(form.weight * 24 * form.pal) : null);
   const mealsPerDay = interviewData.mealsPerDay ?? 'not provided';
-  const modelPrompt = modelPrompts[form.model] || '';
+
+  const model = form.model;
+  const isScientific = scientificModels.includes(model);
+  const modelPrompt = isScientific
+    ? `Apply the "${model}" diet model using official clinical guidelines and nutrition science (e.g. EFSA, WHO, ESPEN, AND).`
+    : manualModelPrompts[model] || '';
+
   const encoder = new TextEncoder();
 
   res.writeHead(200, {
@@ -63,11 +72,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     for (let i = 0; i < days.length; i++) {
       const day = days[i];
       let responseText = '';
-      let validJson = false;
 
       const prompt = `You are an AI clinical dietitian.
 Generate meals for: ${day}
-Model: ${form.model}
+Model: ${model}
 ${modelPrompt}
 Calories/day: ${cpm}
 Meals/day: ${mealsPerDay}
@@ -99,7 +107,6 @@ Return JSON only. No comments. Format:
       try {
         JSON.parse(`{ "${day}": ${responseText} }`);
         res.write(encoder.encode(`"${mapDaysToPolish[day]}":${responseText}`));
-        validJson = true;
       } catch {
         res.write(encoder.encode(`"${mapDaysToPolish[day]}":{"error":"Invalid JSON"}`));
       }
