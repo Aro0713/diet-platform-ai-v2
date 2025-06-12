@@ -5,8 +5,19 @@ import { modelRules } from '@/utils/dietModels';
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-
-
+const languageMap: Record<string, string> = {
+  pl: 'Polish',
+  en: 'English',
+  es: 'Spanish',
+  fr: 'French',
+  de: 'German',
+  ua: 'Ukrainian',
+  ru: 'Russian',
+  zh: 'Chinese',
+  hi: 'Hindi',
+  ar: 'Arabic',
+  he: 'Hebrew'
+};
 
 export const config = {
   api: { bodyParser: true }
@@ -134,6 +145,9 @@ Strict rules:
 - JSON must be parsable and syntactically valid
 - Ingredient lists must be valid arrays: comma-separated, bracket closed
 - No markdown, no comments, no explanation — JSON only
+
+Output language:
+- Please write all meals, descriptions, ingredients, and food names in: ${languageMap[lang] || 'English'}
 
 Patient information:
 - Preferred products or cuisines: ${form.dietPreferences || 'not specified'}
