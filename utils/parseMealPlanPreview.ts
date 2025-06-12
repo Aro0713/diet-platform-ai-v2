@@ -13,26 +13,34 @@ export function parseMealPlanPreview(parsed: any): Record<string, Meal[]> {
 
       result[day] = meals.map((m: any) => ({
         name: m.meal || '',
+        time: m.time || '',
         description: m.description || '',
-        ingredients: [{ product: m.description || '', weight: 0 }],
-        calories: 0,
-        glycemicIndex: 0
+        ingredients: Array.isArray(m.ingredients)
+          ? m.ingredients
+          : [{ product: m.description || 'brak', weight: 0 }],
+        calories: m.calories || 0,
+        glycemicIndex: m.glycemicIndex ?? 0,
+        macros: m.macros || { protein: 0, carbs: 0, fat: 0, sodium: 0 } // jeśli kiedyś będzie
       }));
     }
 
     return result;
   }
 
-  // Obsługa dietPlan – obiekt z dniami jako klucze i posiłkami jako nazwy
+  // Obsługa obiektu dietPlan (np. z API)
   if (parsed.dietPlan && typeof parsed.dietPlan === 'object') {
     for (const [day, mealsObj] of Object.entries(parsed.dietPlan)) {
       const meals: Meal[] = Object.entries(mealsObj as any).map(
         ([name, meal]: [string, any]) => ({
           name,
+          time: meal.time || '',
           description: meal.menu || '',
-          ingredients: [{ product: meal.menu || '', weight: 0 }],
-          calories: 0,
-          glycemicIndex: 0
+          ingredients: Array.isArray(meal.ingredients)
+            ? meal.ingredients
+            : [{ product: meal.menu || 'brak', weight: 0 }],
+          calories: meal.kcal || 0,
+          glycemicIndex: meal.glycemicIndex ?? 0,
+          macros: meal.macros || { protein: 0, carbs: 0, fat: 0, sodium: 0 }
         })
       );
 
