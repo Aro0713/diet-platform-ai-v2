@@ -170,29 +170,8 @@ const handleMedicalChange = (data: {
     }
   };
 
-  const dayMap = {
-    Monday: 'Poniedzia�ek',
-    Tuesday: 'Wtorek',
-    Wednesday: '�roda',
-    Thursday: 'Czwartek',
-    Friday: 'Pi�tek',
-    Saturday: 'Sobota',
-    Sunday: 'Niedziela'
-  };
-
-  const mapDaysToPolish: Record<string, string> = {
-  Monday: 'Poniedziałek',
-  Tuesday: 'Wtorek',
-  Wednesday: 'Środa',
-  Thursday: 'Czwartek',
-  Friday: 'Piątek',
-  Saturday: 'Sobota',
-  Sunday: 'Niedziela',
-};
-
 const normalizeDiet = (raw: any): Record<string, Meal[]> => {
   const result: Record<string, Meal[]> = {};
-  const data = raw.dietPlan || raw.weekPlan || raw.mealPlan;
 
   const mapDaysToPolish: Record<string, string> = {
     Monday: 'Poniedziałek',
@@ -204,33 +183,36 @@ const normalizeDiet = (raw: any): Record<string, Meal[]> => {
     Sunday: 'Niedziela',
   };
 
+  const data = raw.dietPlan || raw.mealPlan || raw.week_plan;
+
   if (!data) {
-    throw new Error('Brak dietPlan, weekPlan lub mealPlan w odpowiedzi AI');
+    throw new Error('Brak planu posiłków w odpowiedzi AI');
   }
 
-for (const [dayKey, rawDay] of Object.entries(data)) {
-  const rawDayObj = rawDay as Record<string, any>;
+  for (const [dayPL, rawDay] of Object.entries(data)) {
+    const rawDayObj = rawDay as Record<string, any>;
 
-  const innerDay = Object.keys(rawDayObj).length === 1 && typeof rawDayObj === 'object'
-    ? rawDayObj[Object.keys(rawDayObj)[0]]
-    : rawDayObj;
+    // szukamy wewnętrznego dnia, np. "Monday" w { "Poniedziałek": { "Monday": { Breakfast... } } }
+    const dayEN = Object.keys(rawDayObj)[0];
+    const mealsObj = rawDayObj[dayEN];
 
-  const translatedDay = mapDaysToPolish[dayKey] || dayKey;
+    const translatedDay = mapDaysToPolish[dayEN] || mapDaysToPolish[dayPL] || dayPL;
 
-  result[translatedDay] = Object.entries(innerDay).map(([mealName, meal]: any) => ({
-    name: mealName,
-    time: meal.time || '',
-    description: meal.menu || '',
-    ingredients: Array.isArray(meal.ingredients)
-      ? meal.ingredients
-      : [],
-    calories: meal.kcal || 0,
-    glycemicIndex: meal.glycemicIndex ?? 0
-  }));
-}
+    result[translatedDay] = Object.entries(mealsObj).map(([mealName, meal]: any) => ({
+      name: mealName,
+      time: meal.time || '',
+      description: meal.menu || '',
+      ingredients: Array.isArray(meal.ingredients)
+        ? meal.ingredients
+        : [],
+      calories: meal.kcal || 0,
+      glycemicIndex: meal.glycemicIndex ?? 0
+    }));
+  }
 
   return result;
 };
+
 
 const getRecommendedMealsPerDay = (form: PatientData, interviewData: any): number => {
   const conditions = form.conditions || [];
