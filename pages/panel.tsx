@@ -170,59 +170,6 @@ const handleMedicalChange = (data: {
     }
   };
 
-const normalizeDiet = (raw: any): Record<string, Meal[]> => {
-  const result: Record<string, Meal[]> = {};
-
-  const mapDaysToPolish: Record<string, string> = {
-    Monday: 'Poniedziałek',
-    Tuesday: 'Wtorek',
-    Wednesday: 'Środa',
-    Thursday: 'Czwartek',
-    Friday: 'Piątek',
-    Saturday: 'Sobota',
-    Sunday: 'Niedziela'
-  };
-
-  const data = raw.dietPlan || raw.weekPlan || raw.mealPlan;
-
-  if (!data) {
-    throw new Error('Brak danych dietPlan/weekPlan/mealPlan');
-  }
-
-  for (const [outerKey, outerValue] of Object.entries(data)) {
-    let innerKey: string;
-    let mealsObj: any;
-
-    if (
-      typeof outerValue === 'object' &&
-      outerValue !== null &&
-      Object.keys(outerValue).length === 1 &&
-      typeof Object.values(outerValue)[0] === 'object'
-    ) {
-      // np. "Niedziela": { "Sunday": {...} }
-      innerKey = Object.keys(outerValue)[0];
-      mealsObj = (outerValue as Record<string, any>)[innerKey];
-    } else {
-      // np. "Sunday": {...}
-      innerKey = outerKey;
-      mealsObj = outerValue;
-    }
-
-    const translatedDay = mapDaysToPolish[innerKey] || mapDaysToPolish[outerKey] || outerKey;
-
-    result[translatedDay] = Object.entries(mealsObj as Record<string, any>).map(([mealName, meal]) => ({
-      name: mealName,
-      time: meal.time || '',
-      description: meal.menu || '',
-      ingredients: Array.isArray(meal.ingredients) ? meal.ingredients : [],
-      calories: meal.kcal || 0,
-      glycemicIndex: meal.glycemicIndex ?? 0
-    }));
-  }
-
-  return result;
-};
-
 const getRecommendedMealsPerDay = (form: PatientData, interviewData: any): number => {
   const conditions = form.conditions || [];
   const goal = interviewData.goal || '';
@@ -393,30 +340,15 @@ const handleSubmit = async (e: React.FormEvent) => {
           time: m.time || ''
         }));
       }
-    } else if (parsed.dietPlan && typeof parsed.dietPlan === 'object') {
-      for (const [day, mealsObj] of Object.entries(parsed.dietPlan)) {
-        const meals: Meal[] = Object.entries(mealsObj as any).map(
-          ([name, meal]: [string, any]) => ({
-            name,
-            description: meal.menu || '',
-            ingredients: Array.isArray(meal.ingredients)
-            ? meal.ingredients
-            : typeof meal.ingredients === 'string'
-            ? meal.ingredients.split(',').map((item: string) => {
-            const match = item.trim().match(/(.+?)\\s*\\((\\d+)g\\)/);
-            return match
-          ? { product: match[1].trim(), weight: parseInt(match[2]) }
-          : { product: item.trim(), weight: 0 };
-            })
-          : [],
-            calories: meal.kcal || 0,
-            glycemicIndex: meal.glycemicIndex || 0,
-            time: meal.time || ''
-          })
-        );
-        converted[mapDaysToPolish[day] || day] = meals;
-      }
-    } else if (parsed.weekPlan && Array.isArray(parsed.weekPlan)) {
+    } 
+   if (parsed.dietPlan && typeof parsed.dietPlan === 'object') {
+  const transformed = transformDietPlanToEditableFormat(parsed.dietPlan);
+  setMealPlan(transformed);
+  setDiet(transformed);
+  setEditableDiet(transformed);
+}
+
+    else if (parsed.weekPlan && Array.isArray(parsed.weekPlan)) {
       for (const { day, meals } of parsed.weekPlan) {
         converted[mapDaysToPolish[day] || day] = meals.map((meal: any) => ({
           name: meal.name || '',

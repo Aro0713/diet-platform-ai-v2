@@ -1,44 +1,48 @@
-﻿// Wersja generate-diet.ts z podziałem modeli na naukowe i manualne zasady
-
-import type { NextApiRequest, NextApiResponse } from 'next';
+﻿import type { NextApiRequest, NextApiResponse } from 'next';
 import OpenAI from 'openai';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 const languageMap: Record<string, string> = {
-  pl: 'Polish', en: 'English', es: 'Spanish', fr: 'French', de: 'German',
-  ua: 'Ukrainian', ru: 'Russian', zh: 'Chinese', hi: 'Hindi', ar: 'Arabic', he: 'Hebrew'
+  pl: 'polski', en: 'English', es: 'español', fr: 'français', de: 'Deutsch',
+  ua: 'українська', ru: 'русский', zh: '中文', hi: 'हिन्दी', ar: 'العربية', he: 'עברית'
 };
 
-export const config = { api: { bodyParser: true } };
-
-const scientificModels = [
-  'Dieta ketogeniczna',
-  'Dieta DASH',
-  'Dieta śródziemnomorska',
-  'Dieta wegańska',
-  'Dieta wysokobiałkowa',
-  'Dieta niskowęglowodanowa'
-];
-
-const manualModelPrompts: Record<string, string> = {
-  'Dieta wątrobowa': 'No alcohol, fried food, fatty meats. Use soft vegetables, white rice, lean protein.',
-  'Dieta nerkowa': 'No bananas, dairy, beans, nuts. Low protein, low salt.',
-  'Dieta FODMAP (przy IBS)': 'No garlic, onion, wheat, apples, legumes, lactose. Use gluten-free and low-fructose items.',
-  'Dieta bezglutenowa': 'No wheat, rye, barley. Use gluten-free grains.',
-  'Dieta eliminacyjna': 'No dairy, gluten, eggs, soy, nuts, seafood.',
-  'Dieta lekkostrawna': 'No raw vegetables, spicy food, fried dishes. Use boiled rice, lean meat, soft veggies.',
-  'Dieta przeciwzapalna': 'No sugar, processed meat, trans fats. Use greens, turmeric, berries, olive oil, oily fish.'
+const culturalContextMap: Record<string, string> = {
+  pl: 'Polish and Central European dietary traditions',
+  en: 'Anglo-American dietary habits',
+  es: 'Mediterranean and Latin American dietary culture',
+  fr: 'French and Western European cuisine',
+  de: 'Germanic and Central European dietary preferences',
+  ua: 'Ukrainian and Eastern European food culture',
+  ru: 'Russian and Slavic food heritage',
+  zh: 'Chinese and East Asian culinary traditions',
+  hi: 'Indian dietary principles and traditional spices',
+  ar: 'Arabic and Middle Eastern dietary customs',
+  he: 'Kosher food rules and Israeli cuisine'
 };
 
-const mapDaysToPolish: Record<string, string> = {
-  Monday: 'Poniedziałek',
-  Tuesday: 'Wtorek',
-  Wednesday: 'Środa',
-  Thursday: 'Czwartek',
-  Friday: 'Piątek',
-  Saturday: 'Sobota',
-  Sunday: 'Niedziela'
+const dataSources = `
+Nutrient databases:
+- USDA FoodData Central (https://fdc.nal.usda.gov)
+- Polish Food Composition Tables (https://ncez.pzh.gov.pl)
+- Open Food Facts (https://world.openfoodfacts.org)
+
+Clinical nutrition guidelines:
+- Polish Institute of Public Health (https://ncez.pzh.gov.pl)
+- USDA Recommended Dietary Allowances (https://www.nal.usda.gov)
+- EFSA (https://www.efsa.europa.eu)
+- ESPEN Guidelines (https://www.espen.org/guidelines)
+- NICE UK (https://www.nice.org.uk)
+- AND - Academy of Nutrition and Dietetics (https://www.eatrightpro.org)
+- ESMO (Oncology), IASO (Obesity), IBD Standards UK
+- PubMed & Cochrane Library (https://pubmed.ncbi.nlm.nih.gov, https://www.cochranelibrary.com)
+`;
+
+export const config = {
+  api: { bodyParser: true }
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -47,77 +51,109 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const { form, interviewData, lang = 'pl', goalExplanation = '', recommendation = '' } = req.body;
+  const selectedLang = languageMap[lang] || 'polski';
+  const culturalContext = culturalContextMap[lang] || 'general international dietary style';
 
-  const cpm = form.cpm ?? (form.weight && form.pal ? Math.round(form.weight * 24 * form.pal) : null);
+  const bmi = form.bmi ?? (
+    form.weight && form.height
+      ? parseFloat((form.weight / ((form.height / 100) ** 2)).toFixed(1))
+      : null
+  );
+
+  const pal = form.pal ?? 1.6;
+
+  const cpm = form.cpm ?? (
+    form.weight && pal
+      ? Math.round(form.weight * 24 * pal)
+      : null
+  );
+
   const mealsPerDay = interviewData.mealsPerDay ?? 'not provided';
 
-  const model = form.model;
-  const isScientific = scientificModels.includes(model);
-  const modelPrompt = isScientific
-    ? `Apply the "${model}" diet model using official clinical guidelines and nutrition science (e.g. EFSA, WHO, ESPEN, AND).`
-    : manualModelPrompts[model] || '';
+  const patientData = {
+    ...form,
+    ...interviewData,
+    bmi,
+    pal,
+    cpm,
+    goalExplanation,
+    recommendation,
+    language: selectedLang,
+    mealsPerDay
+  };
 
-  const encoder = new TextEncoder();
+  const prompt = `
+You are a clinical dietitian AI. Generate a 7-day individualized medical diet plan in perfect JSON format.
 
-  res.writeHead(200, {
-    'Content-Type': 'text/plain; charset=utf-8',
-    'Cache-Control': 'no-cache',
-    'Transfer-Encoding': 'chunked'
-  });
-
-  try {
-    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-    res.write(encoder.encode('{"dietPlan":{'));
-
-    for (let i = 0; i < days.length; i++) {
-      const day = days[i];
-      let responseText = '';
-
-      const prompt = `You are an AI clinical dietitian.
-Generate meals for: ${day}
-Model: ${model}
-${modelPrompt}
-Calories/day: ${cpm}
-Meals/day: ${mealsPerDay}
-Goal: ${goalExplanation}
-Preferences: ${form.dietPreferences || 'none'}
-Exclusions: ${form.dislikedProducts || 'none'}
-
-Return JSON only. No comments. Format:
+Return the output **only** as raw JSON object like this:
 {
-  "${day}": {
-    "Breakfast": { "time": "08:00", "menu": "...", "kcal": ..., "glycemicIndex": ..., "ingredients": [ {"product": "...", "weight": ...} ] },
+  "dietPlan": {
+    "Monday": {
+      "Śniadanie": { "time": "07:30", "menu": "...", "kcal": 400 },
+      "Drugie śniadanie": { "time": "10:00", "menu": "...", "kcal": 250 },
+      "Obiad": { "time": "16:00", "menu": "...", "kcal": 650 },
+      "Podwieczorek": { "time": "17:30", "menu": "...", "kcal": 150 },
+      "Kolacja": { "time": "19:30", "menu": "...", "kcal": 350 }
+    },
     ...
   }
-}`;
+}
 
-      const stream = await openai.chat.completions.create({
-        model: 'gpt-4-turbo',
-        stream: true,
-        temperature: 0.7,
-        max_tokens: 3000,
-        messages: [{ role: 'user', content: prompt }]
-      });
+Strict rules:
+- Top-level key must be "dietPlan"
+- Exactly 7 days: Monday to Sunday
+- Days in English: Monday, Tuesday, ...
+- Meal names in Polish: Śniadanie, Drugie śniadanie, Obiad, Podwieczorek, Kolacja
+- Each meal must have: "time", "menu", "kcal"
+- JSON only – no markdown, comments, explanations, code blocks or notes
 
-      for await (const chunk of stream) {
-        const text = chunk.choices?.[0]?.delta?.content;
-        if (text) responseText += text;
+Language of meal descriptions: ${selectedLang}
+Adapt the content to:
+- patient's goal: ${goalExplanation}
+- doctor's notes: ${recommendation}
+- allergies, health conditions, test results, stress, appetite, culture
+- daily kcal and macronutrients matched to CPM
+- mealsPerDay: ${mealsPerDay}
+
+Use culturally appropriate recipes and traditional ingredients based on the patient's origin:
+${culturalContext}
+
+Use only evidence-based data sources:
+${dataSources}
+
+If any source is inaccessible, invalid, or unclear, ignore it and continue using the remaining sources. Do not fail or stop.
+
+All patient data:
+${JSON.stringify(patientData, null, 2)}
+`;
+
+  try {
+    const stream = await openai.chat.completions.create({
+      model: 'gpt-4-turbo',
+      stream: true,
+      temperature: 0.7,
+      max_tokens: 3000,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    res.writeHead(200, {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'no-cache',
+      'Transfer-Encoding': 'chunked'
+    });
+
+    const encoder = new TextEncoder();
+    for await (const chunk of stream) {
+      const text = chunk.choices?.[0]?.delta?.content;
+      if (text) {
+        res.write(encoder.encode(text));
       }
-
-      try {
-        JSON.parse(`{ "${day}": ${responseText} }`);
-        res.write(encoder.encode(`"${mapDaysToPolish[day]}":${responseText}`));
-      } catch {
-        res.write(encoder.encode(`"${mapDaysToPolish[day]}":{"error":"Invalid JSON"}`));
-      }
-
-      if (i < days.length - 1) res.write(encoder.encode(','));
     }
 
-    res.write(encoder.encode('}}'));
     res.end();
   } catch (error: any) {
     console.error('❌ OpenAI error:', error);
-    res.status(500).json({ error: 'AI generation error.' });
+    res.status(500).json({ error: 'Błąd generowania diety przez AI.' });
   }
 }
+
