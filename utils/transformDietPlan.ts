@@ -42,6 +42,10 @@ export function transformDietPlanToEditableFormat(
   const result: Record<string, Meal[]> = {};
   const translationMap = mealTranslations[lang] || {};
 
+  console.log('🌍 [Parser] Użyty język:', lang);
+  console.log('📚 [Parser] Klucze tłumaczeń posiłków:', Object.keys(translationMap));
+  console.log('📅 [Parser] Otrzymane dni:', Object.keys(dietPlan));
+
   for (const day in dietPlan) {
     const mappedDay = dayMap[day.toLowerCase()] || day;
     const mealsForDay = dietPlan[day];
@@ -51,8 +55,15 @@ export function transformDietPlanToEditableFormat(
       const rawMealName = rawKey.trim().toLowerCase();
       const mappedMealName = translationMap[rawMealName] || rawKey;
 
+      if (!standardOrder.includes(mappedMealName)) {
+        console.warn(`⚠️ Nierozpoznana nazwa posiłku: "${rawKey}" → "${mappedMealName}" (lang: ${lang})`);
+      }
+
       const mealData = mealsForDay[rawKey];
-      if (!mealData || typeof mealData !== 'object') continue;
+      if (!mealData || typeof mealData !== 'object') {
+        console.warn(`⛔ Posiłek "${rawKey}" nie ma poprawnej struktury`);
+        continue;
+      }
 
       normalizedDay.push({
         name: mappedMealName,
@@ -68,13 +79,19 @@ export function transformDietPlanToEditableFormat(
           sodium: mealData.macros?.sodium ?? 0
         }
       });
+
+      console.log(`✅ Dodano posiłek: ${mappedDay} → ${mappedMealName}`);
     }
 
-    normalizedDay.sort((a, b) =>
-      standardOrder.indexOf(a.name) - standardOrder.indexOf(b.name)
-    );
+    normalizedDay.sort((a, b) => {
+      const indexA = standardOrder.indexOf(a.name);
+      const indexB = standardOrder.indexOf(b.name);
+      return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
+    });
 
     result[mappedDay] = normalizedDay;
+
+    console.log(`📦 Zapisano dzień: ${mappedDay} — liczba posiłków: ${normalizedDay.length}`);
   }
 
   return result;
