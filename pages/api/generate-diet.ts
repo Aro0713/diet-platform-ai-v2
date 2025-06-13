@@ -104,8 +104,14 @@ Strict rules:
 - Exactly 7 days: Monday to Sunday
 - Days in English: Monday, Tuesday, ...
 - Meal names in Polish: Śniadanie, Drugie śniadanie, Obiad, Podwieczorek, Kolacja
-- Each meal must have: "time", "menu", "kcal"
-- JSON only – no markdown, comments, explanations, code blocks or notes
+Each meal must include:
+- "time" (e.g. "07:30")
+- "menu" (short meal description)
+- "kcal" (energy in kcal)
+- "glycemicIndex" (numerical estimate; required)
+- "ingredients" (array of { "product": string, "weight": number })
+
+Return JSON only – no markdown, no code blocks, no explanations or comments.
 
 Language of meal descriptions: ${selectedLang}
 Adapt the content to:
