@@ -247,16 +247,6 @@ const tryParseJSON = (raw: string, strict = true): Record<string, any> => {
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
-  const mapDaysToPolish: Record<string, string> = {
-    Monday: 'Poniedziałek',
-    Tuesday: 'Wtorek',
-    Wednesday: 'Środa',
-    Thursday: 'Czwartek',
-    Friday: 'Piątek',
-    Saturday: 'Sobota',
-    Sunday: 'Niedziela',
-  };
-
   const missing: string[] = [];
   if (!form.age) missing.push(t('age'));
   if (!form.sex) missing.push(t('sex'));
@@ -313,23 +303,62 @@ const handleSubmit = async (e: React.FormEvent) => {
     while (!done) {
       const { value, done: doneReading } = await reader.read();
       done = doneReading;
-
       const chunk = decoder.decode(value, { stream: true });
       rawText += chunk;
       rawCompleteText += chunk;
       setStreamingText(rawText);
     }
+
     console.log("📦 RAW AI TEXT:", rawText);
-    let parsed = tryParseJSON(rawCompleteText);
+    const parsed = tryParseJSON(rawCompleteText);
     console.log("✅ Parsed JSON:", parsed);
 
-  if (!parsed) throw new Error('Nie można sparsować odpowiedzi AI.');
+    if (!parsed) throw new Error('Nie można sparsować odpowiedzi AI.');
 
-    const converted: Record<string, Meal[]> = {};
-    const sourcePlan = parsed.mealPlan || parsed.week_plan;
+    const mapDaysToPolish: Record<string, string> = {
+      Monday: 'Poniedziałek',
+      Tuesday: 'Wtorek',
+      Wednesday: 'Środa',
+      Thursday: 'Czwartek',
+      Friday: 'Piątek',
+      Saturday: 'Sobota',
+      Sunday: 'Niedziela',
+    };
 
-    if (sourcePlan && Array.isArray(sourcePlan)) {
-      for (const entry of sourcePlan) {
+    // ✅ 1. Parser oparty na dietPlan
+    if (parsed.dietPlan && typeof parsed.dietPlan === 'object') {
+      const transformed = transformDietPlanToEditableFormat(parsed.dietPlan, lang);
+      console.log('📤 FINAL editableDiet sent to table:', transformed);
+      setMealPlan(transformed);
+      setDiet(transformed);
+      setEditableDiet(transformed);
+      return;
+    }
+
+    // ✅ 2. Parser oparty na weekPlan
+    if (parsed.weekPlan && Array.isArray(parsed.weekPlan)) {
+      const converted: Record<string, Meal[]> = {};
+      for (const { day, meals } of parsed.weekPlan) {
+        converted[mapDaysToPolish[day] || day] = meals.map((meal: any) => ({
+          name: meal.name || '',
+          description: meal.menu || '',
+          ingredients: Array.isArray(meal.ingredients) ? meal.ingredients : [],
+          calories: meal.kcal || 0,
+          glycemicIndex: meal.glycemicIndex || 0,
+          time: meal.time || ''
+        }));
+      }
+      console.log('📤 FINAL editableDiet sent to table:', converted);
+      setMealPlan(converted);
+      setDiet(converted);
+      setEditableDiet(converted);
+      return;
+    }
+
+    // ✅ 3. Parser oparty na mealPlan (array of days)
+    if (parsed.mealPlan && Array.isArray(parsed.mealPlan)) {
+      const converted: Record<string, Meal[]> = {};
+      for (const entry of parsed.mealPlan) {
         const { day, meals } = entry;
         converted[mapDaysToPolish[day] || day] = meals.map((m: any) => ({
           name: m.name || '',
@@ -340,34 +369,15 @@ const handleSubmit = async (e: React.FormEvent) => {
           time: m.time || ''
         }));
       }
-    } 
-   if (parsed.dietPlan && typeof parsed.dietPlan === 'object') {
-  const transformed = transformDietPlanToEditableFormat(parsed.dietPlan, lang);
-  setMealPlan(transformed);
-  setDiet(transformed);
-  setEditableDiet(transformed);
-}
-
-    else if (parsed.weekPlan && Array.isArray(parsed.weekPlan)) {
-      for (const { day, meals } of parsed.weekPlan) {
-        converted[mapDaysToPolish[day] || day] = meals.map((meal: any) => ({
-          name: meal.name || '',
-          description: meal.menu || '',
-          ingredients: [],
-          calories: meal.kcal || 0,
-          glycemicIndex: meal.glycemicIndex || 0,
-          time: meal.time || ''
-        }));
-      }
-    } else {
-      throw new Error('Brak poprawnego planu posiłków w odpowiedzi AI (mealPlan, week_plan, dietPlan lub weekPlan)');
+      console.log('📤 FINAL editableDiet sent to table:', converted);
+      setMealPlan(converted);
+      setDiet(converted);
+      setEditableDiet(converted);
+      return;
     }
 
-    setMealPlan(converted);
-    setDiet(converted);
-    setEditableDiet(converted);
-
-    console.log("📤 FINAL editableDiet sent to table:", converted);
+    // ❌ brak żadnej rozpoznawalnej struktury
+    throw new Error('Brak poprawnego planu posiłków w odpowiedzi AI (mealPlan, week_plan, dietPlan lub weekPlan)');
   } catch (err) {
     console.error('❌ Błąd główny:', err);
     alert('Wystąpił błąd przy generowaniu diety.');
