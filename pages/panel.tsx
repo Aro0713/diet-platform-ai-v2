@@ -342,7 +342,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       }
     } 
    if (parsed.dietPlan && typeof parsed.dietPlan === 'object') {
-  const transformed = transformDietPlanToEditableFormat(parsed.dietPlan);
+  const transformed = transformDietPlanToEditableFormat(parsed.dietPlan, lang);
   setMealPlan(transformed);
   setDiet(transformed);
   setEditableDiet(transformed);

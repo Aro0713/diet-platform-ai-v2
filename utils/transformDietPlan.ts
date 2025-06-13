@@ -1,4 +1,6 @@
 import { Meal } from '@/types';
+import { mealTranslations } from '@/utils/mealNameMap';
+import type { LangKey } from './i18n';
 
 type RawMeal = {
   time?: string;
@@ -14,7 +16,14 @@ type RawMeal = {
   };
 };
 
-const standardOrder = ['Śniadanie', 'Drugie śniadanie', 'Obiad', 'Podwieczorek', 'Kolacja'];
+const standardOrder = [
+  'Śniadanie',
+  'Drugie śniadanie',
+  'Obiad',
+  'Podwieczorek',
+  'Kolacja',
+  'Późna kolacja'
+];
 
 const dayMap: Record<string, string> = {
   monday: 'Poniedziałek',
@@ -26,18 +35,12 @@ const dayMap: Record<string, string> = {
   sunday: 'Niedziela'
 };
 
-const mealMap: Record<string, string> = {
-  breakfast: 'Śniadanie',
-  'second breakfast': 'Drugie śniadanie',
-  lunch: 'Obiad',
-  snack: 'Podwieczorek',
-  dinner: 'Kolacja'
-};
-
 export function transformDietPlanToEditableFormat(
-  dietPlan: Record<string, Record<string, RawMeal>>
+  dietPlan: Record<string, Record<string, RawMeal>>,
+  lang: LangKey
 ): Record<string, Meal[]> {
   const result: Record<string, Meal[]> = {};
+  const translationMap = mealTranslations[lang] || {};
 
   for (const day in dietPlan) {
     const mappedDay = dayMap[day.toLowerCase()] || day;
@@ -46,7 +49,7 @@ export function transformDietPlanToEditableFormat(
 
     for (const rawKey in mealsForDay) {
       const rawMealName = rawKey.trim().toLowerCase();
-      const mappedMealName = mealMap[rawMealName] || rawKey;
+      const mappedMealName = translationMap[rawMealName] || rawKey;
 
       const mealData = mealsForDay[rawKey];
       if (!mealData || typeof mealData !== 'object') continue;
