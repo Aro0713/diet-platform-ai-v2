@@ -81,8 +81,27 @@ export const generateDietTool = tool({
       mealsPerDay,
     };
 
-    const prompt = `
-You are a clinical dietitian AI. Generate a 7-day individualized medical diet plan in perfect JSON format.
+const modelDiet = form.model?.toLowerCase();
+const cuisine = interviewData.cuisine?.toLowerCase() || "global";
+
+const prompt = `
+You are a clinical dietitian AI. Based on the data below, generate a 7-day personalized medical diet plan in perfect JSON format.
+
+You MUST take into account:
+- Medical test results, allergies, conditions — if provided
+- Patient interview — if provided
+- Number of meals per day — if provided
+- Doctor's recommendation — if provided
+- Diet goal, dietary model, cuisine
+- Values from calculator (BMI, CPM, PPM, PAL, kcal targets)
+
+Model of diet: ${modelDiet}
+Cuisine style: ${cuisine}
+Goal: ${goalExplanation}
+Doctor's notes: ${recommendation}
+Meals per day: ${mealsPerDay}
+BMI: ${bmi}, PAL: ${pal}, CPM: ${cpm}, PPM: ${interviewData.ppm}
+kcalMaintain: ${interviewData.kcalMaintain}, kcalReduce: ${interviewData.kcalReduce}, kcalGain: ${interviewData.kcalGain}
 
 Return ONLY raw JSON like:
 {
@@ -107,12 +126,6 @@ Strict rules:
 - Day keys in English, meal names in Polish
 - Each meal must include: time, menu, kcal, glycemicIndex (required), ingredients (array)
 - JSON only – no markdown, no explanations
-
-Language: ${selectedLang}
-Goal: ${goalExplanation}
-Doctor's notes: ${recommendation}
-Adapt to allergies, conditions, stress, culture.
-CPM: ${cpm}, mealsPerDay: ${mealsPerDay}
 
 Use culturally relevant food:
 ${culturalContext}
