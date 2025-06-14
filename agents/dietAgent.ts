@@ -121,7 +121,11 @@ Patient data:
 ${JSON.stringify(patientData, null, 2)}
 `;
 
-    return prompt;
+    return {
+  type: "text",
+  content: prompt
+};
+
   }
 });
 
