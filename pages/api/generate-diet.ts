@@ -1,9 +1,15 @@
 import { run } from "@openai/agents";
 import { dietAgent } from "@/agents/dietAgent";
 
-export const runtime = "edge";
+export const config = {
+  runtime: "edge"
+};
 
-export async function POST(req: Request) {
+export default async function handler(req: Request) {
+  if (req.method !== "POST") {
+    return new Response("Method Not Allowed", { status: 405 });
+  }
+
   try {
     const body = await req.json();
 
