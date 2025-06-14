@@ -3,8 +3,9 @@ import OpenAI from "openai";
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export const config = {
-  runtime: "edge"
+  runtime: "nodejs"
 };
+
 
 export default async function handler(req: Request) {
   if (req.method !== "POST") {
