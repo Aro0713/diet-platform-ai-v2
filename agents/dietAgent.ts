@@ -1,4 +1,7 @@
 import { Agent, tool } from "@openai/agents";
+import OpenAI from "openai";
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const languageMap: Record<string, string> = {
   pl: "polski", en: "English", es: "español", fr: "français", de: "Deutsch",
@@ -121,11 +124,20 @@ Patient data:
 ${JSON.stringify(patientData, null, 2)}
 `;
 
-    return {
-  type: "text",
-  content: prompt
-};
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        { role: "system", content: "You are a clinical dietitian AI." },
+        { role: "user", content: prompt }
+      ],
+      temperature: 0.7,
+      stream: false
+    });
 
+    return {
+      type: "text",
+      content: completion.choices[0].message.content ?? "Brak odpowiedzi."
+    };
   }
 });
 
