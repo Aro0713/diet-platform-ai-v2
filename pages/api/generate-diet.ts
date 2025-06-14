@@ -1,19 +1,20 @@
 import OpenAI from "openai";
+import type { NextApiRequest, NextApiResponse } from "next";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export const config = {
-  runtime: "nodejs"
+  api: {
+    bodyParser: true,
+    responseLimit: "2mb"
+  }
 };
 
-
-export default async function handler(req: Request) {
-  if (req.method !== "POST") {
-    return new Response("Method Not Allowed", { status: 405 });
-  }
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
 
   try {
-    const body = await req.json();
+    const body = req.body;
     const { form, interviewData, lang = "pl", goalExplanation = "", recommendation = "" } = body;
 
     const bmi = form.bmi ?? (form.weight && form.height
@@ -78,18 +79,14 @@ ${JSON.stringify(patientData, null, 2)}
         { role: "system", content: "You are a clinical dietitian AI." },
         { role: "user", content: prompt }
       ],
-      temperature: 0.7,
-      stream: false
+      temperature: 0.7
     });
 
     const text = completion.choices[0].message.content ?? "";
-
-    return new Response(text, {
-      headers: { "Content-Type": "text/plain" }
-    });
+    res.status(200).send(text);
 
   } catch (err) {
     console.error("❌ BŁĄD W AI:", err);
-    return new Response("Błąd serwera przy generowaniu diety.", { status: 500 });
+    res.status(500).send("Błąd serwera przy generowaniu diety.");
   }
 }
