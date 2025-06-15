@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import type { NextApiRequest, NextApiResponse } from "next";
+import { validateAndFixDiet } from "@/agents/dqAgent";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -82,7 +83,44 @@ ${JSON.stringify(patientData, null, 2)}
       temperature: 0.7
     });
 
-    const text = completion.choices[0].message.content ?? "";
+    let text = completion.choices[0].message.content ?? "";
+
+    // 🔁 Retry loop: analiza jakości + poprawa
+    try {
+      const parsed = JSON.parse(text);
+      const dietPlan = parsed?.dietPlan;
+
+      if (!dietPlan) {
+        console.warn("❗ Brak dietPlan – pomijam walidację.");
+      } else {
+        const result = await validateAndFixDiet({
+          dietPlan,
+          model: form.model,
+          goal: goalExplanation,
+          cpm,
+          weightKg: form.weight
+        });
+
+        console.log("📋 Diet quality evaluation result:", result);
+
+        if (result.includes("CORRECTED_JSON:")) {
+          const startIndex = result.indexOf("{");
+          const corrected = result.slice(startIndex).trim();
+          console.log("✅ Poprawiona dieta została wygenerowana.");
+          return res.status(200).send(corrected);
+        }
+
+        if (result.includes("VALID ✅")) {
+          console.log("✅ Dieta przeszła walidację AI bez uwag.");
+          return res.status(200).send(text);
+        }
+
+        console.warn("⚠️ Walidacja zwróciła wynik, ale nie rozpoznano formatu — zwracam oryginał.");
+      }
+    } catch (retryErr) {
+      console.warn("⚠️ Retry loop failed:", retryErr);
+    }
+
     res.status(200).send(text);
 
   } catch (err) {
