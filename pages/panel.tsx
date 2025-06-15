@@ -450,14 +450,24 @@ return (
       {/* Sekcja 3: Wywiad pacjenta */}
       <PanelCard title={`🧠 ${tUI('interviewTitle', lang)}`}>
         <InterviewWizard
-          form={form}
-          onFinish={(data) => setInterviewData(data)}
-          lang={lang}
-        />
+      form={form}
+      onFinish={(data) => {
+        setInterviewData(data);
+        setForm((prev) => ({
+          ...prev,
+          stressLevel: data.stressLevel,
+          sleepQuality: data.sleepQuality,
+          physicalActivity: data.physicalActivity,
+          activityDetails: data.activityDetails,
+          otherInfo: data.otherInfo
+        }));
+      }}
+      lang={lang}
+      />
       </PanelCard>
-{/* Sekcja 3.1: Rekomendacje lekarza i liczba posiłków */}
-<PanelCard className="h-full">
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    {/* Sekcja 3.1: Rekomendacje lekarza i liczba posiłków */}
+    <PanelCard className="h-full">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
     {/* Zalecenia lekarza */}
     <div className="flex flex-col space-y-2">
       <label className="text-sm font-medium text-black dark:text-white">
@@ -613,9 +623,13 @@ return (
         nmcLorentz: interviewData.nmcLorentz
       }
     );
+    const formattedDate = new Date().toISOString().slice(0, 10);
+    const safeName = form.name?.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "") || "pacjent";
+    const filename = `dieta_${safeName}_${formattedDate}.pdf`;
 
     pdfMake.createPdf(docDefinition).getBlob(async (blob: Blob) => {
-      const success = await sendToPatient(form.email, blob, lang);
+      const success = await sendToPatient(form.email, blob, lang, filename);
+
       if (success) {
         alert('📤 Dieta została wysłana pacjentowi!');
       } else {

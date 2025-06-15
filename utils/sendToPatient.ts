@@ -1,7 +1,8 @@
 export async function sendToPatient(
   email: string,
   pdfBlob: Blob,
-  lang: string = 'pl'
+  lang: string = 'pl',
+  filename: string = 'dieta.pdf'
 ): Promise<boolean> {
   const pdfBase64 = await new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
@@ -21,7 +22,8 @@ export async function sendToPatient(
     body: JSON.stringify({
       to: email,
       lang,
-      pdfBase64
+      pdfBase64,
+      filename // nowy klucz przesyłany do backendu
     })
   });
 

@@ -1546,5 +1546,31 @@ printPdf: {
     ar: 'استبيان PDF',
     he: 'שאלון PDF'
   },
+  activityDetails: {
+    pl: "Opis aktywności",
+    en: "Activity details",
+    es: "Detalles de actividad",
+    fr: "Détails de l'activité",
+    de: "Aktivitätsdetails",
+    ua: "Деталі активності",
+    ru: "Подробности активности",
+    zh: "活动详情",
+    hi: "गतिविधि का विवरण",
+    ar: "تفاصيل النشاط",
+    he: "פרטי פעילות"
+  },
+  otherInfo: {
+    pl: "Inne informacje",
+    en: "Other information",
+    es: "Otra información",
+    fr: "Autres informations",
+    de: "Weitere Informationen",
+    ua: "Інша інформація",
+    ru: "Другая информация",
+    zh: "其他信息",
+    hi: "अन्य जानकारी",
+    ar: "معلومات أخرى",
+    he: "מידע נוסף"
+  }
 };
 

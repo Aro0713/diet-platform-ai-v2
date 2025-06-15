@@ -82,19 +82,33 @@ ${interview.recommendation}`,
     });
   }
 
-  if (interview) {
-    content.push({ text: `🧠 ${tUI('interviewTitle', lang)}`, style: 'subheader', margin: [0, 10, 0, 4] });
-    Object.entries(interview || {}).forEach(([section, sectionValue]) => {
-      if (typeof sectionValue === 'object' && section !== 'recommendation') {
-        content.push({ text: `► ${section}`, bold: true, margin: [0, 6, 0, 2] });
-        Object.entries(sectionValue || {}).forEach(([qKey, qValue]) => {
-          if (typeof qValue === 'string' || typeof qValue === 'number') {
-            content.push({ text: `• ${qKey}: ${qValue}`, margin: [0, 0, 0, 2] });
-          }
-        });
-      }
-    });
-  }
+if (interview) {
+  content.push({ text: `🧠 ${tUI('interviewTitle', lang)}`, style: 'subheader', margin: [0, 10, 0, 4] });
+
+  const keysToShow = ['stressLevel', 'sleepQuality', 'physicalActivity', 'activityDetails', 'otherInfo'];
+  keysToShow.forEach((key) => {
+    if (interview[key]) {
+      content.push({ text: `• ${tUI(key, lang)}: ${interview[key]}`, margin: [0, 0, 0, 2] });
+    }
+  });
+
+  Object.entries(interview ?? {}).forEach(([section, sectionValue]) => {
+    if (
+      section !== "recommendation" &&
+      typeof sectionValue === "object" &&
+      sectionValue !== null &&
+      !Array.isArray(sectionValue)
+    ) {
+      content.push({ text: `► ${section}`, bold: true, margin: [0, 6, 0, 2] });
+
+      Object.entries(sectionValue ?? {}).forEach(([qKey, qValue]) => {
+        if (typeof qValue === "string" || typeof qValue === "number") {
+          content.push({ text: `• ${qKey}: ${qValue}`, margin: [0, 0, 0, 2] });
+        }
+      });
+    }
+  });
+}
 
   content.push({
     text: `🍽️ ${tUI('recommendedDiet', lang)}`,
@@ -179,5 +193,8 @@ ${interview.recommendation}`,
       : undefined
   };
 
-  pdfMake.createPdf(docDefinition).download(`dieta_${new Date().toISOString().slice(0, 10)}.pdf`);
+  const formattedDate = new Date().toISOString().slice(0, 10);
+ const safeName = patient.name?.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "") || "pacjent";
+ pdfMake.createPdf(docDefinition).download(`dieta_${safeName}_${formattedDate}.pdf`);
+
 }
