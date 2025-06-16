@@ -29,6 +29,24 @@ const isValid = (n: any): n is number => typeof n === "number" && !isNaN(n) && n
 
 const tCalc = (key: keyof typeof calculationBlock, lang: LangKey): string =>
   calculationBlock[key]?.[lang] || calculationBlock[key]?.pl || `[${key}]`;
+const extractMappedInterview = (interview: Record<string, string>) => {
+  const result: Record<string, string> = {};
+
+  // 🔹 Aktywność fizyczna (step2_q1 = Czy aktywny, step2_q2 = Jaka aktywność)
+  result.q1 = interview.step2_q1 || '';
+  result.q2 = interview.step2_q2 || '';
+
+  // 🔹 Jakość snu – section2 → q14 (czyli step1_q14)
+  result.q7 = interview.step1_q14 || '';
+
+  // 🔹 Poziom stresu – section2 → q13 (czyli step1_q13)
+  result.q8 = interview.step1_q13 || '';
+
+  // 🔹 Liczba posiłków – step9_mealsPerDay
+  result.mealsPerDay = interview.step9_mealsPerDay || '';
+
+  return result;
+};
 
 export default function CalculationBlock({ form, interview, lang, onResult }: Props) {
   const [pal, setPal] = useState(1.6);

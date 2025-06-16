@@ -134,9 +134,11 @@ export default function InterviewWizard({ onFinish, form, lang }: Props) {
       buildStep(section7, lang, form),
     ];
 
-    if (form.sex === 'female') {
-      baseSteps.push(buildStep(section8, lang, form));
-    }
+      baseSteps.push(
+      form.sex === 'female'
+        ? buildStep(section8, lang, form)
+        : { title: '', questions: [] }
+    );
 
     baseSteps.push(buildStep(section9, lang, form));
     baseSteps.push(buildStep(section10, lang, form));
@@ -144,8 +146,17 @@ export default function InterviewWizard({ onFinish, form, lang }: Props) {
     return baseSteps;
   }, [lang, form.sex]);
 
-  const step = steps[currentStep];
-  const isLastStep = currentStep === steps.length - 1;
+    if (!steps.length || currentStep >= steps.length) {
+      return (
+        <PanelCard className="p-10 text-red-600">
+          ⚠️ Błąd: nieprawidłowy krok wywiadu. Sprawdź dane wejściowe (płeć, język, sekcje).
+        </PanelCard>
+      );
+    }
+
+const step = steps[currentStep] || { title: '', questions: [] };
+const isLastStep = currentStep === steps.length - 1;
+
 
   const next = () => setCurrentStep((prev) => prev + 1);
   const back = () => setCurrentStep((prev) => prev - 1);
