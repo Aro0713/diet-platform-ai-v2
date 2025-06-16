@@ -11,20 +11,19 @@ import { LangKey } from '@/utils/i18n';
 export function convertSectionFormat(
   section: Record<string, Record<LangKey, string | string[]>>
 ): Record<LangKey, Record<string, string | string[] | { dependsOn?: { question: string; value: string } }>> {
- const result = {
-  pl: {},
-  en: {},
-  es: {},
-  fr: {},
-  de: {},
-  ua: {},
-  ru: {},
-  zh: {},
-  hi: {},
-  ar: {},
-  he: {},
-} as Record<LangKey, Record<string, any>>;
-
+  const result = {
+    pl: {},
+    en: {},
+    es: {},
+    fr: {},
+    de: {},
+    ua: {},
+    ru: {},
+    zh: {},
+    hi: {},
+    ar: {},
+    he: {},
+  } as Record<LangKey, Record<string, any>>;
 
   for (const key in section) {
     const translations = section[key];
@@ -118,3 +117,18 @@ export function withOtherOption(
 
   return modified;
 }
+
+/**
+ * Wyciąga kluczowe dane z wywiadu do kalkulatora (PAL, sen, stres, posiłki)
+ */
+export const extractMappedInterview = (interview: Record<string, string>) => {
+  const result: Record<string, string> = {};
+
+  result.q1 = interview.step2_q1 || '';
+  result.q2 = interview.step2_q2 || '';
+  result.q7 = interview.step1_q14 || '';
+  result.q8 = interview.step1_q13 || '';
+  result.mealsPerDay = interview.step9_mealsPerDay || '';
+
+  return result;
+};

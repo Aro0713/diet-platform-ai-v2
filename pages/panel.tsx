@@ -19,6 +19,7 @@ import DietGoalForm from '@/components/DietGoalForm';
 import SelectCuisineForm from '@/components/SelectCuisineForm';
 import SelectModelForm from '@/components/SelectModelForm';
 import CalculationBlock from '@/components/CalculationBlock';
+import { extractMappedInterview } from '@/utils/interviewHelpers';
 import DietTable from '@/components/DietTable';
 import ConfirmationModal from '@/components/ConfirmationModal';
 
@@ -533,7 +534,7 @@ return (
       <PanelCard title={`🧮 ${tUI('patientInNumbers', lang)}`} className="h-full">
         <CalculationBlock
           form={form}
-          interview={interviewData}
+          interview={extractMappedInterview(interviewData)}
           lang={lang}
           onResult={handleCalculationResult}
         />
