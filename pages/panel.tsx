@@ -542,6 +542,8 @@ return (
      {/* Sekcja 6: Przyciski akcji */}
 <PanelCard title={tUI('actions', lang)} className="mt-2">
   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+
+    {/* 🔵 Generuj dietę */}
     <button
       type="button"
       onClick={handleSubmit}
@@ -556,6 +558,7 @@ return (
       ) : tUI('generate', lang)}
     </button>
 
+    {/* 🟣 Zatwierdź dietę */}
     <button
       type="button"
       className="w-full bg-purple-700 text-white px-4 py-3 rounded-md font-medium hover:bg-purple-800 disabled:opacity-50"
@@ -565,68 +568,99 @@ return (
       {isGenerating ? '⏳ Czekaj...' : `✅ ${tUI('approvedDiet', lang)}`}
     </button>
 
+    {/* ✅ Pobierz PDF */}
     <button
       type="button"
       className="w-full bg-green-700 text-white px-4 py-3 rounded-md font-medium hover:bg-green-800 disabled:opacity-50"
-      onClick={() => {
-        if (isGenerating) {
-          alert('⏳ Dieta nie została jeszcze w pełni wygenerowana.');
-          return;
-        }
-        if (!confirmedDiet) {
-          alert('❗ Najpierw zatwierdź dietę, zanim pobierzesz PDF.');
-          return;
-        }
-        generateDietPdf(form, bmi, confirmedDiet, dietApproved, notes);
-      }}
       disabled={isGenerating || !confirmedDiet}
+      onClick={async () => {
+        const { generateDietPdf } = await import('@/utils/generateDietPdf');
+        await generateDietPdf(
+          form,
+          bmi,
+          confirmedDiet!,
+          dietApproved,
+          notes,
+          lang,
+          undefined,
+          interviewData,
+          {
+            bmi: interviewData.bmi,
+            ppm: interviewData.ppm,
+            cpm: interviewData.cpm,
+            pal: interviewData.pal,
+            kcalMaintain: interviewData.kcalMaintain,
+            kcalReduce: interviewData.kcalReduce,
+            kcalGain: interviewData.kcalGain,
+            nmcBroca: interviewData.nmcBroca,
+            nmcLorentz: interviewData.nmcLorentz
+          }
+        );
+      }}
     >
-      {isGenerating ? '⏳ Czekaj...' : `📄 ${tUI('pdf', lang)}`}
+      {isGenerating ? '⏳ Generowanie...' : `📄 ${tUI('pdf', lang)}`}
     </button>
 
+    {/* 📤 Wyślij pacjentowi */}
+    <button
+      type="button"
+      className="w-full bg-blue-500 text-white px-4 py-3 rounded-md font-medium hover:bg-blue-600 disabled:opacity-50"
+      disabled={isGenerating || !confirmedDiet || !form.email}
+      onClick={async () => {
+        const pdfMake = (await import('pdfmake/build/pdfmake')).default;
+        const pdfFonts = (await import('pdfmake/build/vfs_fonts')).default;
+        pdfMake.vfs = pdfFonts.vfs;
 
-<button
-  type="button"
-  className="w-full bg-green-700 text-white px-4 py-3 rounded-md font-medium hover:bg-green-800 disabled:opacity-50"
-  disabled={isGenerating || !confirmedDiet}
-  onClick={async () => {
-    const { generateDietPdf } = await import('@/utils/generateDietPdf');
-    await generateDietPdf(
-      form,
-      bmi,
-      confirmedDiet!,
-      dietApproved,
-      notes,
-      lang,
-      undefined,
-      interviewData,
-      {
-        bmi: interviewData.bmi,
-        ppm: interviewData.ppm,
-        cpm: interviewData.cpm,
-        pal: interviewData.pal,
-        kcalMaintain: interviewData.kcalMaintain,
-        kcalReduce: interviewData.kcalReduce,
-        kcalGain: interviewData.kcalGain,
-        nmcBroca: interviewData.nmcBroca,
-        nmcLorentz: interviewData.nmcLorentz
-      }
-    );
-  }}
->
-  {isGenerating ? '⏳ Generowanie...' : `📄 ${tUI('pdf', lang)}`}
-</button>
+        const { generateDietPdf } = await import('@/utils/generateDietPdf');
 
+        const docDefinition = await generateDietPdf(
+          form,
+          bmi,
+          confirmedDiet!,
+          dietApproved,
+          notes,
+          lang,
+          undefined,
+          interviewData,
+          {
+            bmi: interviewData.bmi,
+            ppm: interviewData.ppm,
+            cpm: interviewData.cpm,
+            pal: interviewData.pal,
+            kcalMaintain: interviewData.kcalMaintain,
+            kcalReduce: interviewData.kcalReduce,
+            kcalGain: interviewData.kcalGain,
+            nmcBroca: interviewData.nmcBroca,
+            nmcLorentz: interviewData.nmcLorentz
+          }
+        );
 
-        </div>
+        const formattedDate = new Date().toISOString().slice(0, 10);
+        const safeName = form.name?.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "") || "pacjent";
+        const filename = `dieta_${safeName}_${formattedDate}.pdf`;
 
-        {/* Pasek ładowania */}
-        {isGenerating && (
-          <div className="text-sm text-gray-600 italic mt-4 animate-pulse">
-            ⏳ Piszę dietę... {streamingText.length > 20 && '(czekaj, trwa generowanie)'}
-          </div>
-        )}
-      </PanelCard>
+        pdfMake.createPdf(docDefinition).getBlob(async (blob: Blob) => {
+          const success = await sendToPatient(form.email, blob, lang, filename);
+          if (success) {
+            alert('📤 Dieta została wysłana pacjentowi!');
+          } else {
+            alert('❌ Wysyłka nie powiodła się. Sprawdź adres e-mail lub połączenie.');
+          }
+        });
+      }}
+    >
+      {isGenerating ? '⏳ Wysyłanie...' : `📤 ${tUI('sendToPatient', lang)}`}
+    </button>
+
+  </div>
+
+  {/* Pasek ładowania */}
+  {isGenerating && (
+    <div className="text-sm text-gray-600 italic mt-4 animate-pulse">
+      ⏳ Piszę dietę... {streamingText.length > 20 && '(czekaj, trwa generowanie)'}
+    </div>
+  )}
+</PanelCard>
 
       {/* Sekcja 7: Tabela z dietą */}
       {editableDiet && Object.keys(editableDiet).length > 0 && (
