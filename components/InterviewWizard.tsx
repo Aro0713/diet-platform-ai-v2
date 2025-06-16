@@ -68,7 +68,8 @@ const getSexString = (
 
 const shouldRenderQuestion = (q: Question, answers: InterviewAnswers): boolean => {
   if (!q.dependsOn) return true;
-  return answers[q.dependsOn.question] === q.dependsOn.value;
+  const scoped = Object.entries(answers).find(([k]) => k.endsWith(`_${q.dependsOn?.question}`))?.[1];
+  return scoped === q.dependsOn.value;
 };
 
 function convertSectionFormat(section: Record<string, any>): { title: string; questions: Question[] } {
@@ -207,7 +208,13 @@ export default function InterviewWizard({ onFinish, form, lang }: Props) {
         flattenedAnswers[shortKey] = value;
       });
 
-      await onFinish(flattenedAnswers);
+      await onFinish({
+  ...flattenedAnswers,
+  stressLevel: flattenedAnswers.q5,
+  sleepQuality: flattenedAnswers.q6,
+  physicalActivity: flattenedAnswers.q3,
+});
+
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (e) {
