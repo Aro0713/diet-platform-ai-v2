@@ -10,7 +10,6 @@ export async function generateDietPdf(
   approved: boolean = false,
   notes: Record<string, string> = {},
   lang: LangKey = 'pl',
-  _logoBase64?: string, // logo wyłączone
   interview?: any,
   calc?: {
     bmi: number;
@@ -31,19 +30,16 @@ export async function generateDietPdf(
 
   const content: any[] = [];
 
-  // ✅ Tytuł dokumentu
   content.push({
     text: `📋 ${tUI('dietPlanTitle', lang)}`,
     style: 'header'
   });
 
-  // 🕒 Data
   content.push({
     text: `${tUI('date', lang)}: ${new Date().toLocaleString()}`,
     margin: [0, 0, 0, 10]
   });
 
-  // 👤 Dane pacjenta
   content.push({
     text: `${tUI('patientData', lang)}:
 ${tUI('age', lang)}: ${patient.age} | ${tUI('sex', lang)}: ${tUI(patient.sex, lang)} | ${tUI('weight', lang)}: ${patient.weight} kg | ${tUI('height', lang)}: ${patient.height} cm | BMI: ${bmi ?? 'n/a'}`,
@@ -57,7 +53,6 @@ ${tUI('region', lang)}: ${patient.region || tUI('none', lang)}`,
     margin: [0, 0, 0, 10]
   });
 
-  // 🩺 Nagłówek + badania
   content.push({
     text: `🩺 ${tUI('medicalDataIncluded', lang)}`,
     style: 'subheader',
@@ -206,7 +201,7 @@ ${interview.recommendation}`,
     defaultStyle: {
       fontSize: 11
     },
-    background: undefined // logo wyłączone
+    background: undefined
   };
 
   if (mode === 'returnDoc') {

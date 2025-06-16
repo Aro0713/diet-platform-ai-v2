@@ -578,29 +578,31 @@ return (
     try {
       setIsGenerating(true);
       const { generateDietPdf } = await import('@/utils/generateDietPdf');
-      await generateDietPdf(
-        form,
-        bmi,
-        confirmedDiet!,
-        dietApproved,
-        notes,
-        lang,
-        undefined,
-        interviewData,
-        {
-          bmi: interviewData.bmi,
-          ppm: interviewData.ppm,
-          cpm: interviewData.cpm,
-          pal: interviewData.pal,
-          kcalMaintain: interviewData.kcalMaintain,
-          kcalReduce: interviewData.kcalReduce,
-          kcalGain: interviewData.kcalGain,
-          nmcBroca: interviewData.nmcBroca,
-          nmcLorentz: interviewData.nmcLorentz
-        }
-      );
+  await generateDietPdf(
+  form,
+  bmi,
+  confirmedDiet!,
+  dietApproved,
+  notes,
+  lang,
+  interviewData,
+  {
+    bmi: interviewData.bmi,
+    ppm: interviewData.ppm,
+    cpm: interviewData.cpm,
+    pal: interviewData.pal,
+    kcalMaintain: interviewData.kcalMaintain,
+    kcalReduce: interviewData.kcalReduce,
+    kcalGain: interviewData.kcalGain,
+    nmcBroca: interviewData.nmcBroca,
+    nmcLorentz: interviewData.nmcLorentz
+  },
+  'download' // ✅ to jest poprawny 9. argument
+);
+
     } catch (e) {
       alert('❌ Błąd przy generowaniu PDF');
+      console.error(e);
     } finally {
       setIsGenerating(false);
     }
@@ -608,6 +610,7 @@ return (
 >
   {isGenerating ? '⏳ Generowanie...' : `📄 ${tUI('pdf', lang)}`}
 </button>
+
 
 {/* 📤 Wyślij pacjentowi */}
 <button
@@ -629,7 +632,6 @@ return (
         dietApproved,
         notes,
         lang,
-        undefined,
         interviewData,
         {
           bmi: interviewData.bmi,
