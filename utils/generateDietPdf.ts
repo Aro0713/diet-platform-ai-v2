@@ -2,6 +2,7 @@ import { PatientData, Meal } from '@/types';
 import { stampBase64 } from '@/utils/stamp';
 import { LangKey } from '@/utils/i18n';
 import { tUI } from '@/utils/i18n';
+import { loadLogoBase64 } from '@/utils/loadLogoBase64';
 
 export async function generateDietPdf(
   patient: PatientData,
@@ -22,39 +23,72 @@ export async function generateDietPdf(
     kcalGain: number;
     nmcBroca: number;
     nmcLorentz: number;
-  }
+  },
+  mode: 'download' | 'returnDoc' = 'download'
 ) {
   const pdfMake = (await import('pdfmake/build/pdfmake')).default;
   const pdfFonts = (await import('pdfmake/build/vfs_fonts')).default;
   pdfMake.vfs = pdfFonts.vfs;
 
-  const content: any[] = [
-    { text: `📋 ${tUI('dietPlanTitle', lang)}`, style: 'header' },
-    { text: `${tUI('date', lang)}: ${new Date().toLocaleString()}`, margin: [0, 0, 0, 10] },
-    {
-      text: `${tUI('patientData', lang)}:
+   if (!logoBase64) {
+    const { loadLogoBase64 } = await import('@/utils/loadLogoBase64');
+    logoBase64 = await loadLogoBase64();
+  }
+
+const content: any[] = [];
+
+// ✅ Logo w nagłówku (jeśli jest)
+if (logoBase64) {
+  content.push({
+    image: logoBase64,
+    width: 120,
+    alignment: 'right',
+    margin: [0, 0, 0, 10]
+  });
+}
+
+// ✅ Tytuł dokumentu
+content.push({
+  text: `📋 ${tUI('dietPlanTitle', lang)}`,
+  style: 'header'
+});
+
+// 🕒 Data
+content.push({
+  text: `${tUI('date', lang)}: ${new Date().toLocaleString()}`,
+  margin: [0, 0, 0, 10]
+});
+
+// 👤 Dane pacjenta
+content.push({
+  text: `${tUI('patientData', lang)}:
 ${tUI('age', lang)}: ${patient.age} | ${tUI('sex', lang)}: ${tUI(patient.sex, lang)} | ${tUI('weight', lang)}: ${patient.weight} kg | ${tUI('height', lang)}: ${patient.height} cm | BMI: ${bmi ?? 'n/a'}`,
-      margin: [0, 0, 0, 10]
-    },
-    {
-      text: `${tUI('conditions', lang)}: ${patient.conditions?.join(', ') || tUI('none', lang)}
+  margin: [0, 0, 0, 10]
+});
+
+content.push({
+  text: `${tUI('conditions', lang)}: ${patient.conditions?.join(', ') || tUI('none', lang)}
 ${tUI('allergies', lang)}: ${patient.allergies || tUI('none', lang)}
 ${tUI('region', lang)}: ${patient.region || tUI('none', lang)}`,
-      margin: [0, 0, 0, 10]
-    },
-    {
-      text: `🩺 ${tUI('medicalDataIncluded', lang)}`,
-      style: 'subheader',
-      margin: [0, 10, 0, 4]
-    },
-    ...(patient.medical ?? []).flatMap((entry) => [
-      { text: `• ${entry.condition}`, bold: true, margin: [0, 4, 0, 0] },
-      ...entry.tests.map((test) => ({
-        text: `   → ${test.name}: ${test.value || '—'}`,
-        margin: [0, 0, 0, 2]
-      }))
-    ]),
-  ];
+  margin: [0, 0, 0, 10]
+});
+
+// 🩺 Nagłówek + badania
+content.push({
+  text: `🩺 ${tUI('medicalDataIncluded', lang)}`,
+  style: 'subheader',
+  margin: [0, 10, 0, 4]
+});
+
+content.push(
+  ...(patient.medical ?? []).flatMap((entry) => [
+    { text: `• ${entry.condition}`, bold: true, margin: [0, 4, 0, 0] },
+    ...entry.tests.map((test) => ({
+      text: `   → ${test.name}: ${test.value || '—'}`,
+      margin: [0, 0, 0, 2]
+    }))
+  ])
+);
 
   if (interview?.recommendation) {
     content.push({
@@ -82,33 +116,33 @@ ${interview.recommendation}`,
     });
   }
 
-if (interview) {
-  content.push({ text: `🧠 ${tUI('interviewTitle', lang)}`, style: 'subheader', margin: [0, 10, 0, 4] });
+  if (interview) {
+    content.push({ text: `🧠 ${tUI('interviewTitle', lang)}`, style: 'subheader', margin: [0, 10, 0, 4] });
 
-  const keysToShow = ['stressLevel', 'sleepQuality', 'physicalActivity', 'activityDetails', 'otherInfo'];
-  keysToShow.forEach((key) => {
-    if (interview[key]) {
-      content.push({ text: `• ${tUI(key, lang)}: ${interview[key]}`, margin: [0, 0, 0, 2] });
-    }
-  });
+    const keysToShow = ['stressLevel', 'sleepQuality', 'physicalActivity', 'activityDetails', 'otherInfo'];
+    keysToShow.forEach((key) => {
+      if (interview[key]) {
+        content.push({ text: `• ${tUI(key, lang)}: ${interview[key]}`, margin: [0, 0, 0, 2] });
+      }
+    });
 
-  Object.entries(interview ?? {}).forEach(([section, sectionValue]) => {
-    if (
-      section !== "recommendation" &&
-      typeof sectionValue === "object" &&
-      sectionValue !== null &&
-      !Array.isArray(sectionValue)
-    ) {
-      content.push({ text: `► ${section}`, bold: true, margin: [0, 6, 0, 2] });
+    Object.entries(interview ?? {}).forEach(([section, sectionValue]) => {
+      if (
+        section !== "recommendation" &&
+        typeof sectionValue === "object" &&
+        sectionValue !== null &&
+        !Array.isArray(sectionValue)
+      ) {
+        content.push({ text: `► ${section}`, bold: true, margin: [0, 6, 0, 2] });
 
-      Object.entries(sectionValue ?? {}).forEach(([qKey, qValue]) => {
-        if (typeof qValue === "string" || typeof qValue === "number") {
-          content.push({ text: `• ${qKey}: ${qValue}`, margin: [0, 0, 0, 2] });
-        }
-      });
-    }
-  });
-}
+        Object.entries(sectionValue ?? {}).forEach(([qKey, qValue]) => {
+          if (typeof qValue === "string" || typeof qValue === "number") {
+            content.push({ text: `• ${qKey}: ${qValue}`, margin: [0, 0, 0, 2] });
+          }
+        });
+      }
+    });
+  }
 
   content.push({
     text: `🍽️ ${tUI('recommendedDiet', lang)}`,
@@ -189,12 +223,15 @@ if (interview) {
       fontSize: 11
     },
     background: logoBase64
-      ? [{ image: logoBase64, width: 300, opacity: 0.06, absolutePosition: { x: 100, y: 200 } }]
+      ? [{ image: logoBase64, width: 200, opacity: 0.08, absolutePosition: { x: 150, y: 300 } }]
       : undefined
   };
 
-  const formattedDate = new Date().toISOString().slice(0, 10);
- const safeName = patient.name?.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "") || "pacjent";
- pdfMake.createPdf(docDefinition).download(`dieta_${safeName}_${formattedDate}.pdf`);
+  if (mode === 'returnDoc') {
+    return docDefinition;
+  }
 
+  const formattedDate = new Date().toISOString().slice(0, 10);
+  const safeName = patient.name?.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "") || "pacjent";
+  pdfMake.createPdf(docDefinition).download(`dieta_${safeName}_${formattedDate}.pdf`);
 }
