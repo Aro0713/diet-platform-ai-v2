@@ -190,9 +190,8 @@ export default function InterviewWizard({ onFinish, form, lang }: Props) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
- const handleChange = (fullName: string, value: string) => {
-  const key = fullName.split('_').slice(-1)[0]; // np. z 'step4_q4' zostaje 'q4'
-  setAllAnswers((prev) => ({ ...prev, [key]: value }));
+const handleChange = (name: string, value: string) => {
+  setAllAnswers((prev) => ({ ...prev, [name]: value }));
 };
 
   const handleFinish = async () => {
@@ -269,7 +268,8 @@ export default function InterviewWizard({ onFinish, form, lang }: Props) {
                           const cleaned = e.target.value.replace(
                             /[^\u0000-\u007F\p{L}\p{N}\p{P}\p{Zs}]/gu, ''
                           );
-                          handleChange(`${scopedName}_details`, cleaned);
+                          handleChange(scopedName, cleaned);
+
                         }}
                       />
                     )}
