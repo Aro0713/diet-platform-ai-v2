@@ -15,7 +15,7 @@ import { OTHER_OPTIONS } from '@/utils/interviewHelpers';
 import PanelCard from './PanelCard';
 
 interface Question {
-  noInput: any;
+  noInput?: any;
   name: string;
   label: string;
   type: 'text' | 'radio' | 'select';
@@ -55,7 +55,6 @@ const getSexString = (sex: 'female' | 'male' | undefined, lang: LangKey): string
     ar: { female: 'سيدة', male: 'سيد', default: 'مريض' },
     he: { female: 'גברת', male: 'אדון', default: 'מטופל' }
   };
-
   const entry = forms[lang] || forms['en'];
   if (sex === 'female') return entry.female;
   if (sex === 'male') return entry.male;
@@ -64,32 +63,21 @@ const getSexString = (sex: 'female' | 'male' | undefined, lang: LangKey): string
 
 const shouldRenderQuestion = (q: Question, answers: InterviewAnswers): boolean => {
   if (!q.dependsOn) return true;
-
-  // Szukamy w allAnswers tego klucza, który kończy się na "_q1"
-  const match = Object.entries(answers).find(([key]) =>
-    key.endsWith(`_${q.dependsOn!.question}`)
-  );
-
-  return match?.[1] === q.dependsOn.value;
+  const match = Object.entries(answers).find(([key]) => key.endsWith(`_${q.dependsOn!.question}`));
+  if (!match) return false;
+  const answerValue = match[1];
+  if (Array.isArray(answerValue)) {
+    return answerValue.includes(q.dependsOn.value);
+  }
+  return answerValue === q.dependsOn.value;
 };
-
 
 function convertSectionFormat(section: Record<string, any>): { title: string; questions: Question[] } {
   const { title } = section;
-
   const questions: Question[] = Object.entries(section)
     .filter(([key]) => key.startsWith('q'))
-    .sort(([a], [b]) => {
-      const numA = parseInt(a.replace(/[^0-9]/g, ''));
-      const numB = parseInt(b.replace(/[^0-9]/g, ''));
-      return numA !== numB ? numA - numB : a.localeCompare(b);
-    })
     .map(([key, value]) => {
-      if (
-        typeof value === 'object' &&
-        value.label &&
-        ['radio', 'select'].includes(value.type)
-      ) {
+      if (typeof value === 'object' && value.label && ['radio', 'select', 'text'].includes(value.type)) {
         return {
           name: key,
           label: value.label,
@@ -98,52 +86,14 @@ function convertSectionFormat(section: Record<string, any>): { title: string; qu
           dependsOn: value.dependsOn
         };
       }
-
-      if (Array.isArray(value) && value.every((v) => typeof v === 'string')) {
-        return {
-          name: key,
-          type: 'radio',
-          label: '',
-          options: value
-        };
-      }
-
-      if (typeof value === 'string') {
-        return {
-          name: key,
-          type: 'text',
-          label: value,
-          dependsOn: undefined
-        };
-      }
-
-      if (
-        typeof value === 'object' &&
-        value.label &&
-        value.type === 'text'
-      ) {
-        return {
-          name: key,
-          label: value.label,
-          type: 'text',
-          dependsOn: value.dependsOn
-        };
-      }
-
       return null;
     })
     .filter(Boolean) as Question[];
-
   return { title, questions };
 }
 
-const buildStep = (
-  section: Record<LangKey, Record<string, any>>,
-  lang: LangKey,
-  form: { sex: 'female' | 'male' }
-): Step => {
+const buildStep = (section: Record<LangKey, Record<string, any>>, lang: LangKey, form: { sex: 'female' | 'male' }): Step => {
   const raw = section[lang] || section['pl'];
-
   const parsed: Record<string, any> = {};
   for (const [key, value] of Object.entries(raw)) {
     if (typeof value === 'string') {
@@ -159,7 +109,6 @@ const buildStep = (
       parsed[key] = value;
     }
   }
-
   return convertSectionFormat(parsed);
 };
 
