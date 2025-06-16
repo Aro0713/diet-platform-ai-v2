@@ -2,7 +2,6 @@ import { PatientData, Meal } from '@/types';
 import { stampBase64 } from '@/utils/stamp';
 import { LangKey } from '@/utils/i18n';
 import { tUI } from '@/utils/i18n';
-import { loadLogoBase64 } from '@/utils/loadLogoBase64';
 
 export async function generateDietPdf(
   patient: PatientData,
@@ -11,7 +10,7 @@ export async function generateDietPdf(
   approved: boolean = false,
   notes: Record<string, string> = {},
   lang: LangKey = 'pl',
-  logoBase64?: string,
+  _logoBase64?: string, // logo wyłączone
   interview?: any,
   calc?: {
     bmi: number;
@@ -30,73 +29,50 @@ export async function generateDietPdf(
   const pdfFonts = (await import('pdfmake/build/vfs_fonts')).default;
   pdfMake.vfs = pdfFonts.vfs;
 
-if (!logoBase64) {
-  try {
-    const { loadLogoBase64 } = await import('@/utils/loadLogoBase64');
-    logoBase64 = await loadLogoBase64();
-    if (!logoBase64.startsWith('data:image')) {
-      throw new Error('Nieprawidłowy base64 logo');
-    }
-  } catch (e) {
-    console.warn('⚠️ Logo base64 nie zostało załadowane:', e);
-    logoBase64 = undefined;
-  }
-}
+  const content: any[] = [];
 
-const content: any[] = [];
-
-// ✅ Logo w nagłówku (jeśli jest)
-if (logoBase64) {
+  // ✅ Tytuł dokumentu
   content.push({
-    image: logoBase64,
-    width: 120,
-    alignment: 'right',
+    text: `📋 ${tUI('dietPlanTitle', lang)}`,
+    style: 'header'
+  });
+
+  // 🕒 Data
+  content.push({
+    text: `${tUI('date', lang)}: ${new Date().toLocaleString()}`,
     margin: [0, 0, 0, 10]
   });
-}
 
-// ✅ Tytuł dokumentu
-content.push({
-  text: `📋 ${tUI('dietPlanTitle', lang)}`,
-  style: 'header'
-});
-
-// 🕒 Data
-content.push({
-  text: `${tUI('date', lang)}: ${new Date().toLocaleString()}`,
-  margin: [0, 0, 0, 10]
-});
-
-// 👤 Dane pacjenta
-content.push({
-  text: `${tUI('patientData', lang)}:
+  // 👤 Dane pacjenta
+  content.push({
+    text: `${tUI('patientData', lang)}:
 ${tUI('age', lang)}: ${patient.age} | ${tUI('sex', lang)}: ${tUI(patient.sex, lang)} | ${tUI('weight', lang)}: ${patient.weight} kg | ${tUI('height', lang)}: ${patient.height} cm | BMI: ${bmi ?? 'n/a'}`,
-  margin: [0, 0, 0, 10]
-});
+    margin: [0, 0, 0, 10]
+  });
 
-content.push({
-  text: `${tUI('conditions', lang)}: ${patient.conditions?.join(', ') || tUI('none', lang)}
+  content.push({
+    text: `${tUI('conditions', lang)}: ${patient.conditions?.join(', ') || tUI('none', lang)}
 ${tUI('allergies', lang)}: ${patient.allergies || tUI('none', lang)}
 ${tUI('region', lang)}: ${patient.region || tUI('none', lang)}`,
-  margin: [0, 0, 0, 10]
-});
+    margin: [0, 0, 0, 10]
+  });
 
-// 🩺 Nagłówek + badania
-content.push({
-  text: `🩺 ${tUI('medicalDataIncluded', lang)}`,
-  style: 'subheader',
-  margin: [0, 10, 0, 4]
-});
+  // 🩺 Nagłówek + badania
+  content.push({
+    text: `🩺 ${tUI('medicalDataIncluded', lang)}`,
+    style: 'subheader',
+    margin: [0, 10, 0, 4]
+  });
 
-content.push(
-  ...(patient.medical ?? []).flatMap((entry) => [
-    { text: `• ${entry.condition}`, bold: true, margin: [0, 4, 0, 0] },
-    ...entry.tests.map((test) => ({
-      text: `   → ${test.name}: ${test.value || '—'}`,
-      margin: [0, 0, 0, 2]
-    }))
-  ])
-);
+  content.push(
+    ...(patient.medical ?? []).flatMap((entry) => [
+      { text: `• ${entry.condition}`, bold: true, margin: [0, 4, 0, 0] },
+      ...entry.tests.map((test) => ({
+        text: `   → ${test.name}: ${test.value || '—'}`,
+        margin: [0, 0, 0, 2]
+      }))
+    ])
+  );
 
   if (interview?.recommendation) {
     content.push({
@@ -230,9 +206,7 @@ ${interview.recommendation}`,
     defaultStyle: {
       fontSize: 11
     },
-    background: logoBase64
-      ? [{ image: logoBase64, width: 200, opacity: 0.08, absolutePosition: { x: 150, y: 300 } }]
-      : undefined
+    background: undefined // logo wyłączone
   };
 
   if (mode === 'returnDoc') {
