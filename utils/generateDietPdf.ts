@@ -30,10 +30,18 @@ export async function generateDietPdf(
   const pdfFonts = (await import('pdfmake/build/vfs_fonts')).default;
   pdfMake.vfs = pdfFonts.vfs;
 
-   if (!logoBase64) {
+if (!logoBase64) {
+  try {
     const { loadLogoBase64 } = await import('@/utils/loadLogoBase64');
     logoBase64 = await loadLogoBase64();
+    if (!logoBase64.startsWith('data:image')) {
+      throw new Error('Nieprawidłowy base64 logo');
+    }
+  } catch (e) {
+    console.warn('⚠️ Logo base64 nie zostało załadowane:', e);
+    logoBase64 = undefined;
   }
+}
 
 const content: any[] = [];
 
