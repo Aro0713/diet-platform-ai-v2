@@ -331,7 +331,7 @@ const handleChange = (name: string, value: string) => {
                       const cleaned = e.target.value.replace(
                         /[^\u0000-\u007F\p{L}\p{N}\p{P}\p{Zs}]/gu, ''
                       );
-                      handleChange(q.name, cleaned);
+                      handleChange(scopedName, cleaned);
                     }}
                   />
                 )}
