@@ -190,11 +190,9 @@ export default function InterviewWizard({ onFinish, form, lang }: Props) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-const handleChange = (fullName: string, value: string) => {
-  const key = fullName.split('_').slice(-1)[0];
-  setAllAnswers((prev) => ({ ...prev, [key]: value }));
+const handleChange = (name: string, value: string) => {
+  setAllAnswers((prev) => ({ ...prev, [name]: value }));
 };
-
 
   const handleFinish = async () => {
     setSaving(true);
