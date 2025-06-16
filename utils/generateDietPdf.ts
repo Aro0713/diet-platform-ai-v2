@@ -2,6 +2,7 @@ import { PatientData, Meal } from '@/types';
 import { stampBase64 } from '@/utils/stamp';
 import { LangKey } from '@/utils/i18n';
 import { tUI } from '@/utils/i18n';
+import { translationsUI } from '@/utils/translationsUI';
 
 export async function generateDietPdf(
   patient: PatientData,
