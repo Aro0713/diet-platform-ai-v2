@@ -559,99 +559,113 @@ return (
       ) : tUI('generate', lang)}
     </button>
 
-    {/* 🟣 Zatwierdź dietę */}
-    <button
-      type="button"
-      className="w-full bg-purple-700 text-white px-4 py-3 rounded-md font-medium hover:bg-purple-800 disabled:opacity-50"
-      onClick={() => setDietApproved(true)}
-      disabled={isGenerating || !confirmedDiet}
-    >
-      {isGenerating ? '⏳ Czekaj...' : `✅ ${tUI('approvedDiet', lang)}`}
-    </button>
+  {/* 🟣 Zatwierdź dietę */}
+<button
+  type="button"
+  className="w-full bg-purple-700 text-white px-4 py-3 rounded-md font-medium hover:bg-purple-800 disabled:opacity-50"
+  onClick={() => setDietApproved(true)}
+  disabled={isGenerating || !confirmedDiet}
+>
+  {isGenerating ? '⏳ Czekaj...' : `✅ ${tUI('approvedDiet', lang)}`}
+</button>
 
-    {/* ✅ Pobierz PDF */}
-    <button
-      type="button"
-      className="w-full bg-green-700 text-white px-4 py-3 rounded-md font-medium hover:bg-green-800 disabled:opacity-50"
-      disabled={isGenerating || !confirmedDiet}
-      onClick={async () => {
-        const { generateDietPdf } = await import('@/utils/generateDietPdf');
-        await generateDietPdf(
-          form,
-          bmi,
-          confirmedDiet!,
-          dietApproved,
-          notes,
-          lang,
-          undefined,
-          interviewData,
-          {
-            bmi: interviewData.bmi,
-            ppm: interviewData.ppm,
-            cpm: interviewData.cpm,
-            pal: interviewData.pal,
-            kcalMaintain: interviewData.kcalMaintain,
-            kcalReduce: interviewData.kcalReduce,
-            kcalGain: interviewData.kcalGain,
-            nmcBroca: interviewData.nmcBroca,
-            nmcLorentz: interviewData.nmcLorentz
-          }
-        );
-      }}
-    >
-      {isGenerating ? '⏳ Generowanie...' : `📄 ${tUI('pdf', lang)}`}
-    </button>
+{/* ✅ Pobierz PDF */}
+<button
+  type="button"
+  className="w-full bg-green-700 text-white px-4 py-3 rounded-md font-medium hover:bg-green-800 disabled:opacity-50"
+  disabled={isGenerating || !confirmedDiet || !dietApproved}
+  onClick={async () => {
+    try {
+      setIsGenerating(true);
+      const { generateDietPdf } = await import('@/utils/generateDietPdf');
+      await generateDietPdf(
+        form,
+        bmi,
+        confirmedDiet!,
+        dietApproved,
+        notes,
+        lang,
+        undefined,
+        interviewData,
+        {
+          bmi: interviewData.bmi,
+          ppm: interviewData.ppm,
+          cpm: interviewData.cpm,
+          pal: interviewData.pal,
+          kcalMaintain: interviewData.kcalMaintain,
+          kcalReduce: interviewData.kcalReduce,
+          kcalGain: interviewData.kcalGain,
+          nmcBroca: interviewData.nmcBroca,
+          nmcLorentz: interviewData.nmcLorentz
+        }
+      );
+    } catch (e) {
+      alert('❌ Błąd przy generowaniu PDF');
+    } finally {
+      setIsGenerating(false);
+    }
+  }}
+>
+  {isGenerating ? '⏳ Generowanie...' : `📄 ${tUI('pdf', lang)}`}
+</button>
 
-    {/* 📤 Wyślij pacjentowi */}
-    <button
-      type="button"
-      className="w-full bg-blue-500 text-white px-4 py-3 rounded-md font-medium hover:bg-blue-600 disabled:opacity-50"
-      disabled={isGenerating || !confirmedDiet || !form.email}
-      onClick={async () => {
-        const pdfMake = (await import('pdfmake/build/pdfmake')).default;
-        const pdfFonts = (await import('pdfmake/build/vfs_fonts')).default;
-        pdfMake.vfs = pdfFonts.vfs;
+{/* 📤 Wyślij pacjentowi */}
+<button
+  type="button"
+  className="w-full bg-blue-500 text-white px-4 py-3 rounded-md font-medium hover:bg-blue-600 disabled:opacity-50"
+  disabled={isGenerating || !confirmedDiet || !dietApproved || !form.email}
+  onClick={async () => {
+    try {
+      setIsGenerating(true);
+      const pdfMake = (await import('pdfmake/build/pdfmake')).default;
+      const pdfFonts = (await import('pdfmake/build/vfs_fonts')).default;
+      pdfMake.vfs = pdfFonts.vfs;
 
-        const { generateDietPdf } = await import('@/utils/generateDietPdf');
+      const { generateDietPdf } = await import('@/utils/generateDietPdf');
+      const docDefinition = await generateDietPdf(
+        form,
+        bmi,
+        confirmedDiet!,
+        dietApproved,
+        notes,
+        lang,
+        undefined,
+        interviewData,
+        {
+          bmi: interviewData.bmi,
+          ppm: interviewData.ppm,
+          cpm: interviewData.cpm,
+          pal: interviewData.pal,
+          kcalMaintain: interviewData.kcalMaintain,
+          kcalReduce: interviewData.kcalReduce,
+          kcalGain: interviewData.kcalGain,
+          nmcBroca: interviewData.nmcBroca,
+          nmcLorentz: interviewData.nmcLorentz
+        }
+      );
 
-        const docDefinition = await generateDietPdf(
-          form,
-          bmi,
-          confirmedDiet!,
-          dietApproved,
-          notes,
-          lang,
-          undefined,
-          interviewData,
-          {
-            bmi: interviewData.bmi,
-            ppm: interviewData.ppm,
-            cpm: interviewData.cpm,
-            pal: interviewData.pal,
-            kcalMaintain: interviewData.kcalMaintain,
-            kcalReduce: interviewData.kcalReduce,
-            kcalGain: interviewData.kcalGain,
-            nmcBroca: interviewData.nmcBroca,
-            nmcLorentz: interviewData.nmcLorentz
-          }
-        );
+      const formattedDate = new Date().toISOString().slice(0, 10);
+      const safeName = form.name?.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "") || "pacjent";
+      const filename = `dieta_${safeName}_${formattedDate}.pdf`;
 
-        const formattedDate = new Date().toISOString().slice(0, 10);
-        const safeName = form.name?.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "") || "pacjent";
-        const filename = `dieta_${safeName}_${formattedDate}.pdf`;
-
-        pdfMake.createPdf(docDefinition).getBlob(async (blob: Blob) => {
-          const success = await sendToPatient(form.email, blob, lang, filename);
-          if (success) {
-            alert('📤 Dieta została wysłana pacjentowi!');
-          } else {
-            alert('❌ Wysyłka nie powiodła się. Sprawdź adres e-mail lub połączenie.');
-          }
-        });
-      }}
-    >
-      {isGenerating ? '⏳ Wysyłanie...' : `📤 ${tUI('sendToPatient', lang)}`}
-    </button>
+      pdfMake.createPdf(docDefinition).getBlob(async (blob: Blob) => {
+        const success = await sendToPatient(form.email, blob, lang, filename);
+        if (success) {
+          alert('📤 Dieta została wysłana pacjentowi!');
+        } else {
+          alert('❌ Wysyłka nie powiodła się. Sprawdź adres e-mail lub połączenie.');
+        }
+      });
+    } catch (err) {
+      console.error(err);
+      alert('❌ Błąd podczas wysyłania diety.');
+    } finally {
+      setIsGenerating(false);
+    }
+  }}
+>
+  {isGenerating ? '⏳ Wysyłanie...' : `📤 ${tUI('sendToPatient', lang)}`}
+</button>
 
   </div>
 
