@@ -61,16 +61,23 @@ const getSexString = (sex: 'female' | 'male' | undefined, lang: LangKey): string
   return entry.default;
 };
 
-const shouldRenderQuestion = (q: Question, answers: InterviewAnswers): boolean => {
+const shouldRenderQuestion = (
+  q: Question,
+  answers: InterviewAnswers,
+  currentStep: number
+): boolean => {
   if (!q.dependsOn) return true;
-  const match = Object.entries(answers).find(([key]) => key.endsWith(`_${q.dependsOn!.question}`));
-  if (!match) return false;
-  const answerValue = match[1];
+
+  const dependencyKey = `step${currentStep}_${q.dependsOn.question}`;
+  const answerValue = answers[dependencyKey];
+
   if (Array.isArray(answerValue)) {
     return answerValue.includes(q.dependsOn.value);
   }
+
   return answerValue === q.dependsOn.value;
 };
+
 
 function convertSectionFormat(section: Record<string, any>): { title: string; questions: Question[] } {
   const { title } = section;
@@ -179,7 +186,7 @@ const handleChange = (name: string, value: string) => {
       {step.questions.map((q) => {
       const scopedName = `step${currentStep}_${q.name}`;
       const answer = allAnswers[scopedName] || '';
-      const visible = shouldRenderQuestion(q, allAnswers);
+      const visible = shouldRenderQuestion(q, allAnswers, currentStep);
       const isConditionalText =
       q.type === 'radio' &&
       q.options?.includes('Tak') &&
