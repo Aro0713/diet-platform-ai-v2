@@ -585,26 +585,16 @@ return (
     </button>
 
 
-        <button
+<button
   type="button"
-  className="w-full bg-blue-500 text-white px-4 py-3 rounded-md font-medium hover:bg-blue-600 disabled:opacity-50"
-  disabled={isGenerating}
+  className="w-full bg-green-700 text-white px-4 py-3 rounded-md font-medium hover:bg-green-800 disabled:opacity-50"
+  disabled={isGenerating || !confirmedDiet}
   onClick={async () => {
-    if (!form.email || !confirmedDiet) {
-      alert('❗ Najpierw zatwierdź dietę i upewnij się, że pacjent ma e-mail.');
-      return;
-    }
-
-    const pdfMake = (await import('pdfmake/build/pdfmake')).default;
-    const pdfFonts = (await import('pdfmake/build/vfs_fonts')).default;
-    pdfMake.vfs = pdfFonts.vfs;
-
     const { generateDietPdf } = await import('@/utils/generateDietPdf');
-
-    const docDefinition = await generateDietPdf(
+    await generateDietPdf(
       form,
       bmi,
-      confirmedDiet,
+      confirmedDiet!,
       dietApproved,
       notes,
       lang,
@@ -622,23 +612,11 @@ return (
         nmcLorentz: interviewData.nmcLorentz
       }
     );
-    const formattedDate = new Date().toISOString().slice(0, 10);
-    const safeName = form.name?.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "") || "pacjent";
-    const filename = `dieta_${safeName}_${formattedDate}.pdf`;
-
-    pdfMake.createPdf(docDefinition).getBlob(async (blob: Blob) => {
-      const success = await sendToPatient(form.email, blob, lang, filename);
-
-      if (success) {
-        alert('📤 Dieta została wysłana pacjentowi!');
-      } else {
-        alert('❌ Wysyłka nie powiodła się. Sprawdź adres e-mail lub połączenie.');
-      }
-    });
   }}
 >
-  {isGenerating ? '⏳ Czekaj...' : `📤 ${tUI('sendToPatient', lang)}`}
+  {isGenerating ? '⏳ Generowanie...' : `📄 ${tUI('pdf', lang)}`}
 </button>
+
 
         </div>
 

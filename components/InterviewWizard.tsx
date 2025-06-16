@@ -37,11 +37,15 @@ interface Props {
   onFinish: (data: InterviewAnswers) => void;
   form: {
     sex: 'female' | 'male';
+    [key: string]: any;
   };
   lang: LangKey;
 }
 
-const getSexString = (sex: 'female' | 'male' | undefined, lang: LangKey): string => {
+const getSexString = (
+  sex: 'female' | 'male' | undefined,
+  lang: LangKey
+): string => {
   const forms: Record<LangKey, { female: string; male: string; default: string }> = {
     pl: { female: 'Pani', male: 'Pana', default: 'pacjenta' },
     en: { female: 'Ms.', male: 'Mr.', default: 'patient' },
@@ -155,7 +159,6 @@ const buildStep = (
 
   return convertSectionFormat(parsed);
 };
-
 export default function InterviewWizard({ onFinish, form, lang }: Props) {
   const [currentStep, setCurrentStep] = useState(0);
   const [allAnswers, setAllAnswers] = useState<InterviewAnswers>({});
@@ -190,15 +193,21 @@ export default function InterviewWizard({ onFinish, form, lang }: Props) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
- const handleChange = (fullName: string, value: string) => {
-  const key = fullName.split('_').slice(-1)[0]; // np. z 'step4_q4' zostaje 'q4'
-  setAllAnswers((prev) => ({ ...prev, [key]: value }));
-};
+  const handleChange = (fullName: string, value: string) => {
+    setAllAnswers((prev) => ({ ...prev, [fullName]: value }));
+  };
 
   const handleFinish = async () => {
     setSaving(true);
     try {
-      await onFinish(allAnswers);
+      // Spłaszcz dane z scopedName → qN (opcjonalnie)
+      const flattenedAnswers: InterviewAnswers = {};
+      Object.entries(allAnswers).forEach(([key, value]) => {
+        const shortKey = key.split('_').slice(-1)[0];
+        flattenedAnswers[shortKey] = value;
+      });
+
+      await onFinish(flattenedAnswers);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (e) {
@@ -208,7 +217,6 @@ export default function InterviewWizard({ onFinish, form, lang }: Props) {
       setSaving(false);
     }
   };
-
   return (
     <PanelCard className="z-10 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 dark:text-white transition-colors min-h-[550px]">
       <div className="bg-blue-50 border border-blue-200 text-blue-900 dark:bg-blue-900 dark:border-blue-400 dark:text-white p-4 rounded text-sm mb-6 space-y-2">
@@ -222,14 +230,13 @@ export default function InterviewWizard({ onFinish, form, lang }: Props) {
       </h2>
 
       {step.questions.map((q) => {
-      const scopedName = `step${currentStep}_${q.name}`;
-      const keyOnly = q.name;
-      const answer = allAnswers[keyOnly] || '';
-      const visible = shouldRenderQuestion(q, allAnswers);
-      const isConditionalText =
-      q.type === 'radio' &&
-      q.options?.includes('Tak') &&
-      q.label.toLowerCase().includes('jeśli tak');
+        const scopedName = `step${currentStep}_${q.name}`;
+        const answer = allAnswers[scopedName] || '';
+        const visible = shouldRenderQuestion(q, allAnswers);
+        const isConditionalText =
+          q.type === 'radio' &&
+          q.options?.includes('Tak') &&
+          q.label.toLowerCase().includes('jeśli tak');
 
         if (!visible) return null;
 
@@ -249,7 +256,7 @@ export default function InterviewWizard({ onFinish, form, lang }: Props) {
                             name={scopedName}
                             value={option}
                             checked={answer === option}
-                            onChange={() => handleChange(q.name, option)}
+                            onChange={() => handleChange(scopedName, option)}
                           />
                           {option}
                         </label>
@@ -266,9 +273,7 @@ export default function InterviewWizard({ onFinish, form, lang }: Props) {
                         placeholder={tUI('pleaseSpecify', lang)}
                         value={allAnswers[`${scopedName}_details`] || ''}
                         onChange={(e) => {
-                          const cleaned = e.target.value.replace(
-                            /[^\u0000-\u007F\p{L}\p{N}\p{P}\p{Zs}]/gu, ''
-                          );
+                          const cleaned = e.target.value.replace(/[^\u0000-\u007F\p{L}\p{N}\p{P}\p{Zs}]/gu, '');
                           handleChange(`${scopedName}_details`, cleaned);
                         }}
                       />
@@ -281,13 +286,11 @@ export default function InterviewWizard({ onFinish, form, lang }: Props) {
                         bg-white text-black border-gray-300 placeholder:text-gray-500
                         dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:placeholder:text-gray-400"
                       value={answer}
-                      onChange={(e) => handleChange(q.name, e.target.value)}
+                      onChange={(e) => handleChange(scopedName, e.target.value)}
                     >
                       <option value="">-- {tUI('selectOption', lang)} --</option>
                       {q.options.map((opt) => (
-                        <option key={opt} value={opt}>
-                          {opt}
-                        </option>
+                        <option key={opt} value={opt}>{opt}</option>
                       ))}
                     </select>
 
@@ -306,9 +309,7 @@ export default function InterviewWizard({ onFinish, form, lang }: Props) {
                           placeholder={tUI('pleaseSpecify', lang)}
                           value={allAnswers[`${scopedName}_other`] || ''}
                           onChange={(e) => {
-                            const cleaned = e.target.value.replace(
-                              /[^\u0000-\u007F\p{L}\p{N}\p{P}\p{Zs}]/gu, ''
-                            );
+                            const cleaned = e.target.value.replace(/[^\u0000-\u007F\p{L}\p{N}\p{P}\p{Zs}]/gu, '');
                             handleChange(`${scopedName}_other`, cleaned);
                           }}
                         />
@@ -323,10 +324,8 @@ export default function InterviewWizard({ onFinish, form, lang }: Props) {
                       dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:placeholder:text-gray-400"
                     value={answer}
                     onChange={(e) => {
-                      const cleaned = e.target.value.replace(
-                        /[^\u0000-\u007F\p{L}\p{N}\p{P}\p{Zs}]/gu, ''
-                      );
-                      handleChange(q.name, cleaned);
+                      const cleaned = e.target.value.replace(/[^\u0000-\u007F\p{L}\p{N}\p{P}\p{Zs}]/gu, '');
+                      handleChange(scopedName, cleaned);
                     }}
                   />
                 )}
