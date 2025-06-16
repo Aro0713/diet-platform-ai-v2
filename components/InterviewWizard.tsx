@@ -244,12 +244,13 @@ export default function InterviewWizard({ onFinish, form, lang }: Props) {
                       {q.options.map((option) => (
                         <label key={option} className="flex items-center gap-2">
                           <input
-                            type="radio"
-                            name={scopedName}
-                            value={option}
-                            checked={answer === option}
-                            onChange={() => handleChange(scopedName, option)}
-                          />
+                          type="radio"
+                          name={scopedName}
+                          value={option}
+                          checked={answer === option}
+                          onChange={() => handleChange(scopedName, option)}
+                          className="accent-black dark:accent-white"
+                        />
                           {option}
                         </label>
                       ))}
