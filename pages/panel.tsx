@@ -449,20 +449,19 @@ return (
 
       {/* Sekcja 3: Wywiad pacjenta */}
       <PanelCard title={`🧠 ${tUI('interviewTitle', lang)}`}>
-        <InterviewWizard
-      form={form}
-      onFinish={(data) => {
-        setInterviewData(data);
-        setForm((prev) => ({
-          ...prev,
-          stressLevel: data.stressLevel,
-          sleepQuality: data.sleepQuality,
-          physicalActivity: data.physicalActivity,
-          activityDetails: data.activityDetails,
-          otherInfo: data.otherInfo
-        }));
-      }}
-      lang={lang}
+      <InterviewWizard
+        form={form}
+        lang={lang}
+        onFinish={(data) => {
+          setInterviewData(data);
+          setForm((prev) => ({
+            ...prev,
+            stressLevel: data.stressLevel,
+            sleepQuality: data.sleepQuality,
+            physicalActivity: data.physicalActivity,
+            mealsPerDay: data.mealsPerDay,
+          }));
+        }}
       />
       </PanelCard>
     {/* Sekcja 3.1: Rekomendacje lekarza i liczba posiłków */}

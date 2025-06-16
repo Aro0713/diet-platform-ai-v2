@@ -190,9 +190,10 @@ export default function InterviewWizard({ onFinish, form, lang }: Props) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const handleChange = (name: string, value: string) => {
-    setAllAnswers((prev) => ({ ...prev, [name]: value }));
-  };
+ const handleChange = (fullName: string, value: string) => {
+  const key = fullName.split('_').slice(-1)[0]; // np. z 'step4_q4' zostaje 'q4'
+  setAllAnswers((prev) => ({ ...prev, [key]: value }));
+};
 
   const handleFinish = async () => {
     setSaving(true);
@@ -221,17 +222,19 @@ export default function InterviewWizard({ onFinish, form, lang }: Props) {
       </h2>
 
       {step.questions.map((q) => {
-        const answer = allAnswers[q.name] || '';
-        const visible = shouldRenderQuestion(q, allAnswers);
-        const isConditionalText =
-          q.type === 'radio' &&
-          q.options?.includes('Tak') &&
-          q.label.toLowerCase().includes('jeśli tak');
+      const scopedName = `step${currentStep}_${q.name}`;
+      const keyOnly = q.name;
+      const answer = allAnswers[keyOnly] || '';
+      const visible = shouldRenderQuestion(q, allAnswers);
+      const isConditionalText =
+      q.type === 'radio' &&
+      q.options?.includes('Tak') &&
+      q.label.toLowerCase().includes('jeśli tak');
 
         if (!visible) return null;
 
         return (
-          <div key={q.name} className="mb-4">
+          <div key={scopedName} className="mb-4">
             {q.label && <label className="block mb-1 font-medium">{q.label}</label>}
 
             {!q.noInput && (
@@ -243,7 +246,7 @@ export default function InterviewWizard({ onFinish, form, lang }: Props) {
                         <label key={option} className="flex items-center gap-2">
                           <input
                             type="radio"
-                            name={q.name}
+                            name={scopedName}
                             value={option}
                             checked={answer === option}
                             onChange={() => handleChange(q.name, option)}
@@ -261,12 +264,12 @@ export default function InterviewWizard({ onFinish, form, lang }: Props) {
                           bg-white text-black border-gray-300 placeholder:text-gray-500
                           dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:placeholder:text-gray-400"
                         placeholder={tUI('pleaseSpecify', lang)}
-                        value={allAnswers[`${q.name}_details`] || ''}
+                        value={allAnswers[`${scopedName}_details`] || ''}
                         onChange={(e) => {
                           const cleaned = e.target.value.replace(
                             /[^\u0000-\u007F\p{L}\p{N}\p{P}\p{Zs}]/gu, ''
                           );
-                          handleChange(`${q.name}_details`, cleaned);
+                          handleChange(`${scopedName}_details`, cleaned);
                         }}
                       />
                     )}
@@ -301,12 +304,12 @@ export default function InterviewWizard({ onFinish, form, lang }: Props) {
                             bg-white text-black border-gray-300 placeholder:text-gray-500
                             dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:placeholder:text-gray-400"
                           placeholder={tUI('pleaseSpecify', lang)}
-                          value={allAnswers[`${q.name}_other`] || ''}
+                          value={allAnswers[`${scopedName}_other`] || ''}
                           onChange={(e) => {
                             const cleaned = e.target.value.replace(
                               /[^\u0000-\u007F\p{L}\p{N}\p{P}\p{Zs}]/gu, ''
                             );
-                            handleChange(`${q.name}_other`, cleaned);
+                            handleChange(`${scopedName}_other`, cleaned);
                           }}
                         />
                       )}
