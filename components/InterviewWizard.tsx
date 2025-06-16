@@ -65,12 +65,14 @@ const getSexString = (sex: 'female' | 'male' | undefined, lang: LangKey): string
 const shouldRenderQuestion = (q: Question, answers: InterviewAnswers): boolean => {
   if (!q.dependsOn) return true;
 
-  const matchingEntry = Object.entries(answers).find(
-    ([key]) => key.endsWith(`_${q.dependsOn!.question}`)
+  // Szukamy w allAnswers tego klucza, który kończy się na "_q1"
+  const match = Object.entries(answers).find(([key]) =>
+    key.endsWith(`_${q.dependsOn!.question}`)
   );
 
-  return matchingEntry?.[1] === q.dependsOn.value;
+  return match?.[1] === q.dependsOn.value;
 };
+
 
 function convertSectionFormat(section: Record<string, any>): { title: string; questions: Question[] } {
   const { title } = section;
