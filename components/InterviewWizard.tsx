@@ -37,15 +37,11 @@ interface Props {
   onFinish: (data: InterviewAnswers) => void;
   form: {
     sex: 'female' | 'male';
-    [key: string]: any;
   };
   lang: LangKey;
 }
 
-const getSexString = (
-  sex: 'female' | 'male' | undefined,
-  lang: LangKey
-): string => {
+const getSexString = (sex: 'female' | 'male' | undefined, lang: LangKey): string => {
   const forms: Record<LangKey, { female: string; male: string; default: string }> = {
     pl: { female: 'Pani', male: 'Pana', default: 'pacjenta' },
     en: { female: 'Ms.', male: 'Mr.', default: 'patient' },
@@ -68,8 +64,7 @@ const getSexString = (
 
 const shouldRenderQuestion = (q: Question, answers: InterviewAnswers): boolean => {
   if (!q.dependsOn) return true;
-  const scoped = Object.entries(answers).find(([k]) => k.endsWith(`_${q.dependsOn?.question}`))?.[1];
-  return scoped === q.dependsOn.value;
+  return answers[q.dependsOn.question] === q.dependsOn.value;
 };
 
 function convertSectionFormat(section: Record<string, any>): { title: string; questions: Question[] } {
@@ -160,6 +155,7 @@ const buildStep = (
 
   return convertSectionFormat(parsed);
 };
+
 export default function InterviewWizard({ onFinish, form, lang }: Props) {
   const [currentStep, setCurrentStep] = useState(0);
   const [allAnswers, setAllAnswers] = useState<InterviewAnswers>({});
@@ -194,36 +190,25 @@ export default function InterviewWizard({ onFinish, form, lang }: Props) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const handleChange = (fullName: string, value: string) => {
-    setAllAnswers((prev) => ({ ...prev, [fullName]: value }));
-  };
+ const handleChange = (fullName: string, value: string) => {
+  const key = fullName.split('_').slice(-1)[0]; // np. z 'step4_q4' zostaje 'q4'
+  setAllAnswers((prev) => ({ ...prev, [key]: value }));
+};
 
   const handleFinish = async () => {
-  setSaving(true);
-  try {
-    const flattenedAnswers: InterviewAnswers = {};
-    Object.entries(allAnswers).forEach(([key, value]) => {
-      const shortKey = key.split('_').slice(-1)[0];
-      flattenedAnswers[shortKey] = value;
-    });
+    setSaving(true);
+    try {
+      await onFinish(allAnswers);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (e) {
+      console.error('❌ Błąd zapisu wywiadu:', e);
+      alert('Błąd zapisu wywiadu. Spróbuj ponownie.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
-    await onFinish({
-      ...flattenedAnswers,
-      stressLevel: flattenedAnswers.q13,
-      sleepQuality: flattenedAnswers.q14,
-      physicalActivity: flattenedAnswers.q1,
-      activityDetails: flattenedAnswers.q2 || ''
-    });
-
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
-  } catch (e) {
-    console.error('❌ Błąd zapisu wywiadu:', e);
-    alert('Błąd zapisu wywiadu. Spróbuj ponownie.');
-  } finally {
-    setSaving(false);
-  }
-};
   return (
     <PanelCard className="z-10 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 dark:text-white transition-colors min-h-[550px]">
       <div className="bg-blue-50 border border-blue-200 text-blue-900 dark:bg-blue-900 dark:border-blue-400 dark:text-white p-4 rounded text-sm mb-6 space-y-2">
@@ -237,13 +222,13 @@ export default function InterviewWizard({ onFinish, form, lang }: Props) {
       </h2>
 
       {step.questions.map((q) => {
-        const scopedName = `step${currentStep}_${q.name}`;
-        const answer = allAnswers[scopedName] || '';
-        const visible = shouldRenderQuestion(q, allAnswers);
-        const isConditionalText =
-          q.type === 'radio' &&
-          q.options?.includes('Tak') &&
-          q.label.toLowerCase().includes('jeśli tak');
+      const scopedName = `step${currentStep}_${q.name}`;
+      const answer = allAnswers[scopedName] || '';
+      const visible = shouldRenderQuestion(q, allAnswers);
+      const isConditionalText =
+      q.type === 'radio' &&
+      q.options?.includes('Tak') &&
+      q.label.toLowerCase().includes('jeśli tak');
 
         if (!visible) return null;
 
@@ -270,18 +255,23 @@ export default function InterviewWizard({ onFinish, form, lang }: Props) {
                       ))}
                     </div>
 
-                    {q.type === 'radio' && answer === 'Tak' && (
-                    <input
-                      type="text"
-                      value={allAnswers[`${scopedName}_details`] || ''}
-                      onChange={(e) => handleChange(`${scopedName}_details`, e.target.value)}
-                      className="mt-2 w-full border rounded-md px-2 py-1 text-sm leading-5 
-                        bg-white text-black border-gray-300 placeholder:text-gray-500
-                        dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:placeholder:text-gray-400"
-                      placeholder={tUI('pleaseSpecify', lang)}
-                    />
-                  )}
-
+                    {isConditionalText && answer === 'Tak' && (
+                      <input
+                        type="text"
+                        maxLength={300}
+                        className="mt-2 w-full border rounded-md px-2 py-1 text-sm leading-5 
+                          bg-white text-black border-gray-300 placeholder:text-gray-500
+                          dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:placeholder:text-gray-400"
+                        placeholder={tUI('pleaseSpecify', lang)}
+                        value={allAnswers[`${scopedName}_details`] || ''}
+                        onChange={(e) => {
+                          const cleaned = e.target.value.replace(
+                            /[^\u0000-\u007F\p{L}\p{N}\p{P}\p{Zs}]/gu, ''
+                          );
+                          handleChange(`${scopedName}_details`, cleaned);
+                        }}
+                      />
+                    )}
                   </>
                 ) : q.type === 'select' && q.options ? (
                   <>
@@ -294,7 +284,9 @@ export default function InterviewWizard({ onFinish, form, lang }: Props) {
                     >
                       <option value="">-- {tUI('selectOption', lang)} --</option>
                       {q.options.map((opt) => (
-                        <option key={opt} value={opt}>{opt}</option>
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
                       ))}
                     </select>
 
@@ -313,7 +305,9 @@ export default function InterviewWizard({ onFinish, form, lang }: Props) {
                           placeholder={tUI('pleaseSpecify', lang)}
                           value={allAnswers[`${scopedName}_other`] || ''}
                           onChange={(e) => {
-                            const cleaned = e.target.value.replace(/[^\u0000-\u007F\p{L}\p{N}\p{P}\p{Zs}]/gu, '');
+                            const cleaned = e.target.value.replace(
+                              /[^\u0000-\u007F\p{L}\p{N}\p{P}\p{Zs}]/gu, ''
+                            );
                             handleChange(`${scopedName}_other`, cleaned);
                           }}
                         />
@@ -328,8 +322,10 @@ export default function InterviewWizard({ onFinish, form, lang }: Props) {
                       dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:placeholder:text-gray-400"
                     value={answer}
                     onChange={(e) => {
-                      const cleaned = e.target.value.replace(/[^\u0000-\u007F\p{L}\p{N}\p{P}\p{Zs}]/gu, '');
-                      handleChange(scopedName, cleaned);
+                      const cleaned = e.target.value.replace(
+                        /[^\u0000-\u007F\p{L}\p{N}\p{P}\p{Zs}]/gu, ''
+                      );
+                      handleChange(q.name, cleaned);
                     }}
                   />
                 )}
