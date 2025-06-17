@@ -37,9 +37,13 @@ export function generateInterviewNarrative(
     const sectionResult: string[] = [];
 
     for (const key of sectionKeys) {
-      const question = data[key];
-      const value = answers[key];
+      const question = data[key] as {
+        label: string;
+        type: 'radio' | 'select' | 'text';
+        dependsOn?: { question: string; value: string };
+      };
 
+      const value = answers[key];
       if (!value || !question) continue;
 
       // Sprawdź warunki zależne
@@ -51,11 +55,7 @@ export function generateInterviewNarrative(
       const label = question.label.replace(/sex/g, sex === 'female' ? (lang === 'pl' ? 'Pani' : 'she') : (lang === 'pl' ? 'Pan' : 'he'));
 
       if (question.type === 'radio' || question.type === 'select') {
-        if (Array.isArray(value)) {
-          sectionResult.push(`${label}: ${value.join(', ')}`);
-        } else {
-          sectionResult.push(`${label}: ${value}`);
-        }
+        sectionResult.push(`${label}: ${value}`);
       } else if (question.type === 'text') {
         sectionResult.push(`${label}: ${value}`);
       }

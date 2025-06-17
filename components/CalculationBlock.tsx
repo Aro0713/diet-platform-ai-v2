@@ -194,7 +194,8 @@ export default function CalculationBlock({ form, interview, lang, onResult }: Pr
         </div>
 
         <div>
-          <strong>{tUI('mealCount', lang)}:</strong> {mealCount ?? tUI('noData', lang)}
+          <strong>{tUI('mealCount', lang)}:</strong>{' '}
+          {mealCount !== undefined && mealCount !== '' ? mealCount : <span className="text-red-500">{tUI('noData', lang)}</span>}
         </div>
       </div>
     </div>
