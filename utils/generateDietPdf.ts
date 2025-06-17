@@ -101,15 +101,19 @@ if (interview) {
   content.push({ text: `🧠 ${tUI('interviewTitle', lang)}`, style: 'subheader', margin: [0, 10, 0, 4] });
 
   try {
-    const narrative = generateInterviewNarrative(interview, lang, patient.sex || 'female');
+    const interviewCleaned: Record<string, string> = Object.fromEntries(
+      Object.entries(interview)
+        .filter(([k]) => /^step\d+_q\d+/.test(k))
+        .map(([k, v]) => [k.replace(/^step\d+_/, ''), String(v)])
+    );
+
+    const narrative = generateInterviewNarrative(interviewCleaned, lang, patient.sex || 'female');
     content.push({ text: narrative, margin: [0, 0, 0, 6] });
   } catch (err) {
     console.error('Błąd generowania narracji wywiadu:', err);
     content.push({ text: '⚠️ Błąd generowania opisu wywiadu', color: 'red' });
   }
 }
-
-
 
   content.push({
     text: `🍽️ ${tUI('recommendedDiet', lang)}`,
