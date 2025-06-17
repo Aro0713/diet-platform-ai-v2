@@ -6,8 +6,9 @@ export type Ingredient = {
 export interface Meal {
   name: string;
   time: string;
-  description: string;
-  ingredients: { product: string; weight: number }[];
+  menu: string; // np. "Sałatka z tuńczykiem i jajkiem"
+  description?: string; // opcjonalny komentarz
+  ingredients: Ingredient[];
   calories: number;
   glycemicIndex: number;
   macros?: {
@@ -17,7 +18,6 @@ export interface Meal {
     sodium?: number;
   };
 }
-
 
 
 export type TestResult = {

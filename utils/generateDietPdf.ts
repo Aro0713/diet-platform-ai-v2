@@ -2,6 +2,7 @@ import { PatientData, Meal } from '@/types';
 import { LangKey } from '@/utils/i18n';
 import { tUI } from '@/utils/i18n';
 import { translationsUI } from '@/utils/translationsUI';
+import QRCode from 'qrcode';
 
 export async function generateDietPdf(
   patient: PatientData,
@@ -112,11 +113,11 @@ ${interview.recommendation}`,
         sectionValue !== null &&
         !Array.isArray(sectionValue)
       ) {
-        content.push({ text: `► ${section}`, bold: true, margin: [0, 6, 0, 2] });
+        content.push({ text: `► ${tUI(section, lang) || section}`, bold: true, margin: [0, 6, 0, 2] });
 
         Object.entries(sectionValue ?? {}).forEach(([qKey, qValue]) => {
           if (typeof qValue === "string" || typeof qValue === "number") {
-            content.push({ text: `• ${qKey}: ${qValue}`, margin: [0, 0, 0, 2] });
+            content.push({ text: `• ${tUI(qKey, lang) || qKey}: ${qValue}`, margin: [0, 0, 0, 2] });
           }
         });
       }
@@ -139,27 +140,39 @@ ${interview.recommendation}`,
   Object.entries(groupedByDay).forEach(([day, meals]) => {
     content.push({ text: `🗓️ ${day}`, style: 'subheader', margin: [0, 10, 0, 4] });
 
-    const mealTable = {
-      table: {
-        widths: ['*', 'auto', 'auto', '*'],
-        body: [
-          [
-            { text: tUI('mealName', lang), style: 'tableHeader' },
-            { text: tUI('time', lang), style: 'tableHeader' },
-            { text: `${tUI('calories', lang)} / IG`, style: 'tableHeader' },
-            { text: tUI('ingredients', lang), style: 'tableHeader' }
-          ],
-          ...meals.map((meal) => [
+const mealTable = {
+  table: {
+    widths: ['auto', 'auto', 'auto', '*'],
+    body: [
+      [
+        { text: tUI('mealName', lang), style: 'tableHeader' },
+        { text: tUI('time', lang), style: 'tableHeader' },
+        { text: `${tUI('calories', lang)} / IG`, style: 'tableHeader' },
+        { text: tUI('ingredients', lang), style: 'tableHeader' }
+      ],
+      ...meals.map((meal) => [
+        {
+          stack: [
             { text: meal.name, bold: true },
-            meal.time || '–',
-            `🔥 ${meal.calories} kcal\n💉 IG: ${meal.glycemicIndex}`,
-            meal.ingredients.map(i => `• ${i.product} – ${i.weight} g`).join('\n')
-          ])
-        ]
-      },
-      layout: 'lightHorizontalLines',
-      margin: [0, 0, 0, 10]
-    };
+            meal.menu ? { text: meal.menu, italics: true, margin: [0, 2, 0, 0] } : null
+          ].filter(Boolean)
+        },
+        meal.time || '–',
+        {
+          text: `🔥 ${meal.calories} kcal\n💉 IG: ${meal.glycemicIndex}`,
+          alignment: 'center'
+        },
+        {
+          text: meal.ingredients.map(i => `• ${i.product} – ${i.weight} g`).join('\n'),
+          alignment: 'justify'
+        }
+      ])
+    ]
+  },
+  layout: 'lightHorizontalLines',
+  margin: [0, 0, 0, 10]
+};
+
 
     content.push(mealTable);
 
@@ -174,32 +187,58 @@ ${interview.recommendation}`,
     }
   });
 
-  content.push({
-    text: '---\n© Diet Care Platform\nEmail: contact@dcp.care |',
-    style: 'footer',
-    margin: [0, 30, 0, 0],
-    alignment: 'center'
-  });
+const docDefinition = {
+  content,
+  styles: {
+    header: { fontSize: 18, bold: true, margin: [0, 0, 0, 10] },
+    subheader: { fontSize: 14, bold: true },
+    tableHeader: { bold: true, fillColor: '#f2f2f2', alignment: 'center' },
+    footer: { fontSize: 14, color: '#3BAA57', alignment: 'center', margin: [0, 10, 0, 0] }
+  },
+  defaultStyle: {
+    fontSize: 11
+  },
+  background: undefined,
 
-  const docDefinition = {
-    content,
-    styles: {
-      header: { fontSize: 18, bold: true, margin: [0, 0, 0, 10] },
-      subheader: { fontSize: 14, bold: true },
-      tableHeader: { bold: true, fillColor: '#f2f2f2', alignment: 'center' },
-      footer: { fontSize: 9, color: 'gray' }
-    },
-    defaultStyle: {
-      fontSize: 11
-    },
-    background: undefined
-  };
-
-  if (mode === 'returnDoc') {
-    return docDefinition;
+  footer: function(currentPage: number, pageCount: number) {
+    return {
+      text: `© Diet Care Platform — contact@dcp.care | Strona ${currentPage} z ${pageCount}`,
+      style: 'footer'
+    };
   }
+};
 
   const formattedDate = new Date().toISOString().slice(0, 10);
   const safeName = patient.name?.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "") || "pacjent";
+  const qrBase64 = await QRCode.toDataURL('https://www.dcp.care');
+
+content.push({
+  columns: [
+    {
+      width: '*',
+      text: ''
+    },
+    {
+      width: 'auto',
+      image: qrBase64,
+      fit: [100, 100],  
+      alignment: 'center'
+    },
+    {
+      width: '*',
+      text: ''
+    }
+  ],
+  margin: [0, 30, 0, 0]
+});
+
+
+content.push({
+  text: 'Zeskanuj kod QR, aby odwiedzić platformę DCP: www.dcp.care',
+  style: 'footer',
+  alignment: 'center',
+  margin: [0, 10, 0, 30]
+});
+
   pdfMake.createPdf(docDefinition).download(`dieta_${safeName}_${formattedDate}.pdf`);
 }
