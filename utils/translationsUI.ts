@@ -69,18 +69,18 @@ export const translationsUI: Record<string, Record<LangKey, string>> = {
   },
 
   enterAsDoctor: {
-    pl: 'Wejdź jako lekarz',
-    en: 'Enter as Doctor',
-    ua: 'Увійти як лікар',
-    es: 'Entrar como médico',
-    fr: 'Entrer comme médecin',
-    de: 'Als Arzt einloggen',
-    ru: 'Войти как врач',
-    zh: '以医生身份进入',
-    hi: 'डॉक्टर के रूप में प्रवेश करें',
-    ar: 'الدخول كطبيب',
-    he: 'כניסה כרופא'
-  },
+  pl: "Wejdź jako lekarz / Dietetyk",
+  en: "Enter as Doctor / Dietitian",
+  es: "Entrar como médico / dietista",
+  fr: "Entrer en tant que médecin / diététicien",
+  de: "Als Arzt / Ernährungsberater eintreten",
+  ua: "Увійти як лікар / дієтолог",
+  ru: "Войти как врач / диетолог",
+  zh: "以医生/营养师身份进入",
+  hi: "डॉक्टर / आहार विशेषज्ञ के रूप में प्रवेश करें",
+  ar: "دخول كطبيب / أخصائي تغذية",
+  he: "היכנס כרופא / דיאטנית"
+},
 
   enterAsPatient: {
     pl: 'Wejdź jako pacjent',
