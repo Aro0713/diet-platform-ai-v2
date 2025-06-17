@@ -1,5 +1,4 @@
 import { PatientData, Meal } from '@/types';
-import { stampBase64 } from '@/utils/stamp';
 import { LangKey } from '@/utils/i18n';
 import { tUI } from '@/utils/i18n';
 import { translationsUI } from '@/utils/translationsUI';
@@ -174,15 +173,6 @@ ${interview.recommendation}`,
       });
     }
   });
-
-  if (approved) {
-    content.push({
-      image: stampBase64,
-      width: 140,
-      alignment: 'right',
-      margin: [0, 30, 0, 0]
-    });
-  }
 
   content.push({
     text: '---\n© Diet Care Platform\nEmail: contact@dcp.care |',
