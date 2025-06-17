@@ -3,6 +3,7 @@ import { LangKey } from '@/utils/i18n';
 import { tUI } from '@/utils/i18n';
 import { translationsUI } from '@/utils/translationsUI';
 import QRCode from 'qrcode';
+import { generateInterviewNarrative } from '@/utils/interview/interviewNarrativeMap';
 
 export async function generateDietPdf(
   patient: PatientData,
@@ -96,28 +97,18 @@ ${interview.recommendation}`,
     });
   }
 
-  if (interview) {
-    content.push({ text: `🧠 ${tUI('interviewTitle', lang)}`, style: 'subheader', margin: [0, 10, 0, 4] });
+if (interview) {
+  content.push({ text: `🧠 ${tUI('interviewTitle', lang)}`, style: 'subheader', margin: [0, 10, 0, 4] });
 
-    const keysToShow = ['stressLevel', 'sleepQuality', 'physicalActivity', 'activityDetails', 'otherInfo'];
-    keysToShow.forEach((key) => {
-      if (interview[key]) {
-        content.push({ text: `• ${tUI(key, lang)}: ${interview[key]}`, margin: [0, 0, 0, 2] });
-      }
-    });
-
- Object.entries(interview ?? {}).forEach(([key, value]) => {
-  if (
-    key !== 'recommendation' &&
-    typeof value === 'string' &&
-    /^step\d+_q\d+/.test(key)
-  ) {
-    content.push({
-      text: `• ${tUI(key, lang) || key}: ${value}`,
-      margin: [0, 0, 0, 2]
-    });
+  try {
+    const narrative = generateInterviewNarrative(interview, lang, patient.sex || 'female');
+    content.push({ text: narrative, margin: [0, 0, 0, 6] });
+  } catch (err) {
+    console.error('Błąd generowania narracji wywiadu:', err);
+    content.push({ text: '⚠️ Błąd generowania opisu wywiadu', color: 'red' });
   }
-});
+}
+
 
 
   content.push({
@@ -237,5 +228,4 @@ content.push({
 });
 
   pdfMake.createPdf(docDefinition).download(`dieta_${safeName}_${formattedDate}.pdf`);
-}
 }
