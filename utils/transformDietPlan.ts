@@ -67,8 +67,9 @@ export function transformDietPlanToEditableFormat(
 
 normalizedDay.push({
   name: mappedMealName,
-  menu: mealData?.menu ?? '', // ⬅️ wymagane przez typ
+  menu: mealData?.menu ?? '', 
   time: mealData?.time ?? '',
+  description: '', 
   ingredients: mealData?.ingredients ?? [],
   calories: mealData?.kcal ?? 0,
   glycemicIndex: mealData?.glycemicIndex ?? 0,
@@ -79,7 +80,6 @@ normalizedDay.push({
     sodium: mealData?.macros?.sodium ?? 0
   }
 });
-
 
       console.log(`✅ Dodano posiłek: ${mappedDay} → ${mappedMealName}`);
     }
