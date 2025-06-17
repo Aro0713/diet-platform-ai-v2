@@ -106,23 +106,19 @@ ${interview.recommendation}`,
       }
     });
 
-    Object.entries(interview ?? {}).forEach(([section, sectionValue]) => {
-      if (
-        section !== "recommendation" &&
-        typeof sectionValue === "object" &&
-        sectionValue !== null &&
-        !Array.isArray(sectionValue)
-      ) {
-        content.push({ text: `► ${tUI(section, lang) || section}`, bold: true, margin: [0, 6, 0, 2] });
-
-        Object.entries(sectionValue ?? {}).forEach(([qKey, qValue]) => {
-          if (typeof qValue === "string" || typeof qValue === "number") {
-            content.push({ text: `• ${tUI(qKey, lang) || qKey}: ${qValue}`, margin: [0, 0, 0, 2] });
-          }
-        });
-      }
+ Object.entries(interview ?? {}).forEach(([key, value]) => {
+  if (
+    key !== 'recommendation' &&
+    typeof value === 'string' &&
+    /^step\d+_q\d+/.test(key)
+  ) {
+    content.push({
+      text: `• ${tUI(key, lang) || key}: ${value}`,
+      margin: [0, 0, 0, 2]
     });
   }
+});
+
 
   content.push({
     text: `🍽️ ${tUI('recommendedDiet', lang)}`,
@@ -234,11 +230,12 @@ content.push({
 
 
 content.push({
-  text: 'Zeskanuj kod QR, aby odwiedzić platformę DCP: www.dcp.care',
+  text: tUI('qrNotice', lang),
   style: 'footer',
   alignment: 'center',
   margin: [0, 10, 0, 30]
 });
 
   pdfMake.createPdf(docDefinition).download(`dieta_${safeName}_${formattedDate}.pdf`);
+}
 }

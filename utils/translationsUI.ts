@@ -1715,6 +1715,19 @@ ingredients: {
   ar: "مكونات",
   he: "מרכיבים"
 },
+qrNotice: {
+  pl: 'Zeskanuj kod QR, aby odwiedzić Diet Care Platform i pobrać nową dietę',
+  en: 'Scan the QR code to visit Diet Care Platform and download your new diet',
+  es: 'Escanee el código QR para visitar la plataforma Diet Care y descargar su nueva dieta',
+  fr: 'Scannez le QR code pour visiter la plateforme Diet Care et télécharger votre nouveau régime',
+  de: 'Scannen Sie den QR-Code, um die Diet Care Platform zu besuchen und Ihren neuen Ernährungsplan herunterzuladen',
+  ua: 'Скануйте QR-код, щоб відвідати платформу Diet Care і завантажити нову дієту',
+  ru: 'Отсканируйте QR-код, чтобы перейти на платформу Diet Care и загрузить новую диету',
+  zh: '扫描二维码访问 Diet Care 平台并下载您的新饮食计划',
+  hi: 'QR कोड स्कैन करें और Diet Care प्लेटफ़ॉर्म पर जाकर अपनी नई डाइट डाउनलोड करें',
+  ar: 'امسح رمز الاستجابة السريعة لزيارة منصة Diet Care وتنزيل النظام الغذائي الجديد الخاص بك',
+  he: 'סרוק את קוד ה-QR כדי לבקר בפלטפורמת Diet Care ולהוריד את התפריט החדש שלך'
+}
 
 };
 
