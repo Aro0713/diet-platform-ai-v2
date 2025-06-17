@@ -13,28 +13,28 @@ export function parseMealPlanPreview(parsed: any): Record<string, Meal[]> {
 
       result[day] = meals.map((m: any) => ({
         name: m.meal || '',
+        menu: m.menu || '',
         time: m.time || '',
         description: m.description || '',
-        ingredients: Array.isArray(m.ingredients)
-          ? m.ingredients
-          : [{ product: m.description || 'brak', weight: 0 }],
+        ingredients: m.ingredients || [],
         calories: m.calories || 0,
-        glycemicIndex: m.glycemicIndex ?? 0,
-        macros: m.macros || { protein: 0, carbs: 0, fat: 0, sodium: 0 } // jeśli kiedyś będzie
+        glycemicIndex: m.glycemicIndex || 0,
+        macros: m.macros || {}
       }));
     }
 
     return result;
   }
 
-  // Obsługa obiektu dietPlan (np. z API)
+  // Obsługa obiektu dietPlan (np. z AI/agentów)
   if (parsed.dietPlan && typeof parsed.dietPlan === 'object') {
     for (const [day, mealsObj] of Object.entries(parsed.dietPlan)) {
       const meals: Meal[] = Object.entries(mealsObj as any).map(
         ([name, meal]: [string, any]) => ({
           name,
+          menu: meal.menu || '', // <- teraz zgodnie z typem
           time: meal.time || '',
-          description: meal.menu || '',
+          description: meal.description || '',
           ingredients: Array.isArray(meal.ingredients)
             ? meal.ingredients
             : [{ product: meal.menu || 'brak', weight: 0 }],
