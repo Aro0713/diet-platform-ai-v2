@@ -13,7 +13,7 @@ export function parseMealPlanPreview(parsed: any): Record<string, Meal[]> {
 
       result[day] = meals.map((m: any) => ({
         name: m.meal || '',
-        menu: m.menu || '',
+        menu: m.menu || '', // <-- wymagane w typie Meal
         time: m.time || '',
         description: m.description || '',
         ingredients: m.ingredients || [],
@@ -26,13 +26,13 @@ export function parseMealPlanPreview(parsed: any): Record<string, Meal[]> {
     return result;
   }
 
-  // Obsługa obiektu dietPlan (np. z AI/agentów)
+  // Obsługa obiektu dietPlan (np. z AI / agenta)
   if (parsed.dietPlan && typeof parsed.dietPlan === 'object') {
     for (const [day, mealsObj] of Object.entries(parsed.dietPlan)) {
       const meals: Meal[] = Object.entries(mealsObj as any).map(
         ([name, meal]: [string, any]) => ({
           name,
-          menu: meal.menu || '', // <- teraz zgodnie z typem
+          menu: meal.menu || '', // ⬅️ WRÓCONY KLUCZ menu
           time: meal.time || '',
           description: meal.description || '',
           ingredients: Array.isArray(meal.ingredients)

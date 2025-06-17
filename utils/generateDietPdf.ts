@@ -154,7 +154,7 @@ const mealTable = {
         {
           stack: [
             { text: meal.name, bold: true },
-            meal.menu ? { text: meal.menu, italics: true, margin: [0, 2, 0, 0] } : null
+           meal.description ? { text: meal.description, italics: true, margin: [0, 2, 0, 0] } : null
           ].filter(Boolean)
         },
         meal.time || '–',

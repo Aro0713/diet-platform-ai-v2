@@ -65,20 +65,21 @@ export function transformDietPlanToEditableFormat(
         continue;
       }
 
-      normalizedDay.push({
-        name: mappedMealName,
-        time: mealData.time ?? '',
-        description: mealData.menu ?? '',
-        ingredients: Array.isArray(mealData.ingredients) ? mealData.ingredients : [],
-        calories: mealData.kcal ?? 0,
-        glycemicIndex: mealData.glycemicIndex ?? 0,
-        macros: {
-          protein: mealData.macros?.protein ?? 0,
-          carbs: mealData.macros?.carbs ?? 0,
-          fat: mealData.macros?.fat ?? 0,
-          sodium: mealData.macros?.sodium ?? 0
-        }
-      });
+normalizedDay.push({
+  name: mappedMealName,
+  menu: mealData?.menu ?? '', // ⬅️ wymagane przez typ
+  time: mealData?.time ?? '',
+  ingredients: mealData?.ingredients ?? [],
+  calories: mealData?.kcal ?? 0,
+  glycemicIndex: mealData?.glycemicIndex ?? 0,
+  macros: {
+    protein: mealData?.macros?.protein ?? 0,
+    carbs: mealData?.macros?.carbs ?? 0,
+    fat: mealData?.macros?.fat ?? 0,
+    sodium: mealData?.macros?.sodium ?? 0
+  }
+});
+
 
       console.log(`✅ Dodano posiłek: ${mappedDay} → ${mappedMealName}`);
     }
