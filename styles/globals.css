@@ -71,8 +71,16 @@ html.dark ::-webkit-scrollbar-thumb {
 .react-international-phone-country-selector-dropdown {
   background-color: #1f2937 !important; /* dark:bg-gray-800 */
   color: white !important;
-  border: 1px solid #4b5563 !important; /* dark:border-gray-600 */
+  border: 1px solid #4b5563 !important;
   z-index: 9999 !important;
+}
+
+.react-international-phone-country-selector-dropdown li {
+  color: white !important;
+}
+
+.react-international-phone-country-selector-dropdown li:hover {
+  background-color: #374151 !important; /* dark:bg-gray-700 */
 }
 
 .react-international-phone-country-selector-button {
@@ -85,11 +93,14 @@ html.dark ::-webkit-scrollbar-thumb {
   align-items: center;
 }
 .react-international-phone-input {
-  height: 44px !important;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-  display: flex;
-  align-items: center;
+  background-color: #ffffff !important;   /* domyślnie light mode */
+  color: #000000 !important;
 }
+
+html.dark .react-international-phone-input {
+  background-color: #1f2937 !important;   /* gray-800 */
+  color: #ffffff !important;
+}
+
 
 
