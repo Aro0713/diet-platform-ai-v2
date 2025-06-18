@@ -34,10 +34,10 @@ export default function MedicalJurisdiction({
           {jurisdictionLabels['select'][lang]}
         </label>
         <select
-          value={jurisdiction}
-          onChange={(e) => onJurisdictionChange(e.target.value)}
-          className="w-full border px-3 py-2"
-        >
+        value={jurisdiction}
+        onChange={(e) => onJurisdictionChange(e.target.value)}
+        className="w-full bg-white text-black border border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 rounded px-3 py-2"
+      >
           <option value="">{jurisdictionLabels['select'][lang]}</option>
           {jurisdictions.map((code) => (
             <option key={code} value={code}>
@@ -50,13 +50,13 @@ export default function MedicalJurisdiction({
         <label className="block font-semibold mb-1">
           {jurisdictionLabels['license'][lang]}
         </label>
-        <input
-          type="text"
-          value={licenseNumber}
-          onChange={(e) => onLicenseChange(e.target.value)}
-          className="w-full border px-3 py-2"
-          placeholder={getPlaceholder(jurisdiction)}
-        />
+      <input
+        type="text"
+        value={licenseNumber}
+        onChange={(e) => onLicenseChange(e.target.value)}
+        className="w-full bg-white text-black border border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 rounded px-3 py-2"
+        placeholder={getPlaceholder(jurisdiction)}
+      />
       </div>
     </div>
   );
