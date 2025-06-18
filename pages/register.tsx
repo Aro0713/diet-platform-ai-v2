@@ -269,13 +269,25 @@ const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
   }
 
   // Rejestracja użytkownika
-  const { data, error } = await supabase.auth.signUp({
-    email: form.email,
-    password: form.password,
-    options: {
-      emailRedirectTo: 'https://diet-platform-ai-v2.vercel.app/register?confirmed=true',
-    },
-  });
+const { data, error } = await supabase.auth.signUp({
+  email: form.email,
+  password: form.password,
+  options: {
+    emailRedirectTo: 'https://diet-platform-ai-v2.vercel.app/register?confirmed=true',
+    data: {
+      name: form.name,
+      phone: form.phone,
+      role: userType,
+      lang: lang,
+      jurisdiction:
+        userType === 'doctor' ? jurisdiction :
+        userType === 'dietitian' ? 'dietitian-default' :
+        null,
+      license_number:
+        userType === 'doctor' || userType === 'dietitian' ? licenseNumber : null
+    }
+  }
+});
 
   if (error) {
     console.error('❌ Błąd rejestracji:', error.message);
