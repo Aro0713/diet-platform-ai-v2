@@ -619,7 +619,7 @@ return (
         }}
         containerClass="!w-full"
         inputClass="pl-14 w-full h-[44px] text-sm bg-white dark:bg-gray-800 text-black dark:text-white border border-gray-300 dark:border-gray-600 rounded px-3 py-2 focus:outline-none"
-        buttonClass="!w-[50px] !h-[44px] bg-white dark:!bg-gray-700 border-r border-gray-300 dark:border-gray-600 rounded-l px-2 flex items-center justify-center"
+        buttonClass="!w-[50px] !h-[44px] bg-white dark:bg-gray-800 border-r border-gray-300 dark:border-gray-600 rounded-l px-2 flex items-center justify-center"
         dropdownClass="dark:bg-gray-800 dark:text-white bg-white text-black border border-gray-300 dark:border-gray-600 shadow-lg mt-1"
         searchClass="!bg-white dark:!bg-gray-800 !text-black dark:!text-white !text-sm"
       />

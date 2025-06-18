@@ -29,34 +29,36 @@ export default function MedicalJurisdiction({
 
   return (
     <div className="space-y-4">
+      {/* Jurysdykcja */}
       <div>
         <label className="block font-semibold mb-1">
           {jurisdictionLabels['select'][lang]}
         </label>
         <select
-        value={jurisdiction}
-        onChange={(e) => onJurisdictionChange(e.target.value)}
-        className="w-full ..."
-      >
-        {jurisdictions.map((code) => (
-          <option key={code} value={code}>
-            {getLabel(code)}
-          </option>
-        ))}
-      </select>
-
+          value={jurisdiction}
+          onChange={(e) => onJurisdictionChange(e.target.value)}
+          className="appearance-none w-full bg-white text-black border border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 rounded px-3 py-2"
+        >
+          {jurisdictions.map((code) => (
+            <option key={code} value={code}>
+              {getLabel(code)}
+            </option>
+          ))}
+        </select>
       </div>
+
+      {/* Numer licencji */}
       <div>
         <label className="block font-semibold mb-1">
           {jurisdictionLabels['license'][lang]}
         </label>
-      <input
-        type="text"
-        value={licenseNumber}
-        onChange={(e) => onLicenseChange(e.target.value)}
-        className="w-full bg-white text-black border border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 rounded px-3 py-2"
-        placeholder={getPlaceholder(jurisdiction)}
-      />
+        <input
+          type="text"
+          value={licenseNumber}
+          onChange={(e) => onLicenseChange(e.target.value)}
+          className="w-full bg-white text-black border border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 rounded px-3 py-2"
+          placeholder={getPlaceholder(jurisdiction)}
+        />
       </div>
     </div>
   );
