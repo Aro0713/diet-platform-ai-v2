@@ -36,15 +36,15 @@ export default function MedicalJurisdiction({
         <select
         value={jurisdiction}
         onChange={(e) => onJurisdictionChange(e.target.value)}
-        className="w-full bg-white text-black border border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 rounded px-3 py-2"
+        className="w-full ..."
       >
-          <option value="">{jurisdictionLabels['select'][lang]}</option>
-          {jurisdictions.map((code) => (
-            <option key={code} value={code}>
-              {getLabel(code)}
-            </option>
-          ))}
-        </select>
+        {jurisdictions.map((code) => (
+          <option key={code} value={code}>
+            {getLabel(code)}
+          </option>
+        ))}
+      </select>
+
       </div>
       <div>
         <label className="block font-semibold mb-1">

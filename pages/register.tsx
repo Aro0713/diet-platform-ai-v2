@@ -595,7 +595,7 @@ return (
 
       <div className="w-full">
       <label htmlFor="phone" className="sr-only">{t('phone')}</label>
-      <PhoneInput
+       <PhoneInput
         country={'auto'}
         enableSearch
         disableSearchIcon
@@ -609,9 +609,9 @@ return (
           'aria-label': t('phone')
         }}
         containerClass="!w-full"
-        inputClass="!pl-16 w-full h-[42px] bg-white text-black dark:bg-gray-800 dark:text-white border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm"
-        buttonClass="!w-[50px] !h-[42px] !bg-gray-100 dark:!bg-gray-700 !border-r border-gray-300 dark:border-gray-600 rounded-l px-2 flex items-center justify-center"
-        dropdownClass="dark:bg-gray-800 dark:text-white bg-white text-black border dark:border-gray-600 shadow-md"
+        inputClass="pl-14 w-full h-[44px] text-sm bg-white dark:bg-gray-800 text-black dark:text-white border border-gray-300 dark:border-gray-600 rounded px-3 py-2 focus:outline-none"
+        buttonClass="!w-[50px] !h-[44px] bg-white dark:!bg-gray-700 border-r border-gray-300 dark:border-gray-600 rounded-l px-2 flex items-center justify-center"
+        dropdownClass="dark:bg-gray-800 dark:text-white bg-white text-black border border-gray-300 dark:border-gray-600 shadow-lg mt-1"
         searchClass="!bg-white dark:!bg-gray-800 !text-black dark:!text-white !text-sm"
       />
     </div>
@@ -656,18 +656,27 @@ return (
         </div>
       )}
 
-      <label className="inline-flex items-center">
+        <div className="flex items-start text-sm gap-2 mt-2">
         <input
           type="checkbox"
           checked={consentGiven}
           onChange={(e) => setConsentGiven(e.target.checked)}
-          className="mr-2"
+          className="mt-1"
+          id="consent"
         />
-        {consentPrefix}{' '}
-        <a href="/regulamin" className="text-blue-600 underline" target="_blank" rel="noopener noreferrer">{termsLinkText}</a>{' '}
-        {t('and')}{' '}
-        <a href="/polityka-prywatnosci" className="text-blue-600 underline" target="_blank" rel="noopener noreferrer">{privacyLinkText}</a>
-      </label>
+        <label htmlFor="consent" className="leading-snug text-sm">
+          <span className="block">{consentPrefix}</span>
+          <span className="block">
+            <a href="/regulamin" className="underline hover:text-blue-400" target="_blank" rel="noopener noreferrer">
+              {termsLinkText}
+            </a>{' '}
+            {t('and')}{' '}
+            <a href="/polityka-prywatnosci" className="underline hover:text-blue-400" target="_blank" rel="noopener noreferrer">
+              {privacyLinkText}
+            </a>
+          </span>
+        </label>
+      </div>
 
       <button
         type="submit"
