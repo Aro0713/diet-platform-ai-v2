@@ -479,18 +479,27 @@ return (
         placeholder={t('password')}
         aria-label={t('password')}
       />
-      <label className="inline-flex items-center">
-        <input
-          type="checkbox"
-          checked={loginConsent}
-          onChange={(e) => setLoginConsent(e.target.checked)}
-          className="mr-2"
-        />
-        {consentPrefix}{' '}
-        <a href="/regulamin" className="text-blue-600 underline" target="_blank" rel="noopener noreferrer">{termsLinkText}</a>{' '}
-        {t('and')}{' '}
-        <a href="/polityka-prywatnosci" className="text-blue-600 underline" target="_blank" rel="noopener noreferrer">{privacyLinkText}</a>
+     <div className="flex items-start text-sm gap-2 mt-2">
+      <input
+        type="checkbox"
+        checked={loginConsent}
+        onChange={(e) => setLoginConsent(e.target.checked)}
+        className="mt-1"
+        id="login-consent"
+      />
+      <label htmlFor="login-consent" className="leading-snug text-sm">
+        <span className="block">{consentPrefix}</span>
+        <span className="block">
+          <a href="/regulamin" className="underline hover:text-blue-400" target="_blank" rel="noopener noreferrer">
+            {termsLinkText}
+          </a>{' '}
+          {t('and')}{' '}
+          <a href="/polityka-prywatnosci" className="underline hover:text-blue-400" target="_blank" rel="noopener noreferrer">
+            {privacyLinkText}
+          </a>
+        </span>
       </label>
+    </div>
       <button type="submit" className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded w-full transition disabled:opacity-50" disabled={!loginConsent}>
         {t('loginTitle')}
       </button>
