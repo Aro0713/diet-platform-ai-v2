@@ -596,22 +596,24 @@ return (
       <div className="w-full">
       <label htmlFor="phone" className="sr-only">{t('phone')}</label>
       <PhoneInput
-        inputClass="w-full bg-white text-black dark:bg-gray-800 dark:text-white border border-gray-300 dark:border-gray-600 rounded px-3 py-2"
-        buttonClass="!bg-transparent"
-        country={'auto'}
-        enableSearch
-        disableSearchIcon={true}
-        placeholder={t('phone')}
-        value={form.phone}
-        onChange={(value) => setForm({ ...form, phone: value })}
-        inputProps={{
-          name: 'phone',
-          required: true,
-          autoFocus: false,
-          id: 'phone',
-          'aria-label': t('phone')
-        }}
-      />
+      country={'auto'}
+      enableSearch
+      disableSearchIcon
+      placeholder={t('phone')}
+      value={form.phone}
+      onChange={(value) => setForm({ ...form, phone: value })}
+      inputProps={{
+        name: 'phone',
+        required: true,
+        id: 'phone',
+        'aria-label': t('phone')
+      }}
+      inputClass="!pl-14 w-full h-[42px] bg-white text-black dark:bg-gray-800 dark:text-white border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm"
+      buttonClass="!border-0 !bg-transparent !left-2 !top-[6px]"
+      dropdownClass="dark:bg-gray-800 dark:text-white"
+      containerClass="!w-full"
+    />
+
     </div>
 
       <div>
