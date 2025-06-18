@@ -596,24 +596,24 @@ return (
       <div className="w-full">
       <label htmlFor="phone" className="sr-only">{t('phone')}</label>
       <PhoneInput
-      country={'auto'}
-      enableSearch
-      disableSearchIcon
-      placeholder={t('phone')}
-      value={form.phone}
-      onChange={(value) => setForm({ ...form, phone: value })}
-      inputProps={{
-        name: 'phone',
-        required: true,
-        id: 'phone',
-        'aria-label': t('phone')
-      }}
-      inputClass="!pl-14 w-full h-[42px] bg-white text-black dark:bg-gray-800 dark:text-white border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm"
-      buttonClass="!border-0 !bg-transparent !left-2 !top-[6px]"
-      dropdownClass="dark:bg-gray-800 dark:text-white"
-      containerClass="!w-full"
-    />
-
+        country={'auto'}
+        enableSearch
+        disableSearchIcon
+        placeholder={t('phone')}
+        value={form.phone}
+        onChange={(value) => setForm({ ...form, phone: value })}
+        inputProps={{
+          name: 'phone',
+          required: true,
+          id: 'phone',
+          'aria-label': t('phone')
+        }}
+        containerClass="!w-full !text-sm"
+        inputClass="!pl-[60px] w-full h-[42px] bg-white dark:bg-gray-800 text-black dark:text-white border border-gray-300 dark:border-gray-600 rounded px-3 py-2"
+        buttonClass="!w-[44px] !h-[44px] !bg-white dark:!bg-gray-800 !border-r border-gray-300 dark:border-gray-600 !rounded-l !overflow-hidden !flex !items-center !justify-center"
+        dropdownClass="dark:bg-gray-800 dark:text-white"
+        searchClass="!text-sm"
+      />
     </div>
 
       <div>
