@@ -5,8 +5,8 @@ import { supabase } from '@/lib/supabaseClient';
 import { translationsRegister } from '@/utils/translations/register';
 import { translationsUI } from '@/utils/translationsUI';
 import { type LangKey, languageLabels } from '@/utils/i18n';
-import PhoneInput from 'react-phone-input-2';
-import 'react-phone-input-2/lib/material.css';
+import { PhoneInput } from 'react-international-phone';
+import 'react-international-phone/style.css';
 
 const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_KEY || '';
 
@@ -604,24 +604,18 @@ return (
 
       <div className="w-full">
       <label htmlFor="phone" className="sr-only">{t('phone')}</label>
-       <PhoneInput
-        country={'auto'}
-        enableSearch
-        disableSearchIcon
-        placeholder={t('phone')}
+      <PhoneInput
+        defaultCountry="pl"
         value={form.phone}
-        onChange={(value) => setForm({ ...form, phone: value })}
+        onChange={(phone) => setForm({ ...form, phone })}
+        inputClassName="w-full h-[44px] text-sm bg-white dark:bg-gray-800 text-black dark:text-white border border-gray-300 dark:border-gray-600 rounded px-3 py-2"
         inputProps={{
           name: 'phone',
           required: true,
           id: 'phone',
-          'aria-label': t('phone')
+          'aria-label': t('phone'),
+          placeholder: t('phone')
         }}
-        containerClass="!w-full"
-        inputClass="pl-14 w-full h-[44px] text-sm bg-white dark:bg-gray-800 text-black dark:text-white border border-gray-300 dark:border-gray-600 rounded px-3 py-2 focus:outline-none"
-        buttonClass="!w-[50px] !h-[44px] bg-white dark:bg-gray-800 border-r border-gray-300 dark:border-gray-600 rounded-l px-2 flex items-center justify-center"
-        dropdownClass="dark:bg-gray-800 dark:text-white bg-white text-black border border-gray-300 dark:border-gray-600 shadow-lg mt-1"
-        searchClass="!bg-white dark:!bg-gray-800 !text-black dark:!text-white !text-sm"
       />
     </div>
 
