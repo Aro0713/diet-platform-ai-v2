@@ -608,10 +608,10 @@ return (
           id: 'phone',
           'aria-label': t('phone')
         }}
-        containerClass="!w-full !flex"
-        inputClass="w-full pl-16 h-[44px] bg-white text-black dark:bg-gray-800 dark:text-white border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm"
-        buttonClass="!w-[44px] !h-[44px] !bg-white dark:!bg-gray-800 !border-r border-gray-300 dark:border-gray-600 rounded-l flex items-center justify-center absolute left-0 top-0"
-        dropdownClass="dark:bg-gray-800 dark:text-white bg-white text-black"
+        containerClass="!w-full"
+        inputClass="!pl-16 w-full h-[42px] bg-white text-black dark:bg-gray-800 dark:text-white border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm"
+        buttonClass="!w-[50px] !h-[42px] !bg-gray-100 dark:!bg-gray-700 !border-r border-gray-300 dark:border-gray-600 rounded-l px-2 flex items-center justify-center"
+        dropdownClass="dark:bg-gray-800 dark:text-white bg-white text-black border dark:border-gray-600 shadow-md"
         searchClass="!bg-white dark:!bg-gray-800 !text-black dark:!text-white !text-sm"
       />
     </div>
