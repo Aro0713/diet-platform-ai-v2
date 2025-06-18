@@ -500,9 +500,13 @@ return (
         </span>
       </label>
     </div>
-      <button type="submit" className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded w-full transition disabled:opacity-50" disabled={!loginConsent}>
-        {t('loginTitle')}
-      </button>
+     <button
+      type="submit"
+      className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded w-full transition disabled:opacity-50 shadow-md"
+      disabled={!loginConsent}
+    >
+      {t('loginTitle')}
+    </button>
     </form>
 
     <div className="mt-6 border-t pt-4">
