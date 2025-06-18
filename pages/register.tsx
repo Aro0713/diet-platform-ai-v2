@@ -5,6 +5,8 @@ import { supabase } from '@/lib/supabaseClient';
 import { translationsRegister } from '@/utils/translations/register';
 import { translationsUI } from '@/utils/translationsUI';
 import { type LangKey, languageLabels } from '@/utils/i18n';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/material.css';
 
 const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_KEY || '';
 
@@ -159,7 +161,7 @@ const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
   event.preventDefault();
 
   if (!loginConsent) {
-    alert('Aby się zalogować, musisz zaakceptować regulamin i politykę prywatności.');
+    alert(tUI('mustAcceptTerms'));
     return;
   }
 
@@ -188,7 +190,7 @@ const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
 
   if (userError || !userData) {
     console.error('❌ Nie można pobrać roli użytkownika:', userError);
-    alert('Nie można pobrać roli użytkownika. Skontaktuj się z administratorem.');
+    alert(tUI('userRoleFetchError'));
     return;
   }
 
@@ -203,25 +205,25 @@ const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
       router.push('/patient');
       break;
     default:
-      alert('Nieznana rola użytkownika.');
+      alert(tUI('unknownUserRole'));
   }
 };
 
   const handleResetPassword = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
-    if (!recoveryID) return alert('Podaj adres e-mail.');
+    if (!recoveryID) return alert(tUI('enterEmail'));
     const { error } = await supabase.auth.resetPasswordForEmail(recoveryID, {
       redirectTo: 'https://dcp.care/reset',
     });
-    if (error) return alert('Błąd resetu hasła: ' + error.message);
-    alert('Wysłano link do resetu hasła. Sprawdź skrzynkę e-mail.');
+    if (error) return alert(tUI('passwordResetError') + ': ' + error.message);
+   alert(tUI('passwordResetSent'));
   };
 
 const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
   event.preventDefault();
 
   if (!consentGiven) {
-    alert('Aby się zarejestrować, musisz zaakceptować regulamin i politykę prywatności.');
+    alert(tUI('mustAcceptTerms'));
     return;
   }
 
@@ -233,7 +235,7 @@ const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
       .maybeSingle();
 
     if (existing) {
-      alert('Konto z tym adresem e-mail już istnieje. Zaloguj się zamiast rejestrować.');
+      alert(tUI('emailAlreadyExists'));
       return;
     }
 
@@ -262,14 +264,16 @@ const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
       });
 
       const result = await response.json();
-      if (!response.ok) throw new Error(result.message || 'Błąd zgłoszenia.');
-      alert('Twoja jurysdykcja wymaga ręcznej weryfikacji. Wysłano zgłoszenie.');
+      if (!response.ok) throw new Error(result.message || tUI('manualVerificationError'));
+
+      alert(tUI('manualVerificationSuccess'));
       return;
-    } catch (err) {
-      alert('Nie udało się wysłać zgłoszenia: ' + (err as Error).message);
-      return;
-    }
-  }
+
+      } catch (err) {
+        alert(tUI('manualVerificationFailure') + ': ' + (err as Error).message);
+        return;
+      }
+      }
 
   // Rejestracja użytkownika
 const { data, error } = await supabase.auth.signUp({
@@ -301,10 +305,10 @@ const sessionRes = await supabase.auth.getSession();
 const session = sessionRes.data?.session;
 
 if (!session || !session.user) {
-  console.error('❌ Brak aktywnej sesji po potwierdzeniu e-maila.');
-  alert('Musisz się zalogować ręcznie.');
+  alert(tUI('emailConfirmationNotice'));
   return;
 }
+
 
 const user = session.user;
 
@@ -316,7 +320,7 @@ const { data: existingUser } = await supabase
   .maybeSingle();
 
 if (existingUser) {
-  console.warn('ℹ️ Użytkownik już istnieje w tabeli users.');
+  console.warn('ℹ️ ' + tUI('userAlreadyExists'));
   router.push('/');
   return;
 }
@@ -339,7 +343,7 @@ const insertResult = await supabase.from('users').insert([{
 
 if (insertResult.error) {
   console.error('❌ Insert error:', insertResult.error);
-  alert('Rejestracja nie została w pełni zakończona. Skontaktuj się z administratorem.');
+  alert(tUI('registrationPartialError'));
   return;
 }
 
@@ -589,18 +593,26 @@ return (
         />
       </div>
 
-      <div>
-        <label htmlFor="phone" className="sr-only">{t('phone')}</label>
-        <input
-          id="phone"
-          type="tel"
-          required
-          onChange={(e) => setForm({ ...form, phone: e.target.value })}
-          className="w-full bg-white text-black border border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 rounded px-3 py-2"
-          placeholder={t('phone')}
-          aria-label={t('phone')}
-        />
-      </div>
+      <div className="w-full">
+      <label htmlFor="phone" className="sr-only">{t('phone')}</label>
+      <PhoneInput
+        inputClass="w-full bg-white text-black dark:bg-gray-800 dark:text-white border border-gray-300 dark:border-gray-600 rounded px-3 py-2"
+        buttonClass="!bg-transparent"
+        country={'auto'}
+        enableSearch
+        disableSearchIcon={true}
+        placeholder={t('phone')}
+        value={form.phone}
+        onChange={(value) => setForm({ ...form, phone: value })}
+        inputProps={{
+          name: 'phone',
+          required: true,
+          autoFocus: false,
+          id: 'phone',
+          'aria-label': t('phone')
+        }}
+      />
+    </div>
 
       <div>
         <label htmlFor="password" className="sr-only">{t('password')}</label>
