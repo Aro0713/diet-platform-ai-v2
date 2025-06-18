@@ -226,13 +226,16 @@ const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
   }
 
   // ✅ SPRAWDZENIE MAILA: CZY UŻYTKOWNIK JUŻ ISTNIEJE
-  const { data: existingAuth } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
-  const alreadyExists = existingAuth?.users.some(u => u.email === form.email);
+    const { data: existing, error: checkError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', form.email)
+      .maybeSingle();
 
-  if (alreadyExists) {
-    alert('Konto z tym adresem e-mail już istnieje. Zaloguj się zamiast rejestrować.');
-    return;
-  }
+    if (existing) {
+      alert('Konto z tym adresem e-mail już istnieje. Zaloguj się zamiast rejestrować.');
+      return;
+    }
 
   if (userType === 'doctor' && !jurisdiction)
     return alert('Wybierz jurysdykcję zawodową.');
