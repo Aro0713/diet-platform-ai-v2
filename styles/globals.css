@@ -62,12 +62,7 @@ h1, h2.dancing {
 html.dark ::-webkit-scrollbar-thumb {
   background-color: rgba(200, 200, 200, 0.3);
 }
-.react-tel-input .selected-flag {
-  padding-right: 12px !important; /* Odstęp między flagą a numerem */
-  background-color: #1f1f1f !important; /* Ciemne tło w dark mode (opcjonalne) */
-  border-right: 1px solid #444;
-  border-radius: 6px 0 0 6px;
-}
+
 .react-international-phone-country-selector-dropdown {
   background-color: #1f2937 !important; /* dark:bg-gray-800 */
   color: white !important;
@@ -92,8 +87,8 @@ html.dark ::-webkit-scrollbar-thumb {
   gap: 0.5rem !important; /* 8px */
   align-items: center;
 }
-.react-international-phone-input {
-  background-color: #ffffff !important;   /* domyślnie light mode */
+html.light .react-international-phone-input {
+  background-color: #ffffff !important;
   color: #000000 !important;
 }
 
