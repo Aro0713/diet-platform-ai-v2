@@ -11,7 +11,21 @@ import 'react-international-phone/style.css';
 const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_KEY || '';
 
 export default function RegisterPage() {
-const router = useRouter();
+  const router = useRouter();
+
+  const [detectedCountry, setDetectedCountry] = useState<'pl'>('pl');
+
+  useEffect(() => {
+    fetch('http://ip-api.com/json/')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.countryCode) {
+          setDetectedCountry(data.countryCode.toLowerCase());
+        }
+      })
+      .catch(() => setDetectedCountry('pl'));
+  }, []);
+
 const [confirmation, setConfirmation] = useState(false);
 const [langReady, setLangReady] = useState(false);
 
@@ -621,7 +635,8 @@ return (
           placeholder: t('phone'),
         }}
       />
-
+      </div>
+      
       <div>
         <label htmlFor="password" className="sr-only">{t('password')}</label>
         <input
