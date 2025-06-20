@@ -69,6 +69,9 @@ export const generateDietTool = tool({
     const cpm = form.cpm ?? (form.weight && pal ? Math.round(form.weight * 24 * pal) : null);
     const mealsPerDay = interviewData.mealsPerDay ?? "not provided";
 
+    const modelDiet = form.model?.toLowerCase();
+    const cuisine = interviewData.cuisine?.toLowerCase() || "global";
+
     const patientData = {
       ...form,
       ...interviewData,
@@ -78,32 +81,41 @@ export const generateDietTool = tool({
       goalExplanation,
       recommendation,
       language: selectedLang,
-      mealsPerDay,
+      mealsPerDay
     };
 
-const modelDiet = form.model?.toLowerCase();
-const cuisine = interviewData.cuisine?.toLowerCase() || "global";
+    const prompt = `
+You are a clinical dietitian AI.
 
-const prompt = `
-You are a clinical dietitian AI. Based on the data below, generate a 7-day personalized medical diet plan in perfect JSON format.
+Generate a 7-day structured and medically accurate diet plan in perfect JSON format. The plan must:
 
-You MUST take into account:
-- Medical test results, allergies, conditions — if provided
-- Patient interview — if provided
-- Number of meals per day — if provided
-- Doctor's recommendation — if provided
-- Diet goal, dietary model, cuisine
-- Values from calculator (BMI, CPM, PPM, PAL, kcal targets)
+✔ Be customized based on:
+- Patient interview, test results, medical history
+- Cultural context: ${culturalContext}
+- Diet model: ${modelDiet}, Cuisine: ${cuisine}
+- Energy targets (CPM: ${cpm}), BMI: ${bmi}, PAL: ${pal}
+- Number of meals: ${mealsPerDay}, Goal: ${goalExplanation}
+- Doctor's notes: ${recommendation}
 
-Model of diet: ${modelDiet}
-Cuisine style: ${cuisine}
-Goal: ${goalExplanation}
-Doctor's notes: ${recommendation}
-Meals per day: ${mealsPerDay}
-BMI: ${bmi}, PAL: ${pal}, CPM: ${cpm}, PPM: ${interviewData.ppm}
-kcalMaintain: ${interviewData.kcalMaintain}, kcalReduce: ${interviewData.kcalReduce}, kcalGain: ${interviewData.kcalGain}
+✔ For EACH meal include:
+- Polish name (Śniadanie, II śniadanie, Obiad, Kolacja)
+- Time (e.g., 07:30)
+- Dish name (menu), Ingredients list (product, weight, unit)
+- Detailed cooking method (preparation)
+- Nutrients: kcal, protein, fat, carbs, fiber, Ca, K, Mg, vit. C, D, B12
 
-Return ONLY raw JSON like:
+✔ For EACH day:
+- Total nutritional summary for the day (JSON object)
+
+✔ For WHOLE week:
+- Table of all meals (day × meal)
+- Summary of total intake
+- Ingredient shopping list
+
+Use ONLY trusted sources:
+${dataSources}
+
+Return only raw JSON:
 {
   "dietPlan": {
     "Monday": {
@@ -113,28 +125,29 @@ Return ONLY raw JSON like:
         "kcal": 400,
         "glycemicIndex": 40,
         "ingredients": [
-          { "product": "...", "weight": 100 }
-        ]
-      }
-    }
-  }
+          { "product": "...", "weight": 100, "unit": "g" }
+        ],
+        "preparation": "...",
+        "nutrients": {
+          "protein": 20,
+          "fat": 15,
+          "carbs": 30,
+          "fiber": 5,
+          "calcium": 100,
+          "potassium": 300,
+          "magnesium": 40,
+          "vitaminC": 30,
+          "vitaminD": 5,
+          "vitaminB12": 1.2
+        }
+      },
+      ...
+    },
+    ...
+  },
+  "weeklyOverview": { ... },
+  "shoppingList": [ { product: "...", quantity: 300, unit: "g" }, ... ]
 }
-
-Strict rules:
-- Top-level key: "dietPlan"
-- 7 days: Monday to Sunday
-- Day keys in English, meal names in Polish
-- Each meal must include: time, menu, kcal, glycemicIndex (required), ingredients (array)
-- JSON only – no markdown, no explanations
-
-Use culturally relevant food:
-${culturalContext}
-
-Use only these evidence-based sources:
-${dataSources}
-
-Patient data:
-${JSON.stringify(patientData, null, 2)}
 `;
 
     const completion = await openai.chat.completions.create({

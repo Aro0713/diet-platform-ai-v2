@@ -70,7 +70,7 @@ export async function generateInterviewPdf(
   }
 
   content.push({
-    text: '---\n© ALS sp. z o.o. | KRS 0000087600 | NIP 6252121456 | REGON 266795439\nEmail: a4p.email@gmail.com | tel. +48 500 720 242',
+    text: '---\n© Diet Care Platform|\nEmail: contact@dcp.care |',
     style: 'footer',
     margin: [0, 30, 0, 0],
     alignment: 'center',

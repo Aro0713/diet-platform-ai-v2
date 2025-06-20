@@ -2,27 +2,12 @@ import { LangKey } from '@/utils/i18n';
 
 /**
  * Konwertuje surową sekcję tłumaczeń (np. section1) do formatu rozpoznawanego przez InterviewWizard.
- * Obsługuje:
- * – *_options → przekształca na opcje select/radio,
- * – *_dependsOn → zamienia na zależności typu { dependsOn: { question, value } },
- * – pomija *_dependsOn jako osobne pytania,
- * – dodaje puste wartości dla bazowych kluczy jeśli są tylko options.
  */
 export function convertSectionFormat(
   section: Record<string, Record<LangKey, string | string[]>>
 ): Record<LangKey, Record<string, string | string[] | { dependsOn?: { question: string; value: string } }>> {
   const result = {
-    pl: {},
-    en: {},
-    es: {},
-    fr: {},
-    de: {},
-    ua: {},
-    ru: {},
-    zh: {},
-    hi: {},
-    ar: {},
-    he: {},
+    pl: {}, en: {}, es: {}, fr: {}, de: {}, ua: {}, ru: {}, zh: {}, hi: {}, ar: {}, he: {},
   } as Record<LangKey, Record<string, any>>;
 
   for (const key in section) {
@@ -70,26 +55,17 @@ export function convertSectionFormat(
  * Mapowanie "Inne" → w danym języku
  */
 export const otherOptionByLang: Record<LangKey, string> = {
-  pl: 'Inne',
-  en: 'Other',
-  es: 'Otro',
-  fr: 'Autre',
-  de: 'Anderes',
-  ua: 'Інше',
-  ru: 'Другое',
-  zh: '其他',
-  hi: 'अन्य',
-  ar: 'أخرى',
-  he: 'אחר',
+  pl: 'Inne', en: 'Other', es: 'Otro', fr: 'Autre', de: 'Anderes',
+  ua: 'Інше', ru: 'Другое', zh: '其他', hi: 'अन्य', ar: 'أخرى', he: 'אחר',
 };
 
 /**
- * Lista wszystkich tłumaczeń słowa "Inne" — używana do wykrywania odpowiedzi w InterviewWizard
+ * Lista wszystkich tłumaczeń słowa "Inne"
  */
 export const OTHER_OPTIONS = Object.values(otherOptionByLang);
 
 /**
- * Automatycznie dopisuje "Inne" do końca każdej tablicy opcji w danej sekcji
+ * Automatycznie dodaje "Inne" do listy opcji
  */
 export function withOtherOption(
   section: Record<LangKey, Record<string, string | string[]>>
@@ -132,3 +108,30 @@ export const extractMappedInterview = (interview: Record<string, string>) => {
 
   return result;
 };
+
+/**
+ * 🔄 Konwertuje dane z InterviewWizard (stepX_qY) do:
+ * - structuredInterview: sectionX.qY → do PDF, alergii, analiz
+ * - narrativeInput: qY → do generateInterviewNarrative
+ */
+export function convertInterviewAnswers(answers: Record<string, string>) {
+  const stepData: Record<string, Record<string, string>> = {};
+  const narrativeData: Record<string, string> = {};
+
+  for (const [key, value] of Object.entries(answers)) {
+    const match = key.match(/^step(\d+)_q(\d+)/);
+    if (match) {
+      const step = parseInt(match[1]) + 1; // step0 = section1
+      const question = `q${match[2]}`;
+
+      if (!stepData[`section${step}`]) stepData[`section${step}`] = {};
+      stepData[`section${step}`][question] = value;
+      narrativeData[question] = value;
+    }
+  }
+
+  return {
+    structuredInterview: stepData,
+    narrativeInput: narrativeData
+  };
+}

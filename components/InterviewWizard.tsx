@@ -13,6 +13,7 @@ import { section9 } from '@/utils/translations/interview/section9';
 import { section10 } from '@/utils/translations/interview/section10';
 import { OTHER_OPTIONS } from '@/utils/interviewHelpers';
 import PanelCard from './PanelCard';
+import { convertInterviewAnswers } from '@/utils/interviewHelpers';
 
 interface Question {
   noInput?: any;
@@ -168,19 +169,19 @@ const handleChange = (name: string, value: string) => {
   setAllAnswers((prev) => ({ ...prev, [name]: value }));
 };
 
-  const handleFinish = async () => {
-    setSaving(true);
-    try {
-      await onFinish(allAnswers);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
-    } catch (e) {
-      console.error('❌ Błąd zapisu wywiadu:', e);
-      alert('Błąd zapisu wywiadu. Spróbuj ponownie.');
-    } finally {
-      setSaving(false);
-    }
-  };
+const handleFinish = async () => {
+  setSaving(true);
+  try {
+    await onFinish(allAnswers); 
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
+  } catch (e) {
+    console.error('❌ Błąd zapisu wywiadu:', e);
+    alert('Błąd zapisu wywiadu. Spróbuj ponownie.');
+  } finally {
+    setSaving(false);
+  }
+};
 
   return (
     <PanelCard className="z-10 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 dark:text-white transition-colors min-h-[550px]">
