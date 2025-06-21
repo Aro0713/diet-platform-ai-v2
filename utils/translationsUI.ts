@@ -2053,6 +2053,126 @@ kcal: {
   hi: "किलो कैलोरी",
   ar: "سعرة حرارية",
   he: "קק\"ל"
+},
+dietitianSignature: {
+  pl: "Dietetyk prowadzący",
+  en: "Dietitian",
+  es: "Nutricionista responsable",
+  fr: "Diététicien responsable",
+  de: "Betreuender Ernährungsberater",
+  ua: "Лікар-дієтолог",
+  ru: "Ведущий диетолог",
+  zh: "主治营养师",
+  hi: "आहार विशेषज्ञ",
+  ar: "أخصائي التغذية المشرف",
+  he: "תזונאית אחראית"
+},
+noImageAvailable: {
+  pl: "Brak zdjęcia",
+  en: "No image available",
+  es: "Sin imagen disponible",
+  fr: "Aucune image disponible",
+  de: "Kein Bild verfügbar",
+  ua: "Зображення відсутнє",
+  ru: "Изображение отсутствует",
+  zh: "无可用图片",
+  hi: "कोई छवि उपलब्ध नहीं",
+  ar: "لا توجد صورة متاحة",
+  he: "אין תמונה זמינה"
+},
+
+protein: {
+  pl: "Białko",
+  en: "Protein",
+  es: "Proteína",
+  fr: "Protéine",
+  de: "Eiweiß",
+  ua: "Білок",
+  ru: "Белок",
+  zh: "蛋白质",
+  hi: "प्रोटीन",
+  ar: "بروتين",
+  he: "חלבון"
+},
+
+fat: {
+  pl: "Tłuszcz",
+  en: "Fat",
+  es: "Grasa",
+  fr: "Graisse",
+  de: "Fett",
+  ua: "Жир",
+  ru: "Жир",
+  zh: "脂肪",
+  hi: "वसा",
+  ar: "دهون",
+  he: "שומן"
+},
+
+carbs: {
+  pl: "Węglowodany",
+  en: "Carbs",
+  es: "Carbohidratos",
+  fr: "Glucides",
+  de: "Kohlenhydrate",
+  ua: "Вуглеводи",
+  ru: "Углеводы",
+  zh: "碳水化合物",
+  hi: "कार्बोहाइड्रेट",
+  ar: "كربوهيدرات",
+  he: "פחמימות"
+},
+preparation: {
+  pl: "Sposób przygotowania",
+  en: "Preparation",
+  es: "Preparación",
+  fr: "Préparation",
+  de: "Zubereitung",
+  ua: "Приготування",
+  ru: "Приготовление",
+  zh: "准备方式",
+  hi: "तैयारी",
+  ar: "طريقة التحضير",
+  he: "הכנה"
+},
+note: {
+  pl: "Notatka",
+  en: "Note",
+  es: "Nota",
+  fr: "Remarque",
+  de: "Notiz",
+  ua: "Нотатка",
+  ru: "Заметка",
+  zh: "备注",
+  hi: "टिप्पणी",
+  ar: "ملاحظة",
+  he: "הערה"
+},
+nutritionSummaryTitle: {
+  pl: "Podsumowanie makroskładników dziennych",
+  en: "Daily Macronutrient Summary",
+  es: "Resumen diario de macronutrientes",
+  fr: "Résumé quotidien des macronutriments",
+  de: "Tägliche Makronährstoffübersicht",
+  ua: "Щоденне підсумування макронутрієнтів",
+  ru: "Ежедневное потребление макронутриентов",
+  zh: "每日营养素汇总",
+  hi: "दैनिक पोषक तत्व सारांश",
+  ar: "ملخص المغذيات اليومية",
+  he: "סיכום יומי של רכיבי תזונה"
+},
+allergenLegend: {
+  pl: "⚠️ Produkt może zawierać alergeny wskazane w wywiadzie",
+  en: "⚠️ Product may contain allergens listed in the interview",
+  es: "⚠️ El producto puede contener alérgenos indicados en la entrevista",
+  fr: "⚠️ Le produit peut contenir des allergènes mentionnés dans l'entretien",
+  de: "⚠️ Produkt kann im Interview genannte Allergene enthalten",
+  ua: "⚠️ Продукт може містити алергени, зазначені в опитуванні",
+  ru: "⚠️ Продукт может содержать аллергены, указанные в анкете",
+  zh: "⚠️ 产品可能含有访谈中提到的过敏原",
+  hi: "⚠️ उत्पाद में साक्षात्कार में बताए गए एलर्जन हो सकते हैं",
+  ar: "⚠️ قد يحتوي المنتج على مسببات الحساسية المذكورة في المقابلة",
+  he: "⚠️ המוצר עשוי להכיל אלרגנים שצוינו בראיון"
 }
 
 };

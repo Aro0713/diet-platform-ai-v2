@@ -83,12 +83,38 @@ export async function generateFullDietPdf(
     groupedByDay[day].push(meal);
   });
 
-  Object.entries(groupedByDay).forEach(([day, meals]) => {
+  for (const [day, meals] of Object.entries(groupedByDay)) {
     content.push({
       text: `📅 ${day}`,
       style: 'subheader',
       margin: [0, 10, 0, 4]
     });
+
+    const rows = await Promise.all(meals.map(async (meal) => {
+      const tags: string[] = [];
+      const text = `${meal.menu} ${meal.description || ''}`.toLowerCase();
+      if (text.includes('wegań') || text.includes('vegan')) tags.push('🌱');
+      if (text.includes('bezglut') || text.includes('gluten')) tags.push('🚫🌾');
+      if (text.includes('fodmap')) tags.push('🔽FODMAP');
+
+      return [
+        {
+          stack: [
+            { text: `${tags.join(' ')} ${meal.name}`, bold: true },
+            meal.description ? { text: meal.description, italics: true, fontSize: 10, margin: [0, 2, 0, 2] } : null
+          ].filter(Boolean)
+        },
+        meal.time || '–',
+        {
+          text: `🔥 ${meal.calories} kcal\n💉 IG: ${meal.glycemicIndex}\n🥩 ${tUI('protein', lang)}: ${meal.macros?.protein ?? 0} g\n🧈 ${tUI('fat', lang)}: ${meal.macros?.fat ?? 0} g\n🍞 ${tUI('carbs', lang)}: ${meal.macros?.carbs ?? 0} g\n🌿 ${tUI('fiber', lang)}: ${meal.macros?.fiber ?? 0} g\n🧪 ${tUI('potassium', lang)}: ${meal.macros?.potassium ?? 0} mg`,
+          fontSize: 9
+        },
+        {
+          text: meal.ingredients.map(i => `• ${i.product} – ${i.weight} g`).join('\n'),
+          fontSize: 9
+        }
+      ];
+    }));
 
     content.push({
       table: {
@@ -100,12 +126,7 @@ export async function generateFullDietPdf(
             { text: `${tUI('calories', lang)} / IG`, style: 'tableHeader' },
             { text: tUI('ingredients', lang), style: 'tableHeader' }
           ],
-          ...meals.map((meal) => [
-            { text: meal.name, bold: true },
-            meal.time || '–',
-            `🔥 ${meal.calories} kcal\n💉 IG: ${meal.glycemicIndex}`,
-            meal.ingredients.map(i => `• ${i.product} – ${i.weight} g`).join('\n')
-          ])
+          ...rows
         ]
       },
       layout: 'lightHorizontalLines',
@@ -121,7 +142,7 @@ export async function generateFullDietPdf(
         margin: [0, 0, 0, 10]
       });
     }
-  });
+  }
 
   if (approved) {
     content.push({

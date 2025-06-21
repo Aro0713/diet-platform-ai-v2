@@ -4,12 +4,12 @@ export type Ingredient = {
   unit?: string; // np. "g", "ml", "szt", "łyżka"
 };
 
-
 export interface Meal {
   name: string;
   time: string;
-  menu: string; // np. "Sałatka z tuńczykiem i jajkiem"
-  description?: string; // opcjonalny komentarz
+  date?: string; // 🆕 do PDF
+  menu: string;
+  description?: string;
   ingredients: Ingredient[];
   calories: number;
   glycemicIndex: number;
@@ -18,9 +18,10 @@ export interface Meal {
     carbs?: number;
     fat?: number;
     sodium?: number;
+    fiber?: number;     // 🆕 do PDF
+    potassium?: number; // 🆕 do PDF
   };
 }
-
 
 export type TestResult = {
   name: string;
@@ -28,10 +29,10 @@ export type TestResult = {
 };
 
 export interface MedicalData {
-  name: string;       // np. "glukoza"
-  value: string;      // np. "98"
-  unit?: string;      // np. "mg/dl"
-  note?: string;      // np. "po posiłku", "na czczo"
+  name: string;
+  value: string;
+  unit?: string;
+  note?: string;
 }
 
 export type ConditionWithTests = {
@@ -53,8 +54,8 @@ export interface PatientData {
   cuisine: string;
   model: string;
   password?: string;
+  createdByName?: string; // 🆕 do PDF podpisu
 
-  // Choroby i badania
   conditions: string[];
   conditionGroups?: string[];
   testResults?: Record<string, string>;
@@ -66,11 +67,10 @@ export interface PatientData {
     }[];
   }[];
 
-  // 🔽 Wskaźniki z kalkulatora
   pal?: number | null;
   bmi?: number | null;
   cpm?: number | null;
-};
+}
 
 export interface InterviewData {
   section1: Record<string, string>;
