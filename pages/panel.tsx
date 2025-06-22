@@ -472,7 +472,16 @@ return (
 
       {/* Sekcja 2: Dane medyczne */}
       <PanelCard className="z-30">
-        <MedicalForm onChange={handleMedicalChange} lang={lang} />
+        <MedicalForm
+        onChange={handleMedicalChange}
+        onUpdateMedical={(summary) => {
+          setMedicalData((prev: any) => ({
+            ...prev,
+            summary
+          }));
+        }}
+        lang={lang}
+      />
       </PanelCard>
 
       {/* Sekcja 3: Wywiad pacjenta */}

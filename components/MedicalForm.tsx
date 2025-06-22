@@ -21,12 +21,12 @@ interface MedicalFormProps {
     medicalSummary?: string;
     structuredOutput?: any;
   }) => void;
+  onUpdateMedical?: (summary: string) => void; // <-- DODAJ TO
   lang: LangKey;
 }
 
 
-
-const MedicalForm: React.FC<MedicalFormProps> = ({ onChange, lang }) => {
+  const MedicalForm: React.FC<MedicalFormProps> = ({ onChange, onUpdateMedical, lang }) => {
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [availableConditions, setAvailableConditions] = useState<string[]>([]);
   const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
@@ -119,9 +119,10 @@ const handleMedicalAnalysis = async () => {
 };
 
   const handleEditAnalysis = () => {
-    setMedicalSummary(undefined);
-    setStructuredOutput(undefined);
+  setEditedSummary(medicalSummary || "");
+  setIsEditing(true);
   };
+
 
   const handleConfirmAnalysis = () => {
   onChange({
@@ -201,6 +202,8 @@ const handleMedicalAnalysis = async () => {
       label: getTranslation(conditionLabels, cond, lang)
     }))
   ), [availableConditions, lang]);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedSummary, setEditedSummary] = useState("");
 
   return (
   <PanelCard title={`🧪 ${tUI('testResults', lang)}`}>
@@ -266,14 +269,39 @@ const handleMedicalAnalysis = async () => {
         {loading ? tUI("analyzing", lang) : tUI("analyzeTestResults", lang)}
       </button>
         {medicalSummary && (
-        <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded text-sm whitespace-pre-wrap mt-4 border border-blue-300 dark:border-blue-500">
-          <strong className="block mb-2 text-blue-800 dark:text-blue-300">
-            {tUI("medicalAnalysisSummary", lang)}:
-          </strong>
-          <p>{medicalSummary}</p>
-        </div>
+  <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded text-sm whitespace-pre-wrap mt-4 border border-blue-300 dark:border-blue-500">
+    <strong className="block mb-2 text-blue-800 dark:text-blue-300">
+      {tUI("medicalAnalysisSummary", lang)}:
+    </strong>
+
+    {isEditing ? (
+      <>
+        <textarea
+          value={editedSummary}
+          onChange={(e) => setEditedSummary(e.target.value)}
+          className="w-full p-2 rounded bg-white dark:bg-gray-700 text-black dark:text-white border dark:border-gray-500"
+          rows={6}
+        />
+        <div className="flex justify-end mt-2">
+          <button
+            className="px-4 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+             onClick={() => {
+            setMedicalSummary(editedSummary);
+            setIsEditing(false);
+            if (onUpdateMedical) onUpdateMedical(editedSummary); // <- dodajesz tę linię
+          }}
+            >
+              💾 {tUI("save", lang)}
+            </button>
+          </div>
+        </>
+      ) : (
+        <p>{medicalSummary}</p>
       )}
-      <div className="mt-4 flex flex-col md:flex-row gap-3">
+    </div>
+  )}
+
+        <div className="mt-4 flex flex-col md:flex-row gap-3">
         <button
           onClick={handleConfirmAnalysis}
           className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md shadow-md hover:bg-green-700 transition-colors"
