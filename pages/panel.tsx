@@ -163,9 +163,12 @@ const handleMedicalChange = (data: {
     medical: convertedMedical,
   }));
 
-  if (data.structuredOutput) {
-    setMedicalData(data.structuredOutput); 
-  }
+if (data.structuredOutput || data.medicalSummary) {
+  setMedicalData({
+    summary: data.medicalSummary ?? '',
+    json: data.structuredOutput ?? null
+  });
+}
 };
 
   const handleDietSave = (meals: Meal[]) => {
@@ -274,6 +277,12 @@ const handleSubmit = async (e: React.FormEvent) => {
   setIsGenerating(true);
   setStreamingText('');
   setDietApproved(false);
+  
+  if (!medicalData) {
+  alert('⚠️ Musisz zatwierdzić analizę wyników badań przed wygenerowaniem diety.');
+  setIsGenerating(false);
+  return;
+}
 
   try {
     const goalMap: Record<string, string> = {
@@ -721,5 +730,4 @@ return (
   
 );
 }
-
 export default Panel;
