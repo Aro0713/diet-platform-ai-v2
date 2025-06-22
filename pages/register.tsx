@@ -16,7 +16,7 @@ export default function RegisterPage() {
   const [detectedCountry, setDetectedCountry] = useState<'pl'>('pl');
 
   useEffect(() => {
-    fetch('http://ip-api.com/json/')
+    fetch('https://ip-api.com/json/')
       .then((res) => res.json())
       .then((data) => {
         if (data?.countryCode) {

@@ -261,7 +261,14 @@ useEffect(() => {
       >
         {loading ? tUI("analyzing", lang) : tUI("analyzeTestResults", lang)}
       </button>
-
+        {medicalSummary && (
+        <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded text-sm whitespace-pre-wrap mt-4 border border-blue-300 dark:border-blue-500">
+          <strong className="block mb-2 text-blue-800 dark:text-blue-300">
+            {tUI("medicalAnalysisSummary", lang)}:
+          </strong>
+          <p>{medicalSummary}</p>
+        </div>
+      )}
       <div className="mt-4 flex flex-col md:flex-row gap-3">
         <button
           onClick={handleConfirmAnalysis}
