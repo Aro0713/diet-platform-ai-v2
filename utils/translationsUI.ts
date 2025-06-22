@@ -2173,7 +2173,125 @@ allergenLegend: {
   hi: "⚠️ उत्पाद में साक्षात्कार में बताए गए एलर्जन हो सकते हैं",
   ar: "⚠️ قد يحتوي المنتج على مسببات الحساسية المذكورة في المقابلة",
   he: "⚠️ המוצר עשוי להכיל אלרגנים שצוינו בראיון"
-}
+},
+  testResults: {
+    pl: "Wyniki badań",
+    en: "Test results",
+    es: "Resultados de pruebas",
+    fr: "Résultats des tests",
+    de: "Testergebnisse",
+    ua: "Результати аналізів",
+    ru: "Результаты анализов",
+    zh: "检测结果",
+    hi: "परीक्षण परिणाम",
+    ar: "نتائج التحاليل",
+    he: "תוצאות בדיקה"
+  },
+  selectConditions: {
+    pl: "Wybierz jednostki chorobowe",
+    en: "Select conditions",
+    es: "Seleccionar afecciones",
+    fr: "Sélectionner les pathologies",
+    de: "Erkrankungen auswählen",
+    ua: "Виберіть захворювання",
+    ru: "Выберите заболевания",
+    zh: "选择疾病",
+    hi: "स्थितियाँ चुनें",
+    ar: "اختر الحالات المرضية",
+    he: "בחר מצבים רפואיים"
+  },
+  rangePrefix: {
+    pl: "Zakres referencyjny:",
+    en: "Reference range:",
+    es: "Rango de referencia:",
+    fr: "Plage de référence :",
+    de: "Referenzbereich:",
+    ua: "Референтний діапазон:",
+    ru: "Референсный диапазон:",
+    zh: "参考范围：",
+    hi: "संदर्भ सीमा:",
+    ar: "النطاق المرجعي:",
+    he: "טווח התייחסות:"
+  },
+  enterResult: {
+    pl: "Wprowadź wynik",
+    en: "Enter result",
+    es: "Ingrese resultado",
+    fr: "Entrez le résultat",
+    de: "Ergebnis eingeben",
+    ua: "Введіть результат",
+    ru: "Введите результат",
+    zh: "输入结果",
+    hi: "परिणाम दर्ज करें",
+    ar: "أدخل النتيجة",
+    he: "הזן תוצאה"
+  },
+  analyzeTestResults: {
+    pl: "Analizuj wyniki",
+    en: "Analyze results",
+    es: "Analizar resultados",
+    fr: "Analyser les résultats",
+    de: "Ergebnisse analysieren",
+    ua: "Аналізувати результати",
+    ru: "Анализировать результаты",
+    zh: "分析结果",
+    hi: "परिणामों का विश्लेषण करें",
+    ar: "تحليل النتائج",
+    he: "נתח תוצאות"
+  },
+  analyzing: {
+    pl: "Analizuję...",
+    en: "Analyzing...",
+    es: "Analizando...",
+    fr: "Analyse en cours...",
+    de: "Analysiere...",
+    ua: "Аналізую...",
+    ru: "Анализирую...",
+    zh: "分析中...",
+    hi: "विश्लेषण किया जा रहा है...",
+    ar: "جاري التحليل...",
+    he: "מנתח..."
+  },
+  medicalAnalysisSummary: {
+    pl: "Podsumowanie analizy medycznej",
+    en: "Medical analysis summary",
+    es: "Resumen del análisis médico",
+    fr: "Résumé de l'analyse médicale",
+    de: "Zusammenfassung der medizinischen Analyse",
+    ua: "Підсумок медичного аналізу",
+    ru: "Резюме медицинского анализа",
+    zh: "医疗分析摘要",
+    hi: "चिकित्सा विश्लेषण सारांश",
+    ar: "ملخص التحليل الطبي",
+    he: "סיכום ניתוח רפואי"
+  },
+  confirmAnalysis: {
+    pl: "Zatwierdź analizę",
+    en: "Confirm analysis",
+    es: "Confirmar análisis",
+    fr: "Confirmer l'analyse",
+    de: "Analyse bestätigen",
+    ua: "Підтвердити аналіз",
+    ru: "Подтвердить анализ",
+    zh: "确认分析",
+    hi: "विश्लेषण की पुष्टि करें",
+    ar: "تأكيد التحليل",
+    he: "אשר ניתוח"
+  },
+  editAnalysis: {
+    pl: "Popraw analizę",
+    en: "Edit analysis",
+    es: "Editar análisis",
+    fr: "Modifier l'analyse",
+    de: "Analyse bearbeiten",
+    ua: "Редагувати аналіз",
+    ru: "Редактировать анализ",
+    zh: "编辑分析",
+    hi: "विश्लेषण संपादित करें",
+    ar: "تعديل التحليل",
+    he: "ערוך ניתוח"
+  }
+
 
 };
 
