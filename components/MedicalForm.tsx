@@ -46,7 +46,22 @@ const MedicalForm: React.FC<MedicalFormProps> = ({ onChange, lang }) => {
       attributes: true,
       attributeFilter: ['class'],
     });
+  useEffect(() => {
+      const conditions: string[] = selectedGroups.flatMap((group) =>
+        diseaseGroups[group] || []
+      );
 
+      const isSame =
+        conditions.length === availableConditions.length &&
+        conditions.every((c) => availableConditions.includes(c));
+
+      if (!isSame) {
+        setAvailableConditions(conditions);
+        setSelectedConditions([]);
+        setTestResults({});
+      }
+    }, [selectedGroups]);
+    
     setIsDarkMode(document.documentElement.classList.contains('dark'));
 
     return () => observer.disconnect();
