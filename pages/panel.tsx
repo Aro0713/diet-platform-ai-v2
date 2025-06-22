@@ -424,22 +424,27 @@ return (
 
 
 {/* Pasek z nagłówkiem i przełącznikiem */}
-<div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between px-4">
-  <div className="flex flex-col">
-    {userData?.name && (
-      <span className="text-sm font-medium text-gray-800">
-        {/* Tytuł naukowy */}
-        {userData?.title && translatedTitles[userData.title as 'dr' | 'drhab' | 'prof']
-          ? `${translatedTitles[userData.title as 'dr' | 'drhab' | 'prof'][lang]} `
-          : ''}
-        {/* Imię i nazwisko */}
-        {userData.name}
-        {/* Rola */}
-        {userData?.role && translationsUI[userData.role as 'doctor' | 'dietitian']
-          ? ` – ${translationsUI[userData.role as 'doctor' | 'dietitian'][lang]}`
-          : ''}
-      </span>
+  <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between px-4">
+    <div className="flex flex-col">
+  {userData && userData.name && (
+    <span className="text-sm font-medium text-gray-800 dark:text-white">
+      {/* Tytuł naukowy */}
+      {userData.title &&
+        translatedTitles[userData.title as 'dr' | 'drhab' | 'prof']?.[lang] && (
+          <>{translatedTitles[userData.title as 'dr' | 'drhab' | 'prof'][lang]} </>
+        )}
+
+      {/* Imię i nazwisko */}
+      {userData.name}
+
+      {/* Rola */}
+      {userData.role &&
+        translationsUI[userData.role as 'doctor' | 'dietitian']?.[lang] && (
+          <> – {translationsUI[userData.role as 'doctor' | 'dietitian'][lang]}</>
+        )}
+    </span>
     )}
+
     <h1 className="text-2xl font-bold text-gray-800">
       {tUI('doctorPanelTitle', lang)}
     </h1>
