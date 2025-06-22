@@ -141,11 +141,14 @@ useEffect(() => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
+const [medicalData, setMedicalData] = useState<any>(null); // dodaj wyżej
 
 const handleMedicalChange = (data: {
   selectedGroups: string[];
   selectedConditions: string[];
   testResults: { [testName: string]: string };
+  medicalSummary?: string;
+  structuredOutput?: any;
 }) => {
   const convertedMedical = data.selectedConditions.map((condition) => ({
     condition,
@@ -159,8 +162,11 @@ const handleMedicalChange = (data: {
     testResults: data.testResults,
     medical: convertedMedical,
   }));
-};
 
+  if (data.structuredOutput) {
+    setMedicalData(data.structuredOutput);
+  }
+};
 
   const handleDietSave = (meals: Meal[]) => {
     const errors = validateDiet(meals);
@@ -290,7 +296,14 @@ const handleSubmit = async (e: React.FormEvent) => {
     const res = await fetch('/api/generate-diet', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ form, interviewData, lang, goalExplanation, recommendation })
+      body: JSON.stringify({
+          form,
+          interviewData,
+          lang,
+          goalExplanation,
+          recommendation,
+          medical: medicalData 
+        })
     });
 
     if (!res.body) throw new Error('Brak treści w odpowiedzi serwera.');
