@@ -477,7 +477,8 @@ return (
         onUpdateMedical={(summary) => {
           setMedicalData((prev: any) => ({
             ...prev,
-            summary
+            summary,
+            json: null 
           }));
         }}
         lang={lang}
