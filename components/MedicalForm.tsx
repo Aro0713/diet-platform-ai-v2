@@ -118,15 +118,20 @@ useEffect(() => {
     }
   };
 
-  const handleConfirmAnalysis = () => {
-    onChange({
-      selectedGroups,
-      selectedConditions,
-      testResults,
-      medicalSummary,
-      structuredOutput
-    });
-  };
+ const handleConfirmAnalysis = () => {
+  if (!medicalSummary || !structuredOutput) return;
+
+  onChange({
+    selectedGroups,
+    selectedConditions,
+    testResults,
+    medicalSummary,
+    structuredOutput
+  });
+
+  console.log("✅ Analiza zatwierdzona i przekazana");
+};
+
 
   const handleEditAnalysis = () => {
     setMedicalSummary(undefined);

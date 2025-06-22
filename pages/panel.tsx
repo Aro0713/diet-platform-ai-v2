@@ -141,7 +141,7 @@ useEffect(() => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
-const [medicalData, setMedicalData] = useState<any>(null); // dodaj wyżej
+const [medicalData, setMedicalData] = useState<any>(null);
 
 const handleMedicalChange = (data: {
   selectedGroups: string[];
@@ -164,7 +164,7 @@ const handleMedicalChange = (data: {
   }));
 
   if (data.structuredOutput) {
-    setMedicalData(data.structuredOutput);
+    setMedicalData(data.structuredOutput); 
   }
 };
 
