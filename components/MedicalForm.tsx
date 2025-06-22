@@ -12,7 +12,6 @@ import { testsByCondition } from '@/types/testsByCondition';
 import { testReferenceValues } from '@/components/testReferenceValues';
 import PanelCard from '@/components/PanelCard';
 import SelectGroupForm from './SelectGroupForm';
-import { medicalLabAgent } from "@/agents/medicalLabAgent";
 
 interface MedicalFormProps {
   onChange: (data: {
@@ -72,8 +71,13 @@ const MedicalForm: React.FC<MedicalFormProps> = ({ onChange, lang }) => {
     setLoading(true);
     try {
       const description = testResults["Opis choroby"] || "";
-      const result = await medicalLabAgent({ testResults, description, lang });
+      const response = await fetch("/api/analyze-medical", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ testResults, description, lang })
+      });
 
+      const result = await response.text();
       const jsonBlock = result.match(/```json([\s\S]*?)```/);
       const parsed = jsonBlock ? JSON.parse(jsonBlock[1]) : null;
 
@@ -162,48 +166,49 @@ const MedicalForm: React.FC<MedicalFormProps> = ({ onChange, lang }) => {
       color: isDarkMode ? 'white' : 'black',
     }),
   }), [isDarkMode]);
-const groupOptions = useMemo(() => (
-  Object.keys(diseaseGroups).map((group) => ({
-    value: group,
-    label: getTranslation(conditionGroupLabels, group, lang)
-  }))
-), [lang]);
 
-const conditionOptions = useMemo(() => (
-  availableConditions.map((cond) => ({
-    value: cond,
-    label: getTranslation(conditionLabels, cond, lang)
-  }))
-), [availableConditions, lang]);
+  const groupOptions = useMemo(() => (
+    Object.keys(diseaseGroups).map((group) => ({
+      value: group,
+      label: getTranslation(conditionGroupLabels, group, lang)
+    }))
+  ), [lang]);
 
-return (
-  <PanelCard title={`🧪 ${tMedical('testResults', lang)}`}>
-    <SelectGroupForm
-      selectedGroups={selectedGroups}
-      setSelectedGroups={setSelectedGroups}
-      options={groupOptions}
-    />
+  const conditionOptions = useMemo(() => (
+    availableConditions.map((cond) => ({
+      value: cond,
+      label: getTranslation(conditionLabels, cond, lang)
+    }))
+  ), [availableConditions, lang]);
 
-    {availableConditions.length > 0 && (
-      <>
-        <label className="block mb-2 font-semibold dark:text-white">
-          {tMedical('selectConditions', lang)}
-        </label>
-        <Select
-          instanceId="disease-conditions"
-          isMulti
-          options={conditionOptions}
-          value={conditionOptions.filter(opt => selectedConditions.includes(opt.value))}
-          onChange={(selected) => setSelectedConditions(selected.map((s) => s.value))}
-          className="mb-6"
-          placeholder={tMedical('selectConditions', lang)}
-          menuPortalTarget={typeof window !== "undefined" ? document.body : undefined}
-          styles={customStyles}
-        />
-      </>
-    )}
+  return (
+    <PanelCard title={`🧪 ${tMedical('testResults', lang)}`}>
+      <SelectGroupForm
+        selectedGroups={selectedGroups}
+        setSelectedGroups={setSelectedGroups}
+        options={groupOptions}
+      />
 
-                {selectedConditions.map((condition) => (
+      {availableConditions.length > 0 && (
+        <>
+          <label className="block mb-2 font-semibold dark:text-white">
+            {tMedical('selectConditions', lang)}
+          </label>
+          <Select
+            instanceId="disease-conditions"
+            isMulti
+            options={conditionOptions}
+            value={conditionOptions.filter(opt => selectedConditions.includes(opt.value))}
+            onChange={(selected) => setSelectedConditions(selected.map((s) => s.value))}
+            className="mb-6"
+            placeholder={tMedical('selectConditions', lang)}
+            menuPortalTarget={typeof window !== "undefined" ? document.body : undefined}
+            styles={customStyles}
+          />
+        </>
+      )}
+
+      {selectedConditions.map((condition) => (
         <div key={condition} className="mb-6">
           <h4 className="font-semibold mb-2 dark:text-white">
             {getTranslation(conditionLabels, condition, lang)}
@@ -229,42 +234,42 @@ return (
             );
           })}
         </div>
-          ))}
+      ))}
 
-       <div className="mt-6 space-y-4">
-          <button
-            onClick={handleMedicalAnalysis}
-            disabled={loading}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition disabled:opacity-50"
-          >
-            {loading ? tMedical("analyzing", lang) : tMedical("analyzeTestResults", lang)}
-          </button>
+      <div className="mt-6 space-y-4">
+        <button
+          onClick={handleMedicalAnalysis}
+          disabled={loading}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition disabled:opacity-50"
+        >
+          {loading ? tMedical("analyzing", lang) : tMedical("analyzeTestResults", lang)}
+        </button>
 
-          {medicalSummary && (
-            <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded text-sm whitespace-pre-wrap">
-              <strong className="block mb-2">{tMedical("medicalAnalysisSummary", lang)}:</strong>
-              <p>{medicalSummary}</p>
+        {medicalSummary && (
+          <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded text-sm whitespace-pre-wrap">
+            <strong className="block mb-2">{tMedical("medicalAnalysisSummary", lang)}:</strong>
+            <p>{medicalSummary}</p>
 
-              <div className="mt-4 flex flex-wrap gap-4">
-                <button
-                  onClick={handleConfirmAnalysis}
-                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
-                >
-                  ✅ {tMedical("confirmAnalysis", lang)}
-                </button>
-                <button
-                  onClick={handleEditAnalysis}
-                  className="px-4 py-2 bg-yellow-500 text-black rounded hover:bg-yellow-600 transition"
-                >
-                  ✏️ {tMedical("editAnalysis", lang)}
-                </button>
-              </div>
+            <div className="mt-4 flex flex-wrap gap-4">
+              <button
+                onClick={handleConfirmAnalysis}
+                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+              >
+                ✅ {tMedical("confirmAnalysis", lang)}
+              </button>
+              <button
+                onClick={handleEditAnalysis}
+                className="px-4 py-2 bg-yellow-500 text-black rounded hover:bg-yellow-600 transition"
+              >
+                ✏️ {tMedical("editAnalysis", lang)}
+              </button>
             </div>
-          )}
-        </div>
-  </PanelCard>
-);
-
+          </div>
+        )}
+      </div>
+    </PanelCard>
+  );
 };
 
 export default MedicalForm;
+
