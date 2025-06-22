@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { validateAndFixDiet } from "@/agents/dqAgent";
+import { dqAgent } from "@/agents/dqAgent";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -16,7 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const body = req.body;
-    const { form, interviewData, lang = "pl", goalExplanation = "", recommendation = "" } = body;
+    const { form, interviewData, lang = "pl", goalExplanation = "", recommendation = "", medical } = body;
 
     const bmi = form.bmi ?? (form.weight && form.height
       ? parseFloat((form.weight / ((form.height / 100) ** 2)).toFixed(1))
@@ -35,6 +35,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       recommendation,
       language: lang,
       mealsPerDay,
+      medical
     };
 
     const prompt = `
@@ -85,7 +86,7 @@ ${JSON.stringify(patientData, null, 2)}
 
     let text = completion.choices[0].message.content ?? "";
 
-    // 🔁 Retry loop: analiza jakości + poprawa
+    // 🔁 Walidacja i ewentualna poprawa przez dqAgent
     try {
       const parsed = JSON.parse(text);
       const dietPlan = parsed?.dietPlan;
@@ -93,13 +94,15 @@ ${JSON.stringify(patientData, null, 2)}
       if (!dietPlan) {
         console.warn("❗ Brak dietPlan – pomijam walidację.");
       } else {
-        const result = await validateAndFixDiet({
+        const dqResult = await dqAgent.run({
           dietPlan,
           model: form.model,
           goal: goalExplanation,
           cpm,
           weightKg: form.weight
         });
+
+        const result = dqResult.content || "";
 
         console.log("📋 Diet quality evaluation result:", result);
 
