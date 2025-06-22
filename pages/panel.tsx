@@ -163,12 +163,10 @@ const handleMedicalChange = (data: {
     medical: convertedMedical,
   }));
 
-if (data.structuredOutput || data.medicalSummary) {
-  setMedicalData({
-    summary: data.medicalSummary ?? '',
-    json: data.structuredOutput ?? null
-  });
-}
+setMedicalData({
+  summary: data.medicalSummary ?? '',
+  json: data.structuredOutput ?? null
+});
 };
 
   const handleDietSave = (meals: Meal[]) => {
