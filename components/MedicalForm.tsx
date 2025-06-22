@@ -38,34 +38,37 @@ const MedicalForm: React.FC<MedicalFormProps> = ({ onChange, lang }) => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const observer = new MutationObserver(() => {
-      setIsDarkMode(document.documentElement.classList.contains('dark'));
-    });
-
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class'],
-    });
-  useEffect(() => {
-      const conditions: string[] = selectedGroups.flatMap((group) =>
-        diseaseGroups[group] || []
-      );
-
-      const isSame =
-        conditions.length === availableConditions.length &&
-        conditions.every((c) => availableConditions.includes(c));
-
-      if (!isSame) {
-        setAvailableConditions(conditions);
-        setSelectedConditions([]);
-        setTestResults({});
-      }
-    }, [selectedGroups]);
-    
+  const observer = new MutationObserver(() => {
     setIsDarkMode(document.documentElement.classList.contains('dark'));
+  });
 
-    return () => observer.disconnect();
-  }, []);
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['class'],
+  });
+
+  setIsDarkMode(document.documentElement.classList.contains('dark'));
+
+  return () => observer.disconnect();
+}, []);
+
+// ✅ dynamiczne przypisanie availableConditions po zmianie grup
+useEffect(() => {
+  const conditions: string[] = selectedGroups.flatMap((group) =>
+    diseaseGroups[group] || []
+  );
+
+  const isSame =
+    conditions.length === availableConditions.length &&
+    conditions.every((c) => availableConditions.includes(c));
+
+  if (!isSame) {
+    setAvailableConditions(conditions);
+    setSelectedConditions([]);
+    setTestResults({});
+  }
+}, [selectedGroups]);
+
 
   const handleTestResultChange = (testName: string, value: string) => {
     setTestResults((prev) => ({
@@ -260,28 +263,21 @@ const MedicalForm: React.FC<MedicalFormProps> = ({ onChange, lang }) => {
           {loading ? tMedical("analyzing", lang) : tMedical("analyzeTestResults", lang)}
         </button>
 
-        {medicalSummary && (
-          <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded text-sm whitespace-pre-wrap">
-            <strong className="block mb-2">{tMedical("medicalAnalysisSummary", lang)}:</strong>
-            <p>{medicalSummary}</p>
-
-            <div className="mt-4 flex flex-wrap gap-4">
-              <button
-                onClick={handleConfirmAnalysis}
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
-              >
-                ✅ {tMedical("confirmAnalysis", lang)}
-              </button>
-              <button
-                onClick={handleEditAnalysis}
-                className="px-4 py-2 bg-yellow-500 text-black rounded hover:bg-yellow-600 transition"
-              >
-                ✏️ {tMedical("editAnalysis", lang)}
-              </button>
-            </div>
-          </div>
-        )}
+        <div className="mt-4 flex flex-col md:flex-row gap-3">
+        <button
+          onClick={handleConfirmAnalysis}
+          className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md shadow-md hover:bg-green-700 transition-colors"
+        >
+          ✅ {tMedical("confirmAnalysis", lang)}
+        </button>
+        <button
+          onClick={handleEditAnalysis}
+          className="flex-1 px-4 py-2 bg-yellow-400 text-black rounded-md shadow-md hover:bg-yellow-500 transition-colors"
+        >
+          ✏️ {tMedical("editAnalysis", lang)}
+        </button>
       </div>
+     </div>
     </PanelCard>
   );
 };
