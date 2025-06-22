@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import Select from 'react-select';
-import { LangKey, getTranslation } from '../utils/i18n';
+import { tUI, getTranslation, LangKey } from '@/utils/i18n';
 import {
   conditionLabels,
   conditionGroupLabels,
-  testLabels,
-  medicalUI
+  testLabels
 } from '@/utils/translations/translationsConditions';
+
 import { diseaseGroups } from '@/components/diseaseGroups';
 import { testsByCondition } from '@/types/testsByCondition';
 import { testReferenceValues } from '@/components/testReferenceValues';
@@ -24,8 +24,7 @@ interface MedicalFormProps {
   lang: LangKey;
 }
 
-const tMedical = (key: keyof typeof medicalUI, lang: LangKey): string =>
-  medicalUI[key]?.[lang] || medicalUI[key]?.pl || key;
+
 
 const MedicalForm: React.FC<MedicalFormProps> = ({ onChange, lang }) => {
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
@@ -200,86 +199,86 @@ useEffect(() => {
   ), [availableConditions, lang]);
 
   return (
-    <PanelCard title={`🧪 ${tMedical('testResults', lang)}`}>
-      <SelectGroupForm
-        selectedGroups={selectedGroups}
-        setSelectedGroups={setSelectedGroups}
-        options={groupOptions}
-      />
+  <PanelCard title={`🧪 ${tUI('testResults', lang)}`}>
+    <SelectGroupForm
+      selectedGroups={selectedGroups}
+      setSelectedGroups={setSelectedGroups}
+      options={groupOptions}
+    />
 
-      {availableConditions.length > 0 && (
-        <>
-          <label className="block mb-2 font-semibold dark:text-white">
-            {tMedical('selectConditions', lang)}
-          </label>
-          <Select
-            instanceId="disease-conditions"
-            isMulti
-            options={conditionOptions}
-            value={conditionOptions.filter(opt => selectedConditions.includes(opt.value))}
-            onChange={(selected) => setSelectedConditions(selected.map((s) => s.value))}
-            className="mb-6"
-            placeholder={tMedical('selectConditions', lang)}
-            menuPortalTarget={typeof window !== "undefined" ? document.body : undefined}
-            styles={customStyles}
-          />
-        </>
-      )}
+    {availableConditions.length > 0 && (
+      <>
+        <label className="block mb-2 font-semibold dark:text-white">
+          {tUI('selectConditions', lang)}
+        </label>
+        <Select
+          instanceId="disease-conditions"
+          isMulti
+          options={conditionOptions}
+          value={conditionOptions.filter(opt => selectedConditions.includes(opt.value))}
+          onChange={(selected) => setSelectedConditions(selected.map((s) => s.value))}
+          className="mb-6"
+          placeholder={tUI('selectConditions', lang)}
+          menuPortalTarget={typeof window !== "undefined" ? document.body : undefined}
+          styles={customStyles}
+        />
+      </>
+    )}
 
-      {selectedConditions.map((condition) => (
-        <div key={condition} className="mb-6">
-          <h4 className="font-semibold mb-2 dark:text-white">
-            {getTranslation(conditionLabels, condition, lang)}
-          </h4>
+    {selectedConditions.map((condition) => (
+      <div key={condition} className="mb-6">
+        <h4 className="font-semibold mb-2 dark:text-white">
+          {getTranslation(conditionLabels, condition, lang)}
+        </h4>
 
-          {(testsByCondition[condition] || ["Opis choroby"]).map((test: string) => {
-            const fieldKey = `${condition}__${test}`;
-            return (
-              <div key={fieldKey} className="mb-3">
-                <label className="block text-sm font-semibold mb-1 dark:text-white">
-                  {getTranslation(testLabels, test, lang)}
-                </label>
-                <input
-                  type="text"
-                  value={testResults[fieldKey] || ""}
-                  onChange={(e) => handleTestResultChange(fieldKey, e.target.value)}
-                  className="w-full px-4 py-2 rounded-md bg-white text-black placeholder-gray-500 
-                            dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 
-                            border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors"
-                  placeholder={`${tMedical('rangePrefix', lang)} ${testReferenceValues[test] || tMedical('enterResult', lang)}`}
-                />
-              </div>
-            );
-          })}
-        </div>
-      ))}
+        {(testsByCondition[condition] || ["Opis choroby"]).map((test: string) => {
+          const fieldKey = `${condition}__${test}`;
+          return (
+            <div key={fieldKey} className="mb-3">
+              <label className="block text-sm font-semibold mb-1 dark:text-white">
+                {getTranslation(testLabels, test, lang)}
+              </label>
+              <input
+                type="text"
+                value={testResults[fieldKey] || ""}
+                onChange={(e) => handleTestResultChange(fieldKey, e.target.value)}
+                className="w-full px-4 py-2 rounded-md bg-white text-black placeholder-gray-500 
+                          dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 
+                          border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors"
+                placeholder={`${tUI('rangePrefix', lang)} ${testReferenceValues[test] || tUI('enterResult', lang)}`}
+              />
+            </div>
+          );
+        })}
+      </div>
+    ))}
 
-      <div className="mt-6 space-y-4">
-        <button
-          onClick={handleMedicalAnalysis}
-          disabled={loading}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition disabled:opacity-50"
-        >
-          {loading ? tMedical("analyzing", lang) : tMedical("analyzeTestResults", lang)}
-        </button>
+    <div className="mt-6 space-y-4">
+      <button
+        onClick={handleMedicalAnalysis}
+        disabled={loading}
+        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition disabled:opacity-50"
+      >
+        {loading ? tUI("analyzing", lang) : tUI("analyzeTestResults", lang)}
+      </button>
 
-        <div className="mt-4 flex flex-col md:flex-row gap-3">
+      <div className="mt-4 flex flex-col md:flex-row gap-3">
         <button
           onClick={handleConfirmAnalysis}
           className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md shadow-md hover:bg-green-700 transition-colors"
         >
-          ✅ {tMedical("confirmAnalysis", lang)}
+          ✅ {tUI("confirmAnalysis", lang)}
         </button>
         <button
           onClick={handleEditAnalysis}
           className="flex-1 px-4 py-2 bg-yellow-400 text-black rounded-md shadow-md hover:bg-yellow-500 transition-colors"
         >
-          ✏️ {tMedical("editAnalysis", lang)}
+          ✏️ {tUI("editAnalysis", lang)}
         </button>
       </div>
-     </div>
-    </PanelCard>
-  );
+    </div>
+  </PanelCard>
+);
 };
 
 export default MedicalForm;
