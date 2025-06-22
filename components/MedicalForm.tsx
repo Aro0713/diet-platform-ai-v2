@@ -84,43 +84,46 @@ useEffect(() => {
     });
   }, [selectedGroups, selectedConditions, testResults]);
 
-  const handleMedicalAnalysis = async () => {
-    setLoading(true);
-    try {
-      const description = testResults["Opis choroby"] || "";
-      const response = await fetch("/api/analyze-medical", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ testResults, description, lang })
-      });
+const handleMedicalAnalysis = async () => {
+  setLoading(true);
+  try {
+    const description = testResults["Opis choroby"] || "";
+    const response = await fetch("/api/analyze-medical", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ testResults, description, lang })
+    });
 
-    const result = await response.text();
-    const jsonBlock = result.match(/```json([\s\S]*?)```/);
-    const parsed = jsonBlock ? JSON.parse(jsonBlock[1]) : null;
+    const fullResult = await response.text();
 
-    const cleanedResult = result.split("```json")[0].trim();
+    const jsonMatch = fullResult.match(/```json([\s\S]*?)```/);
+    const parsed = jsonMatch ? JSON.parse(jsonMatch[1]) : null;
 
-    setMedicalSummary(cleanedResult);
+    const analysisText = fullResult.split("```")[0].trim(); // tylko część A (tekst)
+
+    setMedicalSummary(analysisText);
     setStructuredOutput(parsed);
 
     onChange({
       selectedGroups,
       selectedConditions,
       testResults,
-      medicalSummary: cleanedResult,
+      medicalSummary: analysisText,
       structuredOutput: parsed
     });
+  } catch (error) {
+    console.error("Błąd analizy medycznej:", error);
+  } finally {
+    setLoading(false);
+  }
+};
 
-    } catch (error) {
-      console.error("Błąd analizy medycznej:", error);
-    } finally {
-      setLoading(false);
-    }
+  const handleEditAnalysis = () => {
+    setMedicalSummary(undefined);
+    setStructuredOutput(undefined);
   };
 
- const handleConfirmAnalysis = () => {
-  if (!medicalSummary || !structuredOutput) return;
-
+  const handleConfirmAnalysis = () => {
   onChange({
     selectedGroups,
     selectedConditions,
@@ -128,15 +131,8 @@ useEffect(() => {
     medicalSummary,
     structuredOutput
   });
-
-  console.log("✅ Analiza zatwierdzona i przekazana");
 };
 
-
-  const handleEditAnalysis = () => {
-    setMedicalSummary(undefined);
-    setStructuredOutput(undefined);
-  };
 
   const customStyles = useMemo(() => ({
     control: (base: any) => ({
