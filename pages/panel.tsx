@@ -163,9 +163,17 @@ const handleMedicalChange = (data: {
     medical: convertedMedical,
   }));
 
-setMedicalData({
-  summary: data.medicalSummary ?? '',
-  json: data.structuredOutput ?? null
+setMedicalData((prev: any) => {
+  if (
+    prev?.summary === data.medicalSummary &&
+    JSON.stringify(prev?.json) === JSON.stringify(data.structuredOutput)
+  ) {
+    return prev;
+  }
+  return {
+    summary: data.medicalSummary ?? '',
+    json: data.structuredOutput ?? null
+  };
 });
 };
 
