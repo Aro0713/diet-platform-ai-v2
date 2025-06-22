@@ -94,20 +94,23 @@ useEffect(() => {
         body: JSON.stringify({ testResults, description, lang })
       });
 
-      const result = await response.text();
-      const jsonBlock = result.match(/```json([\s\S]*?)```/);
-      const parsed = jsonBlock ? JSON.parse(jsonBlock[1]) : null;
+    const result = await response.text();
+    const jsonBlock = result.match(/```json([\s\S]*?)```/);
+    const parsed = jsonBlock ? JSON.parse(jsonBlock[1]) : null;
 
-      setMedicalSummary(result);
-      setStructuredOutput(parsed);
+    const cleanedResult = result.split("```json")[0].trim();
 
-      onChange({
-        selectedGroups,
-        selectedConditions,
-        testResults,
-        medicalSummary: result,
-        structuredOutput: parsed
-      });
+    setMedicalSummary(cleanedResult);
+    setStructuredOutput(parsed);
+
+    onChange({
+      selectedGroups,
+      selectedConditions,
+      testResults,
+      medicalSummary: cleanedResult,
+      structuredOutput: parsed
+    });
+
     } catch (error) {
       console.error("Błąd analizy medycznej:", error);
     } finally {
