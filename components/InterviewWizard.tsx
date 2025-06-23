@@ -189,7 +189,7 @@ const handleGeneratePdfOnly = async () => {
   try {
     setGeneratingPdf(true);
 
-  const response = await fetch('/api/interviewNarrativeAgent', {
+ const response = await fetch('/api/interviewNarrativeAgent', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
@@ -200,7 +200,18 @@ const handleGeneratePdfOnly = async () => {
   })
 });
 
-const { narrativeText } = await response.json();
+let narrativeText = '⚠️ Brak odpowiedzi AI';
+
+if (!response.ok) {
+  console.error(`❌ Agent failed: HTTP ${response.status}`);
+} else {
+  try {
+    const json = await response.json();
+    narrativeText = json.narrativeText || narrativeText;
+  } catch (err) {
+    console.error('❌ JSON.parse() failed:', err);
+  }
+}
 
     await generateInterviewPdf({
       lang,
