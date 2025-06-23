@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { translateText } from "@/agents/translationAgent";
+import { translatorAgent } from '@/agents/translationAgent';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
@@ -13,10 +13,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const result = await translateText(text);
-    res.status(200).json(result);
+    const translations = await translatorAgent.run({ text });
+
+    return res.status(200).json({ translations });
   } catch (err) {
-    console.error("Translation API error:", err);
-    res.status(500).json({ error: "Translation failed" });
+    console.error("❌ Translation API error:", err);
+    return res.status(500).json({ error: "Translation failed" });
   }
 }

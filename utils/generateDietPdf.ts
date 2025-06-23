@@ -109,7 +109,8 @@ try {
     })
   });
 
-  const { narrativeText } = await response.json();
+  if (!response.ok) throw new Error(`AI API failed with status ${response.status}`);
+const { narrativeText } = await response.json();
 
   content.push({ text: narrativeText || '⚠️ Brak opisu.', margin: [0, 0, 0, 6] });
 } catch (err) {

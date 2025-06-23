@@ -34,13 +34,12 @@ Language: ${selectedLang}
 Convert the following structured patient interview data into a short, fluent narrative paragraph suitable for a PDF medical report.
 
 Input:
-- Interview data:
-${JSON.stringify(interviewData, null, 2)}
+${JSON.stringify(interviewData, null, 2).slice(0, 2500)}
 
-- Diet goal: ${goal}
-- Doctor's notes: ${recommendation}
+Goal: ${goal}
+Recommendation: ${recommendation}
 
-Write only one natural paragraph in ${selectedLang}. Mention conditions, stress, sleep, activity, preferences if relevant. Avoid technical jargon.
+Write only one paragraph in ${selectedLang}. Mention conditions, stress, sleep, activity, preferences if relevant. Avoid technical jargon.
 `;
 
   try {
@@ -53,10 +52,19 @@ Write only one natural paragraph in ${selectedLang}. Mention conditions, stress,
         },
         { role: 'user', content: prompt }
       ],
-      temperature: 0.4
+      temperature: 0.2
     });
 
-    const narrativeText = completion.choices[0].message.content ?? '⚠️ No response.';
+    const rawText = completion.choices[0].message.content || '';
+    const narrativeText = rawText.trim();
+
+    if (!narrativeText || narrativeText.toLowerCase().includes('error')) {
+      console.error('⛔ Brak narracji lub AI odpowiedziało błędem:', rawText);
+      return res.status(200).json({ narrativeText: '⚠️ Brak opisu. Spróbuj ponownie później.' });
+    }
+
+    console.log('📦 RAW AI TEXT:', narrativeText);
+
     return res.status(200).json({ narrativeText });
   } catch (err) {
     console.error('❌ GPT error:', err);

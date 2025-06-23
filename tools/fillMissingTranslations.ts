@@ -1,7 +1,7 @@
 import { LangKey, languageLabels } from "../utils/i18n";
 import { translationsUI } from "../utils/translationsUI";
 import { medicalUI } from "../utils/translations/translationsConditions";
-import { translateText } from "../agents/translationAgent";
+import { translatorAgent } from '../agents/translationAgent';
 
 // 🧠 Języki do pokrycia
 const LANGS: LangKey[] = [
@@ -42,7 +42,8 @@ async function processSource(
     }
 
     try {
-      const result = await translateText(base);
+      const result = await translatorAgent.run({ text: base });
+
       for (const lang of missingEntries[key]) {
         source[key][lang] = result[lang] || base;
       }

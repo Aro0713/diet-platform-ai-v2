@@ -2472,6 +2472,19 @@ tagline: {
   hi: 'आपका आहार, आपका स्वास्थ्य, आपकी योजना।',
   ar: 'نظامك الغذائي. صحتك. خطتك.',
   he: 'התזונה שלך. הבריאות שלך. התוכנית שלך.'
+},
+generateInterviewPdf: {
+  pl: 'Wygeneruj PDF z wywiadu',
+  en: 'Generate Interview PDF',
+  es: 'Generar PDF de la entrevista',
+  fr: 'Générer le PDF de l\'entretien',
+  de: 'Interview-PDF erstellen',
+  ua: 'Згенерувати PDF опитування',
+  ru: 'Создать PDF интервью',
+  zh: '生成访谈 PDF',
+  hi: 'साक्षात्कार PDF बनाएं',
+  ar: 'إنشاء PDF للمقابلة',
+  he: 'צור PDF של הראיון'
 }
 
 };
