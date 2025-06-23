@@ -45,7 +45,21 @@ Return one of the following:
 - List of specific problems (e.g. "Tuesday exceeds carbs limit for keto")
 
 📋 CORRECTED_JSON:
-- Return corrected version of the plan if possible (same structure)
+- Return corrected version of the plan **strictly wrapped in a "dietPlan" field**, like:
+
+{
+  "dietPlan": {
+    "Monday": {
+      "Śniadanie": {
+        "time": "07:30",
+        "menu": "Owsianka z jabłkiem",
+        ...
+      }
+    }
+  }
+}
+
+Do not return raw weekdays as top-level keys — always wrap them in "dietPlan".
 
 Here is the plan to analyze:
 ${JSON.stringify(dietPlan, null, 2)}
@@ -54,7 +68,10 @@ ${JSON.stringify(dietPlan, null, 2)}
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
-        { role: "system", content: "You are a clinical diet quality controller for structured JSON plans." },
+        {
+          role: "system",
+          content: "You are a clinical diet quality controller for structured JSON plans."
+        },
         { role: "user", content: prompt }
       ],
       temperature: 0.4
