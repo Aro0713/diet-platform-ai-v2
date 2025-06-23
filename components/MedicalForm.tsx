@@ -76,16 +76,16 @@ useEffect(() => {
     }));
   };
 
-      useEffect(() => {
-      onChange({
-      selectedGroups,
-      selectedConditions,
-      testResults,
-      medicalSummary,
-      structuredOutput
-    });
-    setIsConfirmed(true);
+  useEffect(() => {
+  onChange({
+    selectedGroups,
+    selectedConditions,
+    testResults,
+    medicalSummary,
+    structuredOutput
+  });
 }, [selectedGroups, selectedConditions, testResults]);
+
 
 const handleMedicalAnalysis = async () => {
   setLoading(true);
@@ -126,8 +126,8 @@ const handleMedicalAnalysis = async () => {
   setIsEditing(true);
   };
 
-
   const handleConfirmAnalysis = () => {
+  setIsConfirmed(true);
   onChange({
     selectedGroups,
     selectedConditions,
@@ -136,8 +136,6 @@ const handleMedicalAnalysis = async () => {
     structuredOutput
   });
 };
-
-
   const customStyles = useMemo(() => ({
     control: (base: any) => ({
       ...base,
