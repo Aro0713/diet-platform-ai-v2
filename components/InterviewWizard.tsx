@@ -14,7 +14,7 @@ import { section10 } from '@/utils/translations/interview/section10';
 import { OTHER_OPTIONS } from '@/utils/interviewHelpers';
 import PanelCard from './PanelCard';
 import { convertInterviewAnswers } from '@/utils/interviewHelpers';
-import interviewNarrativeAgent from '@/agents/interviewNarrativeAgent';
+import { interviewNarrativeAgent } from '@/agents/interviewNarrativeAgent';
 import { generateInterviewPdf } from '@/utils/generateInterviewPdf';
 
 interface Question {

@@ -1,4 +1,4 @@
-import OpenAI from "openai";
+import OpenAI from 'openai';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -42,18 +42,21 @@ ${JSON.stringify(interviewData, null, 2)}
 - Diet goal: ${goal}
 - Doctor's notes: ${recommendation}
 
-Write only one natural paragraph in ${selectedLang}. Mention conditions, stress, sleep, activity, preferences if relevant. Avoid technical jargon.`;
+Write only one natural paragraph in ${selectedLang}. Mention conditions, stress, sleep, activity, preferences if relevant. Avoid technical jargon.
+`;
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
-        { role: 'system', content: 'You are a medical assistant writing PDF narratives for patients.' },
+        {
+          role: 'system',
+          content: 'You are a medical assistant writing patient-friendly PDF summaries.'
+        },
         { role: 'user', content: prompt }
       ],
       temperature: 0.4
     });
 
-    return completion.choices[0].message.content ?? '⚠️ Brak narracji.';
+    return completion.choices[0].message.content ?? '⚠️ No response.';
   }
 };
-export default interviewNarrativeAgent;
