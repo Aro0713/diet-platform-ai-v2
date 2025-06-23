@@ -2291,18 +2291,18 @@ allergenLegend: {
     ar: "تعديل التحليل",
     he: "ערוך ניתוח"
   },
-  analysisConfirmed: {
-  pl: "🔁 analysisConfirmed (pl)",
-  en: "🔁 analysisConfirmed (en)",
-  es: "🔁 analysisConfirmed (es)",
-  fr: "🔁 analysisConfirmed (fr)",
-  de: "🔁 analysisConfirmed (de)",
-  ua: "🔁 analysisConfirmed (ua)",
-  ru: "🔁 analysisConfirmed (ru)",
-  zh: "🔁 analysisConfirmed (zh)",
-  hi: "🔁 analysisConfirmed (hi)",
-  ar: "🔁 analysisConfirmed (ar)",
-  he: "🔁 analysisConfirmed (he)"
+analysisConfirmed: {
+  pl: "Analiza zatwierdzona",
+  en: "Analysis confirmed",
+  es: "Análisis confirmado",
+  fr: "Analyse confirmée",
+  de: "Analyse bestätigt",
+  ua: "Аналіз підтверджено",
+  ru: "Анализ подтвержден",
+  zh: "分析已确认",
+  hi: "विश्लेषण की पुष्टि की गई",
+  ar: "تم تأكيد التحليل",
+  he: "הניתוח אושר"
 },
 translationFailed: {
   pl: "🔁 translationFailed (pl)",
