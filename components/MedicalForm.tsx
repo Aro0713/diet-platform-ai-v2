@@ -76,13 +76,16 @@ useEffect(() => {
     }));
   };
 
-  useEffect(() => {
-    onChange({
+      useEffect(() => {
+      onChange({
       selectedGroups,
       selectedConditions,
       testResults,
+      medicalSummary,
+      structuredOutput
     });
-  }, [selectedGroups, selectedConditions, testResults]);
+    setIsConfirmed(true);
+}, [selectedGroups, selectedConditions, testResults]);
 
 const handleMedicalAnalysis = async () => {
   setLoading(true);
@@ -204,6 +207,7 @@ const handleMedicalAnalysis = async () => {
   ), [availableConditions, lang]);
   const [isEditing, setIsEditing] = useState(false);
   const [editedSummary, setEditedSummary] = useState("");
+  const [isConfirmed, setIsConfirmed] = useState(false);
 
   return (
   <PanelCard title={`🧪 ${tUI('testResults', lang)}`}>
@@ -302,22 +306,29 @@ const handleMedicalAnalysis = async () => {
     </div>
   )}
 
-        <div className="mt-4 flex flex-col md:flex-row gap-3">
-        <button
-          onClick={handleConfirmAnalysis}
-          className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md shadow-md hover:bg-green-700 transition-colors"
-        >
-          ✅ {tUI("confirmAnalysis", lang)}
-        </button>
-        <button
-          onClick={handleEditAnalysis}
-          className="flex-1 px-4 py-2 bg-yellow-400 text-black rounded-md shadow-md hover:bg-yellow-500 transition-colors"
-        >
-          ✏️ {tUI("editAnalysis", lang)}
-        </button>
-      </div>
+<div className="mt-4 flex flex-col md:flex-row gap-3">
+  {!isConfirmed ? (
+    <button
+      onClick={handleConfirmAnalysis}
+      className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md shadow-md hover:bg-green-700 transition-colors"
+    >
+      ✅ {tUI("confirmAnalysis", lang)}
+    </button>
+  ) : (
+    <div className="flex-1 px-4 py-2 bg-green-100 text-green-800 rounded-md shadow-inner text-center font-semibold">
+      ✅ {tUI("analysisConfirmed", lang)}
     </div>
-  </PanelCard>
+  )}
+
+  <button
+    onClick={handleEditAnalysis}
+    className="flex-1 px-4 py-2 bg-yellow-400 text-black rounded-md shadow-md hover:bg-yellow-500 transition-colors"
+  >
+    ✏️ {tUI("editAnalysis", lang)}
+  </button>
+</div>
+</div>
+</PanelCard>
 );
 };
 
