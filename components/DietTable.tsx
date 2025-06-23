@@ -12,6 +12,41 @@ interface DietTableProps {
   notes: Record<string, string>;
   setNotes: React.Dispatch<React.SetStateAction<Record<string, string>>>;
 }
+const getFallbackMeal = (): Meal => ({
+  name: '',
+  menu: '',
+  time: '',
+  calories: 0,
+  glycemicIndex: 0,
+  day: '',
+  ingredients: [],
+  macros: {
+    protein: 0,
+    fat: 0,
+    carbs: 0,
+    sodium: 0,
+    fiber: 0,
+    potassium: 0
+  }
+});
+const sumDailyMacros = (meals: Meal[]) => {
+  return meals.reduce(
+    (acc, meal) => {
+      acc.protein += meal.macros?.protein ?? 0;
+      acc.fat += meal.macros?.fat ?? 0;
+      acc.carbs += meal.macros?.carbs ?? 0;
+      acc.fiber += meal.macros?.fiber ?? 0;
+      acc.potassium += meal.macros?.potassium ?? 0;
+      return acc;
+    },
+    { protein: 0, fat: 0, carbs: 0, fiber: 0, potassium: 0 }
+  );
+};
+
+const sumWeeklyMacros = (diet: Record<string, Meal[]>) => {
+  const allMeals = Object.values(diet).flat();
+  return sumDailyMacros(allMeals);
+};
 
 const DietTable: React.FC<DietTableProps> = ({
   editableDiet,
@@ -129,9 +164,9 @@ const DietTable: React.FC<DietTableProps> = ({
                 {label}
               </td>
               {dayKeys.map((day) => {
-                const meal = (editableDiet[day] || []).find((m) => m.name === key) ?? {
-                  name: '', description: '', ingredients: [], calories: 0, glycemicIndex: 0, time: ''
-                };
+              const meal: Meal = (editableDiet[day] || []).find((m) => m.name === key) ?? getFallbackMeal();
+
+
                 return (
                   <td key={day + key} className="border border-gray-600 bg-[#0d1117] px-3 py-2 align-top text-white">
                     <div className="space-y-2">
@@ -212,10 +247,16 @@ const DietTable: React.FC<DietTableProps> = ({
                               <li className="text-gray-500 italic">Brak składników</li>
                             )}
                           </ul>
-                            <div className="text-xs mt-1 text-gray-400">
-                            Kalorie: {meal.calories > 0 ? `${meal.calories} kcal` : '–'} | IG: {meal.glycemicIndex > 0 ? meal.glycemicIndex : '–'}
-                          </div>
+                           <div className="text-xs mt-1 text-gray-400">
+                          Kalorie: {meal.calories > 0 ? `${meal.calories} kcal` : '–'} | IG: {meal.glycemicIndex > 0 ? meal.glycemicIndex : '–'}
+                        </div>
 
+                        {meal.macros && (
+                          <div className="text-xs mt-1 text-gray-500">
+                            B: {meal.macros.protein ?? '–'}g, T: {meal.macros.fat ?? '–'}g, W: {meal.macros.carbs ?? '–'}g, 
+                            błonnik: {meal.macros.fiber ?? '–'}g, K: {meal.macros.potassium ?? '–'}mg
+                          </div>
+                        )}
                         </>
                       )}
                     </div>
@@ -224,6 +265,43 @@ const DietTable: React.FC<DietTableProps> = ({
               })}
             </tr>
           ))}
+          <tr className="bg-[#222c3f] font-semibold text-sm text-white">
+            <td className="border border-gray-600 px-2 py-1 text-right">Suma</td>
+            {dayKeys.map((day) => {
+              const macros = sumDailyMacros(editableDiet[day] || []);
+              return (
+                <td key={day + '_sum'} className="border border-gray-600 px-2 py-1 text-xs text-gray-300">
+                  B: {macros.protein}g<br />
+                  T: {macros.fat}g<br />
+                  W: {macros.carbs}g<br />
+                  błonnik: {macros.fiber}g<br />
+                  K: {macros.potassium}mg
+                </td>
+              );
+            })}
+          </tr>
+          <tr className="bg-[#1f2a3c] font-semibold text-sm text-white">
+          <td className="border border-gray-600 px-2 py-1 text-right">Suma tygodnia</td>
+          {(() => {
+            const weekly = sumWeeklyMacros(editableDiet);
+            return dayKeys.map((_, idx) => (
+              <td
+                key={`week_sum_${idx}`}
+                className="border border-gray-600 px-2 py-1 text-xs text-gray-300"
+              >
+                {idx === 0 ? (
+                  <>
+                    B: {weekly.protein}g<br />
+                    T: {weekly.fat}g<br />
+                    W: {weekly.carbs}g<br />
+                    błonnik: {weekly.fiber}g<br />
+                    K: {weekly.potassium}mg
+                  </>
+                ) : null}
+              </td>
+            ));
+          })()}
+          </tr>
           <tr>
             <td className="font-semibold bg-gray-800 border border-gray-600 px-2 py-1">Uwagi</td>
             {dayKeys.map((day) => (

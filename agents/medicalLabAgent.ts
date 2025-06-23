@@ -1,4 +1,4 @@
-import OpenAI from "openai";
+import OpenAI from 'openai';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -48,12 +48,10 @@ Start your reply in language: ${lang}.
 `;
 
   const completion = await openai.chat.completions.create({
-    model: "gpt-4o",
-    messages: [{ role: "user", content: prompt }],
+    model: 'gpt-4o',
+    messages: [{ role: 'user', content: prompt }],
     temperature: 0.2
   });
 
-  return completion.choices[0].message.content || "No output";
+  return completion.choices[0].message.content || '⚠️ No output';
 }
-
-

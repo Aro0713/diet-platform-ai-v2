@@ -2460,5 +2460,19 @@ missingData: {
   ar: "بيانات مفقودة",
   he: "נתונים חסרים"
 },
+tagline: {
+  pl: 'Twoja dieta. Twoje zdrowie. Twój plan.',
+  en: 'Your diet. Your health. Your plan.',
+  es: 'Tu dieta. Tu salud. Tu plan.',
+  fr: 'Votre alimentation. Votre santé. Votre plan.',
+  de: 'Deine Ernährung. Deine Gesundheit. Dein Plan.',
+  ua: 'Твоя дієта. Твоє здоров’я. Твій план.',
+  ru: 'Твоя диета. Твоё здоровье. Твой план.',
+  zh: '你的饮食，你的健康，你的计划。',
+  hi: 'आपका आहार, आपका स्वास्थ्य, आपकी योजना।',
+  ar: 'نظامك الغذائي. صحتك. خطتك.',
+  he: 'התזונה שלך. הבריאות שלך. התוכנית שלך.'
+}
+
 };
 

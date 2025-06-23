@@ -31,16 +31,27 @@ export interface PatientData {
   testResults?: Record<string, string>;
   medical?: ConditionWithTests[];
 }
+
 export interface Meal {
-  name: string;                  
-  menu: string;                 
-  time: string;                 
-  calories: number;             
-  glycemicIndex: number;        
-  day?: string;                 
+  name: string;
+  menu: string;
+  time: string;
+  calories: number;
+  glycemicIndex: number;
+  day?: string;
   ingredients: {
     product: string;
     weight: number;
   }[];
+  macros?: {
+    protein?: number;
+    carbs?: number;
+    fat?: number;
+    sodium?: number;
+    fiber?: number;
+    potassium?: number;
+  };
 }
+
+
 

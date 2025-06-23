@@ -84,7 +84,7 @@ export const generateDietTool = tool({
       mealsPerDay
     };
 
-    const prompt = `
+const prompt = `
 You are a clinical dietitian AI.
 
 Generate a 7-day structured and medically accurate diet plan in perfect JSON format. The plan must:
@@ -103,6 +103,8 @@ Generate a 7-day structured and medically accurate diet plan in perfect JSON for
 - Dish name (menu), Ingredients list (product, weight, unit)
 - Detailed cooking method (preparation)
 - Nutrients: kcal, protein, fat, carbs, fiber, Ca, K, Mg, vit. C, D, B12
+
+**Nutrients must reflect real food values based on actual ingredient weights. Use reliable scientific food composition sources (USDA, Open Food Facts, Polish IŻŻ). Do not estimate or round randomly.**
 
 ✔ For EACH day:
 - Total nutritional summary for the day (JSON object)
@@ -149,6 +151,7 @@ Return only raw JSON:
   "shoppingList": [ { product: "...", quantity: 300, unit: "g" }, ... ]
 }
 `;
+;
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",

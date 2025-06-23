@@ -7,6 +7,7 @@ import { generateInterviewNarrative } from '@/utils/interview/interviewNarrative
 import { generateShoppingList } from '@/utils/generateShoppingList';
 import { getTranslation } from '@/utils/translations/useTranslationAgent';
 import { convertInterviewAnswers } from '@/utils/interviewHelpers';
+import { generateNarrativeTool } from '@/agents/interviewNarrativeAgent';
 
 export async function generateDietPdf(
   patient: PatientData,
@@ -41,11 +42,12 @@ export async function generateDietPdf(
 
   // ✅ Strona tytułowa
   content.push(
-    { text: patient.name, style: 'header', alignment: 'center', fontSize: 26, margin: [0, 60, 0, 10] },
-    { text: `${startDate} – ${endDate}`, alignment: 'center', fontSize: 14, margin: [0, 0, 0, 20] },
-    { text: `${tUI('dietitianSignature', lang)}: ${patient.createdByName || tUI('missingData', lang)}`, alignment: 'center', fontSize: 12 },
-    { text: '', pageBreak: 'after' }
-  );
+  { text: patient.name, style: 'header', alignment: 'center', fontSize: 26, margin: [0, 60, 0, 10] },
+  { text: `${startDate} – ${endDate}`, alignment: 'center', fontSize: 14, margin: [0, 0, 0, 20] },
+  { text: `${tUI('dietitianSignature', lang)}: ${patient.createdByName || tUI('missingData', lang)}`, alignment: 'center', fontSize: 12 },
+  { text: tUI('tagline', lang), alignment: 'center', italics: true, fontSize: 14, color: '#555555', margin: [0, 20, 0, 0] },
+  { text: '', pageBreak: 'after' }
+);
 
   // ✅ Dane pacjenta
   content.push({ text: `📋 ${tUI('dietPlanTitle', lang)}`, style: 'header' });
@@ -88,13 +90,21 @@ ${tUI('region', lang)}: ${patient.region ? await getTranslation(patient.region, 
 
     content.push({ text: `🧠 ${tUI('interviewTitle', lang)}`, style: 'subheader', margin: [0, 10, 0, 4] });
 
-    try {
-      const narrative = generateInterviewNarrative(narrativeInput, lang, patient.sex || 'female');
-      content.push({ text: narrative, margin: [0, 0, 0, 6] });
-    } catch (err) {
-      console.error('Błąd generowania narracji wywiadu:', err);
-      content.push({ text: '⚠️ Błąd generowania opisu wywiadu', color: 'red' });
-    }
+try {
+  // @ts-ignore - TS nie widzi .execute na tool() mimo że działa
+  const result = await generateNarrativeTool.execute({
+    interviewData: narrativeInput,
+    goal: patient.goal || '',
+    recommendation: (patient as any).recommendation || '',
+    lang
+  });
+
+  content.push({ text: result || '⚠️ Brak opisu.', margin: [0, 0, 0, 6] });
+} catch (err) {
+  console.error('❌ Błąd agent interviewNarrativeAgent:', err);
+  content.push({ text: '⚠️ Błąd generowania opisu wywiadu przez AI', color: 'red' });
+}
+
   }
   const groupedByDay: Record<string, Meal[]> = {};
   diet.forEach((meal) => {
@@ -243,56 +253,65 @@ ${tUI('region', lang)}: ${patient.region ? await getTranslation(patient.region, 
     });
   }
 
-  // ➕ Podsumowanie tygodnia
-  function summarizeNutritionByDay(diet: Meal[]) {
-    const byDay: Record<string, { kcal: number; protein: number; fat: number; carbs: number }> = {};
-    diet.forEach(meal => {
-      const day = (meal as any).day || 'Inne';
-      if (!byDay[day]) byDay[day] = { kcal: 0, protein: 0, fat: 0, carbs: 0 };
-      byDay[day].kcal += meal.calories || 0;
-      byDay[day].protein += meal.macros?.protein || 0;
-      byDay[day].fat += meal.macros?.fat || 0;
-      byDay[day].carbs += meal.macros?.carbs || 0;
-    });
-    return byDay;
-  }
-
-  const dailySummary = summarizeNutritionByDay(diet);
-  content.push({ text: tUI('nutritionSummaryTitle', lang), style: 'subheader', margin: [0, 10, 0, 6] });
-
-  content.push({
-    table: {
-      widths: ['*', 'auto', 'auto', 'auto', 'auto'],
-      body: [
-        [
-          tUI('day', lang),
-          tUI('kcal', lang),
-          tUI('protein', lang),
-          tUI('fat', lang),
-          tUI('carbs', lang)
-        ],
-        ...Object.entries(dailySummary).map(([day, d]) => [
-          day,
-          Math.round(d.kcal),
-          `${Math.round(d.protein)} g`,
-          `${Math.round(d.fat)} g`,
-          `${Math.round(d.carbs)} g`
-        ])
-      ]
-    },
-    layout: 'lightHorizontalLines',
-    margin: [0, 0, 0, 10]
+function summarizeNutritionByDay(diet: Meal[]) {
+  const byDay: Record<string, { kcal: number; protein: number; fat: number; carbs: number; fiber: number; potassium: number }> = {};
+  diet.forEach(meal => {
+    const day = (meal as any).day || 'Inne';
+    if (!byDay[day]) {
+      byDay[day] = { kcal: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, potassium: 0 };
+    }
+    byDay[day].kcal += meal.calories || 0;
+    byDay[day].protein += meal.macros?.protein || 0;
+    byDay[day].fat += meal.macros?.fat || 0;
+    byDay[day].carbs += meal.macros?.carbs || 0;
+    byDay[day].fiber += meal.macros?.fiber || 0;
+    byDay[day].potassium += meal.macros?.potassium || 0;
   });
+  return byDay;
+}
+const dailySummary = summarizeNutritionByDay(diet);
 
-  const weekly = Object.values(dailySummary).reduce(
-    (a, b) => ({
-      kcal: a.kcal + b.kcal,
-      protein: a.protein + b.protein,
-      fat: a.fat + b.fat,
-      carbs: a.carbs + b.carbs
-    }),
-    { kcal: 0, protein: 0, fat: 0, carbs: 0 }
-  );
+const weekly = Object.values(dailySummary).reduce(
+  (a, b) => ({
+    kcal: a.kcal + b.kcal,
+    protein: a.protein + b.protein,
+    fat: a.fat + b.fat,
+    carbs: a.carbs + b.carbs,
+    fiber: a.fiber + b.fiber,
+    potassium: a.potassium + b.potassium
+  }),
+  { kcal: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, potassium: 0 }
+);
+
+content.push({ text: tUI('weeklyNutritionSummaryTitle', lang), style: 'subheader', margin: [0, 10, 0, 6] });
+
+content.push({
+  table: {
+    widths: ['*', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'],
+    body: [
+      [
+        tUI('week', lang),
+        'kcal',
+        tUI('protein', lang),
+        tUI('fat', lang),
+        tUI('carbs', lang),
+        tUI('fiber', lang),
+        tUI('potassium', lang)
+      ],
+      [
+        tUI('total', lang),
+        Math.round(weekly.kcal),
+        `${Math.round(weekly.protein)} g`,
+        `${Math.round(weekly.fat)} g`,
+        `${Math.round(weekly.carbs)} g`,
+        `${Math.round(weekly.fiber)} g`,
+        `${Math.round(weekly.potassium)} mg`
+      ]
+    ]
+  },
+  layout: 'lightHorizontalLines',
+  margin: [0, 0, 0, 10]
+});
 
   content.push({ text: tUI('weeklyNutritionSummaryTitle', lang), style: 'subheader', margin: [0, 10, 0, 6] });
 

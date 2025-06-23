@@ -8,6 +8,7 @@ export interface Meal {
   name: string;
   time: string;
   date?: string; // 🆕 do PDF
+  day?: string;  // ✅ DODAJ TO POLE
   menu: string;
   description?: string;
   ingredients: Ingredient[];
@@ -22,6 +23,7 @@ export interface Meal {
     potassium?: number; // 🆕 do PDF
   };
 }
+
 
 export type TestResult = {
   name: string;
