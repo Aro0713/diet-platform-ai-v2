@@ -328,6 +328,16 @@ const handleMedicalAnalysis = async () => {
   ✅ {tUI(isConfirmed ? "analysisConfirmed" : "confirmAnalysis", lang)}
 </button>
 
+
+  <button
+    onClick={() => {
+      handleEditAnalysis();
+      setIsConfirmed(false); // 👈 Cofnij stan zatwierdzenia po edycji
+    }}
+    className="flex-1 px-4 py-2 bg-yellow-400 text-black rounded-md shadow-md hover:bg-yellow-500 transition-colors"
+  >
+    ✏️ {tUI("editAnalysis", lang)}
+  </button>
 </div>
 </div>
 </PanelCard>
