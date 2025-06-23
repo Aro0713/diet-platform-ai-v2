@@ -7,7 +7,7 @@ import { generateInterviewNarrative } from '@/utils/interview/interviewNarrative
 import { generateShoppingList } from '@/utils/generateShoppingList';
 import { getTranslation } from '@/utils/translations/useTranslationAgent';
 import { convertInterviewAnswers } from '@/utils/interviewHelpers';
-import { interviewNarrativeAgent } from '@/agents/interviewNarrativeAgent';
+
 
 export async function generateDietPdf(
   patient: PatientData,
@@ -98,20 +98,24 @@ ${tUI('region', lang)}: ${patient.region ? await getTranslation(patient.region, 
     content.push({ text: `🧠 ${tUI('interviewTitle', lang)}`, style: 'subheader', margin: [0, 10, 0, 4] });
 
 try {
-  // @ts-ignore - TS nie widzi .execute na tool() mimo że działa
-  const result = await generateNarrativeTool.execute({
-    interviewData: narrativeInput,
-    goal: patient.goal || '',
-    recommendation: (patient as any).recommendation || '',
-    lang
+  const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || ''}/api/interviewNarrativeAgent`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      interviewData: narrativeInput,
+      goal: patient.goal || '',
+      recommendation: (patient as any).recommendation || '',
+      lang
+    })
   });
 
-  content.push({ text: result || '⚠️ Brak opisu.', margin: [0, 0, 0, 6] });
+  const { narrativeText } = await response.json();
+
+  content.push({ text: narrativeText || '⚠️ Brak opisu.', margin: [0, 0, 0, 6] });
 } catch (err) {
-  console.error('❌ Błąd agent interviewNarrativeAgent:', err);
+  console.error('❌ Błąd agent interviewNarrativeAgent (fetch):', err);
   content.push({ text: '⚠️ Błąd generowania opisu wywiadu przez AI', color: 'red' });
 }
-
   }
   const groupedByDay: Record<string, Meal[]> = {};
   diet.forEach((meal) => {
