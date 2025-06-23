@@ -209,6 +209,12 @@ const handleMedicalAnalysis = async () => {
   const [editedSummary, setEditedSummary] = useState("");
   const [isConfirmed, setIsConfirmed] = useState(false);
 
+    useEffect(() => {
+  if (!medicalSummary) {
+    setIsConfirmed(false); 
+  }
+}, [medicalSummary]);
+
   return (
   <PanelCard title={`🧪 ${tUI('testResults', lang)}`}>
     <SelectGroupForm
