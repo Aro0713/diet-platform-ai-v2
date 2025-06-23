@@ -2408,6 +2408,57 @@ emptyNoteWarning: {
   ar: "🔁 emptyNoteWarning (ar)",
   he: "🔁 emptyNoteWarning (he)"
 },
-
+save: {
+  pl: "Zapisz",
+  en: "Save",
+  es: "Guardar",
+  fr: "Enregistrer",
+  de: "Speichern",
+  ua: "Зберегти",
+  ru: "Сохранить",
+  zh: "保存",
+  hi: "सहेजें",
+  ar: "حفظ",
+  he: "שמור"
+},
+fiber: {
+  pl: "Błonnik",
+  en: "Fiber",
+  es: "Fibra",
+  fr: "Fibre",
+  de: "Ballaststoffe",
+  ua: "Клітковина",
+  ru: "Клетчатка",
+  zh: "纤维",
+  hi: "रेशा",
+  ar: "الألياف",
+  he: "סיבים"
+},
+potassium: {
+  pl: "Potas",
+  en: "Potassium",
+  es: "Potasio",
+  fr: "Potassium",
+  de: "Kalium",
+  ua: "Калій",
+  ru: "Калий",
+  zh: "钾",
+  hi: "पोटेशियम",
+  ar: "البوتاسيوم",
+  he: "אשלגן"
+},
+missingData: {
+  pl: "Brak danych",
+  en: "Missing data",
+  es: "Faltan datos",
+  fr: "Données manquantes",
+  de: "Fehlende Daten",
+  ua: "Відсутні дані",
+  ru: "Недостаточно данных",
+  zh: "缺少数据",
+  hi: "जानकारी अनुपलब्ध",
+  ar: "بيانات مفقودة",
+  he: "נתונים חסרים"
+},
 };
 
