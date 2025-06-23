@@ -18,7 +18,9 @@ const languageMap: Record<string, string> = {
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
 
   const { interviewData, goal, recommendation, lang } = req.body;
 
@@ -64,10 +66,9 @@ Write only one paragraph in ${selectedLang}. Mention conditions, stress, sleep, 
     }
 
     console.log('📦 RAW AI TEXT:', narrativeText);
-
     return res.status(200).json({ narrativeText });
   } catch (err) {
-    console.error('❌ GPT error:', err);
+    console.error('❌ GPT error in interviewNarrativeAgent:', err);
     return res.status(500).json({ error: 'Internal server error' });
   }
 }
