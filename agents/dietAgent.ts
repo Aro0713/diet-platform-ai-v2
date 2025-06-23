@@ -84,10 +84,10 @@ export const generateDietTool = tool({
       mealsPerDay
     };
 
-const prompt = `
+    const prompt = `
 You are a clinical dietitian AI.
 
-Generate a 7-day structured and medically accurate diet plan in perfect JSON format. The plan must:
+Generate a 7-day structured and medically accurate diet plan in valid JSON format. The plan must:
 
 ✔ Be customized based on:
 - Patient interview, test results, medical history
@@ -117,41 +117,21 @@ Generate a 7-day structured and medically accurate diet plan in perfect JSON for
 Use ONLY trusted sources:
 ${dataSources}
 
-Return only raw JSON:
+Return ONLY valid JSON. Do not include markdown, comments, explanations or raw weekdays.
+
+Your response MUST have this format:
+
 {
   "dietPlan": {
-    "Monday": {
-      "Śniadanie": {
-        "time": "07:30",
-        "menu": "...",
-        "kcal": 400,
-        "glycemicIndex": 40,
-        "ingredients": [
-          { "product": "...", "weight": 100, "unit": "g" }
-        ],
-        "preparation": "...",
-        "nutrients": {
-          "protein": 20,
-          "fat": 15,
-          "carbs": 30,
-          "fiber": 5,
-          "calcium": 100,
-          "potassium": 300,
-          "magnesium": 40,
-          "vitaminC": 30,
-          "vitaminD": 5,
-          "vitaminB12": 1.2
-        }
-      },
-      ...
-    },
+    "Monday": { ... },
     ...
   },
   "weeklyOverview": { ... },
-  "shoppingList": [ { product: "...", quantity: 300, unit: "g" }, ... ]
+  "shoppingList": [ ... ]
 }
+
+Do not return top-level "Monday", "Tuesday" etc. — wrap all days inside "dietPlan".
 `;
-;
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",
