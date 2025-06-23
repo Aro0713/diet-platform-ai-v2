@@ -14,6 +14,8 @@ import { section10 } from '@/utils/translations/interview/section10';
 import { OTHER_OPTIONS } from '@/utils/interviewHelpers';
 import PanelCard from './PanelCard';
 import { convertInterviewAnswers } from '@/utils/interviewHelpers';
+import interviewNarrativeAgent from '@/agents/interviewNarrativeAgent';
+import { generateInterviewPdf } from '@/utils/generateInterviewPdf';
 
 interface Question {
   noInput?: any;
@@ -182,6 +184,34 @@ const handleFinish = async () => {
     setSaving(false);
   }
 };
+const [generatingPdf, setGeneratingPdf] = useState(false);
+
+const handleGeneratePdfOnly = async () => {
+  try {
+    setGeneratingPdf(true);
+
+  const narrativeText = await interviewNarrativeAgent.run({
+  interviewData: allAnswers,
+  goal: '',
+  recommendation: '',
+  lang
+});
+
+
+
+    await generateInterviewPdf({
+      lang,
+      sex: form.sex,
+      interview: allAnswers,
+      narrativeText
+    });
+  } catch (err) {
+    console.error('❌ Błąd generowania PDF:', err);
+    alert('Błąd podczas generowania PDF z wywiadu.');
+  } finally {
+    setGeneratingPdf(false);
+  }
+};
 
   return (
     <PanelCard className="z-10 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 dark:text-white transition-colors min-h-[550px]">
@@ -311,33 +341,44 @@ const handleFinish = async () => {
         );
       })}
 
-      <div className="flex justify-between mt-6">
-        {currentStep > 0 && (
-          <button
-            className="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-4 rounded"
-            onClick={back}
-          >
-            ⬅️ {tUI('back', lang)}
-          </button>
-        )}
+<div className="flex justify-between mt-6">
+  {currentStep > 0 && (
+    <button
+      className="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-4 rounded"
+      onClick={back}
+    >
+      ⬅️ {tUI('back', lang)}
+    </button>
+  )}
 
-        {isLastStep ? (
-          <button
-            onClick={handleFinish}
-            disabled={saving}
-            className="ml-auto bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded disabled:opacity-50"
-          >
-            {saving ? 'Zapisywanie...' : saved ? 'Zapisano ✓' : `✅ ${tUI('saveInterview', lang)}`}
-          </button>
-        ) : (
-          <button
-            className="ml-auto bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded"
-            onClick={next}
-          >
-            {tUI('next', lang)} ➡️
-          </button>
-        )}
-      </div>
+  {isLastStep ? (
+    <div className="flex gap-2 justify-end">
+      <button
+        onClick={handleFinish}
+        disabled={saving}
+        className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded disabled:opacity-50"
+      >
+        {saving ? 'Zapisywanie...' : saved ? 'Zapisano ✓' : `✅ ${tUI('saveInterview', lang)}`}
+      </button>
+
+      <button
+        onClick={handleGeneratePdfOnly}
+        disabled={generatingPdf}
+        className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded disabled:opacity-50"
+      >
+        {generatingPdf ? 'Generuję PDF...' : `🧾 ${tUI('generateInterviewPdf', lang)}`}
+      </button>
+    </div>
+  ) : (
+    <button
+      className="ml-auto bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded"
+      onClick={next}
+    >
+      {tUI('next', lang)} ➡️
+    </button>
+  )}
+</div>
+
     </PanelCard>
   );
 }

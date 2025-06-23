@@ -7,7 +7,7 @@ import { generateInterviewNarrative } from '@/utils/interview/interviewNarrative
 import { generateShoppingList } from '@/utils/generateShoppingList';
 import { getTranslation } from '@/utils/translations/useTranslationAgent';
 import { convertInterviewAnswers } from '@/utils/interviewHelpers';
-import { generateNarrativeTool } from '@/agents/interviewNarrativeAgent';
+import { interviewNarrativeAgent } from '@/agents/interviewNarrativeAgent';
 
 export async function generateDietPdf(
   patient: PatientData,
@@ -45,7 +45,14 @@ export async function generateDietPdf(
   { text: patient.name, style: 'header', alignment: 'center', fontSize: 26, margin: [0, 60, 0, 10] },
   { text: `${startDate} – ${endDate}`, alignment: 'center', fontSize: 14, margin: [0, 0, 0, 20] },
   { text: `${tUI('dietitianSignature', lang)}: ${patient.createdByName || tUI('missingData', lang)}`, alignment: 'center', fontSize: 12 },
-  { text: tUI('tagline', lang), alignment: 'center', italics: true, fontSize: 14, color: '#555555', margin: [0, 20, 0, 0] },
+  {
+  text: tUI('tagline', lang),
+  alignment: 'center',
+  italics: true,
+  fontSize: 22,
+  color: '#1f2a3c', // Ciemnogranatowy jak na screenie
+  margin: [0, 20, 0, 0]
+},
   { text: '', pageBreak: 'after' }
 );
 
@@ -373,9 +380,10 @@ content.push({
     },
     background: function () {
       return {
-        canvas: [{ type: 'rect', x: 0, y: 0, w: 595.28, h: 841.89, color: '#e8f8f3' }]
+        canvas: [{ type: 'rect', x: 0, y: 0, w: 595.28, h: 841.89, color: '#e7f2fc' }]
       };
     },
+
     footer: function (currentPage: number, pageCount: number) {
       return {
         text: `© Diet Care Platform — ${patient.createdByName || 'Dietetyk'} | Strona ${currentPage} z ${pageCount}`,

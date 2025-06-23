@@ -39,7 +39,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     };
 
     const prompt = `
-You are a clinical dietitian AI. Generate a 7-day individualized medical diet plan in perfect JSON format.
+You are a clinical dietitian AI. Generate a 7-day individualized medical diet plan in strict JSON format.
 
 Return ONLY raw JSON like:
 {
@@ -52,7 +52,14 @@ Return ONLY raw JSON like:
         "glycemicIndex": 40,
         "ingredients": [
           { "product": "...", "weight": 100 }
-        ]
+        ],
+        "macros": {
+          "protein": 20,
+          "fat": 15,
+          "carbs": 30,
+          "fiber": 5,
+          "potassium": 300
+        }
       }
     }
   }
@@ -62,8 +69,8 @@ Strict rules:
 - Top-level key: "dietPlan"
 - 7 days: Monday to Sunday
 - Day keys in English, meal names in Polish
-- Each meal must include: time, menu, kcal, glycemicIndex (required), ingredients (array)
-- JSON only – no markdown, no explanations
+- Each meal must include: time, menu, kcal, glycemicIndex, ingredients[], and macros
+- JSON only – no markdown, no commentary
 
 Language: ${lang}
 Goal: ${goalExplanation}
@@ -86,7 +93,9 @@ ${JSON.stringify(patientData, null, 2)}
 
     let text = completion.choices[0].message.content ?? "";
 
-    // 🔁 Walidacja i ewentualna poprawa przez dqAgent
+    // 🧹 Remove markdown (```json ... ```)
+    text = text.replace(/```json|```/g, "").trim();
+
     try {
       const parsed = JSON.parse(text);
       const dietPlan = parsed?.dietPlan;
@@ -120,12 +129,12 @@ ${JSON.stringify(patientData, null, 2)}
 
         console.warn("⚠️ Walidacja zwróciła wynik, ale nie rozpoznano formatu — zwracam oryginał.");
       }
-    } catch (retryErr) {
-      console.warn("⚠️ Retry loop failed:", retryErr);
+
+      return res.status(200).send(text);
+    } catch (parseErr) {
+      console.error("❌ Błąd parsowania JSON:", parseErr);
+      return res.status(500).send("Błąd parsowania JSON z OpenAI.");
     }
-
-    res.status(200).send(text);
-
   } catch (err) {
     console.error("❌ BŁĄD W AI:", err);
     res.status(500).send("Błąd serwera przy generowaniu diety.");

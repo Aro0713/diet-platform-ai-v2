@@ -1,6 +1,4 @@
-import { Agent, tool } from '@openai/agents';
-import OpenAI from 'openai';
-import { z } from 'zod';
+import OpenAI from "openai";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -18,16 +16,18 @@ const languageMap: Record<string, string> = {
   he: 'עברית'
 };
 
-export const generateNarrativeTool = tool({
-  name: 'generate_interview_narrative',
-  description: 'Generates a short narrative summary based on interview data and doctor recommendations.',
-  parameters: z.object({
-    interviewData: z.record(z.string()),
-    goal: z.string(),
-    recommendation: z.string(),
-    lang: z.string()
-  }),
-  async execute({ interviewData, goal, recommendation, lang }) {
+export const interviewNarrativeAgent = {
+  run: async ({
+    interviewData,
+    goal,
+    recommendation,
+    lang
+  }: {
+    interviewData: Record<string, string>;
+    goal: string;
+    recommendation: string;
+    lang: string;
+  }) => {
     const selectedLang = languageMap[lang] || 'polski';
 
     const prompt = `
@@ -53,12 +53,7 @@ Write only one natural paragraph in ${selectedLang}. Mention conditions, stress,
       temperature: 0.4
     });
 
-    return completion.choices[0].message.content || '⚠️ Brak wygenerowanej narracji';
+    return completion.choices[0].message.content ?? '⚠️ Brak narracji.';
   }
-});
-
-export const interviewNarrativeAgent = new Agent({
-  name: 'Interview Narrative Agent',
-  instructions: 'Generate a medical narrative for the PDF based on patient interview.',
-  tools: [generateNarrativeTool]
-});
+};
+export default interviewNarrativeAgent;

@@ -1,63 +1,43 @@
-import { Meal, PatientData } from '@/types';
 import { stampBase64 } from '@/utils/stamp';
+import { LangKey } from '@/utils/i18n';
 
-export async function generateInterviewPdf(
-  form: PatientData,
-  bmi: number | null,
-  interviewData: any,
-  approved: boolean = false,
-  logoBase64?: string
-) {
+interface InterviewPdfParams {
+  lang: LangKey;
+  sex: 'female' | 'male';
+  interview: Record<string, string>;
+  narrativeText: string;
+  approved?: boolean;
+  logoBase64?: string;
+}
+
+export async function generateInterviewPdf({
+  lang,
+  sex,
+  interview,
+  narrativeText,
+  approved = false,
+  logoBase64
+}: InterviewPdfParams) {
   const pdfMake = (await import('pdfmake/build/pdfmake')).default;
   const pdfFonts = (await import('pdfmake/build/vfs_fonts')).default;
   pdfMake.vfs = pdfFonts.vfs;
 
   const content: any[] = [
     { text: '📝 Wywiad dietetyczny', style: 'header' },
-    { text: `Data: ${new Date().toLocaleString()}`, margin: [0, 0, 0, 10] },
     {
-      text: `Dane pacjenta:\nWiek: ${form.age} lat | Płeć: ${form.sex} | Waga: ${form.weight} kg | Wzrost: ${form.height} cm | BMI: ${bmi ?? 'n/a'}`,
-      margin: [0, 0, 0, 10],
+      text: `Data: ${new Date().toLocaleDateString()} | Płeć: ${sex}`,
+      margin: [0, 0, 0, 10]
     },
-    {
-      text: `Schorzenia: ${form.conditions?.join(', ') || 'brak'}\nAlergie: ${form.allergies || 'brak'}\nRegion: ${form.region || 'brak'}`,
-      margin: [0, 0, 0, 10],
-    },
-    {
-      text: '🩺 Uwzględnione dane medyczne:',
-      style: 'subheader',
-      margin: [0, 10, 0, 4],
-    },
-    ...(form.medical ?? []).flatMap((entry: any) => [
-      { text: `• ${entry.condition}`, bold: true, margin: [0, 4, 0, 0] },
-      ...(entry.tests || []).map((test: any) => ({
-        text: `   → ${test.name}: ${test.value || '—'}`,
-        margin: [10, 0, 0, 0],
-        fontSize: 10,
-      })),
-    ]),
-    {
-      text: '🧾 Informacje z wywiadu:',
-      style: 'subheader',
-      margin: [0, 10, 0, 6],
-    },
-    `Główne cele: ${interviewData.goal || 'brak'}`,
-    `Dodatkowe cele: ${interviewData.goals?.join(', ') || 'brak'}`,
-    `Model diety: ${interviewData.model || 'brak'}`,
-    `Kuchnia: ${interviewData.cuisine || 'brak'}`,
-    `Aktywność fizyczna: ${interviewData.activity || 'brak'}`,
-    `Sen: ${interviewData.sleep || 'brak'}`,
-    `Stres: ${interviewData.stress || 'brak'}`,
-    `Gotowanie: ${interviewData.cookingHabits || 'brak'}`,
-    `Budżet: ${interviewData.budgetLimits || 'brak'}`,
-    `Preferencje żywieniowe: ${interviewData.foodPreferences || 'brak'}`,
-    `Nietolerancje: ${interviewData.intolerances || 'brak'}`,
-    `Suplementy: ${interviewData.supplements || 'brak'}`,
-    `Leki: ${interviewData.medications || 'brak'}`,
-    `Oczekiwania: ${interviewData.expectations || 'brak'}`,
-    `Dotychczasowe diety: ${interviewData.previousDiets || 'brak'}`,
-    `Obecna dieta: ${interviewData.currentDiet || 'brak'}`,
-    `Uwagi: ${interviewData.otherNotes || 'brak'}`,
+
+    { text: '🧠 Podsumowanie narracyjne', style: 'subheader', margin: [0, 10, 0, 4] },
+    { text: narrativeText, italics: true, margin: [0, 0, 0, 10] },
+
+    { text: '🧾 Surowe odpowiedzi z wywiadu', style: 'subheader', margin: [0, 10, 0, 4] },
+    ...Object.entries(interview).map(([key, value]) => ({
+      text: `${key}: ${value}`,
+      fontSize: 10,
+      margin: [0, 2, 0, 0],
+    }))
   ];
 
   if (approved) {
@@ -70,7 +50,7 @@ export async function generateInterviewPdf(
   }
 
   content.push({
-    text: '---\n© Diet Care Platform|\nEmail: contact@dcp.care |',
+    text: '---\n© Diet Care Platform\nEmail: contact@dcp.care',
     style: 'footer',
     margin: [0, 30, 0, 0],
     alignment: 'center',
@@ -87,14 +67,12 @@ export async function generateInterviewPdf(
       fontSize: 11,
     },
     background: logoBase64
-      ? [
-          {
-            image: logoBase64,
-            width: 300,
-            opacity: 0.06,
-            absolutePosition: { x: 100, y: 200 },
-          },
-        ]
+      ? [{
+          image: logoBase64,
+          width: 300,
+          opacity: 0.06,
+          absolutePosition: { x: 100, y: 200 },
+        }]
       : undefined,
   };
 
