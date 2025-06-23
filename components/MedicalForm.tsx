@@ -209,11 +209,6 @@ const handleMedicalAnalysis = async () => {
   const [editedSummary, setEditedSummary] = useState("");
   const [isConfirmed, setIsConfirmed] = useState(false);
 
-    useEffect(() => {
-  if (!medicalSummary) {
-    setIsConfirmed(false); 
-  }
-}, [medicalSummary]);
 
   return (
   <PanelCard title={`🧪 ${tUI('testResults', lang)}`}>
@@ -319,6 +314,7 @@ const handleMedicalAnalysis = async () => {
     handleConfirmAnalysis();
     setIsConfirmed(true);
   }}
+  disabled={!medicalSummary}
   className={`flex-1 px-4 py-2 rounded-md shadow-md font-semibold transition-colors ${
     isConfirmed
       ? "bg-green-100 text-green-800 cursor-default"
@@ -327,7 +323,6 @@ const handleMedicalAnalysis = async () => {
 >
   ✅ {tUI(isConfirmed ? "analysisConfirmed" : "confirmAnalysis", lang)}
 </button>
-
 
   <button
     onClick={() => {
