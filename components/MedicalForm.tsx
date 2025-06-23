@@ -313,16 +313,13 @@ const handleMedicalAnalysis = async () => {
   )}
 
 <div className="mt-4 flex flex-col md:flex-row gap-3">
-  <button
-    onClick={handleConfirmAnalysis}
-    disabled={isConfirmed}
-    className={`flex-1 px-4 py-2 rounded-md shadow-md transition-colors font-semibold
-      ${isConfirmed
-        ? "bg-green-100 text-green-800 cursor-default"
-        : "bg-green-600 text-white hover:bg-green-700"}`}
-  >
-    ✅ {tUI(isConfirmed ? "analysisConfirmed" : "confirmAnalysis", lang)}
-  </button>
+<button
+  onClick={handleConfirmAnalysis}
+  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md shadow-md hover:bg-green-700 transition-colors font-semibold"
+>
+  ✅ {tUI("confirmAnalysis", lang)}
+</button>
+
 
   <button
     onClick={() => {
