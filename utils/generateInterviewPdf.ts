@@ -30,7 +30,8 @@ export async function generateInterviewPdf({
     },
 
     { text: '🧠 Podsumowanie narracyjne', style: 'subheader', margin: [0, 10, 0, 4] },
-    { text: narrativeText, italics: true, margin: [0, 0, 0, 10] },
+    { text: narrativeText?.trim() || '⚠️ Brak opisu narracyjnego', italics: true, margin: [0, 0, 0, 10] },
+
 
     { text: '🧾 Surowe odpowiedzi z wywiadu', style: 'subheader', margin: [0, 10, 0, 4] },
     ...Object.entries(interview).map(([key, value]) => ({
