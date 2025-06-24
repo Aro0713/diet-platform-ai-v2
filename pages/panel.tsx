@@ -551,26 +551,22 @@ return (
       </PanelCard>
 
       {/* Sekcja 3: Wywiad pacjenta */}
-      <PanelCard title="📝 Narracyjny opis pacjenta (AI)">
-  <div className="flex flex-col gap-2">
-    <textarea
-      rows={6}
-      value={narrativeText}
-      onChange={(e) => setNarrativeText(e.target.value)}
-      placeholder="Opis wygenerowany przez AI pojawi się tutaj..."
-      className="w-full border rounded px-3 py-2 text-sm text-gray-800 dark:text-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
-    />
-
-    <button
-      type="button"
-      className="bg-orange-500 hover:bg-orange-600 text-white font-medium px-4 py-2 rounded"
-      onClick={handleGenerateNarrative}
-      disabled={isGenerating}
-    >
-      {isGenerating ? '⏳ Piszę wywiad...' : '🔥 Pisz wywiad...'}
-    </button>
-  </div>
-</PanelCard>
+      <PanelCard title={`🧠 ${tUI('interviewTitle', lang)}`}>
+        <InterviewWizard
+          form={form}
+          lang={lang}
+          onFinish={(data) => {
+            setInterviewData(data);
+            setForm((prev) => ({
+              ...prev,
+              stressLevel: data.stressLevel,
+              sleepQuality: data.sleepQuality,
+              physicalActivity: data.physicalActivity,
+              mealsPerDay: data.mealsPerDay
+            }));
+          }}
+        />
+      </PanelCard>
 
     {/* Sekcja 3.1: Rekomendacje lekarza i liczba posiłków */}
     <PanelCard className="h-full">
