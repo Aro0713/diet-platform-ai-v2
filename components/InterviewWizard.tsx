@@ -378,49 +378,6 @@ const handleGenerateNarrative = async () => {
           </div>
         );
       })}
-<div className="mt-8 space-y-2">
-  <label className="block text-sm font-semibold">
-    🧠 {tUI('interviewNarrativeLabel', lang) || 'Narracyjny opis pacjenta (AI)'}
-  </label>
-  <textarea
-    className="w-full border rounded-md px-3 py-2 text-sm dark:bg-gray-800 dark:text-white"
-    rows={6}
-    value={narrativeText}
-    onChange={(e) => setNarrativeText(e.target.value)}
-    placeholder="Opis wygenerowany przez AI pojawi się tutaj..."
-  />
-  <button
-    type="button"
-    onClick={handleGenerateNarrative}
-    disabled={narrativeGenerating}
-    className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded disabled:opacity-50"
-  >
-    {narrativeGenerating ? 'Generuję opis...' : '✍️ Wygeneruj opis AI'}
-  </button>
-</div>
-<div className="mt-8 space-y-2">
-  <label className="block text-sm font-semibold">
-    🧠 {tUI('interviewNarrativeLabel', lang) || 'Narracyjny opis pacjenta (AI)'}
-  </label>
-
-  <textarea
-    className="w-full border rounded-md px-3 py-2 text-sm dark:bg-gray-800 dark:text-white"
-    rows={6}
-    value={narrativeText}
-    onChange={(e) => setNarrativeText(e.target.value)}
-    placeholder="Opis wygenerowany przez AI pojawi się tutaj..."
-  />
-
-  <button
-    type="button"
-    onClick={handleGenerateNarrative}
-    disabled={narrativeGenerating}
-    className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded disabled:opacity-50"
-  >
-    {narrativeGenerating ? tUI('generatingNarrativePending', lang) : tUI('generateNarrativeButton', lang)}
-  </button>
-</div>
-
 <div className="flex justify-between mt-6">
   {currentStep > 0 && (
     <button
@@ -430,6 +387,32 @@ const handleGenerateNarrative = async () => {
       ⬅️ {tUI('back', lang)}
     </button>
   )}
+  {isLastStep && (
+  <div className="mt-8 space-y-2">
+    <label className="block text-sm font-semibold">
+      🧠 {tUI('interviewNarrativeLabel', lang) || 'Narracyjny opis pacjenta'}
+    </label>
+
+    <textarea
+      className="w-full border rounded-md px-3 py-2 text-sm dark:bg-gray-800 dark:text-white"
+      rows={6}
+      value={narrativeText}
+      onChange={(e) => setNarrativeText(e.target.value)}
+      placeholder="Opis wygenerowany przez AI pojawi się tutaj..."
+    />
+
+    <button
+      type="button"
+      onClick={handleGenerateNarrative}
+      disabled={narrativeGenerating}
+      className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded disabled:opacity-50"
+    >
+      {narrativeGenerating
+        ? tUI('generatingNarrativePending', lang)
+        : tUI('generateNarrativeButton', lang)}
+    </button>
+  </div>
+)}
 
   {isLastStep ? (
     <div className="flex gap-2 justify-end">
