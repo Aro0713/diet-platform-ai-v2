@@ -1,4 +1,7 @@
 import OpenAI from "openai";
+import { Meal } from "@/types";
+import { calculateMealMacros } from "@/utils/nutrition/calculateMealMacros";
+import { validateDietWithModel } from "@/utils/validateDiet";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -10,7 +13,7 @@ export const dqAgent = {
     cpm,
     weightKg
   }: {
-    dietPlan: any;
+    dietPlan: Record<string, Record<string, Meal>>; // ✅ poprawiony typ
     model: string;
     goal?: string;
     cpm?: number | null;
@@ -18,6 +21,18 @@ export const dqAgent = {
   }) => {
     const safeCpm = cpm ?? undefined;
     const safeWeight = weightKg ?? undefined;
+
+    // 🔁 Uzupełnij brakujące makroskładniki
+    const enrichedPlan: Record<string, Record<string, Meal>> = JSON.parse(JSON.stringify(dietPlan)); // deep clone
+    for (const day of Object.keys(enrichedPlan)) {
+      const meals = enrichedPlan[day];
+      for (const mealKey of Object.keys(meals)) {
+        const meal = meals[mealKey];
+        if (!meal.macros || Object.keys(meal.macros).length === 0) {
+          meal.macros = calculateMealMacros(meal.ingredients);
+        }
+      }
+    }
 
     const prompt = `
 You are a clinical AI diet quality controller.
@@ -73,7 +88,7 @@ Return one of the following:
 ⚠️ If unsure, omit uncertain values instead of guessing.
 
 Here is the plan to analyze:
-${JSON.stringify(dietPlan, null, 2)}
+${JSON.stringify(enrichedPlan, null, 2)}
 `;
 
     const completion = await openai.chat.completions.create({
@@ -88,9 +103,43 @@ ${JSON.stringify(dietPlan, null, 2)}
       temperature: 0.4
     });
 
+    const text = completion.choices[0].message.content ?? "";
+    const clean = text.replace(/```json|```/g, "").trim();
+
+    if (clean.includes("CORRECTED_JSON")) {
+      const startIndex = clean.indexOf("{");
+      const correctedJson = clean.slice(startIndex).trim();
+
+      try {
+        const parsed = JSON.parse(correctedJson);
+        const correctedPlan = parsed?.dietPlan as Record<string, Record<string, Meal>>;
+        if (!correctedPlan) throw new Error("Brak dietPlan");
+
+        // 🔍 Porównaj jakość
+        const originalMeals: Meal[] = Object.values(enrichedPlan).flatMap(day => Object.values(day));
+        const correctedMeals: Meal[] = Object.values(correctedPlan).flatMap(day => Object.values(day));
+
+        const issuesOriginal = validateDietWithModel(originalMeals, model);
+        const issuesCorrected = validateDietWithModel(correctedMeals, model);
+
+        if (issuesCorrected.length < issuesOriginal.length) {
+          console.log("✅ Zwrot poprawionej diety (mniej błędów):", issuesCorrected);
+          return {
+            type: "text",
+            content: correctedJson
+          };
+        } else {
+          console.log("ℹ️ Poprawiona dieta nie jest lepsza – zwracam oryginał.");
+        }
+      } catch (e) {
+        console.warn("❌ Nie udało się sparsować poprawionego planu:", e);
+      }
+    }
+
+    // Jeśli nie rozpoznano JSON lub dieta nie była lepsza → zwróć oryginał
     return {
       type: "text",
-      content: completion.choices[0].message.content ?? "⚠️ No response."
+      content: JSON.stringify({ dietPlan: enrichedPlan }, null, 2)
     };
   }
 };
