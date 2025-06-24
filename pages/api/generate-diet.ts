@@ -1,6 +1,5 @@
 import OpenAI from "openai";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { dqAgent } from "@/agents/dqAgent";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -93,50 +92,13 @@ ${JSON.stringify(patientData, null, 2)}
 
     let text = completion.choices[0].message.content ?? "";
 
-    // 🧹 Remove markdown (```json ... ```)
+    // 🧹 Remove markdown
     text = text.replace(/```json|```/g, "").trim();
 
-    try {
-      const parsed = JSON.parse(text);
-      const dietPlan = parsed?.dietPlan;
-
-      if (!dietPlan) {
-        console.warn("❗ Brak dietPlan – pomijam walidację.");
-      } else {
-        const dqResult = await dqAgent.run({
-          dietPlan,
-          model: form.model,
-          goal: goalExplanation,
-          cpm,
-          weightKg: form.weight
-        });
-
-        const result = dqResult.content || "";
-
-        console.log("📋 Diet quality evaluation result:", result);
-
-        if (result.includes("CORRECTED_JSON:")) {
-          const startIndex = result.indexOf("{");
-          const corrected = result.slice(startIndex).trim();
-          console.log("✅ Poprawiona dieta została wygenerowana.");
-          return res.status(200).send(corrected);
-        }
-
-        if (result.includes("VALID ✅")) {
-          console.log("✅ Dieta przeszła walidację AI bez uwag.");
-          return res.status(200).send(text);
-        }
-
-        console.warn("⚠️ Walidacja zwróciła wynik, ale nie rozpoznano formatu — zwracam oryginał.");
-      }
-
-      return res.status(200).send(text);
-    } catch (parseErr) {
-      console.error("❌ Błąd parsowania JSON:", parseErr);
-      return res.status(500).send("Błąd parsowania JSON z OpenAI.");
-    }
+    // ✅ zwróć tylko dietę, walidacja będzie osobno
+    res.status(200).send(text);
   } catch (err) {
-    console.error("❌ BŁĄD W AI:", err);
+    console.error("❌ Błąd generowania diety:", err);
     res.status(500).send("Błąd serwera przy generowaniu diety.");
   }
 }
