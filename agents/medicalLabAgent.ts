@@ -10,21 +10,7 @@ export async function medicalLabAgent({
   testResults: Record<string, string>;
   description: string;
   lang: string;
-}): Promise<{
-  summary: string;
-  json: {
-    risks?: string[];
-    warnings?: string[];
-    dietHints?: {
-      avoid?: string[];
-      recommend?: string[];
-    };
-    dqChecks?: {
-      avoidIngredients?: string[];
-      preferModels?: string[];
-    };
-  };
-}> {
+}): Promise<string> {
   const prompt = `
 You are a professional medical lab assistant AI.
 
@@ -55,29 +41,6 @@ Output in language: ${lang}
     temperature: 0.2
   });
 
-  const content = completion.choices[0].message.content || '';
-
-  let parsed: any = {};
-  const jsonRegex = /```json\s*([\s\S]*?)```/;
-  const jsonMatch = content.match(jsonRegex);
-
-  if (jsonMatch && jsonMatch[1]) {
-    let rawJson = jsonMatch[1].trim();
-
-    try {
-      // Od-escape'uj jeśli to string z escapami
-      if (rawJson.startsWith('"')) {
-        rawJson = JSON.parse(rawJson); // JSON string → raw JSON text
-      }
-      parsed = JSON.parse(rawJson);    // raw JSON text → obiekt
-    } catch (err) {
-      console.error('❌ Błąd parsowania JSON z medicalLabAgent:', err);
-    }
-  }
-
-  return {
-    summary: content,
-    json: parsed
-  };
+  return completion.choices[0].message.content || '⚠️ No output';
 }
 
