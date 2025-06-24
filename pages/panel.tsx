@@ -421,6 +421,41 @@ const handleSendToPatient = () => {
   alert('?? Dieta zosta�a wys�ana pacjentowi (symulacja).');
 };
 const [notes, setNotes] = useState<Record<string, string>>({});
+const [narrativeText, setNarrativeText] = useState('');
+
+const handleGenerateNarrative = async () => {
+  try {
+    const response = await fetch('/api/interview-narrative', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        interviewData,
+        goal: interviewData.goal,
+        recommendation: interviewData.recommendation,
+        lang
+      })
+    });
+
+    if (!response.ok) {
+      console.error("❌ Błąd HTTP:", response.status);
+      alert("⚠️ Pusta odpowiedź z AI. Spróbuj ponownie.");
+      return;
+    }
+
+    const data = await response.json();
+    if (!data.narrativeText) {
+      alert("⚠️ AI nie wygenerowało opisu. Spróbuj ponownie.");
+      return;
+    }
+
+    setNarrativeText(data.narrativeText);
+  } catch (err) {
+    console.error("❌ Błąd sieci/AI:", err);
+    alert("⚠️ Nie udało się połączyć z AI.");
+  }
+};
 
 const handleCalculationResult = ({ suggestedModel, ...rest }: any) => {
   setInterviewData((prev: any) => ({
@@ -508,7 +543,27 @@ return (
           }));
         }}
       />
-      </PanelCard>
+          </PanelCard>
+          <PanelCard title="📝 Narracyjny opis pacjenta (AI)">
+      <div className="flex flex-col gap-2">
+        <textarea
+          rows={6}
+          value={narrativeText}
+          onChange={(e) => setNarrativeText(e.target.value)}
+          placeholder="Opis wygenerowany przez AI pojawi się tutaj..."
+          className="w-full border rounded px-3 py-2 text-sm text-gray-800 dark:text-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+        />
+
+        <button
+          type="button"
+          className="bg-orange-500 hover:bg-orange-600 text-white font-medium px-4 py-2 rounded"
+          onClick={handleGenerateNarrative}
+          disabled={isGenerating}
+        >
+          {isGenerating ? '⏳ Piszę wywiad...' : '🔥 Pisz wywiad...'}
+        </button>
+      </div>
+    </PanelCard>
     {/* Sekcja 3.1: Rekomendacje lekarza i liczba posiłków */}
     <PanelCard className="h-full">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -622,27 +677,29 @@ return (
     try {
       setIsGenerating(true);
       const { generateDietPdf } = await import('@/utils/generateDietPdf');
-  await generateDietPdf(
-  form,
-  bmi,
-  confirmedDiet!,
-  dietApproved,
-  notes,
-  lang,
-  interviewData,
-  {
-    bmi: interviewData.bmi,
-    ppm: interviewData.ppm,
-    cpm: interviewData.cpm,
-    pal: interviewData.pal,
-    kcalMaintain: interviewData.kcalMaintain,
-    kcalReduce: interviewData.kcalReduce,
-    kcalGain: interviewData.kcalGain,
-    nmcBroca: interviewData.nmcBroca,
-    nmcLorentz: interviewData.nmcLorentz
-  },
-  'download' // ✅ to jest poprawny 9. argument
-);
+
+      await generateDietPdf(
+        form,
+        bmi,
+        confirmedDiet!,
+        dietApproved,
+        notes,
+        lang,
+        interviewData,
+        {
+          bmi: interviewData.bmi,
+          ppm: interviewData.ppm,
+          cpm: interviewData.cpm,
+          pal: interviewData.pal,
+          kcalMaintain: interviewData.kcalMaintain,
+          kcalReduce: interviewData.kcalReduce,
+          kcalGain: interviewData.kcalGain,
+          nmcBroca: interviewData.nmcBroca,
+          nmcLorentz: interviewData.nmcLorentz
+        },
+        'download',         // ← 9. argument: tryb generowania
+        narrativeText       // ← 10. argument: opis AI
+      );
 
     } catch (e) {
       alert('❌ Błąd przy generowaniu PDF');
@@ -654,6 +711,7 @@ return (
 >
   {isGenerating ? '⏳ Generowanie...' : `📄 ${tUI('pdf', lang)}`}
 </button>
+
 
 
 {/* 📤 Wyślij pacjentowi */}

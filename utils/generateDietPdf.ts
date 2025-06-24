@@ -30,7 +30,8 @@ export async function generateDietPdf(
     nmcBroca: number;
     nmcLorentz: number;
   },
-  mode: 'download' | 'returnDoc' = 'download'
+    mode: 'download' | 'returnDoc' = 'download',
+  narrativeText?: string
 ) {
   const pdfMake = (await import('pdfmake/build/pdfmake')).default;
   let dietitianSignature = tUI('missingData', lang);
