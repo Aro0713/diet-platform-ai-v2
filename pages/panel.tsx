@@ -29,6 +29,8 @@ import type { LangKey } from '@/utils/i18n';
 
 // 🧠 Utils – AI, walidacja, PDF
 import { generateDietPdf } from '@/utils/generateDietPdf';
+import { dqAgent } from '@/agents/dqAgent';
+
 import { transformDietPlanToEditableFormat } from '@/utils/transformDietPlan';
 import { generateInterviewPdf } from '@/utils/generateInterviewPdf';
 import { validateDiet } from '@/utils/validateDiet';
@@ -341,6 +343,27 @@ const handleSubmit = async (e: React.FormEvent) => {
     console.log("📦 RAW AI TEXT:", rawText);
     const parsed = tryParseJSON(rawCompleteText);
     console.log("✅ Parsed JSON:", parsed);
+
+    // 🔍 Walidacja przez dqAgent
+      try {
+        const dq = await dqAgent.run({
+          dietPlan: parsed.dietPlan,
+          model: form.model,
+          goal: interviewData.goal,
+          cpm: form.cpm,
+          weightKg: form.weight
+        });
+
+        const fixed = tryParseJSON(dq.content, true);
+        if (fixed?.dietPlan) {
+          parsed.dietPlan = fixed.dietPlan; 
+          console.log('🩺 Poprawiona dieta przez dqAgent:', fixed.dietPlan);
+        } else {
+          console.warn('⚠️ dqAgent nie zwrócił poprawionej diety.');
+        }
+      } catch (dqError) {
+        console.error('❌ Błąd dqAgent:', dqError);
+      }
 
     if (!parsed) throw new Error('Nie można sparsować odpowiedzi AI.');
 

@@ -13,9 +13,12 @@ export const dqAgent = {
     dietPlan: any;
     model: string;
     goal?: string;
-    cpm?: number;
-    weightKg?: number;
+    cpm?: number | null;
+    weightKg?: number | null;
   }) => {
+    const safeCpm = cpm ?? undefined;
+    const safeWeight = weightKg ?? undefined;
+
     const prompt = `
 You are a clinical AI diet quality controller.
 
@@ -23,8 +26,8 @@ Your task is to validate and optionally fix a 7-day meal plan based on the follo
 
 - Diet model: "${model}"
 - Goal: "${goal}"
-- Target energy requirement (CPM): ${cpm} kcal
-- Patient weight: ${weightKg} kg
+- Target energy requirement (CPM): ${safeCpm} kcal
+- Patient weight: ${safeWeight} kg
 
 Analyze the plan by:
 1. Checking total daily and weekly kcal vs CPM (±10% acceptable)
@@ -45,7 +48,7 @@ Return one of the following:
 - List of specific problems (e.g. "Tuesday exceeds carbs limit for keto")
 
 📋 CORRECTED_JSON:
-- Return corrected version of the plan **strictly wrapped in a "dietPlan" field**, like:
+- Return ONLY valid JSON, strictly wrapped in a "dietPlan" field, like:
 
 {
   "dietPlan": {
@@ -53,13 +56,21 @@ Return one of the following:
       "Śniadanie": {
         "time": "07:30",
         "menu": "Owsianka z jabłkiem",
-        ...
+        "kcal": 400,
+        "ingredients": [ { "product": "...", "weight": 100 } ],
+        "macros": { "protein": 20, "fat": 10, "carbs": 40 }
       }
     }
   }
 }
 
-Do not return raw weekdays as top-level keys — always wrap them in "dietPlan".
+🚫 DO NOT include:
+- markdown (e.g. \`\`\`json)
+- ellipsis (...), comments (//), or Note:
+- any explanation, continuation hints, or formatting outside the JSON object
+
+⚠️ Return ONLY the JSON object.
+⚠️ If unsure, omit uncertain values instead of guessing.
 
 Here is the plan to analyze:
 ${JSON.stringify(dietPlan, null, 2)}

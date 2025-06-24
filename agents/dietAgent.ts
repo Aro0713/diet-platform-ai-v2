@@ -87,7 +87,17 @@ export const generateDietTool = tool({
     const prompt = `
 You are a clinical dietitian AI.
 
-Generate a 7-day structured and medically accurate diet plan in valid JSON format. The plan must:
+Generate a complete 7-day diet plan. DO NOT stop after 1 or 2 days.
+
+YOU MUST include:
+- All 7 days (Monday to Sunday)
+- All meals per day (e.g. Śniadanie, II śniadanie, Obiad, Kolacja, Snack if needed)
+- Full ingredient and macro data for each meal
+- Do not use phrases like "continue similarly", "example", or "partial"
+
+This is a production plan. Not a draft. Do not omit any day.
+
+The plan must:
 
 ✔ Be customized based on:
 - Patient interview, test results, medical history
