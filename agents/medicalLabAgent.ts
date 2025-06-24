@@ -10,41 +10,43 @@ export async function medicalLabAgent({
   testResults: Record<string, string>;
   description: string;
   lang: string;
-}): Promise<string> {
+}): Promise<{
+  summary: string;
+  json: {
+    risks?: string[];
+    warnings?: string[];
+    dietHints?: {
+      avoid?: string[];
+      recommend?: string[];
+    };
+    dqChecks?: {
+      avoidIngredients?: string[];
+      preferModels?: string[];
+    };
+  };
+}> {
   const prompt = `
 You are a professional medical lab assistant AI.
 
-Patient has submitted the following:
+Patient has submitted:
 - Lab test results: ${JSON.stringify(testResults, null, 2)}
 - Medical description: "${description}"
 - Language of output: ${lang}
 
 Your tasks:
-1. Detect and explain abnormalities (e.g. high cholesterol, low hemoglobin, elevated glucose, etc.)
-2. Summarize potential conditions and associated clinical risks.
-3. Ask clarifying questions only if necessary.
-4. Provide general dietary or lifestyle recommendations.
-5. Then, return a structured JSON formatted exactly like this:
+1. Detect abnormalities.
+2. Summarize clinical risks.
+3. Suggest dietary/lifestyle recommendations.
+4. Output human-readable summary followed by a JSON block:
 
 {
-  "risks": ["..."],
-  "warnings": ["..."],
-  "dietHints": {
-    "avoid": ["..."],
-    "recommend": ["..."]
-  },
-  "dqChecks": {
-    "avoidIngredients": ["..."],
-    "preferModels": ["..."]
-  }
+  "risks": [...],
+  "warnings": [...],
+  "dietHints": { "avoid": [...], "recommend": [...] },
+  "dqChecks": { "avoidIngredients": [...], "preferModels": [...] }
 }
 
-Output should contain:
-A. Human-readable analysis (paragraphs),
-B. ✅ JSON block as described above (as code block).
-Do not skip the JSON, it will be used by another agent.
-
-Start your reply in language: ${lang}.
+Output in language: ${lang}
 `;
 
   const completion = await openai.chat.completions.create({
@@ -53,5 +55,22 @@ Start your reply in language: ${lang}.
     temperature: 0.2
   });
 
-  return completion.choices[0].message.content || '⚠️ No output';
+  const content = completion.choices[0].message.content || '';
+
+  // 🔍 Wyodrębnij JSON z odpowiedzi (między ```json ... ```)
+  const jsonMatch = content.match(/```json\s*([\s\S]*?)```/);
+  let parsed: any = {};
+
+  if (jsonMatch && jsonMatch[1]) {
+    try {
+      parsed = JSON.parse(jsonMatch[1]);
+    } catch (err) {
+      console.error('❌ Błąd parsowania JSON z medicalLabAgent:', err);
+    }
+  }
+
+  return {
+    summary: content,
+    json: parsed
+  };
 }
