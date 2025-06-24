@@ -255,7 +255,7 @@ const handleGenerateNarrative = async () => {
     }
 
     const jsonMatch = fullResult.match(/```json\s*([\s\S]*?)```/);
-    let parsed = null;
+    let parsed: Record<string, any> | null = null;
 
     if (jsonMatch && jsonMatch[1]) {
       let rawJson = jsonMatch[1].trim();
