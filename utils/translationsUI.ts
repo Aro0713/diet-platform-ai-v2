@@ -2485,7 +2485,45 @@ generateInterviewPdf: {
   hi: 'साक्षात्कार PDF बनाएं',
   ar: 'إنشاء PDF للمقابلة',
   he: 'צור PDF של הראיון'
+},
+interviewNarrativeLabel: {
+  pl: 'Narracyjny opis pacjenta (AI)',
+  en: 'Patient narrative summary (AI)',
+  es: 'Resumen narrativo del paciente (IA)',
+  fr: 'Résumé narratif du patient (IA)',
+  de: 'Narrative Patientenbeschreibung (KI)',
+  ua: 'Опис пацієнта (ШІ)',
+  ru: 'Нарративное описание пациента (ИИ)',
+  zh: '病人叙述总结（AI）',
+  hi: 'मरीज़ का वर्णनात्मक सारांश (एआई)',
+  ar: 'ملخص وصفي للمريض (الذكاء الاصطناعي)',
+  he: 'תיאור נרטיבי של המטופל (בינה מלאכותית)'
+},
+generateNarrativeButton: {
+  pl: '📄 Pokaż wywiad',
+  en: '📄 Show interview',
+  es: '📄 Mostrar entrevista',
+  fr: '📄 Afficher l\'entretien',
+  de: '📄 Interview anzeigen',
+  ua: '📄 Показати анкету',
+  ru: '📄 Показать опрос',
+  zh: '📄 显示问卷',
+  hi: '📄 साक्षात्कार दिखाएं',
+  ar: '📄 عرض المقابلة',
+  he: '📄 הצג ראיון'
+},
+generatingNarrativePending: {
+  pl: '✍️ Piszę wywiad...',
+  en: '✍️ Writing interview...',
+  es: '✍️ Escribiendo la entrevista...',
+  fr: '✍️ Rédaction de l\'entretien...',
+  de: '✍️ Interview wird geschrieben...',
+  ua: '✍️ Пишу анкету...',
+  ru: '✍️ Пишу опрос...',
+  zh: '✍️ 正在撰写问卷...',
+  hi: '✍️ साक्षात्कार लिखा जा रहा है...',
+  ar: '✍️ جارٍ كتابة المقابلة...',
+  he: '✍️ כותב את הראיון...'
 }
-
 };
 

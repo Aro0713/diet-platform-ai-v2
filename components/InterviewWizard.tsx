@@ -173,7 +173,7 @@ const handleChange = (name: string, value: string) => {
 const handleFinish = async () => {
   setSaving(true);
   try {
-    await onFinish(allAnswers); 
+    await onFinish({ ...allAnswers, narrativeText });
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   } catch (e) {
@@ -184,6 +184,8 @@ const handleFinish = async () => {
   }
 };
 const [generatingPdf, setGeneratingPdf] = useState(false);
+const [narrativeText, setNarrativeText] = useState('');
+const [narrativeGenerating, setNarrativeGenerating] = useState(false);
 
 const handleGeneratePdfOnly = async () => {
   try {
@@ -211,7 +213,7 @@ if (!response.ok) {
   } catch (err) {
     console.error('❌ JSON.parse() failed:', err);
   }
-}
+};
 
     await generateInterviewPdf({
       lang,
@@ -226,7 +228,29 @@ if (!response.ok) {
     setGeneratingPdf(false);
   }
 };
+const handleGenerateNarrative = async () => {
+  setNarrativeGenerating(true);
+  try {
+    const response = await fetch('/api/interviewNarrativeAgent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        interviewData: allAnswers,
+        goal: '',
+        recommendation: '',
+        lang
+      })
+    });
 
+    const data = await response.json();
+    setNarrativeText(data.narrativeText || '');
+  } catch (err) {
+    console.error('❌ Błąd generowania narracji:', err);
+    alert('Błąd AI podczas generowania opisu wywiadu.');
+  } finally {
+    setNarrativeGenerating(false);
+  }
+};
   return (
     <PanelCard className="z-10 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 dark:text-white transition-colors min-h-[550px]">
       <div className="bg-blue-50 border border-blue-200 text-blue-900 dark:bg-blue-900 dark:border-blue-400 dark:text-white p-4 rounded text-sm mb-6 space-y-2">
@@ -354,6 +378,48 @@ if (!response.ok) {
           </div>
         );
       })}
+<div className="mt-8 space-y-2">
+  <label className="block text-sm font-semibold">
+    🧠 {tUI('interviewNarrativeLabel', lang) || 'Narracyjny opis pacjenta (AI)'}
+  </label>
+  <textarea
+    className="w-full border rounded-md px-3 py-2 text-sm dark:bg-gray-800 dark:text-white"
+    rows={6}
+    value={narrativeText}
+    onChange={(e) => setNarrativeText(e.target.value)}
+    placeholder="Opis wygenerowany przez AI pojawi się tutaj..."
+  />
+  <button
+    type="button"
+    onClick={handleGenerateNarrative}
+    disabled={narrativeGenerating}
+    className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded disabled:opacity-50"
+  >
+    {narrativeGenerating ? 'Generuję opis...' : '✍️ Wygeneruj opis AI'}
+  </button>
+</div>
+<div className="mt-8 space-y-2">
+  <label className="block text-sm font-semibold">
+    🧠 {tUI('interviewNarrativeLabel', lang) || 'Narracyjny opis pacjenta (AI)'}
+  </label>
+
+  <textarea
+    className="w-full border rounded-md px-3 py-2 text-sm dark:bg-gray-800 dark:text-white"
+    rows={6}
+    value={narrativeText}
+    onChange={(e) => setNarrativeText(e.target.value)}
+    placeholder="Opis wygenerowany przez AI pojawi się tutaj..."
+  />
+
+  <button
+    type="button"
+    onClick={handleGenerateNarrative}
+    disabled={narrativeGenerating}
+    className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded disabled:opacity-50"
+  >
+    {narrativeGenerating ? tUI('generatingNarrativePending', lang) : tUI('generateNarrativeButton', lang)}
+  </button>
+</div>
 
 <div className="flex justify-between mt-6">
   {currentStep > 0 && (

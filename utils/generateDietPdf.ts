@@ -7,6 +7,8 @@ import { generateInterviewNarrative } from '@/utils/interview/interviewNarrative
 import { generateShoppingList } from '@/utils/generateShoppingList';
 import { getTranslation } from '@/utils/translations/useTranslationAgent';
 import { convertInterviewAnswers } from '@/utils/interviewHelpers';
+import { supabase } from '@/lib/supabaseClient';
+import { translatedTitles } from '@/utils/translatedTitles';
 
 
 export async function generateDietPdf(
@@ -31,6 +33,29 @@ export async function generateDietPdf(
   mode: 'download' | 'returnDoc' = 'download'
 ) {
   const pdfMake = (await import('pdfmake/build/pdfmake')).default;
+  let dietitianSignature = tUI('missingData', lang);
+
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data, error } = await supabase
+        .from('users')
+        .select('name, title, role')
+        .eq('user_id', user.id)
+        .single();
+
+      if (data) {
+        const title = data.title && translatedTitles[data.title as 'dr' | 'drhab' | 'prof']?.[lang];
+        const role = translationsUI[data.role as 'doctor' | 'dietitian']?.[lang];
+        dietitianSignature = `${title ? `${title} ` : ''}${data.name}${role ? ` – ${role}` : ''}`;
+      }
+
+      if (error) console.warn('⚠️ Błąd pobierania danych dietetyka:', error.message);
+    }
+  } catch (err) {
+    console.error('❌ Błąd Supabase podczas pobierania danych dietetyka:', err);
+  }
+
   const pdfFonts = (await import('pdfmake/build/vfs_fonts')).default;
   pdfMake.vfs = pdfFonts.vfs;
 
@@ -44,7 +69,7 @@ export async function generateDietPdf(
   content.push(
   { text: patient.name, style: 'header', alignment: 'center', fontSize: 26, margin: [0, 60, 0, 10] },
   { text: `${startDate} – ${endDate}`, alignment: 'center', fontSize: 14, margin: [0, 0, 0, 20] },
-  { text: `${tUI('dietitianSignature', lang)}: ${patient.createdByName || tUI('missingData', lang)}`, alignment: 'center', fontSize: 12 },
+  { text: `${tUI('dietitianSignature', lang)}: ${dietitianSignature}`, alignment: 'center', fontSize: 12 },
   {
   text: tUI('tagline', lang),
   alignment: 'center',
@@ -138,14 +163,18 @@ const { narrativeText } = await response.json();
     ];
 
     const rows = await Promise.all(meals.map(async (meal) => {
-      const image = await getMealImageBase64(meal.menu || meal.name);
-      const tags = getMealTags(meal);
-      const tagLabels = await Promise.all(tags.map(tag => getTranslation(`specialLabel${capitalize(tag)}`, lang)));
+  const image = meal.imageUrl 
+    ? meal.imageUrl 
+    : await getMealImageBase64(meal.menu || meal.name);
 
-      const icons = [];
-      if (tags.includes('vegan')) icons.push('🌱');
-      if (tags.includes('glutenFree')) icons.push('🚫🌾');
-      if (tags.includes('lowFodmap')) icons.push('🔽FODMAP');
+  const tags = getMealTags(meal);
+  const tagLabels = await Promise.all(tags.map(tag => getTranslation(`specialLabel${capitalize(tag)}`, lang)));
+
+  const icons = [];
+  if (tags.includes('vegan')) icons.push('🌱');
+  if (tags.includes('glutenFree')) icons.push('🚫🌾');
+  if (tags.includes('lowFodmap')) icons.push('🔽FODMAP');
+
 
       return [
         {
@@ -166,16 +195,23 @@ const { narrativeText } = await response.json();
 🧪 ${tUI('potassium', lang)}: ${meal.macros?.potassium ?? 0} mg`,
                   fontSize: 9
                 },
-                image ? {
-                  width: 120,
-                  image,
-                  margin: [10, 0, 0, 6]
-                } : {
+                image ? (
+                  image.startsWith('data:image') ? {
+                    width: 120,
+                    image,
+                    margin: [10, 0, 0, 6]
+                  } : {
+                    image: await toBase64Image(image), // pobrany URL → base64
+                    width: 120,
+                    margin: [10, 0, 0, 6]
+                  }
+                ) : {
                   text: tUI('noImageAvailable', lang),
                   alignment: 'center',
                   color: 'gray',
                   fontSize: 9
                 }
+
               ]
             },
             tagLabels.length > 0 ? {
@@ -391,7 +427,7 @@ content.push({
 
     footer: function (currentPage: number, pageCount: number) {
       return {
-        text: `© Diet Care Platform — ${patient.createdByName || 'Dietetyk'} | Strona ${currentPage} z ${pageCount}`,
+        text: `© Diet Care Platform — ${dietitianSignature} | Strona ${currentPage} z ${pageCount}`,
         style: 'footer'
       };
     }
@@ -423,3 +459,12 @@ function capitalize(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+async function toBase64Image(url: string): Promise<string> {
+  try {
+    const res = await fetch(url);
+    const buffer = await res.arrayBuffer();
+    return `data:image/jpeg;base64,${Buffer.from(buffer).toString('base64')}`;
+  } catch {
+    return '';
+  }
+}

@@ -22,6 +22,7 @@ export interface Meal {
     fiber?: number;     // 🆕 do PDF
     potassium?: number; // 🆕 do PDF
   };
+  imageUrl?: string; 
 }
 
 
