@@ -231,22 +231,32 @@ if (!response.ok) {
 const handleGenerateNarrative = async () => {
   setNarrativeGenerating(true);
   try {
+    const payload = {
+      interviewData: allAnswers,
+      goal: '',
+      recommendation: '',
+      lang
+    };
+
+    console.log('📤 Wysyłam do agent interviewNarrative:', payload);
+
     const response = await fetch('/api/interviewNarrativeAgent', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        interviewData: allAnswers,
-        goal: '',
-        recommendation: '',
-        lang
-      })
+      body: JSON.stringify(payload)
     });
 
     const raw = await response.text();
+    console.log('📩 Odpowiedź tekstowa od AI:', raw);
+
+    if (!raw.trim()) {
+      alert('⚠️ Pusta odpowiedź z AI. Spróbuj ponownie.');
+      return;
+    }
 
     try {
       const data = JSON.parse(raw);
-      setNarrativeText(data.narrativeText || '');
+      setNarrativeText(data.narrativeText || '⚠️ Brak wygenerowanego opisu.');
     } catch (err) {
       console.error('❌ JSON.parse() failed (narrative):', err, raw);
       alert('❌ Błąd przetwarzania odpowiedzi z AI.');
@@ -258,6 +268,7 @@ const handleGenerateNarrative = async () => {
     setNarrativeGenerating(false);
   }
 };
+
 
 return (
     <PanelCard className="z-10 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 dark:text-white transition-colors min-h-[550px]">

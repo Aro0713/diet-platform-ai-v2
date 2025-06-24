@@ -24,11 +24,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { interviewData, goal, recommendation, lang } = req.body;
 
-  if (!interviewData || typeof lang !== 'string') {
-    return res.status(400).json({ error: 'Missing required fields' });
+  if (
+    !interviewData ||
+    typeof interviewData !== 'object' ||
+    Object.keys(interviewData).length < 3 || // <--- minimum danych
+    typeof lang !== 'string'
+  ) {
+    return res.status(400).json({
+      error: 'Too little data to generate summary'
+    });
   }
 
   const selectedLang = languageMap[lang] || 'polski';
+
+  console.log('📥 Interview input to AI:', {
+    interviewData,
+    goal,
+    recommendation,
+    lang
+  });
 
   const prompt = `
 Language: ${selectedLang}
@@ -61,11 +75,13 @@ Write only one paragraph in ${selectedLang}. Mention conditions, stress, sleep, 
     const narrativeText = rawText.trim();
 
     if (!narrativeText || narrativeText.toLowerCase().includes('error')) {
-      console.error('⛔ Brak narracji lub AI odpowiedziało błędem:', rawText);
-      return res.status(200).json({ narrativeText: '⚠️ Brak opisu. Spróbuj ponownie później.' });
+      console.warn('⛔ AI returned invalid or empty narrative:', rawText);
+      return res.status(200).json({
+        narrativeText: '⚠️ Brak opisu. Spróbuj ponownie później.'
+      });
     }
 
-    console.log('📦 RAW AI TEXT:', narrativeText);
+    console.log('📦 AI narrative result:', narrativeText);
     return res.status(200).json({ narrativeText });
   } catch (err) {
     console.error('❌ GPT error in interviewNarrativeAgent:', err);
