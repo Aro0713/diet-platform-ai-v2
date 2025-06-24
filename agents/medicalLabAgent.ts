@@ -57,13 +57,19 @@ Output in language: ${lang}
 
   const content = completion.choices[0].message.content || '';
 
-  // 🔍 Wyodrębnij JSON z odpowiedzi (między ```json ... ```)
-  const jsonMatch = content.match(/```json\s*([\s\S]*?)```/);
   let parsed: any = {};
+  const jsonRegex = /```json\s*([\s\S]*?)```/;
+  const jsonMatch = content.match(jsonRegex);
 
   if (jsonMatch && jsonMatch[1]) {
+    let rawJson = jsonMatch[1].trim();
+
     try {
-      parsed = JSON.parse(jsonMatch[1]);
+      // Od-escape'uj jeśli to string z escapami
+      if (rawJson.startsWith('"')) {
+        rawJson = JSON.parse(rawJson); // JSON string → raw JSON text
+      }
+      parsed = JSON.parse(rawJson);    // raw JSON text → obiekt
     } catch (err) {
       console.error('❌ Błąd parsowania JSON z medicalLabAgent:', err);
     }
@@ -74,3 +80,4 @@ Output in language: ${lang}
     json: parsed
   };
 }
+
