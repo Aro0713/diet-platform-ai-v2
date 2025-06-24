@@ -242,16 +242,24 @@ const handleGenerateNarrative = async () => {
       })
     });
 
-    const data = await response.json();
-    setNarrativeText(data.narrativeText || '');
+    const raw = await response.text();
+
+    try {
+      const data = JSON.parse(raw);
+      setNarrativeText(data.narrativeText || '');
+    } catch (err) {
+      console.error('❌ JSON.parse() failed (narrative):', err, raw);
+      alert('❌ Błąd przetwarzania odpowiedzi z AI.');
+    }
   } catch (err) {
-    console.error('❌ Błąd generowania narracji:', err);
-    alert('Błąd AI podczas generowania opisu wywiadu.');
+    console.error('❌ Błąd wywołania AI:', err);
+    alert('Błąd połączenia z AI.');
   } finally {
     setNarrativeGenerating(false);
   }
 };
-  return (
+
+return (
     <PanelCard className="z-10 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 dark:text-white transition-colors min-h-[550px]">
       <div className="bg-blue-50 border border-blue-200 text-blue-900 dark:bg-blue-900 dark:border-blue-400 dark:text-white p-4 rounded text-sm mb-6 space-y-2">
         <p><strong>{tUI('interviewNoticeTitle', lang)}</strong> {tUI('interviewNotice1', lang)}</p>
@@ -378,71 +386,75 @@ const handleGenerateNarrative = async () => {
           </div>
         );
       })}
-<div className="flex justify-between mt-6">
-  {currentStep > 0 && (
-    <button
-      className="bg-gray-300 hover:bg-gray-400 text-black font-semibold py-2 px-4 rounded"
-      onClick={back}
-    >
-      ⬅️ {tUI('back', lang)}
-    </button>
-  )}
-  {isLastStep && (
-  <div className="mt-8 space-y-2">
-    <label className="block text-sm font-semibold">
-      🧠 {tUI('interviewNarrativeLabel', lang) || 'Narracyjny opis pacjenta'}
-    </label>
-
-    <textarea
-      className="w-full border rounded-md px-3 py-2 text-sm dark:bg-gray-800 dark:text-white"
-      rows={6}
-      value={narrativeText}
-      onChange={(e) => setNarrativeText(e.target.value)}
-      placeholder="Opis wygenerowany przez AI pojawi się tutaj..."
-    />
-
-    <button
-      type="button"
-      onClick={handleGenerateNarrative}
-      disabled={narrativeGenerating}
-      className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded disabled:opacity-50"
-    >
-      {narrativeGenerating
-        ? tUI('generatingNarrativePending', lang)
-        : tUI('generateNarrativeButton', lang)}
-    </button>
-  </div>
-)}
-
-  {isLastStep ? (
-    <div className="flex gap-2 justify-end">
+<div className="mt-6 flex flex-col gap-6">
+  <div className="flex justify-between items-center flex-wrap gap-4">
+    {currentStep > 0 && (
       <button
-        onClick={handleFinish}
-        disabled={saving}
-        className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded disabled:opacity-50"
+        className="bg-gray-300 hover:brightness-90 text-black font-semibold px-5 py-2.5 rounded-xl"
+        onClick={back}
       >
-        {saving ? 'Zapisywanie...' : saved ? 'Zapisano ✓' : `✅ ${tUI('saveInterview', lang)}`}
+        ⬅️ {tUI('back', lang)}
       </button>
+    )}
+
+    {isLastStep ? (
+      <div className="flex gap-4 justify-end flex-wrap ml-auto">
+        <button
+          onClick={handleFinish}
+          disabled={saving}
+          className="bg-green-500 hover:brightness-90 text-white font-semibold px-5 py-2.5 rounded-xl disabled:opacity-50"
+        >
+          {saving ? 'Zapisywanie...' : saved ? 'Zapisano ✓' : `✅ ${tUI('saveInterview', lang)}`}
+        </button>
+
+        <button
+          onClick={handleGeneratePdfOnly}
+          disabled={generatingPdf}
+          className="bg-purple-600 hover:brightness-90 text-white font-semibold px-5 py-2.5 rounded-xl disabled:opacity-50"
+        >
+          {generatingPdf ? 'Generuję PDF...' : `🧾 ${tUI('generateInterviewPdf', lang)}`}
+        </button>
+      </div>
+    ) : (
+      <button
+        className="ml-auto bg-blue-500 hover:brightness-90 text-white font-semibold px-5 py-2.5 rounded-xl"
+        onClick={next}
+      >
+        {tUI('next', lang)} ➡️
+      </button>
+    )}
+  </div>
+
+  {isLastStep && (
+    <div className="space-y-3">
+      <label className="block text-sm font-semibold">
+        🧠 {tUI('interviewNarrativeLabel', lang) || 'Narracyjny opis pacjenta'}
+      </label>
+
+      <textarea
+        className="w-full border rounded-xl px-4 py-3 text-sm leading-6
+          bg-white text-black border-gray-300 placeholder:text-gray-500
+          dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:placeholder:text-gray-400"
+        rows={6}
+        value={narrativeText}
+        onChange={(e) => setNarrativeText(e.target.value)}
+        placeholder="Opis wygenerowany przez AI pojawi się tutaj..."
+      />
 
       <button
-        onClick={handleGeneratePdfOnly}
-        disabled={generatingPdf}
-        className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded disabled:opacity-50"
+        type="button"
+        onClick={handleGenerateNarrative}
+        disabled={narrativeGenerating}
+        className="bg-blue-500 hover:brightness-90 text-white font-semibold px-5 py-2.5 rounded-xl disabled:opacity-50"
       >
-        {generatingPdf ? 'Generuję PDF...' : `🧾 ${tUI('generateInterviewPdf', lang)}`}
+        {narrativeGenerating
+          ? tUI('generatingNarrativePending', lang)
+          : tUI('generateNarrativeButton', lang)}
       </button>
     </div>
-  ) : (
-    <button
-      className="ml-auto bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded"
-      onClick={next}
-    >
-      {tUI('next', lang)} ➡️
-    </button>
   )}
 </div>
-
-    </PanelCard>
+  </PanelCard>
   );
 }
 
