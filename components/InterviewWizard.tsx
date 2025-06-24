@@ -240,27 +240,45 @@ const handleGenerateNarrative = async () => {
 
     console.log('📤 Wysyłam do agent interviewNarrative:', payload);
 
-    const response = await fetch('/api/interviewNarrativeAgent', {
+    const response = await fetch('/api/interview-narrative', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
 
-    const raw = await response.text();
-    console.log('📩 Odpowiedź tekstowa od AI:', raw);
+    const fullResult = await response.text();
+    console.log('📩 Pełna odpowiedź od AI:', fullResult);
 
-    if (!raw.trim()) {
+    if (!fullResult.trim()) {
       alert('⚠️ Pusta odpowiedź z AI. Spróbuj ponownie.');
       return;
     }
 
-    try {
-      const data = JSON.parse(raw);
-      setNarrativeText(data.narrativeText || '⚠️ Brak wygenerowanego opisu.');
-    } catch (err) {
-      console.error('❌ JSON.parse() failed (narrative):', err, raw);
-      alert('❌ Błąd przetwarzania odpowiedzi z AI.');
+    const jsonMatch = fullResult.match(/```json\s*([\s\S]*?)```/);
+    let parsed = null;
+
+    if (jsonMatch && jsonMatch[1]) {
+      let rawJson = jsonMatch[1].trim();
+      try {
+        parsed = JSON.parse(rawJson);
+      } catch (e1) {
+        try {
+          const unescaped = JSON.parse(rawJson);
+          parsed = JSON.parse(unescaped);
+        } catch (e2) {
+          console.error('❌ Podwójne parsowanie JSON zawiodło:', e2);
+        }
+      }
     }
+
+    const summary = fullResult.split("```json")[0].trim();
+
+    setNarrativeText(summary);
+    setAllAnswers((prev: any) => ({
+      ...prev,
+      narrativeJson: parsed || null
+    }));
+
   } catch (err) {
     console.error('❌ Błąd wywołania AI:', err);
     alert('Błąd połączenia z AI.');
@@ -268,7 +286,6 @@ const handleGenerateNarrative = async () => {
     setNarrativeGenerating(false);
   }
 };
-
 
 return (
     <PanelCard className="z-10 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 dark:text-white transition-colors min-h-[550px]">

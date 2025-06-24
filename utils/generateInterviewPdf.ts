@@ -1,5 +1,5 @@
 import { stampBase64 } from '@/utils/stamp';
-import { LangKey } from '@/utils/i18n';
+import { tUI, LangKey } from '@/utils/i18n';
 
 interface InterviewPdfParams {
   lang: LangKey;
@@ -23,20 +23,20 @@ export async function generateInterviewPdf({
   pdfMake.vfs = pdfFonts.vfs;
 
   const content: any[] = [
-    { text: '📝 Wywiad dietetyczny', style: 'header' },
+    { text: tUI('interviewPdfTitle', lang), style: 'header' },
     {
       text: `Data: ${new Date().toLocaleDateString()} | Płeć: ${sex}`,
       margin: [0, 0, 0, 10]
     },
 
-    { text: '🧠 Podsumowanie narracyjne', style: 'subheader', margin: [0, 10, 0, 4] },
+    { text: tUI('narrativeSummary', lang), style: 'subheader' },
     {
       text: narrativeText?.trim() || '⚠️ Brak opisu narracyjnego',
       italics: true,
       margin: [0, 0, 0, 10]
     },
 
-    { text: '🧾 Surowe odpowiedzi z wywiadu', style: 'subheader', margin: [0, 10, 0, 4] },
+    { text: tUI('rawAnswers', lang), style: 'subheader' },
     ...Object.entries(interview).map(([key, value]) => ({
       text: `${key}: ${value}`,
       fontSize: 10,

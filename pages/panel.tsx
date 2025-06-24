@@ -15,6 +15,7 @@ import PatientDataForm from '@/components/PatientDataForm'; //
 import MedicalForm from '@/components/MedicalForm';
 import SelectConditionForm from '@/components/SelectConditionForm';
 import InterviewWizard from '@/components/InterviewWizard'; 
+import { convertInterviewAnswers } from '@/utils/interviewHelpers';
 import DietGoalForm from '@/components/DietGoalForm';
 import SelectCuisineForm from '@/components/SelectCuisineForm';
 import SelectModelForm from '@/components/SelectModelForm';
@@ -425,13 +426,13 @@ const [narrativeText, setNarrativeText] = useState('');
 
 const handleGenerateNarrative = async () => {
   try {
+    const { narrativeInput } = convertInterviewAnswers(interviewData);
+
     const response = await fetch('/api/interview-narrative', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        interviewData,
+        interviewData: narrativeInput,
         goal: interviewData.goal,
         recommendation: interviewData.recommendation,
         lang
@@ -444,15 +445,36 @@ const handleGenerateNarrative = async () => {
       return;
     }
 
-    const data = await response.json();
-    if (!data.narrativeText) {
-      alert("⚠️ AI nie wygenerowało opisu. Spróbuj ponownie.");
-      return;
+    const fullResult = await response.text();
+
+    const jsonMatch = fullResult.match(/```json\s*([\s\S]*?)```/);
+    let parsed = null;
+
+    if (jsonMatch && jsonMatch[1]) {
+      let rawJson = jsonMatch[1].trim();
+      try {
+        parsed = JSON.parse(rawJson);
+      } catch (e1) {
+        try {
+          const unescaped = JSON.parse(rawJson);
+          parsed = JSON.parse(unescaped);
+        } catch (e2) {
+          console.error('❌ Błąd podwójnego parsowania JSON:', e2);
+        }
+      }
     }
 
-    setNarrativeText(data.narrativeText);
+    const summary = fullResult.split("```json")[0].trim();
+    setNarrativeText(summary);
+
+   setInterviewData((prev: any) => ({
+  ...prev,
+    narrativeText: summary,
+    narrativeJson: parsed || null
+  }));
+
   } catch (err) {
-    console.error("❌ Błąd sieci/AI:", err);
+    console.error("❌ Błąd połączenia z AI:", err);
     alert("⚠️ Nie udało się połączyć z AI.");
   }
 };
@@ -528,42 +550,27 @@ return (
       </PanelCard>
 
       {/* Sekcja 3: Wywiad pacjenta */}
-      <PanelCard title={`🧠 ${tUI('interviewTitle', lang)}`}>
-      <InterviewWizard
-        form={form}
-        lang={lang}
-        onFinish={(data) => {
-          setInterviewData(data);
-          setForm((prev) => ({
-            ...prev,
-            stressLevel: data.stressLevel,
-            sleepQuality: data.sleepQuality,
-            physicalActivity: data.physicalActivity,
-            mealsPerDay: data.mealsPerDay,
-          }));
-        }}
-      />
-          </PanelCard>
-          <PanelCard title="📝 Narracyjny opis pacjenta (AI)">
-      <div className="flex flex-col gap-2">
-        <textarea
-          rows={6}
-          value={narrativeText}
-          onChange={(e) => setNarrativeText(e.target.value)}
-          placeholder="Opis wygenerowany przez AI pojawi się tutaj..."
-          className="w-full border rounded px-3 py-2 text-sm text-gray-800 dark:text-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
-        />
+      <PanelCard title="📝 Narracyjny opis pacjenta (AI)">
+  <div className="flex flex-col gap-2">
+    <textarea
+      rows={6}
+      value={narrativeText}
+      onChange={(e) => setNarrativeText(e.target.value)}
+      placeholder="Opis wygenerowany przez AI pojawi się tutaj..."
+      className="w-full border rounded px-3 py-2 text-sm text-gray-800 dark:text-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+    />
 
-        <button
-          type="button"
-          className="bg-orange-500 hover:bg-orange-600 text-white font-medium px-4 py-2 rounded"
-          onClick={handleGenerateNarrative}
-          disabled={isGenerating}
-        >
-          {isGenerating ? '⏳ Piszę wywiad...' : '🔥 Pisz wywiad...'}
-        </button>
-      </div>
-    </PanelCard>
+    <button
+      type="button"
+      className="bg-orange-500 hover:bg-orange-600 text-white font-medium px-4 py-2 rounded"
+      onClick={handleGenerateNarrative}
+      disabled={isGenerating}
+    >
+      {isGenerating ? '⏳ Piszę wywiad...' : '🔥 Pisz wywiad...'}
+    </button>
+  </div>
+</PanelCard>
+
     {/* Sekcja 3.1: Rekomendacje lekarza i liczba posiłków */}
     <PanelCard className="h-full">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
