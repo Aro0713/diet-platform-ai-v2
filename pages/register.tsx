@@ -355,25 +355,41 @@ if (existingUser) {
 }
 
 // INSERT do tabeli users
-const insertResult = await supabase.from('users').insert([{
-  user_id: user.id,
-  name: form.name,
-  email: form.email,
-  phone: form.phone,
-  role: userType,
-  lang: lang,
-  jurisdiction:
-    userType === 'doctor' ? jurisdiction :
-    userType === 'dietitian' ? 'dietitian-default' :
-    null,
-  license_number:
-    userType === 'doctor' || userType === 'dietitian' ? licenseNumber : null,
-}]);
+if (userType === 'doctor' || userType === 'dietitian') {
+  const insertResult = await supabase.from('users').insert([{
+    user_id: user.id,
+    name: form.name,
+    email: form.email,
+    phone: form.phone,
+    role: userType,
+    lang: lang,
+    jurisdiction: userType === 'doctor' ? jurisdiction : 'dietitian-default',
+    license_number: licenseNumber
+  }]);
 
-if (insertResult.error) {
-  console.error('❌ Insert error:', insertResult.error);
-  alert(tUI('registrationPartialError'));
-  return;
+  if (insertResult.error) {
+    console.error('❌ Insert error (users):', insertResult.error);
+    alert(tUI('registrationPartialError'));
+    return;
+  }
+}
+
+if (userType === 'patient') {
+  const { error: patientError } = await supabase.from('patients').upsert({
+    user_id: user.id,
+    sex: 'unknown',
+    age: null,
+    region: 'default',
+    allergies: '',
+    health_status: '',
+    medical_data: ''
+  });
+
+  if (patientError) {
+    console.error('❌ Błąd dodawania pacjenta do patients:', patientError.message);
+    alert(tUI('registrationPartialError'));
+    return;
+  }
 }
 
 alert(t('registrationSuccess'));
