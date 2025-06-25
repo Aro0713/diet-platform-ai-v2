@@ -338,8 +338,31 @@ if (!session || !session.user) {
   return;
 }
 
-
 const user = session.user;
+if (userType === 'patient') {
+  const { error: patientError } = await supabase.from('patients').upsert({
+    user_id: user.id,
+    name: form.name,
+    email: form.email,
+    phone: form.phone,
+    lang: lang,
+    sex: 'unknown',
+    age: null,
+    height: null,
+    weight: null,
+    region: 'default',
+    allergies: '',
+    conditions: [],
+    health_status: '',
+    medical_data: {}
+  });
+
+  if (patientError) {
+    console.error('❌ Błąd dodawania pacjenta do tabeli patients:', patientError.message);
+    alert('Rejestracja nie została w pełni zakończona. Skontaktuj się z administratorem.');
+    return;
+  }
+}
 
 // Zabezpieczenie: czy wpis już istnieje?
 const { data: existingUser } = await supabase
