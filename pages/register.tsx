@@ -44,13 +44,15 @@ useEffect(() => {
       .eq('user_id', authUser.user.id)
       .maybeSingle();
 
-    if (!exists) {
+    const role = authUser.user.user_metadata?.role;
+
+    if (!exists && (role === 'doctor' || role === 'dietitian')) {
       const insertResult = await supabase.from('users').insert([{
         user_id: authUser.user.id,
         name: authUser.user.user_metadata?.name || authUser.user.email?.split('@')[0] || 'Nieznany',
         email: authUser.user.email,
-        role: 'patient',
-        lang: lang,
+        role,
+        lang,
       }]);
 
       if (insertResult.error) {
@@ -80,10 +82,8 @@ useEffect(() => {
     }
   };
 
-  runInsert(); 
-
-}, [router.query.confirmed, langReady, router.isReady]); 
-
+  runInsert();
+}, [router.query.confirmed, langReady, router.isReady]);
 
   const [selectedRoleLabel, setSelectedRoleLabel] = useState('');
   const [showAdminPopup, setShowAdminPopup] = useState(false);
@@ -585,38 +585,56 @@ return (
         <>
           {(router.query.mode === 'doctor' || router.query.mode === 'dietitian') && (
             <>
-              <button
+             <button
                 onClick={() => setUserType('doctor')}
-                className={`px-4 py-2 rounded ${userType === 'doctor' ? 'bg-blue-700 text-white' : 'bg-blue-100 text-blue-700'}`}
+                disabled={userType !== null}
+                className={`px-4 py-2 rounded transition ${
+                  userType === 'doctor'
+                    ? 'bg-blue-700 text-white'
+                    : 'bg-blue-100 text-blue-700'
+                } ${userType !== null ? 'opacity-50 cursor-not-allowed' : ''}`}
                 role="radio"
                 aria-checked={userType === 'doctor'}
+                aria-disabled={userType !== null}
                 aria-label={t('roleDoctor')}
               >
                 {t('roleDoctor')}
               </button>
 
-              <button
-                onClick={() => setUserType('dietitian')}
-                className={`px-4 py-2 rounded ${userType === 'dietitian' ? 'bg-purple-700 text-white' : 'bg-purple-100 text-purple-700'}`}
-                role="radio"
-                aria-checked={userType === 'dietitian'}
-                aria-label={t('roleDietitian')}
-              >
-                {t('roleDietitian')}
-              </button>
+             <button
+              onClick={() => setUserType('dietitian')}
+              disabled={userType !== null}
+              className={`px-4 py-2 rounded transition ${
+                userType === 'dietitian'
+                  ? 'bg-purple-700 text-white'
+                  : 'bg-purple-100 text-purple-700'
+              } ${userType !== null ? 'opacity-50 cursor-not-allowed' : ''}`}
+              role="radio"
+              aria-checked={userType === 'dietitian'}
+              aria-disabled={userType !== null}
+              aria-label={t('roleDietitian')}
+            >
+              {t('roleDietitian')}
+            </button>
             </>
           )}
 
           {(!router.query.mode || router.query.mode === 'register' || router.query.mode === 'patient') && (
-            <button
-              onClick={() => setUserType('patient')}
-              className={`px-4 py-2 rounded ${userType === 'patient' ? 'bg-green-700 text-white' : 'bg-green-100 text-green-700'}`}
-              role="radio"
-              aria-checked={userType === 'patient'}
-              aria-label={rolePatientLabel}
-            >
-              {rolePatientLabel}
-            </button>
+           <button
+            onClick={() => setUserType('patient')}
+            disabled={userType !== null}
+            className={`px-4 py-2 rounded transition ${
+              userType === 'patient'
+                ? 'bg-green-700 text-white'
+                : 'bg-green-100 text-green-700'
+            } ${userType !== null ? 'opacity-50 cursor-not-allowed' : ''}`}
+            role="radio"
+            aria-checked={userType === 'patient'}
+            aria-disabled={userType !== null}
+            aria-label={rolePatientLabel}
+          >
+            {rolePatientLabel}
+          </button>
           )}
         </>
       )}
