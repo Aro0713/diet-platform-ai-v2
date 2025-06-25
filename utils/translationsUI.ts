@@ -722,6 +722,19 @@ export const translationsUI: Record<string, Record<LangKey, string>> = {
   contraception: {
     pl: 'Antykoncepcja', en: 'Contraception', es: 'Anticoncepción', fr: 'Contraception', de: 'Verhütung', ua: 'Контрацепція', ru: 'Контрацепция', zh: '避孕', hi: 'गर्भनिरोधक', ar: 'منع الحمل', he: 'אמצעי מניעה'
   },
+  product: {
+  pl: "Produkt",
+  en: "Product",
+  es: "Producto",
+  fr: "Produit",
+  de: "Produkt",
+  ua: "Продукт",
+  ru: "Продукт",
+  zh: "产品",
+  hi: "उत्पाद",
+  ar: "المنتج",
+  he: "מוצר"
+},
     doctorRecommendation: {
       pl: 'Zalecenia lekarza / dietetyka',
       en: 'Doctor / Dietitian recommendations',

@@ -44,20 +44,35 @@ useEffect(() => {
       .eq('user_id', authUser.user.id)
       .maybeSingle();
 
-    if (!exists) {
+      if (!exists) {
       const insertResult = await supabase.from('users').insert([{
         user_id: authUser.user.id,
         name: authUser.user.email?.split('@')[0] || 'Nieznany',
         email: authUser.user.email,
         role: 'patient',
-        lang: lang, // teraz lang jest bezpieczny, bo czekałeś na langReady
+        lang: lang,
       }]);
 
       if (insertResult.error) {
         console.error('❌ Insert error po confirm:', insertResult.error);
       }
+
+      // ⬇️ DODAJ TO:
+      const { error: patientError } = await supabase.from('patients').upsert({
+        user_id: authUser.user.id,
+        sex: 'unknown',
+        age: null,
+        region: 'default',
+        allergies: '',
+        health_status: '',
+        medical_data: ''
+      });
+
+      if (patientError) {
+        console.error('❌ Błąd dodawania pacjenta do tabeli patients:', patientError.message);
+      }
     }
-  };
+ };
 
   runInsert();
 }, [router.query.confirmed, langReady, router.isReady]);
@@ -294,7 +309,7 @@ const { data, error } = await supabase.auth.signUp({
   email: form.email,
   password: form.password,
   options: {
-    emailRedirectTo: 'https://diet-platform-ai-v2.vercel.app/register?confirmed=true',
+    emailRedirectTo: 'https://dcp.care/register?confirmed=true',
     data: {
       name: form.name,
       phone: form.phone,
