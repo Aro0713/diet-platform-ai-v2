@@ -38,34 +38,41 @@ useEffect(() => {
     const { data: authUser, error: authError } = await supabase.auth.getUser();
     if (authError || !authUser?.user) return;
 
-    const { data: exists } = await supabase
-      .from('users')
-      .select('id')
-      .eq('user_id', authUser.user.id)
-      .maybeSingle();
+    const metadata = authUser.user.user_metadata || {};
+    const role = metadata.role || 'patient';
+    const langFromMeta = metadata.lang || 'pl';
 
-    const role = authUser.user.user_metadata?.role;
+    if (role === 'doctor' || role === 'dietitian') {
+      const { data: exists } = await supabase
+        .from('users')
+        .select('id')
+        .eq('user_id', authUser.user.id)
+        .maybeSingle();
 
-    if (!exists && (role === 'doctor' || role === 'dietitian')) {
-      const insertResult = await supabase.from('users').insert([{
-        user_id: authUser.user.id,
-        name: authUser.user.user_metadata?.name || authUser.user.email?.split('@')[0] || 'Nieznany',
-        email: authUser.user.email,
-        role,
-        lang,
-      }]);
+      if (!exists) {
+        const insertResult = await supabase.from('users').insert([{
+          user_id: authUser.user.id,
+          name: metadata.name || authUser.user.email?.split('@')[0] || 'Nieznany',
+          email: authUser.user.email,
+          phone: metadata.phone || '',
+          role,
+          lang: langFromMeta,
+          jurisdiction: metadata.jurisdiction || '',
+          license_number: metadata.license_number || ''
+        }]);
 
-      if (insertResult.error) {
-        console.error('❌ Insert error po confirm:', insertResult.error);
+        if (insertResult.error) {
+          console.error('❌ Insert error (users):', insertResult.error);
+        }
       }
     }
 
     const { error: patientError } = await supabase.from('patients').upsert({
       user_id: authUser.user.id,
-      name: authUser.user.user_metadata?.name || 'Nieznany',
+      name: metadata.name || 'Nieznany',
       email: authUser.user.email,
-      phone: authUser.user.user_metadata?.phone || '',
-      lang: lang,
+      phone: metadata.phone || '',
+      lang: langFromMeta,
       sex: 'unknown',
       age: null,
       height: null,
@@ -83,6 +90,7 @@ useEffect(() => {
   };
 
   runInsert();
+
 }, [router.query.confirmed, langReady, router.isReady]);
 
   const [selectedRoleLabel, setSelectedRoleLabel] = useState('');
@@ -338,71 +346,6 @@ const { data, error } = await supabase.auth.signUp({
     return alert('Błąd rejestracji: ' + error.message);
   }
 
-const sessionRes = await supabase.auth.getSession();
-const session = sessionRes.data?.session;
-
-if (!session || !session.user) {
-  alert(tUI('emailConfirmationNotice'));
-  return;
-}
-
-const user = session.user;
-
-// Zabezpieczenie: czy wpis już istnieje?
-const { data: existingUser } = await supabase
-  .from('users')
-  .select('id')
-  .eq('user_id', user.id)
-  .maybeSingle();
-
-if (existingUser) {
-  console.warn('ℹ️ ' + tUI('userAlreadyExists'));
-  router.push('/');
-  return;
-}
-
-// INSERT do tabeli users
-if (userType === 'doctor' || userType === 'dietitian') {
-  const insertResult = await supabase.from('users').insert([{
-    user_id: user.id,
-    name: form.name,
-    email: form.email,
-    phone: form.phone,
-    role: userType,
-    lang: lang,
-    jurisdiction: userType === 'doctor' ? jurisdiction : 'dietitian-default',
-    license_number: licenseNumber
-  }]);
-
-  if (insertResult.error) {
-    console.error('❌ Insert error (users):', insertResult.error);
-    alert(tUI('registrationPartialError'));
-    return;
-  }
-
-  const { error: patientError } = await supabase.from('patients').upsert({
-    user_id: user.id,
-    name: form.name.trim(),
-    email: form.email,
-    phone: form.phone,
-    lang: lang,
-    sex: 'unknown',
-    age: null,
-    height: null,
-    weight: null,
-    region: 'default',
-    allergies: '',
-    conditions: [],
-    health_status: '',
-    medical_data: {}
-  });
-
-  if (patientError) {
-    console.error('❌ Błąd dodawania pacjenta do tabeli patients:', patientError.message);
-    alert('Rejestracja nie została w pełni zakończona. Skontaktuj się z administratorem.');
-    return;
-  }
-}
 };
 const rolePatientLabel = t('rolePatient');
 const roleDoctorLabel = t('roleDoctor');
