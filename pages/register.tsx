@@ -44,7 +44,7 @@ useEffect(() => {
       .eq('user_id', authUser.user.id)
       .maybeSingle();
 
-      if (!exists) {
+    if (!exists) {
       const insertResult = await supabase.from('users').insert([{
         user_id: authUser.user.id,
         name: authUser.user.email?.split('@')[0] || 'Nieznany',
@@ -56,23 +56,23 @@ useEffect(() => {
       if (insertResult.error) {
         console.error('❌ Insert error po confirm:', insertResult.error);
       }
-
-      // ⬇️ DODAJ TO:
-      const { error: patientError } = await supabase.from('patients').upsert({
-        user_id: authUser.user.id,
-        sex: 'unknown',
-        age: null,
-        region: 'default',
-        allergies: '',
-        health_status: '',
-        medical_data: ''
-      });
-
-      if (patientError) {
-        console.error('❌ Błąd dodawania pacjenta do tabeli patients:', patientError.message);
-      }
     }
- };
+
+    // 🟢 Upsert zawsze, niezależnie od tego czy wpis istniał w users
+    const { error: patientError } = await supabase.from('patients').upsert({
+      user_id: authUser.user.id,
+      sex: 'unknown',
+      age: null,
+      region: 'default',
+      allergies: '',
+      health_status: '',
+      medical_data: ''
+    });
+
+    if (patientError) {
+      console.error('❌ Błąd dodawania pacjenta do tabeli patients:', patientError.message);
+  }
+};
 
   runInsert();
 }, [router.query.confirmed, langReady, router.isReady]);
