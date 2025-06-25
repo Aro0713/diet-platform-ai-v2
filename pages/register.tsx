@@ -339,10 +339,16 @@ if (!session || !session.user) {
 }
 
 const user = session.user;
+
 if (userType === 'patient') {
+  if (!form.name?.trim()) {
+    alert('Uzupełnij imię i nazwisko');
+    return;
+  }
+
   const { error: patientError } = await supabase.from('patients').upsert({
     user_id: user.id,
-    name: form.name,
+    name: form.name.trim(),
     email: form.email,
     phone: form.phone,
     lang: lang,
@@ -363,6 +369,7 @@ if (userType === 'patient') {
     return;
   }
 }
+
 
 // Zabezpieczenie: czy wpis już istnieje?
 const { data: existingUser } = await supabase
