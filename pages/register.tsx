@@ -47,7 +47,7 @@ useEffect(() => {
     if (!exists) {
       const insertResult = await supabase.from('users').insert([{
         user_id: authUser.user.id,
-        name: authUser.user.email?.split('@')[0] || 'Nieznany',
+        name: authUser.user.user_metadata?.name || authUser.user.email?.split('@')[0] || 'Nieznany',
         email: authUser.user.email,
         role: 'patient',
         lang: lang,
@@ -58,24 +58,32 @@ useEffect(() => {
       }
     }
 
-    // 🟢 Upsert zawsze, niezależnie od tego czy wpis istniał w users
     const { error: patientError } = await supabase.from('patients').upsert({
       user_id: authUser.user.id,
+      name: authUser.user.user_metadata?.name || 'Nieznany',
+      email: authUser.user.email,
+      phone: authUser.user.user_metadata?.phone || '',
+      lang: lang,
       sex: 'unknown',
       age: null,
+      height: null,
+      weight: null,
       region: 'default',
       allergies: '',
+      conditions: [],
       health_status: '',
-      medical_data: ''
+      medical_data: {}
     });
 
     if (patientError) {
-      console.error('❌ Błąd dodawania pacjenta do tabeli patients:', patientError.message);
-  }
-};
+      console.error('❌ Błąd dodawania pacjenta do patients:', patientError.message);
+    }
+  };
 
-  runInsert();
-}, [router.query.confirmed, langReady, router.isReady]);
+  runInsert(); 
+
+}, [router.query.confirmed, langReady, router.isReady]); 
+
 
   const [selectedRoleLabel, setSelectedRoleLabel] = useState('');
   const [showAdminPopup, setShowAdminPopup] = useState(false);
@@ -340,37 +348,6 @@ if (!session || !session.user) {
 
 const user = session.user;
 
-if (userType === 'patient') {
-  if (!form.name || form.name.trim() === '') {
-  console.warn('⚠️ Pole imię jest puste lub niezdefiniowane:', form.name);
-  alert('Uzupełnij imię i nazwisko przed rejestracją.');
-  return;
-}
-
-  const { error: patientError } = await supabase.from('patients').upsert({
-    user_id: user.id,
-    name: form.name.trim(),
-    email: form.email,
-    phone: form.phone,
-    lang: lang,
-    sex: 'unknown',
-    age: null,
-    height: null,
-    weight: null,
-    region: 'default',
-    allergies: '',
-    conditions: [],
-    health_status: '',
-    medical_data: {}
-  });
-
-if (patientError && patientError.message) {
-  console.error('❌ Błąd dodawania pacjenta do tabeli patients:', patientError.message);
-  alert('Rejestracja nie została w pełni zakończona. Skontaktuj się z administratorem.');
-  return;
-}
-}
-
 // Zabezpieczenie: czy wpis już istnieje?
 const { data: existingUser } = await supabase
   .from('users')
@@ -402,40 +379,31 @@ if (userType === 'doctor' || userType === 'dietitian') {
     alert(tUI('registrationPartialError'));
     return;
   }
-}
 
-if (userType === 'patient') {
   const { error: patientError } = await supabase.from('patients').upsert({
     user_id: user.id,
+    name: form.name.trim(),
+    email: form.email,
+    phone: form.phone,
+    lang: lang,
     sex: 'unknown',
     age: null,
+    height: null,
+    weight: null,
     region: 'default',
     allergies: '',
+    conditions: [],
     health_status: '',
-    medical_data: ''
+    medical_data: {}
   });
 
   if (patientError) {
-    console.error('❌ Błąd dodawania pacjenta do patients:', patientError.message);
-    alert(tUI('registrationPartialError'));
+    console.error('❌ Błąd dodawania pacjenta do tabeli patients:', patientError.message);
+    alert('Rejestracja nie została w pełni zakończona. Skontaktuj się z administratorem.');
     return;
   }
 }
-
-alert(t('registrationSuccess'));
-router.push('/');
-
 };
-
- // ⏳ Zatrzymanie renderu do momentu gotowości języka i routera
-
-if (!langReady || !router.isReady) {
-  return (
-    <main className="min-h-screen flex items-center justify-center">
-      <p className="text-gray-500 text-sm">⏳ Ładowanie języka...</p>
-    </main>
-  );
-}
 const rolePatientLabel = t('rolePatient');
 const roleDoctorLabel = t('roleDoctor');
 const roleDietitianLabel = t('roleDietitian');
