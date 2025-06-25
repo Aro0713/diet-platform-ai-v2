@@ -14,7 +14,7 @@ export default function PatientPanel() {
   const [lang, setLang] = useState('');
 
   useEffect(() => {
-    const fetchPatientData = async () => {
+        const fetchPatientData = async () => {
       const userId = localStorage.getItem('currentUserID');
       if (!userId) {
         alert('Nie jesteś zalogowany.');
@@ -26,7 +26,7 @@ export default function PatientPanel() {
         .from('patients')
         .select('*')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle(); // ✅ zamiast .single()
 
       if (error || !data) {
         console.error('Błąd pobierania danych pacjenta:', error);
@@ -46,6 +46,7 @@ export default function PatientPanel() {
         setDaysLeft(diff);
       }
     };
+
 
     fetchPatientData();
   }, [router]);
