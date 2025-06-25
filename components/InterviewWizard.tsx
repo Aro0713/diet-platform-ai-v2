@@ -158,25 +158,24 @@ export default function InterviewWizard({ onFinish, form, lang, onUpdateNarrativ
       );
     }
 
-const step = steps[currentStep] || { title: '', questions: [] };
-const isLastStep = currentStep === steps.length - 1;
-
-
+  const step = steps[currentStep] || { title: '', questions: [] };
+  const isLastStep = currentStep === steps.length - 1;
   const next = () => setCurrentStep((prev) => prev + 1);
-  const back = () => setCurrentStep((prev) => prev - 1);
-
+  const back = () => {
+  setCurrentStep((prev) => prev - 1);
+  setIsNarrativeFinalized(false);
+}; 
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-
-const handleChange = (name: string, value: string) => {
-  setAllAnswers((prev) => ({ ...prev, [name]: value }));
-};
-
-const handleFinish = async () => {
+  const handleChange = (name: string, value: string) => {
+    setAllAnswers((prev) => ({ ...prev, [name]: value }));
+  };
+  const handleFinish = async () => {
   setSaving(true);
   try {
     await onFinish({ ...allAnswers, narrativeText: narrativeText.trim() });
     setSaved(true);
+    setIsNarrativeFinalized(true);
     setTimeout(() => setSaved(false), 3000);
   } catch (e) {
     console.error('❌ Błąd zapisu wywiadu:', e);
@@ -188,12 +187,13 @@ const handleFinish = async () => {
 const [generatingPdf, setGeneratingPdf] = useState(false);
 const [narrativeText, setNarrativeText] = useState('');
 const [narrativeGenerating, setNarrativeGenerating] = useState(false);
+const [isNarrativeFinalized, setIsNarrativeFinalized] = useState(false);
 
 const handleGeneratePdfOnly = async () => {
   try {
     setGeneratingPdf(true);
 
- const response = await fetch('/api/interviewNarrativeAgent', {
+  const response = await fetch('/api/interview-narrative', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
@@ -467,9 +467,9 @@ return (
         dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:placeholder:text-gray-400"
       rows={6}
       value={narrativeText}
+      readOnly={isNarrativeFinalized}
       onChange={(e) => setNarrativeText(e.target.value)}
-      placeholder="Opis wygenerowany przez AI pojawi się tutaj..."
-    />
+      />
 
     <div className="flex flex-wrap gap-4 mt-3">
       <button
@@ -483,13 +483,17 @@ return (
           : tUI('generateNarrativeButton', lang)}
       </button>
 
+     {!isNarrativeFinalized && (
       <button
         type="button"
-        onClick={() => onUpdateNarrative?.(narrativeText)}
+        onClick={() => {
+          onUpdateNarrative?.(narrativeText);
+        }}
         className="bg-green-600 hover:brightness-90 text-white font-semibold px-5 py-2.5 rounded-xl"
       >
         💾 {tUI('save', lang)}
       </button>
+      )}
     </div>
   </div>
 )}
