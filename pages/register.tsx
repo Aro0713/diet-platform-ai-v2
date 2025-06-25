@@ -341,10 +341,11 @@ if (!session || !session.user) {
 const user = session.user;
 
 if (userType === 'patient') {
-  if (!form.name?.trim()) {
-    alert('Uzupełnij imię i nazwisko');
-    return;
-  }
+  if (!form.name || form.name.trim() === '') {
+  console.warn('⚠️ Pole imię jest puste lub niezdefiniowane:', form.name);
+  alert('Uzupełnij imię i nazwisko przed rejestracją.');
+  return;
+}
 
   const { error: patientError } = await supabase.from('patients').upsert({
     user_id: user.id,
@@ -363,13 +364,12 @@ if (userType === 'patient') {
     medical_data: {}
   });
 
-  if (patientError) {
-    console.error('❌ Błąd dodawania pacjenta do tabeli patients:', patientError.message);
-    alert('Rejestracja nie została w pełni zakończona. Skontaktuj się z administratorem.');
-    return;
-  }
+if (patientError && patientError.message) {
+  console.error('❌ Błąd dodawania pacjenta do tabeli patients:', patientError.message);
+  alert('Rejestracja nie została w pełni zakończona. Skontaktuj się z administratorem.');
+  return;
 }
-
+}
 
 // Zabezpieczenie: czy wpis już istnieje?
 const { data: existingUser } = await supabase
