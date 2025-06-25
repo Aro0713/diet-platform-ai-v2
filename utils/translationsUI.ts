@@ -2538,6 +2538,20 @@ generatingNarrativePending: {
     ar: "📝 مقابلة التغذية",
     he: "📝 ראיון תזונתי"
   },
+  interviewDate: {
+  pl: "Data",
+  en: "Date",
+  es: "Fecha",
+  fr: "Date",
+  de: "Datum",
+  ua: "Дата",
+  ru: "Дата",
+  zh: "日期",
+  hi: "तारीख़",
+  ar: "التاريخ",
+  he: "תאריך"
+},
+
   narrativeSummary: {
     pl: "🧠 Podsumowanie narracyjne",
     en: "🧠 Narrative Summary",

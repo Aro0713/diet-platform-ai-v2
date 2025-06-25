@@ -22,10 +22,14 @@ export async function generateInterviewPdf({
   const pdfFonts = (await import('pdfmake/build/vfs_fonts')).default;
   pdfMake.vfs = pdfFonts.vfs;
 
+  // 🧠 Przetłumaczona płeć
+  const sexLabel = sex === 'female' ? tUI('female', lang) : tUI('male', lang);
+
   const content: any[] = [
     { text: tUI('interviewPdfTitle', lang), style: 'header' },
+
     {
-      text: `Data: ${new Date().toLocaleDateString()} | Płeć: ${sex}`,
+      text: `${tUI('interviewDate', lang)}: ${new Date().toLocaleDateString()} | ${tUI('sex', lang)}: ${sexLabel}`,
       margin: [0, 0, 0, 10]
     },
 
@@ -33,15 +37,18 @@ export async function generateInterviewPdf({
     {
       text: narrativeText?.trim() || '⚠️ Brak opisu narracyjnego',
       italics: true,
-      margin: [0, 0, 0, 10]
+      margin: [0, 0, 0, 20]
     },
 
-    { text: tUI('rawAnswers', lang), style: 'subheader' },
+    // ❗Opcjonalnie – jeśli chcesz też zachować surowe odpowiedzi:
+    /*
+    { text: tUI('rawAnswers', lang), style: 'subheader', margin: [0, 10, 0, 5] },
     ...Object.entries(interview).map(([key, value]) => ({
       text: `${key}: ${value}`,
-      fontSize: 10,
-      margin: [0, 2, 0, 0],
-    }))
+      fontSize: 9,
+      margin: [0, 1, 0, 0],
+    })),
+    */
   ];
 
   if (approved) {
@@ -54,17 +61,17 @@ export async function generateInterviewPdf({
   }
 
   content.push({
-    text: '---\n© Diet Care Platform\nEmail: contact@dcp.care',
+    text: '© Diet Care Platform — contact@dcp.care',
     style: 'footer',
-    margin: [0, 30, 0, 0],
+    margin: [0, 40, 0, 0],
     alignment: 'center',
   });
 
   const docDefinition = {
     content,
     styles: {
-      header: { fontSize: 18, bold: true, margin: [0, 0, 0, 10] },
-      subheader: { fontSize: 14, bold: true },
+      header: { fontSize: 20, bold: true, alignment: 'center', margin: [0, 0, 0, 20] },
+      subheader: { fontSize: 14, bold: true, margin: [0, 10, 0, 5] },
       footer: { fontSize: 9, color: 'gray' },
     },
     defaultStyle: {
@@ -80,5 +87,6 @@ export async function generateInterviewPdf({
       : undefined,
   };
 
-  pdfMake.createPdf(docDefinition).open();
+  // ✅ pobranie, zamiast open()
+  pdfMake.createPdf(docDefinition).download("wywiad_dietetyczny.pdf");
 }
