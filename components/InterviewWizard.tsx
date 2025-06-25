@@ -240,46 +240,30 @@ const handleGenerateNarrative = async () => {
       lang
     };
 
-    console.log('📤 Wysyłam do agent interviewNarrative:', payload);
-
     const response = await fetch('/api/interview-narrative', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
 
-    const fullResult = await response.text();
-    console.log('📩 Pełna odpowiedź od AI:', fullResult);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
 
-    if (!fullResult.trim()) {
+    const json = await response.json();
+
+    if (!json || !json.narrativeText) {
       alert('⚠️ Pusta odpowiedź z AI. Spróbuj ponownie.');
       return;
     }
 
-    const jsonMatch = fullResult.match(/```json\s*([\s\S]*?)```/);
-    let parsed: Record<string, any> | null = null;
-
-    if (jsonMatch && jsonMatch[1]) {
-      let rawJson = jsonMatch[1].trim();
-      try {
-        parsed = JSON.parse(rawJson);
-      } catch (e1) {
-        try {
-          const unescaped = JSON.parse(rawJson);
-          parsed = JSON.parse(unescaped);
-        } catch (e2) {
-          console.error('❌ Podwójne parsowanie JSON zawiodło:', e2);
-        }
-      }
-    }
-
-    const summary = fullResult.split("```json")[0].trim();
-
-    setNarrativeText(summary);
+    setNarrativeText(json.narrativeText);
     setAllAnswers((prev: any) => ({
       ...prev,
-      narrativeJson: parsed || null
+      narrativeJson: json.structuredOutput || null
     }));
+
+    onUpdateNarrative?.(json.narrativeText); // opcjonalne automatyczne ustawienie
 
   } catch (err) {
     console.error('❌ Błąd wywołania AI:', err);
