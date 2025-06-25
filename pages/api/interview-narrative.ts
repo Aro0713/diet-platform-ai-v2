@@ -17,9 +17,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const result = await interviewNarrativeAgent({ interviewData, goal, recommendation, lang });
-    return res.status(200).send(result); // send full text (including ```json block)
+
+    // 🔍 Oddziel opis narracyjny od JSON-a (```json ... ```)
+    const match = result.match(/```json\s*([\s\S]*?)```/);
+    const narrativeText = result.split('```json')[0].trim();
+    let structuredOutput = null;
+
+    if (match && match[1]) {
+      try {
+        structuredOutput = JSON.parse(match[1]);
+      } catch (e) {
+        console.warn('⚠️ JSON parsing failed in API handler:', e);
+      }
+    }
+
+    return res.status(200).json({
+      narrativeText,
+      structuredOutput
+    });
+
   } catch (err) {
     console.error('❌ interviewNarrativeAgent error:', err);
     return res.status(500).json({ error: 'Agent failed' });
   }
 }
+
