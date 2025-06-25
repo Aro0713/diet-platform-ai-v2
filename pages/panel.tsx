@@ -88,6 +88,10 @@ useEffect(() => {
   });
 
   const [interviewData, setInterviewData] = useState<any>({});
+  const [interviewNarrative, setInterviewNarrative] = useState<string>('');
+  useEffect(() => {
+  console.log("📘 Opis wywiadu zapisany:", interviewNarrative);
+  }, [interviewNarrative]);
   const [history, setHistory] = useState<any[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [drafts, setDrafts] = useState<any[]>([]);
@@ -565,6 +569,7 @@ return (
               mealsPerDay: data.mealsPerDay
             }));
           }}
+          onUpdateNarrative={(text) => setInterviewNarrative(text)}
         />
       </PanelCard>
 

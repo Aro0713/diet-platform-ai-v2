@@ -41,7 +41,9 @@ interface Props {
     sex: 'female' | 'male';
   };
   lang: LangKey;
+  onUpdateNarrative?: (text: string) => void; 
 }
+
 
 const getSexString = (sex: 'female' | 'male' | undefined, lang: LangKey): string => {
   const forms: Record<LangKey, { female: string; male: string; default: string }> = {
@@ -121,7 +123,7 @@ const buildStep = (section: Record<LangKey, Record<string, any>>, lang: LangKey,
   return convertSectionFormat(parsed);
 };
 
-export default function InterviewWizard({ onFinish, form, lang }: Props) {
+export default function InterviewWizard({ onFinish, form, lang, onUpdateNarrative }: Props) {
   const [currentStep, setCurrentStep] = useState(0);
   const [allAnswers, setAllAnswers] = useState<InterviewAnswers>({});
 
@@ -173,7 +175,7 @@ const handleChange = (name: string, value: string) => {
 const handleFinish = async () => {
   setSaving(true);
   try {
-    await onFinish({ ...allAnswers, narrativeText });
+    await onFinish({ ...allAnswers, narrativeText: narrativeText.trim() });
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   } catch (e) {
@@ -453,22 +455,23 @@ return (
     )}
   </div>
 
-  {isLastStep && (
-    <div className="space-y-3">
-      <label className="block text-sm font-semibold">
-        🧠 {tUI('interviewNarrativeLabel', lang) || 'Narracyjny opis pacjenta'}
-      </label>
+{isLastStep && (
+  <div className="space-y-3">
+    <label className="block text-sm font-semibold">
+      🧠 {tUI('interviewNarrativeLabel', lang) || 'Narracyjny opis pacjenta (AI)'}
+    </label>
 
-      <textarea
-        className="w-full border rounded-xl px-4 py-3 text-sm leading-6
-          bg-white text-black border-gray-300 placeholder:text-gray-500
-          dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:placeholder:text-gray-400"
-        rows={6}
-        value={narrativeText}
-        onChange={(e) => setNarrativeText(e.target.value)}
-        placeholder="Opis wygenerowany przez AI pojawi się tutaj..."
-      />
+    <textarea
+      className="w-full border rounded-xl px-4 py-3 text-sm leading-6
+        bg-white text-black border-gray-300 placeholder:text-gray-500
+        dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:placeholder:text-gray-400"
+      rows={6}
+      value={narrativeText}
+      onChange={(e) => setNarrativeText(e.target.value)}
+      placeholder="Opis wygenerowany przez AI pojawi się tutaj..."
+    />
 
+    <div className="flex flex-wrap gap-4 mt-3">
       <button
         type="button"
         onClick={handleGenerateNarrative}
@@ -479,8 +482,18 @@ return (
           ? tUI('generatingNarrativePending', lang)
           : tUI('generateNarrativeButton', lang)}
       </button>
+
+      <button
+        type="button"
+        onClick={() => onUpdateNarrative?.(narrativeText)}
+        className="bg-green-600 hover:brightness-90 text-white font-semibold px-5 py-2.5 rounded-xl"
+      >
+        💾 {tUI('save', lang)}
+      </button>
     </div>
-  )}
+  </div>
+)}
+
 </div>
   </PanelCard>
   );
