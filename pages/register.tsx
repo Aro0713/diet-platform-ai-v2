@@ -264,26 +264,94 @@ const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
    alert(tUI('passwordResetSent'));
   };
 
+useEffect(() => {
+  const runInsert = async () => {
+    if (!router.isReady || router.query.confirmed !== 'true') return;
+
+    const { data: authUser, error: authError } = await supabase.auth.getUser();
+    if (authError || !authUser?.user) return;
+
+    const metadata = authUser.user.user_metadata || {};
+    const role = metadata.role || 'patient';
+    const langFromMeta = metadata.lang || 'pl';
+
+    // insert do users
+    if (role === 'doctor' || role === 'dietitian') {
+      const { data: exists } = await supabase
+        .from('users')
+        .select('id')
+        .eq('user_id', authUser.user.id)
+        .maybeSingle();
+
+      if (!exists) {
+        await supabase.from('users').insert([{
+          user_id: authUser.user.id,
+          name: metadata.name || authUser.user.email?.split('@')[0] || 'Nieznany',
+          email: authUser.user.email,
+          phone: metadata.phone || '',
+          role,
+          lang: langFromMeta,
+          jurisdiction: metadata.jurisdiction || '',
+          license_number: metadata.license_number || ''
+        }]);
+      }
+    }
+
+    // insert do patients (zawsze)
+    const { data: patientExists } = await supabase
+      .from('patients')
+      .select('id')
+      .eq('user_id', authUser.user.id)
+      .maybeSingle();
+
+    if (!patientExists) {
+      await supabase.from('patients').insert({
+        user_id: authUser.user.id,
+        name: metadata.name || 'Nieznany',
+        email: authUser.user.email,
+        phone: metadata.phone || '',
+        lang: langFromMeta,
+        sex: 'unknown',
+        age: null,
+        height: null,
+        weight: null,
+        region: 'default',
+        allergies: '',
+        conditions: [],
+        health_status: '',
+        medical_data: {}
+      });
+    }
+
+    setConfirmation(true);
+  };
+
+  runInsert();
+}, [router.query.confirmed, router.isReady]);
+
+const rolePatientLabel = t('rolePatient');
+const roleDoctorLabel = t('roleDoctor');
+const roleDietitianLabel = t('roleDietitian');
+const disclaimer = t('disclaimer');
+const consentPrefix = t('consentPrefix');
+const termsLinkText = t('termsLinkText');
+const privacyLinkText = t('privacyLinkText');
+const continueWithoutRegister = t('continueWithoutRegister');
+console.log({
+  lang,
+  disclaimer,
+  consentPrefix,
+  termsLinkText,
+  privacyLinkText,
+  continueWithoutRegister,
+});
 const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
-  console.log("🔥 handleRegister został wywołany");
   event.preventDefault();
 
   if (!consentGiven) {
     alert(tUI('mustAcceptTerms'));
     return;
   }
-
-  // ✅ SPRAWDZENIE MAILA: CZY UŻYTKOWNIK JUŻ ISTNIEJE
-    const { data: existing, error: checkError } = await supabase
-      .from('users')
-      .select('id')
-      .eq('email', form.email)
-      .maybeSingle();
-
-    if (existing) {
-      alert(tUI('emailAlreadyExists'));
-      return;
-    }
 
   if (userType === 'doctor' && !jurisdiction)
     return alert('Wybierz jurysdykcję zawodową.');
@@ -315,55 +383,36 @@ const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
       alert(tUI('manualVerificationSuccess'));
       return;
 
-      } catch (err) {
-        alert(tUI('manualVerificationFailure') + ': ' + (err as Error).message);
-        return;
-      }
-      }
-
-  // Rejestracja użytkownika
-const { data, error } = await supabase.auth.signUp({
-  email: form.email,
-  password: form.password,
-  options: {
-    emailRedirectTo: 'https://dcp.care/register?confirmed=true',
-    data: {
-      name: form.name,
-      phone: form.phone,
-      role: userType,
-      lang: lang,
-      jurisdiction:
-        userType === 'doctor' ? jurisdiction :
-        userType === 'dietitian' ? 'dietitian-default' :
-        null,
-      license_number:
-        userType === 'doctor' || userType === 'dietitian' ? licenseNumber : null
+    } catch (err) {
+      alert(tUI('manualVerificationFailure') + ': ' + (err as Error).message);
+      return;
     }
   }
-});
+
+  const { data, error } = await supabase.auth.signUp({
+    email: form.email,
+    password: form.password,
+    options: {
+      emailRedirectTo: 'https://dcp.care/register?confirmed=true',
+      data: {
+        name: form.name,
+        phone: form.phone,
+        role: userType,
+        lang: lang,
+        jurisdiction: userType === 'doctor' ? jurisdiction : 'dietitian-default',
+        license_number: licenseNumber
+      }
+    }
+  });
 
   if (error) {
     console.error('❌ Błąd rejestracji:', error.message);
-    return alert('Błąd rejestracji: ' + error.message);
+    alert('Błąd rejestracji: ' + error.message);
+    return;
   }
 
+  alert('📩 Link aktywacyjny został wysłany na e-mail.');
 };
-const rolePatientLabel = t('rolePatient');
-const roleDoctorLabel = t('roleDoctor');
-const roleDietitianLabel = t('roleDietitian');
-const disclaimer = t('disclaimer');
-const consentPrefix = t('consentPrefix');
-const termsLinkText = t('termsLinkText');
-const privacyLinkText = t('privacyLinkText');
-const continueWithoutRegister = t('continueWithoutRegister');
-console.log({
-  lang,
-  disclaimer,
-  consentPrefix,
-  termsLinkText,
-  privacyLinkText,
-  continueWithoutRegister,
-});
 
 return (
   <main
