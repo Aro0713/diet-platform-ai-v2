@@ -265,6 +265,7 @@ const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
   };
 
 const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
+  console.log("🔥 handleRegister został wywołany");
   event.preventDefault();
 
   if (!consentGiven) {
