@@ -283,15 +283,20 @@ console.log({
 const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
   event.preventDefault();
 
+  const mode = (router.query.mode || 'patient') as 'doctor' | 'dietitian' | 'patient';
+
+  // 🔒 Wymuszamy role:
+  const role = mode === 'patient' ? 'patient' : userType;
+
   if (!consentGiven) {
     alert(tUI('mustAcceptTerms'));
     return;
   }
 
-  if (userType === 'doctor' && !jurisdiction)
+  if (role === 'doctor' && !jurisdiction)
     return alert('Wybierz jurysdykcję zawodową.');
 
-  if ((userType === 'doctor' || userType === 'dietitian') && !licenseNumber)
+  if ((role === 'doctor' || role === 'dietitian') && !licenseNumber)
     return alert('Wprowadź numer licencji lub dyplomu.');
 
   if (jurisdiction === 'other') {
@@ -303,7 +308,7 @@ const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
           Accept: 'application/json',
         },
         body: JSON.stringify({
-          typ: userType,
+          typ: role,
           imie: form.name,
           email: form.email,
           phone: form.phone,
@@ -332,9 +337,9 @@ const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
       data: {
         name: form.name,
         phone: form.phone,
-        role: userType,
+        role: role,
         lang: lang,
-        jurisdiction: userType === 'doctor' ? jurisdiction : 'dietitian-default',
+        jurisdiction: role === 'doctor' ? jurisdiction : 'dietitian-default',
         license_number: licenseNumber
       }
     }
