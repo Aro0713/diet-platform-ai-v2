@@ -1,4 +1,3 @@
-// pages/panel-patient.tsx
 import Head from 'next/head';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
@@ -6,15 +5,14 @@ import LangAndThemeToggle from '@/components/LangAndThemeToggle';
 import { supabase } from '@/lib/supabaseClient';
 
 import { PatientIconGrid } from '@/components/PatientIconGrid';
-import PatientDataForm from '@/components/PatientDataForm';
+import PatientSelfForm from '@/components/PatientSelfForm';
 import MedicalForm from '@/components/MedicalForm';
 import InterviewWizard from '@/components/InterviewWizard';
 import CalculationBlock from '@/components/CalculationBlock';
 import DietTable from '@/components/DietTable';
-import PatientPanelSection from '@/components/PatientPanelSection';
 
 import { extractMappedInterview } from '@/utils/interviewHelpers';
-import { LangKey, tUI } from '@/utils/i18n';
+import { LangKey } from '@/utils/i18n';
 import type { PatientData, Meal } from '@/types';
 
 export default function PatientPanelPage() {
@@ -28,7 +26,6 @@ export default function PatientPanelPage() {
   const [interviewData, setInterviewData] = useState<any>({});
   const [medicalData, setMedicalData] = useState<any>(null);
   const [editableDiet, setEditableDiet] = useState<Record<string, Meal[]>>({});
-  const [calcResult, setCalcResult] = useState<any>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -75,17 +72,14 @@ export default function PatientPanelPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0b2e23]/80 dark:bg-[#0b2e23]/90 backdrop-blur-2xl text-white px-6 py-12 transition-all duration-300">
-
+    <div className="min-h-screen bg-[#0b2e23]/80 dark:bg-[#0b2e23]/90 backdrop-blur-2xl text-white px-4 py-10 transition-all duration-300">
       <Head>
         <title>Panel pacjenta</title>
       </Head>
 
       {/* Pasek nagłówka */}
       <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between px-4">
-        <div className="text-sm font-medium text-white">
-          {patient.name}
-        </div>
+        <div className="text-sm font-medium text-white">{patient.name}</div>
         <LangAndThemeToggle />
       </div>
 
@@ -94,9 +88,7 @@ export default function PatientPanelPage() {
 
       {/* Główna zawartość */}
       <div className="z-10 flex flex-col w-full max-w-[1000px] mx-auto gap-6 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 mt-20 dark:text-white transition-colors">
-        {selectedSection === 'data' && (
-         <PatientPanelSection form={form} setForm={setForm} lang={lang} />
-        )}
+        {selectedSection === 'data' && <PatientSelfForm lang={lang} />}
 
         {selectedSection === 'medical' && (
           <MedicalForm
@@ -162,7 +154,6 @@ export default function PatientPanelPage() {
                 ...result,
                 model: result.suggestedModel
               }));
-              setCalcResult(result);
             }}
           />
         )}
@@ -176,12 +167,11 @@ export default function PatientPanelPage() {
             lang={lang}
             notes={notes}
             setNotes={setNotes}
-            />
-
+          />
         )}
 
         {!selectedSection && (
-          <p className="text-center text-gray-700 dark:text-gray-300">
+          <p className="text-center text-gray-300">
             Wybierz jedną z ikon powyżej.
           </p>
         )}

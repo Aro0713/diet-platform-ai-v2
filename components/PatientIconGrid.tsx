@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { tUI, type LangKey } from '@/utils/i18n';
 import {
   NotebookPen,
@@ -15,25 +15,34 @@ interface PatientIconGridProps {
 }
 
 export const PatientIconGrid: React.FC<PatientIconGridProps> = ({ lang, onSelect }) => {
+  const [activeId, setActiveId] = useState<string | null>(null);
+
   const icons = [
-    { id: 'data', label: tUI('patientData', lang), icon: NotebookPen },
-    { id: 'medical', label: tUI('medicalAnalysis', lang), icon: Stethoscope },
-    { id: 'interview', label: tUI('interviewTitle', lang), icon: FileText },
-    { id: 'calculator', label: tUI('patientInNumbers', lang), icon: Calculator },
-    { id: 'diet', label: tUI('dietPlan', lang), icon: ChefHat },
-    { id: 'scan', label: tUI('scanProduct', lang), icon: ScanLine }
+    { id: 'data', label: tUI('patientData', lang), icon: NotebookPen, bg: 'bg-blue-200/30' },
+    { id: 'medical', label: tUI('medicalAnalysis', lang), icon: Stethoscope, bg: 'bg-red-200/30' },
+    { id: 'interview', label: tUI('interviewTitle', lang), icon: FileText, bg: 'bg-yellow-200/30' },
+    { id: 'calculator', label: tUI('patientInNumbers', lang), icon: Calculator, bg: 'bg-green-200/30' },
+    { id: 'diet', label: tUI('dietPlan', lang), icon: ChefHat, bg: 'bg-purple-200/30' },
+    { id: 'scan', label: tUI('scanProduct', lang), icon: ScanLine, bg: 'bg-pink-200/30' }
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 mt-20">
-      {icons.map(({ id, label, icon: Icon }) => (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 mt-20">
+      {icons.map(({ id, label, icon: Icon, bg }) => (
         <button
           key={id}
-          onClick={() => onSelect(id)}
-          className="flex flex-col items-center justify-center p-4 bg-white dark:bg-gray-800 rounded-xl shadow-md hover:scale-105 transition-all"
+          onClick={() => {
+            setActiveId(id);
+            onSelect(id);
+          }}
+          className={`
+            flex flex-col items-center justify-center 
+            p-6 ${bg} rounded-2xl shadow-lg transition-all transform
+            ${activeId === id ? 'rotate-180 scale-105' : 'hover:scale-105'}
+          `}
         >
-          <Icon size={32} className="text-blue-600 mb-2" />
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-200 text-center">
+          <Icon size={48} className="mb-3 text-black dark:text-white" />
+          <span className="text-sm font-medium text-center text-black dark:text-white">
             {label}
           </span>
         </button>
