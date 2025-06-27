@@ -73,7 +73,16 @@ const handleSave = async () => {
     return;
   }
 
-  console.log('💾 Zapis do Supabase dla user_id:', userId);
+  if (!patient.email) {
+    console.error('❌ Brak email — wymagany przez Supabase (NOT NULL)');
+    setMessage(tUI('saveError', lang));
+    return;
+  }
+
+  console.log('💾 Zapis danych pacjenta:', {
+    user_id: userId,
+    ...patient,
+  });
 
   setSaving(true);
   setMessage('');
@@ -82,25 +91,23 @@ const handleSave = async () => {
     .from('patients')
     .upsert([{
       user_id: userId,
-      name: patient.name,
-      phone: patient.phone,
-      sex: patient.sex,
+      ...patient,
       age: patient.age ? parseInt(patient.age) : null,
       height: patient.height ? parseInt(patient.height) : null,
       weight: patient.weight ? parseInt(patient.weight) : null,
-      region: patient.region,
     }]);
 
   if (error) {
     console.error('❌ Błąd zapisu danych pacjenta:', error.message);
     setMessage(tUI('saveError', lang));
   } else {
-    console.log('✅ Dane pacjenta zapisane.');
+    console.log('✅ Dane pacjenta zapisane do Supabase');
     setMessage(tUI('saveSuccess', lang));
   }
 
   setSaving(false);
 };
+
 
 if (loading) {
   return <p className="text-sm text-gray-500">{tUI('loading', lang)}...</p>;

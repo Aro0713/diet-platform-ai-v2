@@ -18,13 +18,13 @@ export const PatientIconGrid: React.FC<PatientIconGridProps> = ({ lang, onSelect
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const icons = [
-    { id: 'data', label: tUI('patientData', lang), icon: NotebookPen, bg: 'bg-blue-200/30' },
-    { id: 'medical', label: tUI('medicalAnalysis', lang), icon: Stethoscope, bg: 'bg-red-200/30' },
-    { id: 'interview', label: tUI('interviewTitle', lang), icon: FileText, bg: 'bg-yellow-200/30' },
-    { id: 'calculator', label: tUI('patientInNumbers', lang), icon: Calculator, bg: 'bg-green-200/30' },
-    { id: 'diet', label: tUI('dietPlan', lang), icon: ChefHat, bg: 'bg-purple-200/30' },
-    { id: 'scan', label: tUI('scanProduct', lang), icon: ScanLine, bg: 'bg-gray-300/30' }
-  ];
+  { id: 'data', label: tUI('patientData', lang), icon: NotebookPen, bg: 'bg-blue-500/30' },
+  { id: 'medical', label: tUI('medicalAnalysis', lang), icon: Stethoscope, bg: 'bg-rose-500/30' },
+  { id: 'interview', label: tUI('interviewTitle', lang), icon: FileText, bg: 'bg-amber-500/30' },
+  { id: 'calculator', label: tUI('patientInNumbers', lang), icon: Calculator, bg: 'bg-emerald-500/30' },
+  { id: 'diet', label: tUI('dietPlan', lang), icon: ChefHat, bg: 'bg-purple-600/30' },
+  { id: 'scan', label: tUI('scanProduct', lang), icon: ScanLine, bg: 'bg-cyan-500/30' }
+];
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 mt-20 px-4">
