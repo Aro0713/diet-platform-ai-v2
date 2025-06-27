@@ -95,91 +95,113 @@ const PatientSelfForm: React.FC<Props> = ({ lang }) => {
   }
 
   return (
-    <div className="space-y-4 max-w-xl mx-auto">
-      <h2 className="text-xl font-bold">{tUI('patientData', lang)}</h2>
+  <div className="space-y-4 max-w-xl mx-auto">
+    <h2 className="text-xl font-bold">{tUI('patientData', lang)}</h2>
 
-      <input
-        name="name"
-        value={patient.name}
-        onChange={handleChange}
-        className="w-full rounded px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600"
-        placeholder={tUI('fullName', lang)}
-      />
+    <input
+      name="name"
+      value={patient.name}
+      onChange={handleChange}
+      className="w-full px-4 py-2 rounded-md bg-white text-black placeholder-gray-500 
+                 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 
+                 border border-gray-300 dark:border-gray-600 
+                 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors"
+      placeholder={tUI('fullName', lang)}
+    />
 
-      <input
-        name="email"
-        value={patient.email}
-        disabled
-        className="w-full rounded px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-500"
-        placeholder="Email"
-      />
+    <input
+      name="email"
+      value={patient.email}
+      disabled
+      className="w-full px-4 py-2 rounded-md bg-gray-100 text-gray-500 
+                 dark:bg-gray-700 dark:text-gray-400 cursor-not-allowed"
+      placeholder="Email"
+    />
 
-      <input
-        name="phone"
-        value={patient.phone}
-        onChange={handleChange}
-        className="w-full rounded px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600"
-        placeholder={tUI('phone', lang)}
-      />
+    <input
+      name="phone"
+      value={patient.phone}
+      onChange={handleChange}
+      className="w-full px-4 py-2 rounded-md bg-white text-black placeholder-gray-500 
+                 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 
+                 border border-gray-300 dark:border-gray-600 
+                 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors"
+      placeholder={tUI('phone', lang)}
+    />
 
-      <select
-        name="sex"
-        value={patient.sex}
-        onChange={handleChange}
-        className="w-full rounded px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600"
-      >
-        <option value="">{tUI('selectOption', lang)}</option>
-        <option value="female">{tUI('female', lang)}</option>
-        <option value="male">{tUI('male', lang)}</option>
-        <option value="other">{tUI('other', lang)}</option>
-      </select>
+    <select
+      name="sex"
+      value={patient.sex}
+      onChange={handleChange}
+      className="w-full px-4 py-2 rounded-md bg-white text-black 
+                 dark:bg-gray-800 dark:text-white 
+                 border border-gray-300 dark:border-gray-600 
+                 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors"
+    >
+      <option value="">{tUI('selectOption', lang)}</option>
+      <option value="female">{tUI('female', lang)}</option>
+      <option value="male">{tUI('male', lang)}</option>
+      <option value="other">{tUI('other', lang)}</option>
+    </select>
 
-      <input
-        name="age"
-        type="number"
-        value={patient.age}
-        onChange={handleChange}
-        className="w-full rounded px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600"
-        placeholder={tUI('age', lang)}
-      />
+    <input
+      name="age"
+      type="number"
+      value={patient.age}
+      onChange={handleChange}
+      className="w-full px-4 py-2 rounded-md bg-white text-black placeholder-gray-500 
+                 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 
+                 border border-gray-300 dark:border-gray-600 
+                 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors"
+      placeholder={tUI('age', lang)}
+    />
 
-      <input
-        name="height"
-        type="number"
-        value={patient.height}
-        onChange={handleChange}
-        className="w-full rounded px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600"
-        placeholder={tUI('height', lang)}
-      />
+    <input
+      name="height"
+      type="number"
+      value={patient.height}
+      onChange={handleChange}
+      className="w-full px-4 py-2 rounded-md bg-white text-black placeholder-gray-500 
+                 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 
+                 border border-gray-300 dark:border-gray-600 
+                 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors"
+      placeholder={tUI('height', lang)}
+    />
 
-      <input
-        name="weight"
-        type="number"
-        value={patient.weight}
-        onChange={handleChange}
-        className="w-full rounded px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600"
-        placeholder={tUI('weight', lang)}
-      />
+    <input
+      name="weight"
+      type="number"
+      value={patient.weight}
+      onChange={handleChange}
+      className="w-full px-4 py-2 rounded-md bg-white text-black placeholder-gray-500 
+                 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 
+                 border border-gray-300 dark:border-gray-600 
+                 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors"
+      placeholder={tUI('weight', lang)}
+    />
 
-      <input
-        name="region"
-        value={patient.region}
-        onChange={handleChange}
-        className="w-full rounded px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600"
-        placeholder={tUI('region', lang)}
-      />
+    <input
+      name="region"
+      value={patient.region}
+      onChange={handleChange}
+      className="w-full px-4 py-2 rounded-md bg-white text-black placeholder-gray-500 
+                 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 
+                 border border-gray-300 dark:border-gray-600 
+                 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors"
+      placeholder={tUI('region', lang)}
+    />
 
-      <button
-        onClick={handleSave}
-        className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 transition disabled:opacity-50"
-        disabled={saving}
-      >
-        {saving ? tUI('saving', lang) : tUI('save', lang)}
-      </button>
+    <button
+      onClick={handleSave}
+      className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 transition disabled:opacity-50"
+      disabled={saving}
+    >
+      {saving ? tUI('saving', lang) : tUI('save', lang)}
+    </button>
 
-      {message && <p className="text-sm text-blue-600 mt-2">{message}</p>}
-    </div>
-  );
+    {message && <p className="text-sm text-blue-600 mt-2">{message}</p>}
+  </div>
+);
 };
 
 export default PatientSelfForm;
