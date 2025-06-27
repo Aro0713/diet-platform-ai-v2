@@ -226,32 +226,36 @@ const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     return;
   }
 
-  // ✅ użycie maybeSingle zamiast single
+  const userId = data.user.id;
+  localStorage.setItem('currentUserID', userId);
+
+  // ✅ najpierw próbujemy z tabeli users (lekarz/dietetyk)
   const { data: userData, error: userError } = await supabase
     .from('users')
-    .select('role, user_id, email')
-    .eq('user_id', data.user.id)
+    .select('role')
+    .eq('user_id', userId)
     .maybeSingle();
 
-  if (userError || !userData) {
-    console.error('❌ Nie można pobrać roli użytkownika:', userError);
-    alert(tUI('userRoleFetchError'));
+  if (userData?.role === 'doctor' || userData?.role === 'dietitian') {
+    router.push('/panel');
     return;
   }
 
-  localStorage.setItem('currentUserID', data.user.id);
+  // ✅ jeśli nie znaleziono – sprawdzamy tabelę patients
+  const { data: patientData, error: patientError } = await supabase
+    .from('patients')
+    .select('user_id')
+    .eq('user_id', userId)
+    .maybeSingle();
 
-  switch (userData.role) {
-    case 'doctor':
-    case 'dietitian':
-      router.push('/panel');
-      break;
-    case 'patient':
-      router.push('/patient');
-      break;
-    default:
-      alert(tUI('unknownUserRole'));
+  if (patientData) {
+    router.push('/panel-patient');
+    return;
   }
+
+  // ❌ brak wpisu w żadnej tabeli
+  console.error('❌ Nie można określić roli użytkownika:', userError, patientError);
+  alert(tUI('userRoleFetchError'));
 };
 
   const handleResetPassword = async (event: React.MouseEvent<HTMLButtonElement>) => {
