@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import LangAndThemeToggle from '@/components/LangAndThemeToggle';
 import { supabase } from '@/lib/supabaseClient';
+import { tUI } from '@/utils/i18n';
 
 import { PatientIconGrid } from '@/components/PatientIconGrid';
 import PatientSelfForm from '@/components/PatientSelfForm';
@@ -81,9 +82,19 @@ export default function PatientPanelPage() {
 
       {/* Pasek nagłówka */}
       <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between px-4">
-        <div className="text-sm font-medium text-white">{patient.name}</div>
-        <LangAndThemeToggle />
-      </div>
+  <div className="flex flex-col">
+    {patient?.name && (
+      <span className="text-sm font-medium text-gray-800 dark:text-white">
+        {patient.name}
+      </span>
+    )}
+    <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
+      {tUI('patientPanelTitle', lang)}
+    </h1>
+  </div>
+  <LangAndThemeToggle />
+</div>
+
 
       {/* Ikony */}
       <PatientIconGrid lang={lang} onSelect={(id) => setSelectedSection(id)} />
@@ -172,10 +183,10 @@ export default function PatientPanelPage() {
           />
         )}
 
-        {!selectedSection && (
-          <p className="text-center text-gray-300">
-            Wybierz jedną z ikon powyżej.
-          </p>
+       {!selectedSection && (
+        <p className="text-center text-gray-300 text-sm max-w-xl mx-auto">
+        {tUI('iconInstructionFull', lang)}
+        </p>
         )}
       </div>
      </main>
