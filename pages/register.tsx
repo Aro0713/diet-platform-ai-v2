@@ -229,7 +229,7 @@ const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
   const userId = data.user.id;
   localStorage.setItem('currentUserID', userId);
 
-  // ✅ najpierw próbujemy z tabeli users (lekarz/dietetyk)
+  // ✅ najpierw próbujemy z tabeli users
   const { data: userData, error: userError } = await supabase
     .from('users')
     .select('role')
@@ -237,6 +237,7 @@ const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     .maybeSingle();
 
   if (userData?.role === 'doctor' || userData?.role === 'dietitian') {
+    localStorage.setItem('currentUserRole', userData.role);
     router.push('/panel');
     return;
   }
@@ -249,6 +250,7 @@ const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     .maybeSingle();
 
   if (patientData) {
+    localStorage.setItem('currentUserRole', 'patient');
     router.push('/panel-patient');
     return;
   }
@@ -257,6 +259,7 @@ const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
   console.error('❌ Nie można określić roli użytkownika:', userError, patientError);
   alert(tUI('userRoleFetchError'));
 };
+
 
   const handleResetPassword = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
