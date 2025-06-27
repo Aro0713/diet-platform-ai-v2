@@ -356,12 +356,9 @@ const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
 
 return (
   <main
-  className="relative min-h-screen bg-cover bg-center bg-no-repeat flex flex-col items-center justify-start px-4 py-12 transition-colors"
-  style={{
-    backgroundImage:
-      "linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('/background.jpg')",
-  }}
+  className="relative min-h-screen bg-[#0b2e23]/80 dark:bg-[#0b2e23]/90 backdrop-blur-2xl flex flex-col justify-start items-center pt-10 px-4 text-white transition-all duration-300"
 >
+
   <nav className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between px-4">
     {/* 🌍 Wybór języka */}
     <div className="flex items-center gap-2">

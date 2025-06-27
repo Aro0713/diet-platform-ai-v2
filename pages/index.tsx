@@ -44,13 +44,9 @@ export default function Home() {
   if (!mounted) return null;
 
   return (
-    <main
-      className="relative min-h-screen bg-cover bg-center bg-no-repeat flex flex-col justify-start items-center pt-10 transition-colors"
-      style={{
-        backgroundImage:
-          'linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url(/background.jpg)',
-      }}
-    >
+  <main
+  className="relative min-h-screen bg-[#0b2e23]/80 dark:bg-[#0b2e23]/90 backdrop-blur-2xl flex flex-col justify-start items-center pt-10 px-4 text-white transition-all duration-300"
+>
       <Head>
         <title>Diet Care Platform</title>
       </Head>

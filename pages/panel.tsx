@@ -492,14 +492,7 @@ const handleCalculationResult = ({ suggestedModel, ...rest }: any) => {
   }));
 };
 return (
-  <div
-  className="min-h-screen bg-cover bg-center bg-no-repeat bg-fixed py-10 px-4"
-  style={{
-    backgroundImage: "url('/background.jpg')",
-    backgroundSize: 'cover',
-  }}
->
-
+<div className="min-h-screen bg-[#0b2e23]/80 dark:bg-[#0b2e23]/90 backdrop-blur-2xl text-white px-6 py-12 transition-all duration-300">
 
 {/* Pasek z nagłówkiem i przełącznikiem */}
   <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between px-4">
