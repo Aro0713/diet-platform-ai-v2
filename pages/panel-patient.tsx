@@ -72,7 +72,9 @@ export default function PatientPanelPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0b2e23]/80 dark:bg-[#0b2e23]/90 backdrop-blur-2xl text-white px-4 py-10 transition-all duration-300">
+  <main
+  className="relative min-h-screen bg-[#0d2f23]/60 dark:bg-[#0d2f23]/70 backdrop-blur-[10px] shadow-[inset_0_0_40px_rgba(0,0,0,0.4)] flex flex-col justify-start items-center pt-10 px-6 text-white transition-all duration-300"
+>
       <Head>
         <title>Panel pacjenta</title>
       </Head>
@@ -87,7 +89,7 @@ export default function PatientPanelPage() {
       <PatientIconGrid lang={lang} onSelect={(id) => setSelectedSection(id)} />
 
       {/* Główna zawartość */}
-      <div className="z-10 flex flex-col w-full max-w-[1000px] mx-auto gap-6 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 mt-20 dark:text-white transition-colors">
+      <div className="z-10 flex flex-col w-full max-w-[1000px] mx-auto gap-6 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 mt-20 dark:text-white transition-colors animate-flip-in origin-center">
         {selectedSection === 'data' && <PatientSelfForm lang={lang} />}
 
         {selectedSection === 'medical' && (
@@ -176,6 +178,6 @@ export default function PatientPanelPage() {
           </p>
         )}
       </div>
-    </div>
+     </main>
   );
 }

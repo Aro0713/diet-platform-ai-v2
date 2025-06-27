@@ -492,7 +492,10 @@ const handleCalculationResult = ({ suggestedModel, ...rest }: any) => {
   }));
 };
 return (
-<div className="min-h-screen bg-[#0b2e23]/80 dark:bg-[#0b2e23]/90 backdrop-blur-2xl text-white px-6 py-12 transition-all duration-300">
+<main
+  className="relative min-h-screen bg-[#0d2f23]/60 dark:bg-[#0d2f23]/70 backdrop-blur-[10px] shadow-[inset_0_0_40px_rgba(0,0,0,0.4)] flex flex-col justify-start items-center pt-10 px-6 text-white transition-all duration-300"
+>
+
 
 {/* Pasek z nagłówkiem i przełącznikiem */}
   <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between px-4">
@@ -803,7 +806,7 @@ return (
         </PanelCard>
       )}
     </div>
-  </div>
+   </main>
   
 );
 }
