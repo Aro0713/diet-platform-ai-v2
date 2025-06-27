@@ -21,78 +21,90 @@ const PatientSelfForm: React.FC<Props> = ({ lang }) => {
     region: '',
   });
 
-  useEffect(() => {
-    const fetchPatient = async () => {
-      const userId = localStorage.getItem('currentUserID');
-      if (!userId) return;
-
-      const { data, error } = await supabase
-        .from('patients')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (error || !data) {
-        console.error('❌ Błąd pobierania danych pacjenta:', error);
-        setLoading(false);
-        return;
-      }
-
-      setPatient({
-        name: data.name || '',
-        email: data.email || '',
-        phone: data.phone || '',
-        sex: data.sex || '',
-        age: data.age?.toString() || '',
-        height: data.height?.toString() || '',
-        weight: data.weight?.toString() || '',
-        region: data.region || '',
-      });
-
-      setLoading(false);
-    };
-
-    fetchPatient();
-  }, []);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setPatient((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSave = async () => {
+useEffect(() => {
+  const fetchPatient = async () => {
     const userId = localStorage.getItem('currentUserID');
-    if (!userId) return;
-
-    setSaving(true);
-    setMessage('');
-
-    const { error } = await supabase
-      .from('patients')
-      .update({
-        name: patient.name,
-        phone: patient.phone,
-        sex: patient.sex,
-        age: patient.age ? parseInt(patient.age) : null,
-        height: patient.height ? parseInt(patient.height) : null,
-        weight: patient.weight ? parseInt(patient.weight) : null,
-        region: patient.region,
-      })
-      .eq('user_id', userId);
-
-    if (error) {
-      console.error('❌ Błąd zapisu danych pacjenta:', error.message);
-      setMessage(tUI('saveError', lang));
-    } else {
-      setMessage(tUI('saveSuccess', lang));
+    if (!userId) {
+      console.error('❌ Brak user_id w localStorage');
+      return;
     }
 
-    setSaving(false);
+    const { data, error } = await supabase
+      .from('patients')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error || !data) {
+      console.error('❌ Błąd pobierania danych pacjenta:', error);
+      setLoading(false);
+      return;
+    }
+
+    console.log('📦 Dane pacjenta z Supabase:', data);
+
+    setPatient({
+      name: data.name || '',
+      email: data.email || '',
+      phone: data.phone || '',
+      sex: data.sex || '',
+      age: data.age?.toString() || '',
+      height: data.height?.toString() || '',
+      weight: data.weight?.toString() || '',
+      region: data.region || '',
+    });
+
+    setLoading(false);
   };
 
-  if (loading) {
-    return <p className="text-sm text-gray-500">{tUI('loading', lang)}...</p>;
+  fetchPatient();
+}, []);
+
+const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const { name, value } = e.target;
+  setPatient((prev) => ({ ...prev, [name]: value }));
+};
+
+const handleSave = async () => {
+  const userId = localStorage.getItem('currentUserID');
+  if (!userId) {
+    console.error('❌ Brak user_id podczas zapisu');
+    setMessage(tUI('saveError', lang));
+    return;
   }
+
+  console.log('💾 Zapis do Supabase dla user_id:', userId);
+
+  setSaving(true);
+  setMessage('');
+
+  const { error } = await supabase
+    .from('patients')
+    .upsert([{
+      user_id: userId,
+      name: patient.name,
+      phone: patient.phone,
+      sex: patient.sex,
+      age: patient.age ? parseInt(patient.age) : null,
+      height: patient.height ? parseInt(patient.height) : null,
+      weight: patient.weight ? parseInt(patient.weight) : null,
+      region: patient.region,
+    }]);
+
+  if (error) {
+    console.error('❌ Błąd zapisu danych pacjenta:', error.message);
+    setMessage(tUI('saveError', lang));
+  } else {
+    console.log('✅ Dane pacjenta zapisane.');
+    setMessage(tUI('saveSuccess', lang));
+  }
+
+  setSaving(false);
+};
+
+if (loading) {
+  return <p className="text-sm text-gray-500">{tUI('loading', lang)}...</p>;
+}
 
   return (
   <div className="space-y-4 max-w-xl mx-auto">
