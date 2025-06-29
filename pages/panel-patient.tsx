@@ -231,17 +231,20 @@ return (
         }}
         existingMedical={medicalData}
         initialData={{
-            selectedGroups: patient.conditionGroups ?? [],
-            selectedConditions: patient.conditions ?? [],
-            testResults: Object.fromEntries(
-            (patient.medical || []).flatMap((c: any) =>
-                (c.tests || []).map((t: any) => [`${c.condition}__${t.name}`, t.value])
-            )
-            )
+        selectedGroups: Array.isArray(patient.conditionGroups) ? patient.conditionGroups : [],
+        selectedConditions: Array.isArray(patient.conditions) ? patient.conditions : [],
+        testResults: Object.fromEntries(
+            Array.isArray(patient.medical)
+            ? patient.medical.flatMap((c: any) =>
+                Array.isArray(c.tests)
+                    ? c.tests.map((t: any) => [`${c.condition}__${t.name}`, t.value])
+                    : []
+                )
+            : []
+        )
         }}
         lang={lang}
         />
-
 
     {isConfirmed && !interviewData?.goal && (
       <div className="mt-6 p-4 bg-emerald-100/80 dark:bg-emerald-900/40 text-base rounded-md text-gray-900 dark:text-white shadow max-w-2xl mx-auto">
