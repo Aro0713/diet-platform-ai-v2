@@ -2695,6 +2695,46 @@ saveError: {
   ar: 'حدث خطأ أثناء حفظ البيانات.',
   he: 'שגיאה בשמירת הנתונים.',
 },
+dietPlan: {
+  pl: 'Plan diety',
+  en: 'Diet plan',
+  es: 'Plan de dieta',
+  fr: 'Plan alimentaire',
+  de: 'Ernährungsplan',
+  ua: 'План харчування',
+  ru: 'План питания',
+  zh: '饮食计划',
+  hi: 'आहार योजना',
+  ar: 'خطة النظام الغذائي',
+  he: 'תפריט תזונה',
+},
 
+medicalAnalysis: {
+  pl: 'Analiza medyczna',
+  en: 'Medical analysis',
+  es: 'Análisis médico',
+  fr: 'Analyse médicale',
+  de: 'Medizinische Analyse',
+  ua: 'Медичний аналіз',
+  ru: 'Медицинский анализ',
+  zh: '医学分析',
+  hi: 'चिकित्सा विश्लेषण',
+  ar: 'تحليل طبي',
+  he: 'ניתוח רפואי',
+},
+
+scanProduct: {
+  pl: 'Skanuj produkt',
+  en: 'Scan product',
+  es: 'Escanear producto',
+  fr: 'Scanner un produit',
+  de: 'Produkt scannen',
+  ua: 'Сканувати продукт',
+  ru: 'Сканировать продукт',
+  zh: '扫描产品',
+  hi: 'उत्पाद स्कैन करें',
+  ar: 'مسح المنتج',
+  he: 'סרוק מוצר',
+}
 };
 

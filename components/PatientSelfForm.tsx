@@ -87,15 +87,15 @@ const handleSave = async () => {
   setSaving(true);
   setMessage('');
 
-  const { error } = await supabase
+    const { error } = await supabase
     .from('patients')
     .upsert([{
-      user_id: userId,
-      ...patient,
-      age: patient.age ? parseInt(patient.age) : null,
-      height: patient.height ? parseInt(patient.height) : null,
-      weight: patient.weight ? parseInt(patient.weight) : null,
-    }]);
+        user_id: userId,
+        ...patient,
+        age: patient.age ? parseInt(patient.age) : null,
+        height: patient.height ? parseInt(patient.height) : null,
+        weight: patient.weight ? parseInt(patient.weight) : null,
+    }], { onConflict: 'user_id' });
 
   if (error) {
     console.error('❌ Błąd zapisu danych pacjenta:', error.message);
