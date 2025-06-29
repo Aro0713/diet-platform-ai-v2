@@ -243,19 +243,32 @@ if (hasNewMedicalData) {
             setMedicalData((prev: any) => ({ ...prev, summary }));
         }}
         existingMedical={medicalData}
-        initialData={{
-        selectedGroups: Array.isArray(patient.conditionGroups) ? patient.conditionGroups : [],
-        selectedConditions: Array.isArray(patient.conditions) ? patient.conditions : [],
-        testResults: Object.fromEntries(
-            Array.isArray(patient.medical)
-            ? patient.medical.flatMap((c: any) =>
-                Array.isArray(c.tests)
-                    ? c.tests.map((t: any) => [`${c.condition}__${t.name}`, t.value])
-                    : []
-                )
-            : []
-        )
-        }}
+       initialData={{
+            selectedGroups: Array.isArray(patient.conditionGroups)
+                ? patient.conditionGroups
+                : form.conditionGroups ?? [],
+
+            selectedConditions: Array.isArray(patient.conditions)
+                ? patient.conditions
+                : form.conditions ?? [],
+
+            testResults: Object.fromEntries(
+                Array.isArray(patient.medical)
+                ? patient.medical.flatMap((c: any) =>
+                    Array.isArray(c.tests)
+                        ? c.tests.map((t: any) => [`${c.condition}__${t.name}`, t.value])
+                        : []
+                    )
+                : Array.isArray(form.medical)
+                ? form.medical.flatMap((c: any) =>
+                    Array.isArray(c.tests)
+                        ? c.tests.map((t: any) => [`${c.condition}__${t.name}`, t.value])
+                        : []
+                    )
+                : []
+            )
+            }}
+
         lang={lang}
         />
 
