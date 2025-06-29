@@ -79,6 +79,33 @@ export default function PatientPanelPage() {
     fetchPatient();
   }, [router]);
 
+    useEffect(() => {
+    if (selectedSection === 'interview') {
+        const fetchInterviewData = async () => {
+        const userId = localStorage.getItem('currentUserID');
+        if (!userId) return;
+
+        const { data, error } = await supabase
+            .from('patients')
+            .select('interview_data')
+            .eq('user_id', userId)
+            .maybeSingle();
+
+        if (error) {
+            console.error('❌ Błąd pobierania interview_data:', error);
+            return;
+        }
+
+        if (data?.interview_data) {
+            setInterviewData(data.interview_data);
+            setIsInterviewConfirmed(true); // ✅ oznacz jako zatwierdzone
+        }
+        };
+
+        fetchInterviewData();
+    }
+    }, [selectedSection]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -86,33 +113,6 @@ export default function PatientPanelPage() {
       </div>
     );
   }
-
-useEffect(() => {
-  if (selectedSection === 'interview') {
-    const fetchInterviewData = async () => {
-      const userId = localStorage.getItem('currentUserID');
-      if (!userId) return;
-
-      const { data, error } = await supabase
-        .from('patients')
-        .select('interview_data')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (error) {
-        console.error('❌ Błąd pobierania interview_data:', error);
-        return;
-      }
-
-      if (data?.interview_data) {
-        setInterviewData(data.interview_data);
-        setIsInterviewConfirmed(true); // ✅ oznacz jako zatwierdzone
-      }
-    };
-
-    fetchInterviewData();
-  }
-}, [selectedSection]);
 
 return (
   <main className="relative min-h-screen 
@@ -244,8 +244,6 @@ return (
     )}
   </>
 )}
-
-
 
       {selectedSection === 'calculator' && (
         <CalculationBlock
