@@ -18,7 +18,15 @@ import type { PatientData, Meal } from '@/types';
 
 export default function PatientPanelPage() {
   const router = useRouter();
+
+  // Język
   const [lang, setLang] = useState<LangKey>('pl');
+  useEffect(() => {
+    const storedLang = localStorage.getItem('platformLang');
+    if (storedLang) setLang(storedLang as LangKey);
+  }, []);
+
+  // Status i dane
   const [loading, setLoading] = useState(true);
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
   const [patient, setPatient] = useState<any>(null);
@@ -29,11 +37,7 @@ export default function PatientPanelPage() {
   const [editableDiet, setEditableDiet] = useState<Record<string, Meal[]>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    const storedLang = localStorage.getItem('platformLang');
-    if (storedLang) setLang(storedLang as LangKey);
-  }, []);
-
+  // Pobranie danych pacjenta + interview + medical z Supabase
   useEffect(() => {
     const fetchPatient = async () => {
       const userId = localStorage.getItem('currentUserID');
@@ -45,12 +49,12 @@ export default function PatientPanelPage() {
 
       const { data, error } = await supabase
         .from('patients')
-        .select('*')
+        .select('*, interview_data, medical_data, health_status')
         .eq('user_id', userId)
         .maybeSingle();
 
       if (error || !data) {
-        console.error('Błąd pobierania danych pacjenta:', error);
+        console.error('❌ Błąd pobierania danych pacjenta:', error);
         alert('Nie znaleziono danych pacjenta.');
         router.push('/register');
         return;
@@ -58,6 +62,15 @@ export default function PatientPanelPage() {
 
       setPatient(data);
       setForm(data);
+
+      if (data.interview_data) setInterviewData(data.interview_data);
+      if (data.health_status || data.medical_data) {
+        setMedicalData({
+          summary: data.health_status ?? '',
+          json: data.medical_data ?? null
+        });
+      }
+
       setLoading(false);
     };
 
@@ -72,45 +85,46 @@ export default function PatientPanelPage() {
     );
   }
 
-  return (
- <main className="relative min-h-screen 
-  bg-[#0f271e]/70 
-  bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 
-  backdrop-blur-[12px] 
-  shadow-[inset_0_0_60px_rgba(255,255,255,0.08)] 
-  flex flex-col justify-start items-center pt-10 px-6 
-  text-white transition-all duration-300">
+return (
+  <main className="relative min-h-screen 
+    bg-[#0f271e]/70 
+    bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 
+    backdrop-blur-[12px] 
+    shadow-[inset_0_0_60px_rgba(255,255,255,0.08)] 
+    flex flex-col justify-start items-center pt-10 px-6 
+    text-white transition-all duration-300"
+  >
+    <Head>
+      <title>Panel pacjenta</title>
+    </Head>
 
-      <Head>
-        <title>Panel pacjenta</title>
-      </Head>
+    {/* Pasek nagłówka */}
+    <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between px-4">
+      <div className="flex flex-col">
+        {patient?.name && (
+          <span className="text-sm font-medium text-gray-800 dark:text-white">
+            {patient.name}
+          </span>
+        )}
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
+          {tUI('patientPanelTitle', lang)}
+        </h1>
+      </div>
+      <LangAndThemeToggle />
+    </div>
 
-      {/* Pasek nagłówka */}
-      <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between px-4">
-  <div className="flex flex-col">
-    {patient?.name && (
-      <span className="text-sm font-medium text-gray-800 dark:text-white">
-        {patient.name}
-      </span>
-    )}
-    <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
-      {tUI('patientPanelTitle', lang)}
-    </h1>
-  </div>
-  <LangAndThemeToggle />
-</div>
+    {/* Ikony */}
+    <PatientIconGrid lang={lang} onSelect={(id) => setSelectedSection(id)} />
 
+    {/* Główna zawartość */}
+    <div className="z-10 flex flex-col w-full max-w-[1000px] mx-auto gap-6 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 mt-20 dark:text-white transition-colors animate-flip-in origin-center">
+      
+      {selectedSection === 'data' && <PatientSelfForm lang={lang} />}
 
-      {/* Ikony */}
-      <PatientIconGrid lang={lang} onSelect={(id) => setSelectedSection(id)} />
-
-      {/* Główna zawartość */}
-      <div className="z-10 flex flex-col w-full max-w-[1000px] mx-auto gap-6 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 mt-20 dark:text-white transition-colors animate-flip-in origin-center">
-        {selectedSection === 'data' && <PatientSelfForm lang={lang} />}
-
-        {selectedSection === 'medical' && (
+      {selectedSection === 'medical' && (
+        <>
           <MedicalForm
-            onChange={({ selectedGroups, selectedConditions, testResults, medicalSummary, structuredOutput }) => {
+            onChange={async ({ selectedGroups, selectedConditions, testResults, medicalSummary, structuredOutput }) => {
               const convertedMedical = selectedConditions.map((condition) => ({
                 condition,
                 tests: Object.entries(testResults).map(([name, value]) => ({ name, value }))
@@ -136,64 +150,100 @@ export default function PatientPanelPage() {
                   json: structuredOutput ?? null
                 };
               });
+
+              // Zapis do Supabase
+              const userId = localStorage.getItem('currentUserID');
+              if (userId) {
+                await supabase
+                  .from('patients')
+                  .update({
+                    medical_data: structuredOutput,
+                    health_status: medicalSummary
+                  })
+                  .eq('user_id', userId);
+              }
             }}
             onUpdateMedical={(summary) => {
               setMedicalData((prev: any) => ({ ...prev, summary }));
             }}
             lang={lang}
           />
-        )}
+
+          {medicalData?.summary && !interviewData?.goal && (
+            <div className="mt-6 p-4 bg-emerald-100/80 dark:bg-emerald-900/40 text-sm rounded-md text-gray-900 dark:text-white shadow max-w-2xl mx-auto">
+              {tUI('medicalConfirmationMessage', lang)}
+            </div>
+          )}
+        </>
+      )}
 
         {selectedSection === 'interview' && (
-          <InterviewWizard
-            form={form}
-            lang={lang}
-            onFinish={(data) => {
-              setInterviewData(data);
-              setForm((prev) => ({
-                ...prev,
-                stressLevel: data.stressLevel,
-                sleepQuality: data.sleepQuality,
-                physicalActivity: data.physicalActivity,
-                mealsPerDay: data.mealsPerDay
-              }));
-            }}
-          />
-        )}
+  <>
+    <InterviewWizard
+      form={form}
+      lang={lang}
+      onFinish={async (data) => {
+        setInterviewData(data);
+        setForm((prev) => ({
+          ...prev,
+          stressLevel: data.stressLevel,
+          sleepQuality: data.sleepQuality,
+          physicalActivity: data.physicalActivity,
+          mealsPerDay: data.mealsPerDay
+        }));
 
-        {selectedSection === 'calculator' && (
-          <CalculationBlock
-            form={form}
-            interview={extractMappedInterview(interviewData)}
-            lang={lang}
-            onResult={(result) => {
-              setInterviewData((prev: any) => ({
-                ...prev,
-                ...result,
-                model: result.suggestedModel
-              }));
-            }}
-          />
-        )}
+        const userId = localStorage.getItem('currentUserID');
+        if (userId) {
+          await supabase
+            .from('patients')
+            .update({ interview_data: data })
+            .eq('user_id', userId);
+        }
+      }}
+    />
 
-        {selectedSection === 'diet' && editableDiet && Object.keys(editableDiet).length > 0 && (
-          <DietTable
-            editableDiet={editableDiet}
-            setEditableDiet={setEditableDiet}
-            setConfirmedDiet={() => {}}
-            isEditable={false}
-            lang={lang}
-            notes={notes}
-            setNotes={setNotes}
-          />
-        )}
-
-       {!selectedSection && (
-        <p className="text-center text-gray-300 text-sm max-w-xl mx-auto">
-        {tUI('iconInstructionFull', lang)}
-        </p>
-        )}
+    {interviewData?.goal && (
+      <div className="mt-6 p-4 bg-sky-100/80 dark:bg-sky-900/40 text-sm rounded-md text-gray-900 dark:text-white shadow max-w-2xl mx-auto">
+        {tUI('interviewConfirmationMessage', lang)}
       </div>
-     </main>
-  );
+    )}
+  </>
+)}
+
+
+      {selectedSection === 'calculator' && (
+        <CalculationBlock
+          form={form}
+          interview={extractMappedInterview(interviewData)}
+          lang={lang}
+          onResult={(result) => {
+            setInterviewData((prev: any) => ({
+              ...prev,
+              ...result,
+              model: result.suggestedModel
+            }));
+          }}
+        />
+      )}
+
+      {selectedSection === 'diet' && editableDiet && Object.keys(editableDiet).length > 0 && (
+        <DietTable
+          editableDiet={editableDiet}
+          setEditableDiet={setEditableDiet}
+          setConfirmedDiet={() => {}}
+          isEditable={false}
+          lang={lang}
+          notes={notes}
+          setNotes={setNotes}
+        />
+      )}
+
+      {!selectedSection && (
+        <p className="text-center text-gray-300 text-sm max-w-xl mx-auto">
+          {tUI('iconInstructionFull', lang)}
+        </p>
+      )}
+    </div>
+  </main>
+);
 }
