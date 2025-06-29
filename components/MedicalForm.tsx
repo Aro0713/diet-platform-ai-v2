@@ -75,7 +75,10 @@ useEffect(() => {
   if (initialData?.selectedGroups) setSelectedGroups(initialData.selectedGroups);
   if (initialData?.selectedConditions) setSelectedConditions(initialData.selectedConditions);
   if (initialData?.testResults) setTestResults(initialData.testResults);
+
+  if (initialData) setHasLoadedInitial(true); 
 }, [initialData]);
+
 
 
 // ✅ dynamiczne przypisanie availableConditions po zmianie grup
@@ -90,11 +93,14 @@ useEffect(() => {
 
   if (!isSame) {
     setAvailableConditions(conditions);
-    setSelectedConditions([]);
-    setTestResults({});
+
+    // ❗ Resetuj tylko jeśli initialData NIE zostało załadowane
+    if (!hasLoadedInitial) {
+      setSelectedConditions([]);
+      setTestResults({});
+    }
   }
 }, [selectedGroups]);
-
 
   const handleTestResultChange = (testName: string, value: string) => {
     setTestResults((prev) => ({
@@ -233,6 +239,7 @@ const handleMedicalAnalysis = async () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedSummary, setEditedSummary] = useState("");
   const [isConfirmed, setIsConfirmed] = useState(false);
+  const [hasLoadedInitial, setHasLoadedInitial] = useState(false);
 
 
   return (

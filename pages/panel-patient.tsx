@@ -254,7 +254,6 @@ return (
   </>
 )}
 
-
   {selectedSection === 'interview' && (
   <>
     <InterviewWizard
