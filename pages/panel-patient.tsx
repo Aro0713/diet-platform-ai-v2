@@ -1,5 +1,5 @@
 import Head from 'next/head';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import LangAndThemeToggle from '@/components/LangAndThemeToggle';
 import { supabase } from '@/lib/supabaseClient';
@@ -34,10 +34,11 @@ export default function PatientPanelPage() {
   const [form, setForm] = useState<PatientData>({} as PatientData);
   const [interviewData, setInterviewData] = useState<any>({});
   const [isInterviewConfirmed, setIsInterviewConfirmed] = useState(false);
-    const [medicalData, setMedicalData] = useState<any>(null);
+ const [medicalData, setMedicalData] = useState<any>(null);
   const [editableDiet, setEditableDiet] = useState<Record<string, Meal[]>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [isConfirmed, setIsConfirmed] = useState(false);
+const hasMedicalChanged = useRef(false);
 
   // Pobranie danych pacjenta + interview + medical z Supabase
   useEffect(() => {
@@ -106,6 +107,30 @@ export default function PatientPanelPage() {
     }
     }, [selectedSection]);
 
+useEffect(() => {
+  const saveMedicalIfNeeded = async () => {
+    if (
+      hasMedicalChanged.current &&
+      patient?.user_id &&
+      Array.isArray(form?.medical) && form.medical.length > 0
+    ) {
+      await supabase
+        .from('patients')
+        .update({
+          medical: form.medical,
+          medical_data: medicalData?.json ?? null,
+          health_status: medicalData?.summary ?? ''
+        })
+        .eq('user_id', patient.user_id);
+
+      console.log('✅ Dane medyczne zapisane automatycznie');
+      hasMedicalChanged.current = false;
+    }
+  };
+
+  saveMedicalIfNeeded();
+}, [selectedSection]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -153,11 +178,18 @@ return (
  {selectedSection === 'medical' && (
   <>
     <MedicalForm
-      onChange={async ({ selectedGroups, selectedConditions, testResults, medicalSummary, structuredOutput }) => {
-        const convertedMedical = selectedConditions.map((condition) => ({
-          condition,
-          tests: Object.entries(testResults).map(([name, value]) => ({ name, value }))
-        }));
+        onChange={async ({ selectedGroups, selectedConditions, testResults, medicalSummary, structuredOutput }) => {
+            hasMedicalChanged.current = true;
+
+            const convertedMedical = selectedConditions.map((condition) => ({
+            condition,
+            tests: Object.entries(testResults)
+                .filter(([key]) => key.startsWith(`${condition}__`))
+                .map(([name, value]) => ({
+                name: name.replace(`${condition}__`, ''),
+                value
+                }))
+            }));
 
         setForm((prev) => ({
           ...prev,
