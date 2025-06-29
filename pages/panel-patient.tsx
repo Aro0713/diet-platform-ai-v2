@@ -194,13 +194,21 @@ return (
         }))
     }));
 
-    setForm((prev) => ({
-      ...prev,
-      conditionGroups: selectedGroups,
-      conditions: selectedConditions,
-      testResults,
-      medical: convertedMedical
-    }));
+   const hasNewMedicalData =
+  JSON.stringify(form.conditionGroups) !== JSON.stringify(selectedGroups) ||
+  JSON.stringify(form.conditions) !== JSON.stringify(selectedConditions) ||
+  JSON.stringify(form.testResults) !== JSON.stringify(testResults) ||
+  JSON.stringify(form.medical) !== JSON.stringify(convertedMedical);
+
+if (hasNewMedicalData) {
+  setForm((prev) => ({
+    ...prev,
+    conditionGroups: selectedGroups,
+    conditions: selectedConditions,
+    testResults,
+    medical: convertedMedical
+  }));
+}
 
     setMedicalData((prev: any) => {
       if (
@@ -217,14 +225,16 @@ return (
 
     setIsConfirmed(true);
 
-    const userId = localStorage.getItem('currentUserID');
-    if (userId) {
-      await supabase
+        const userId = localStorage.getItem('currentUserID');
+    if (userId && hasNewMedicalData) {
+    await supabase
         .from('patients')
         .update({
-          medical: convertedMedical,
-          medical_data: structuredOutput,
-          health_status: medicalSummary
+        medical: convertedMedical,
+        medical_data: structuredOutput,
+        health_status: medicalSummary,
+        conditionGroups: selectedGroups,
+        conditions: selectedConditions
         })
         .eq('user_id', userId);
         }
