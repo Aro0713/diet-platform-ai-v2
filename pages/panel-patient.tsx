@@ -150,7 +150,7 @@ return (
       
       {selectedSection === 'data' && <PatientSelfForm lang={lang} />}
 
-  {selectedSection === 'medical' && (
+ {selectedSection === 'medical' && (
   <>
     <MedicalForm
       onChange={async ({ selectedGroups, selectedConditions, testResults, medicalSummary, structuredOutput }) => {
@@ -198,6 +198,7 @@ return (
       onUpdateMedical={(summary) => {
         setMedicalData((prev: any) => ({ ...prev, summary }));
       }}
+      existingMedical={medicalData} // ✅ DODANE
       lang={lang}
     />
 

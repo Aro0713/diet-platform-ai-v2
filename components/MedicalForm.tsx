@@ -21,12 +21,18 @@ interface MedicalFormProps {
     medicalSummary?: string;
     structuredOutput?: any;
   }) => void;
-  onUpdateMedical?: (summary: string) => void; // <-- DODAJ TO
+  onUpdateMedical?: (summary: string) => void;
+  onDeleteMedical?: () => void; // ✅ DODAJ TO
+  existingMedical?: { summary?: string; json?: any };
   lang: LangKey;
 }
-
-
-  const MedicalForm: React.FC<MedicalFormProps> = ({ onChange, onUpdateMedical, lang }) => {
+const MedicalForm: React.FC<MedicalFormProps> = ({
+  onChange,
+  onUpdateMedical,
+  onDeleteMedical, // ✅ DODAJ TO
+  existingMedical,
+  lang
+}) => {
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [availableConditions, setAvailableConditions] = useState<string[]>([]);
   const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
@@ -35,6 +41,7 @@ interface MedicalFormProps {
   const [medicalSummary, setMedicalSummary] = useState<string | undefined>();
   const [structuredOutput, setStructuredOutput] = useState<any | undefined>();
   const [loading, setLoading] = useState(false);
+  const [showSnackbar, setShowSnackbar] = useState(false);
 
   useEffect(() => {
   const observer = new MutationObserver(() => {
@@ -50,6 +57,12 @@ interface MedicalFormProps {
 
   return () => observer.disconnect();
 }, []);
+
+useEffect(() => {
+  if (existingMedical?.summary) setMedicalSummary(existingMedical.summary);
+  if (existingMedical?.json) setStructuredOutput(existingMedical.json);
+}, [existingMedical]);
+
 
 // ✅ dynamiczne przypisanie availableConditions po zmianie grup
 useEffect(() => {
@@ -288,7 +301,7 @@ const handleMedicalAnalysis = async () => {
         <div className="flex justify-end mt-2">
           <button
             className="px-4 py-1 bg-green-600 text-white rounded hover:bg-green-700"
-             onClick={() => {
+            onClick={() => { 
             setMedicalSummary(editedSummary);
             setStructuredOutput(undefined); // ❗ Kasujemy JSON bo nieaktualny
             setIsEditing(false);
@@ -306,21 +319,21 @@ const handleMedicalAnalysis = async () => {
   )}
 
 <div className="mt-4 flex flex-col md:flex-row gap-3">
-<button
-  type="button"
-  onClick={() => {
-    handleConfirmAnalysis();
-    setIsConfirmed(true);
-  }}
-  disabled={!medicalSummary}
-  className={`flex-1 px-4 py-2 rounded-md shadow-md font-semibold transition-colors ${
-    isConfirmed
-      ? "bg-green-100 text-green-800 cursor-default"
-      : "bg-green-600 text-white hover:bg-green-700"
-  }`}
->
-  ✅ {tUI(isConfirmed ? "analysisConfirmed" : "confirmAnalysis", lang)}
-</button>
+  <button
+    type="button"
+    onClick={() => {
+      handleConfirmAnalysis();
+      setIsConfirmed(true);
+    }}
+    disabled={!medicalSummary}
+    className={`flex-1 px-4 py-2 rounded-md shadow-md font-semibold transition-colors ${
+      isConfirmed
+        ? "bg-green-100 text-green-800 cursor-default"
+        : "bg-green-600 text-white hover:bg-green-700"
+    }`}
+  >
+    ✅ {tUI(isConfirmed ? "analysisConfirmed" : "confirmAnalysis", lang)}
+  </button>
 
   <button
     onClick={() => {
@@ -331,6 +344,25 @@ const handleMedicalAnalysis = async () => {
   >
     ✏️ {tUI("editAnalysis", lang)}
   </button>
+
+  {onDeleteMedical && (
+    <button
+       onClick={() => {
+      setMedicalSummary(undefined);
+      setStructuredOutput(undefined);
+      setSelectedGroups([]);
+      setSelectedConditions([]);
+      setTestResults({});
+      onDeleteMedical();
+      setShowSnackbar(true);
+      setTimeout(() => setShowSnackbar(false), 3000);
+    }}
+
+      className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md shadow-md hover:bg-red-700 transition-colors"
+    >
+      🗑️ {tUI("deleteMedicalData", lang)}
+    </button>
+  )}
 </div>
 </div>
 </PanelCard>
