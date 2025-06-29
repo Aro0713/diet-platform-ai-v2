@@ -112,14 +112,17 @@ useEffect(() => {
     if (
       hasMedicalChanged.current &&
       patient?.user_id &&
-      Array.isArray(form?.medical) && form.medical.length > 0
+      Array.isArray(form?.medical) &&
+      form.medical.length > 0
     ) {
       await supabase
         .from('patients')
         .update({
           medical: form.medical,
           medical_data: medicalData?.json ?? null,
-          health_status: medicalData?.summary ?? ''
+          health_status: medicalData?.summary ?? '',
+          conditionGroups: form.conditionGroups ?? [],
+          conditions: form.conditions ?? []
         })
         .eq('user_id', patient.user_id);
 
