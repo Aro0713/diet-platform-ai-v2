@@ -244,15 +244,19 @@ if (hasNewMedicalData) {
         }}
         existingMedical={medicalData}
        initialData={{
-            selectedGroups: Array.isArray(patient.conditionGroups)
-                ? patient.conditionGroups
-                : form.conditionGroups ?? [],
+        selectedGroups: Array.isArray(patient?.conditionGroups)
+            ? patient.conditionGroups
+            : Array.isArray(form?.conditionGroups)
+            ? form.conditionGroups
+            : [],
 
-            selectedConditions: Array.isArray(patient.conditions)
-                ? patient.conditions
-                : form.conditions ?? [],
-           
-              testResults: Object.fromEntries(
+        selectedConditions: Array.isArray(patient?.conditions)
+            ? patient.conditions
+            : Array.isArray(form?.conditions)
+            ? form.conditions
+            : [],
+
+         testResults: Object.fromEntries(
             (
                 Array.isArray(patient?.medical)
                 ? patient.medical
