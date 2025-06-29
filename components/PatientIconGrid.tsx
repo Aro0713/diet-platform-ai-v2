@@ -19,11 +19,11 @@ export const PatientIconGrid: React.FC<PatientIconGridProps> = ({ lang, onSelect
 
   const icons = [
     { id: 'data', label: tUI('patientData', lang), icon: NotebookPen, bg: 'bg-blue-600/30' },
-    { id: 'medical', label: tUI('medicalAnalysis', lang), icon: Stethoscope, bg: 'bg-rose-600/30' },
-    { id: 'interview', label: tUI('interviewTitle', lang), icon: FileText, bg: 'bg-yellow-500/30' },
-    { id: 'calculator', label: tUI('patientInNumbers', lang), icon: Calculator, bg: 'bg-emerald-500/30' },
-    { id: 'diet', label: tUI('dietPlan', lang), icon: ChefHat, bg: 'bg-purple-700/30' },
-    { id: 'scan', label: tUI('scanProduct', lang), icon: ScanLine, bg: 'bg-cyan-600/30' }
+    { id: 'medical', label: tUI('medicalAnalysis', lang), icon: Stethoscope, bg: 'bg-red-600/30' },
+    { id: 'interview', label: tUI('interviewTitle', lang), icon: FileText, bg: 'bg-orange-500/30' },
+    { id: 'calculator', label: tUI('patientInNumbers', lang), icon: Calculator, bg: 'bg-yellow-400/30' },
+    { id: 'diet', label: tUI('dietPlan', lang), icon: ChefHat, bg: 'bg-green-600/30' },
+    { id: 'scan', label: tUI('scanProduct', lang), icon: ScanLine, bg: 'bg-purple-700/30' }
   ];
 
   return (
