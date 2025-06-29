@@ -252,16 +252,16 @@ if (hasNewMedicalData) {
                 ? patient.conditions
                 : form.conditions ?? [],
            
-                testResults: Object.fromEntries(
-            (Array.isArray(patient?.medical)
+              testResults: Object.fromEntries(
+            (
+                Array.isArray(patient?.medical)
                 ? patient.medical
                 : Array.isArray(form?.medical)
                 ? form.medical
                 : []
             ).flatMap((c: any) => {
-                if (!c || typeof c !== 'object') return [];
-                const tests = Array.isArray(c.tests) ? c.tests : [];
-                return tests
+                if (!c || typeof c !== 'object' || !Array.isArray(c.tests)) return [];
+                return c.tests
                 .filter((t: any) => t && typeof t.name === 'string')
                 .map((t: { name: string; value: any }) => [
                     `${c.condition ?? 'Nieznane'}__${t.name}`,
@@ -269,6 +269,7 @@ if (hasNewMedicalData) {
                 ]);
             })
             )
+
 
             }}
             lang={lang}
