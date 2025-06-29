@@ -177,62 +177,71 @@ return (
 
  {selectedSection === 'medical' && (
   <>
-    <MedicalForm
-        onChange={async ({ selectedGroups, selectedConditions, testResults, medicalSummary, structuredOutput }) => {
-            hasMedicalChanged.current = true;
+<MedicalForm
+  onChange={async ({ selectedGroups, selectedConditions, testResults, medicalSummary, structuredOutput }) => {
+    hasMedicalChanged.current = true;
 
-            const convertedMedical = selectedConditions.map((condition) => ({
-            condition,
-            tests: Object.entries(testResults)
-                .filter(([key]) => key.startsWith(`${condition}__`))
-                .map(([name, value]) => ({
-                name: name.replace(`${condition}__`, ''),
-                value
-                }))
-            }));
+    const convertedMedical = selectedConditions.map((condition) => ({
+      condition,
+      tests: Object.entries(testResults)
+        .filter(([key]) => key.startsWith(`${condition}__`))
+        .map(([name, value]) => ({
+          name: name.replace(`${condition}__`, ''),
+          value
+        }))
+    }));
 
-        setForm((prev) => ({
-          ...prev,
-          conditionGroups: selectedGroups,
-          conditions: selectedConditions,
-          testResults,
-          medical: convertedMedical
-        }));
+    setForm((prev) => ({
+      ...prev,
+      conditionGroups: selectedGroups,
+      conditions: selectedConditions,
+      testResults,
+      medical: convertedMedical
+    }));
 
-        setMedicalData((prev: any) => {
-          if (
-            prev?.summary === medicalSummary &&
-            JSON.stringify(prev?.json) === JSON.stringify(structuredOutput)
-          ) {
-            return prev;
-          }
-          return {
-            summary: medicalSummary ?? '',
-            json: structuredOutput ?? null
-          };
-        });
+    setMedicalData((prev: any) => {
+      if (
+        prev?.summary === medicalSummary &&
+        JSON.stringify(prev?.json) === JSON.stringify(structuredOutput)
+      ) {
+        return prev;
+      }
+      return {
+        summary: medicalSummary ?? '',
+        json: structuredOutput ?? null
+      };
+    });
 
-        setIsConfirmed(true); // ✅ lokalna flaga zatwierdzenia
+    setIsConfirmed(true);
 
-        // 🧠 Zapis do Supabase
-        const userId = localStorage.getItem('currentUserID');
-        if (userId) {
-          await supabase
-            .from('patients')
-            .update({
-              medical: convertedMedical,         // 🔹 surowe dane
-              medical_data: structuredOutput,    // 🔹 JSON z AI
-              health_status: medicalSummary      // 🔹 opis tekstowy
-            })
-            .eq('user_id', userId);
+    const userId = localStorage.getItem('currentUserID');
+    if (userId) {
+      await supabase
+        .from('patients')
+        .update({
+          medical: convertedMedical,
+          medical_data: structuredOutput,
+          health_status: medicalSummary
+        })
+        .eq('user_id', userId);
         }
-      }}
-      onUpdateMedical={(summary) => {
-        setMedicalData((prev: any) => ({ ...prev, summary }));
-      }}
-      existingMedical={medicalData} // ✅ DODANE
-      lang={lang}
-    />
+        }}
+        onUpdateMedical={(summary) => {
+            setMedicalData((prev: any) => ({ ...prev, summary }));
+        }}
+        existingMedical={medicalData}
+        initialData={{
+            selectedGroups: patient.conditionGroups ?? [],
+            selectedConditions: patient.conditions ?? [],
+            testResults: Object.fromEntries(
+            (patient.medical || []).flatMap((c: any) =>
+                (c.tests || []).map((t: any) => [`${c.condition}__${t.name}`, t.value])
+            )
+            )
+        }}
+        lang={lang}
+        />
+
 
     {isConfirmed && !interviewData?.goal && (
       <div className="mt-6 p-4 bg-emerald-100/80 dark:bg-emerald-900/40 text-base rounded-md text-gray-900 dark:text-white shadow max-w-2xl mx-auto">

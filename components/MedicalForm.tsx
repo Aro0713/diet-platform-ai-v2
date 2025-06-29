@@ -22,17 +22,25 @@ interface MedicalFormProps {
     structuredOutput?: any;
   }) => void;
   onUpdateMedical?: (summary: string) => void;
-  onDeleteMedical?: () => void; // ✅ DODAJ TO
+  onDeleteMedical?: () => void;
   existingMedical?: { summary?: string; json?: any };
+  initialData?: {
+    selectedGroups?: string[];
+    selectedConditions?: string[];
+    testResults?: Record<string, string>;
+  };
   lang: LangKey;
 }
+
 const MedicalForm: React.FC<MedicalFormProps> = ({
   onChange,
   onUpdateMedical,
-  onDeleteMedical, // ✅ DODAJ TO
+  onDeleteMedical,
   existingMedical,
+  initialData,
   lang
 }) => {
+
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [availableConditions, setAvailableConditions] = useState<string[]>([]);
   const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
@@ -62,6 +70,12 @@ useEffect(() => {
   if (existingMedical?.summary) setMedicalSummary(existingMedical.summary);
   if (existingMedical?.json) setStructuredOutput(existingMedical.json);
 }, [existingMedical]);
+
+useEffect(() => {
+  if (initialData?.selectedGroups) setSelectedGroups(initialData.selectedGroups);
+  if (initialData?.selectedConditions) setSelectedConditions(initialData.selectedConditions);
+  if (initialData?.testResults) setTestResults(initialData.testResults);
+}, [initialData]);
 
 
 // ✅ dynamiczne przypisanie availableConditions po zmianie grup
