@@ -90,7 +90,9 @@ export default function SelectGroupForm({ selectedGroups, setSelectedGroups, opt
         isMulti
         options={options}
         value={selectedValues}
-        onChange={(selected) => setSelectedGroups(selected.map((s) => s.value))}
+       onChange={(selected) => setSelectedGroups(
+        Array.isArray(selected) ? selected.map((s) => s.value) : []
+        )}
         classNamePrefix="react-select"
         menuPortalTarget={typeof window !== 'undefined' ? document.body : undefined}
         menuPlacement="auto"

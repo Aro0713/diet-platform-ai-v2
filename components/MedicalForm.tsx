@@ -260,7 +260,9 @@ const handleMedicalAnalysis = async () => {
           isMulti
           options={conditionOptions}
           value={conditionOptions.filter(opt => selectedConditions.includes(opt.value))}
-          onChange={(selected) => setSelectedConditions(selected.map((s) => s.value))}
+          onChange={(selected) => setSelectedConditions(
+          Array.isArray(selected) ? selected.map((s) => s.value) : []
+          )}
           className="mb-6"
           placeholder={tUI('selectConditions', lang)}
           menuPortalTarget={typeof window !== "undefined" ? document.body : undefined}
