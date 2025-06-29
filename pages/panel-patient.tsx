@@ -86,7 +86,7 @@ export default function PatientPanelPage() {
       </div>
     );
   }
-  
+
 useEffect(() => {
   if (selectedSection === 'interview') {
     const fetchInterviewData = async () => {
@@ -150,7 +150,7 @@ return (
       
       {selectedSection === 'data' && <PatientSelfForm lang={lang} />}
 
-      {selectedSection === 'medical' && (
+  {selectedSection === 'medical' && (
   <>
     <MedicalForm
       onChange={async ({ selectedGroups, selectedConditions, testResults, medicalSummary, structuredOutput }) => {
@@ -180,16 +180,17 @@ return (
           };
         });
 
-        setIsConfirmed(true); // ✅ oznacz dane jako zatwierdzone lokalnie
+        setIsConfirmed(true); // ✅ lokalna flaga zatwierdzenia
 
-        // Zapis do Supabase
+        // 🧠 Zapis do Supabase
         const userId = localStorage.getItem('currentUserID');
         if (userId) {
           await supabase
             .from('patients')
             .update({
-              medical_data: structuredOutput,
-              health_status: medicalSummary
+              medical: convertedMedical,         // 🔹 surowe dane
+              medical_data: structuredOutput,    // 🔹 JSON z AI
+              health_status: medicalSummary      // 🔹 opis tekstowy
             })
             .eq('user_id', userId);
         }
@@ -207,6 +208,7 @@ return (
     )}
   </>
 )}
+
 
   {selectedSection === 'interview' && (
   <>
