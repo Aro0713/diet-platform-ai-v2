@@ -251,22 +251,25 @@ if (hasNewMedicalData) {
             selectedConditions: Array.isArray(patient.conditions)
                 ? patient.conditions
                 : form.conditions ?? [],
-
-            testResults: Object.fromEntries(
-            (() => {
-                const source = Array.isArray(patient.medical)
+           
+                testResults: Object.fromEntries(
+            (Array.isArray(patient?.medical)
                 ? patient.medical
-                : Array.isArray(form.medical)
+                : Array.isArray(form?.medical)
                 ? form.medical
-                : [];
-
-                return source.flatMap((c: any) =>
-                Array.isArray(c.tests)
-                    ? c.tests.map((t: any) => [`${c.condition}__${t.name}`, t.value])
-                    : []
-                );
-            })()
+                : []
+            ).flatMap((c: any) => {
+                if (!c || typeof c !== 'object') return [];
+                const tests = Array.isArray(c.tests) ? c.tests : [];
+                return tests
+                .filter((t: any) => t && typeof t.name === 'string')
+                .map((t: { name: string; value: any }) => [
+                    `${c.condition ?? 'Nieznane'}__${t.name}`,
+                    t.value
+                ]);
+            })
             )
+
             }}
             lang={lang}
             />
