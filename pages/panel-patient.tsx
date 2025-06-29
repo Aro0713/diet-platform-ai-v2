@@ -33,9 +33,11 @@ export default function PatientPanelPage() {
 
   const [form, setForm] = useState<PatientData>({} as PatientData);
   const [interviewData, setInterviewData] = useState<any>({});
-  const [medicalData, setMedicalData] = useState<any>(null);
+  const [isInterviewConfirmed, setIsInterviewConfirmed] = useState(false);
+    const [medicalData, setMedicalData] = useState<any>(null);
   const [editableDiet, setEditableDiet] = useState<Record<string, Meal[]>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [isConfirmed, setIsConfirmed] = useState(false);
 
   // Pobranie danych pacjenta + interview + medical z Supabase
   useEffect(() => {
@@ -84,6 +86,33 @@ export default function PatientPanelPage() {
       </div>
     );
   }
+  
+useEffect(() => {
+  if (selectedSection === 'interview') {
+    const fetchInterviewData = async () => {
+      const userId = localStorage.getItem('currentUserID');
+      if (!userId) return;
+
+      const { data, error } = await supabase
+        .from('patients')
+        .select('interview_data')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('❌ Błąd pobierania interview_data:', error);
+        return;
+      }
+
+      if (data?.interview_data) {
+        setInterviewData(data.interview_data);
+        setIsInterviewConfirmed(true); // ✅ oznacz jako zatwierdzone
+      }
+    };
+
+    fetchInterviewData();
+  }
+}, [selectedSection]);
 
 return (
   <main className="relative min-h-screen 
@@ -122,62 +151,64 @@ return (
       {selectedSection === 'data' && <PatientSelfForm lang={lang} />}
 
       {selectedSection === 'medical' && (
-        <>
-          <MedicalForm
-            onChange={async ({ selectedGroups, selectedConditions, testResults, medicalSummary, structuredOutput }) => {
-              const convertedMedical = selectedConditions.map((condition) => ({
-                condition,
-                tests: Object.entries(testResults).map(([name, value]) => ({ name, value }))
-              }));
+  <>
+    <MedicalForm
+      onChange={async ({ selectedGroups, selectedConditions, testResults, medicalSummary, structuredOutput }) => {
+        const convertedMedical = selectedConditions.map((condition) => ({
+          condition,
+          tests: Object.entries(testResults).map(([name, value]) => ({ name, value }))
+        }));
 
-              setForm((prev) => ({
-                ...prev,
-                conditionGroups: selectedGroups,
-                conditions: selectedConditions,
-                testResults,
-                medical: convertedMedical
-              }));
+        setForm((prev) => ({
+          ...prev,
+          conditionGroups: selectedGroups,
+          conditions: selectedConditions,
+          testResults,
+          medical: convertedMedical
+        }));
 
-              setMedicalData((prev: any) => {
-                if (
-                  prev?.summary === medicalSummary &&
-                  JSON.stringify(prev?.json) === JSON.stringify(structuredOutput)
-                ) {
-                  return prev;
-                }
-                return {
-                  summary: medicalSummary ?? '',
-                  json: structuredOutput ?? null
-                };
-              });
+        setMedicalData((prev: any) => {
+          if (
+            prev?.summary === medicalSummary &&
+            JSON.stringify(prev?.json) === JSON.stringify(structuredOutput)
+          ) {
+            return prev;
+          }
+          return {
+            summary: medicalSummary ?? '',
+            json: structuredOutput ?? null
+          };
+        });
 
-              // Zapis do Supabase
-              const userId = localStorage.getItem('currentUserID');
-              if (userId) {
-                await supabase
-                  .from('patients')
-                  .update({
-                    medical_data: structuredOutput,
-                    health_status: medicalSummary
-                  })
-                  .eq('user_id', userId);
-              }
-            }}
-            onUpdateMedical={(summary) => {
-              setMedicalData((prev: any) => ({ ...prev, summary }));
-            }}
-            lang={lang}
-          />
+        setIsConfirmed(true); // ✅ oznacz dane jako zatwierdzone lokalnie
 
-          {medicalData?.summary && !interviewData?.goal && (
-            <div className="mt-6 p-4 bg-emerald-100/80 dark:bg-emerald-900/40 text-sm rounded-md text-gray-900 dark:text-white shadow max-w-2xl mx-auto">
-              {tUI('medicalConfirmationMessage', lang)}
-            </div>
-          )}
-        </>
-      )}
+        // Zapis do Supabase
+        const userId = localStorage.getItem('currentUserID');
+        if (userId) {
+          await supabase
+            .from('patients')
+            .update({
+              medical_data: structuredOutput,
+              health_status: medicalSummary
+            })
+            .eq('user_id', userId);
+        }
+      }}
+      onUpdateMedical={(summary) => {
+        setMedicalData((prev: any) => ({ ...prev, summary }));
+      }}
+      lang={lang}
+    />
 
-        {selectedSection === 'interview' && (
+    {isConfirmed && !interviewData?.goal && (
+      <div className="mt-6 p-4 bg-emerald-100/80 dark:bg-emerald-900/40 text-base rounded-md text-gray-900 dark:text-white shadow max-w-2xl mx-auto">
+        {tUI('medicalConfirmationMessage', lang)}
+      </div>
+    )}
+  </>
+)}
+
+  {selectedSection === 'interview' && (
   <>
     <InterviewWizard
       form={form}
@@ -192,6 +223,8 @@ return (
           mealsPerDay: data.mealsPerDay
         }));
 
+        setIsInterviewConfirmed(true); // ✅ oznaczenie zatwierdzenia
+
         const userId = localStorage.getItem('currentUserID');
         if (userId) {
           await supabase
@@ -202,13 +235,14 @@ return (
       }}
     />
 
-    {interviewData?.goal && (
-      <div className="mt-6 p-4 bg-sky-100/80 dark:bg-sky-900/40 text-sm rounded-md text-gray-900 dark:text-white shadow max-w-2xl mx-auto">
+    {isInterviewConfirmed && (
+      <div className="mt-6 p-4 bg-sky-100/80 dark:bg-sky-900/40 text-base rounded-md text-gray-900 dark:text-white shadow max-w-2xl mx-auto">
         {tUI('interviewConfirmationMessage', lang)}
       </div>
     )}
   </>
 )}
+
 
 
       {selectedSection === 'calculator' && (
