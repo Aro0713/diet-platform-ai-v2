@@ -253,24 +253,23 @@ if (hasNewMedicalData) {
                 : form.conditions ?? [],
 
             testResults: Object.fromEntries(
-                Array.isArray(patient.medical)
-                ? patient.medical.flatMap((c: any) =>
-                    Array.isArray(c.tests)
-                        ? c.tests.map((t: any) => [`${c.condition}__${t.name}`, t.value])
-                        : []
-                    )
+            (() => {
+                const source = Array.isArray(patient.medical)
+                ? patient.medical
                 : Array.isArray(form.medical)
-                ? form.medical.flatMap((c: any) =>
-                    Array.isArray(c.tests)
-                        ? c.tests.map((t: any) => [`${c.condition}__${t.name}`, t.value])
-                        : []
-                    )
-                : []
+                ? form.medical
+                : [];
+
+                return source.flatMap((c: any) =>
+                Array.isArray(c.tests)
+                    ? c.tests.map((t: any) => [`${c.condition}__${t.name}`, t.value])
+                    : []
+                );
+            })()
             )
             }}
-
-        lang={lang}
-        />
+            lang={lang}
+            />
 
     {isConfirmed && !interviewData?.goal && (
       <div className="mt-6 p-4 bg-emerald-100/80 dark:bg-emerald-900/40 text-base rounded-md text-gray-900 dark:text-white shadow max-w-2xl mx-auto">
