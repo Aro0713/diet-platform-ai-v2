@@ -185,17 +185,23 @@ return (
         setIsConfirmed(true);
 
         const userId = localStorage.getItem('currentUserID');
-        if (userId && hasNewMedicalData) {
-          await supabase
+       if (userId) {
+        const { error } = await supabase
             .from('patients')
             .update({
-              medical: convertedMedical,
-              medical_data: structuredOutput,
-              health_status: medicalSummary,
-              conditionGroups: selectedGroups,
-              conditions: selectedConditions
+            medical: convertedMedical,
+            medical_data: structuredOutput,
+            health_status: medicalSummary,
+            conditionGroups: selectedGroups,
+            conditions: selectedConditions
             })
             .eq('user_id', userId);
+
+        if (error) {
+            console.error('❌ Błąd zapisu do Supabase:', error.message);
+        } else {
+            console.log('✅ Dane medyczne zapisane do Supabase');
+        }
         }
       }}
       onUpdateMedical={(summary) => {
