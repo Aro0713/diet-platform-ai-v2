@@ -27,7 +27,10 @@ export default function PatientPanelPage() {
   }, []);
 useEffect(() => {
   const fetchPatientData = async () => {
+    console.log('🔄 Wywołano fetchPatientData()');
+
     const userId = localStorage.getItem('currentUserID');
+    console.log('🧾 userId:', userId);
     if (!userId) return;
 
     const { data, error } = await supabase
@@ -36,47 +39,31 @@ useEffect(() => {
       .eq('user_id', userId)
       .maybeSingle();
 
-    if (error || !data) {
-      console.error("❌ Błąd pobierania danych pacjenta:", error?.message);
-      return;
-    }
+    console.log('📦 Supabase response:', { data, error });
 
-    // 🟢 Dane ogólne
-    setForm((prev) => ({
-      ...prev,
-      name: data.name || '',
-      age: data.age || 0,
-      sex: data.sex || '',
-      weight: Number(data.weight) || 0,
-      height: Number(data.height) || 0,
-      allergies: data.allergies || '',
-      region: data.region || '',
-      email: data.email || '',
-      phone: data.phone || '',
-      conditionGroups: Array.isArray(data.conditionGroups) ? data.conditionGroups : [],
-      conditions: Array.isArray(data.conditions) ? data.conditions : [],
-      medical: Array.isArray(data.medical) ? data.medical : []
-    }));
+    if (data) {
+      setForm((prev) => ({
+        ...prev,
+        conditionGroups: Array.isArray(data.conditionGroups) ? data.conditionGroups : [],
+        conditions: Array.isArray(data.conditions) ? data.conditions : [],
+        medical: Array.isArray(data.medical) ? data.medical : []
+      }));
 
-    // 🧠 Wywiad
-    if (data.interview_data) {
-      setInterviewData(data.interview_data);
-      setIsInterviewConfirmed(true);
-    }
-
-    // 🩺 Dane medyczne AI
-    if (data.health_status || data.medical_data) {
       setMedicalData({
         summary: data.health_status || '',
         json: data.medical_data || null
       });
+
+      setInterviewData(data.interview_data || {});
+      console.log('✅ Dane pobrane z Supabase:', data);
     }
 
-    console.log("✅ Dane pacjenta + wywiad załadowane");
+    if (error) console.error('❌ Supabase błąd:', error.message);
   };
 
   fetchPatientData();
 }, []);
+
 
   // Status i dane
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
@@ -184,6 +171,7 @@ return (
       </div>
       <LangAndThemeToggle />
     </div>
+    <pre className="text-xs text-white">{JSON.stringify(interviewData, null, 2)}</pre>
 
     {/* Ikony */}
     <PatientIconGrid lang={lang} onSelect={(id) => setSelectedSection(id)} />
