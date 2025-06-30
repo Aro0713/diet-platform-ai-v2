@@ -139,104 +139,70 @@ return (
 
  {selectedSection === 'medical' && (
   <>
-<MedicalForm
-  onChange={async ({ selectedGroups, selectedConditions, testResults, medicalSummary, structuredOutput }) => {
-    hasMedicalChanged.current = true;
+    <MedicalForm
+      onChange={async ({ selectedGroups, selectedConditions, testResults, medicalSummary, structuredOutput }) => {
+        hasMedicalChanged.current = true;
 
-    const convertedMedical = selectedConditions.map((condition) => ({
-      condition,
-      tests: Object.entries(testResults)
-        .filter(([key]) => key.startsWith(`${condition}__`))
-        .map(([name, value]) => ({
-          name: name.replace(`${condition}__`, ''),
-          value
-        }))
-    }));
+        const convertedMedical = selectedConditions.map((condition) => ({
+          condition,
+          tests: Object.entries(testResults)
+            .filter(([key]) => key.startsWith(`${condition}__`))
+            .map(([name, value]) => ({
+              name: name.replace(`${condition}__`, ''),
+              value
+            }))
+        }));
 
-   const hasNewMedicalData =
-  JSON.stringify(form.conditionGroups) !== JSON.stringify(selectedGroups) ||
-  JSON.stringify(form.conditions) !== JSON.stringify(selectedConditions) ||
-  JSON.stringify(form.testResults) !== JSON.stringify(testResults) ||
-  JSON.stringify(form.medical) !== JSON.stringify(convertedMedical);
+        const hasNewMedicalData =
+          JSON.stringify(form.conditionGroups) !== JSON.stringify(selectedGroups) ||
+          JSON.stringify(form.conditions) !== JSON.stringify(selectedConditions) ||
+          JSON.stringify(form.testResults) !== JSON.stringify(testResults) ||
+          JSON.stringify(form.medical) !== JSON.stringify(convertedMedical);
 
-if (hasNewMedicalData) {
-  setForm((prev) => ({
-    ...prev,
-    conditionGroups: selectedGroups,
-    conditions: selectedConditions,
-    testResults,
-    medical: convertedMedical
-  }));
-}
+        if (hasNewMedicalData) {
+          setForm((prev) => ({
+            ...prev,
+            conditionGroups: selectedGroups,
+            conditions: selectedConditions,
+            testResults,
+            medical: convertedMedical
+          }));
+        }
 
-    setMedicalData((prev: any) => {
-      if (
-        prev?.summary === medicalSummary &&
-        JSON.stringify(prev?.json) === JSON.stringify(structuredOutput)
-      ) {
-        return prev;
-      }
-      return {
-        summary: medicalSummary ?? '',
-        json: structuredOutput ?? null
-      };
-    });
+        setMedicalData((prev: any) => {
+          if (
+            prev?.summary === medicalSummary &&
+            JSON.stringify(prev?.json) === JSON.stringify(structuredOutput)
+          ) {
+            return prev;
+          }
+          return {
+            summary: medicalSummary ?? '',
+            json: structuredOutput ?? null
+          };
+        });
 
-    setIsConfirmed(true);
+        setIsConfirmed(true);
 
         const userId = localStorage.getItem('currentUserID');
-    if (userId && hasNewMedicalData) {
-    await supabase
-        .from('patients')
-        .update({
-        medical: convertedMedical,
-        medical_data: structuredOutput,
-        health_status: medicalSummary,
-        conditionGroups: selectedGroups,
-        conditions: selectedConditions
-        })
-        .eq('user_id', userId);
-        }
-        }}
-        onUpdateMedical={(summary) => {
-            setMedicalData((prev: any) => ({ ...prev, summary }));
-        }}
-        existingMedical={medicalData}
-       initialData={{
-        selectedGroups: Array.isArray(patient?.conditionGroups)
-            ? patient.conditionGroups
-            : Array.isArray(form?.conditionGroups)
-            ? form.conditionGroups
-            : [],
-
-        selectedConditions: Array.isArray(patient?.conditions)
-            ? patient.conditions
-            : Array.isArray(form?.conditions)
-            ? form.conditions
-            : [],
-
-         testResults: Object.fromEntries(
-            (
-                Array.isArray(patient?.medical)
-                ? patient.medical
-                : Array.isArray(form?.medical)
-                ? form.medical
-                : []
-            ).flatMap((c: any) => {
-                if (!c || typeof c !== 'object' || !Array.isArray(c.tests)) return [];
-                return c.tests
-                .filter((t: any) => t && typeof t.name === 'string')
-                .map((t: { name: string; value: any }) => [
-                    `${c.condition ?? 'Nieznane'}__${t.name}`,
-                    t.value
-                ]);
+        if (userId && hasNewMedicalData) {
+          await supabase
+            .from('patients')
+            .update({
+              medical: convertedMedical,
+              medical_data: structuredOutput,
+              health_status: medicalSummary,
+              conditionGroups: selectedGroups,
+              conditions: selectedConditions
             })
-            )
-
-
-            }}
-            lang={lang}
-            />
+            .eq('user_id', userId);
+        }
+      }}
+      onUpdateMedical={(summary) => {
+        setMedicalData((prev: any) => ({ ...prev, summary }));
+      }}
+      lang={lang}
+    />
 
     {isConfirmed && !interviewData?.goal && (
       <div className="mt-6 p-4 bg-emerald-100/80 dark:bg-emerald-900/40 text-base rounded-md text-gray-900 dark:text-white shadow max-w-2xl mx-auto">
