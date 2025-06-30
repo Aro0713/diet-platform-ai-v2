@@ -25,6 +25,58 @@ export default function PatientPanelPage() {
     const storedLang = localStorage.getItem('platformLang');
     if (storedLang) setLang(storedLang as LangKey);
   }, []);
+useEffect(() => {
+  const fetchPatientData = async () => {
+    const userId = localStorage.getItem('currentUserID');
+    if (!userId) return;
+
+    const { data, error } = await supabase
+      .from('patients')
+      .select('*, interview_data, medical_data, health_status')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error || !data) {
+      console.error("❌ Błąd pobierania danych pacjenta:", error?.message);
+      return;
+    }
+
+    // 🟢 Dane ogólne
+    setForm((prev) => ({
+      ...prev,
+      name: data.name || '',
+      age: data.age || 0,
+      sex: data.sex || '',
+      weight: Number(data.weight) || 0,
+      height: Number(data.height) || 0,
+      allergies: data.allergies || '',
+      region: data.region || '',
+      email: data.email || '',
+      phone: data.phone || '',
+      conditionGroups: Array.isArray(data.conditionGroups) ? data.conditionGroups : [],
+      conditions: Array.isArray(data.conditions) ? data.conditions : [],
+      medical: Array.isArray(data.medical) ? data.medical : []
+    }));
+
+    // 🧠 Wywiad
+    if (data.interview_data) {
+      setInterviewData(data.interview_data);
+      setIsInterviewConfirmed(true);
+    }
+
+    // 🩺 Dane medyczne AI
+    if (data.health_status || data.medical_data) {
+      setMedicalData({
+        summary: data.health_status || '',
+        json: data.medical_data || null
+      });
+    }
+
+    console.log("✅ Dane pacjenta + wywiad załadowane");
+  };
+
+  fetchPatientData();
+}, []);
 
   // Status i dane
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
