@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Select from 'react-select';
 import { tUI, getTranslation, LangKey } from '@/utils/i18n';
+import { supabase } from '@/lib/supabaseClient';
 import {
   conditionLabels,
   conditionGroupLabels,
@@ -159,8 +160,9 @@ const handleMedicalAnalysis = async () => {
   setIsEditing(true);
   };
 
-  const handleConfirmAnalysis = () => {
+const handleConfirmAnalysis = async () => {
   setIsConfirmed(true);
+
   onChange({
     selectedGroups,
     selectedConditions,
@@ -168,7 +170,42 @@ const handleMedicalAnalysis = async () => {
     medicalSummary,
     structuredOutput
   });
+
+  const userId = localStorage.getItem('currentUserID');
+  if (!userId) {
+    console.error("❌ Brak user_id w localStorage");
+    return;
+  }
+
+  const convertedMedical = selectedConditions.map((condition) => ({
+    condition,
+    tests: Object.entries(testResults)
+      .filter(([key]) => key.startsWith(`${condition}__`))
+      .map(([name, value]) => ({
+        name: name.replace(`${condition}__`, ''),
+        value
+      }))
+  }));
+
+  const { error } = await supabase
+    .from('patients')
+    .update({
+      medical: convertedMedical,
+      medical_data: structuredOutput,
+      health_status: medicalSummary,
+      conditionGroups: selectedGroups,
+      conditions: selectedConditions
+    })
+    .eq('user_id', userId);
+
+  if (error) {
+    console.error('❌ Błąd zapisu danych medycznych:', error.message);
+  } else {
+    console.log('✅ Dane medyczne zapisane do Supabase');
+  }
 };
+
+
   const customStyles = useMemo(() => ({
     control: (base: any) => ({
       ...base,
@@ -344,10 +381,7 @@ const handleMedicalAnalysis = async () => {
 <div className="mt-4 flex flex-col md:flex-row gap-3">
   <button
     type="button"
-    onClick={() => {
-      handleConfirmAnalysis();
-      setIsConfirmed(true);
-    }}
+    onClick={handleConfirmAnalysis}
     disabled={!medicalSummary}
     className={`flex-1 px-4 py-2 rounded-md shadow-md font-semibold transition-colors ${
       isConfirmed
@@ -367,6 +401,8 @@ const handleMedicalAnalysis = async () => {
   >
     ✏️ {tUI("editAnalysis", lang)}
   </button>
+</div>
+
 
   {onDeleteMedical && (
     <button
@@ -386,7 +422,6 @@ const handleMedicalAnalysis = async () => {
       🗑️ {tUI("deleteMedicalData", lang)}
     </button>
   )}
-</div>
 </div>
 </PanelCard>
 );
