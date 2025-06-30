@@ -183,7 +183,7 @@ return (
 
  {selectedSection === 'medical' && (
   <>
-   <MedicalForm
+  <MedicalForm
   onChange={async ({ selectedGroups, selectedConditions, testResults, medicalSummary, structuredOutput }) => {
     const convertedMedical = selectedConditions.map((condition) => ({
       condition,
@@ -232,6 +232,24 @@ return (
   onUpdateMedical={(summary) => {
     setMedicalData((prev: any) => ({ ...prev, summary }));
   }}
+  initialData={{
+    selectedGroups: Array.isArray(form.conditionGroups) ? form.conditionGroups : [],
+    selectedConditions: Array.isArray(form.conditions) ? form.conditions : [],
+    testResults: Object.fromEntries(
+      Array.isArray(form.medical)
+        ? form.medical.flatMap((c: any) => {
+            if (!c || typeof c !== 'object' || !Array.isArray(c.tests)) return [];
+            return c.tests
+              .filter((t: any) => t && typeof t.name === 'string')
+              .map((t: { name: string; value: any }) => [
+                `${c.condition ?? 'Nieznane'}__${t.name}`,
+                t.value
+              ]);
+          })
+        : []
+    )
+  }}
+  existingMedical={medicalData}
   lang={lang}
 />
 
