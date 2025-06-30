@@ -44,44 +44,45 @@ export default function PatientPanelPage() {
   const [isConfirmed, setIsConfirmed] = useState(false);
 const hasMedicalChanged = useRef(false);
 
+// Pobieranie danych z wywiadu, jeśli użytkownik przejdzie do sekcji "interview"
+useEffect(() => {
+  if (selectedSection === 'interview') {
+    const fetchInterviewData = async () => {
+      const userId = localStorage.getItem('currentUserID');
+      if (!userId) return;
 
+      const { data, error } = await supabase
+        .from('patients')
+        .select('interview_data')
+        .eq('user_id', userId)
+        .maybeSingle();
 
-    useEffect(() => {
-    if (selectedSection === 'interview') {
-        const fetchInterviewData = async () => {
-        const userId = localStorage.getItem('currentUserID');
-        if (!userId) return;
+      if (error) {
+        console.error('❌ Błąd pobierania interview_data:', error);
+        return;
+      }
 
-        const { data, error } = await supabase
-            .from('patients')
-            .select('interview_data')
-            .eq('user_id', userId)
-            .maybeSingle();
+      if (data?.interview_data) {
+        setInterviewData(data.interview_data);
+        setIsInterviewConfirmed(true); // ✅ oznacz jako zatwierdzone
+      }
+    };
 
-        if (error) {
-            console.error('❌ Błąd pobierania interview_data:', error);
-            return;
-        }
+    fetchInterviewData();
+  }
+}, [selectedSection]);
 
-        if (data?.interview_data) {
-            setInterviewData(data.interview_data);
-            setIsInterviewConfirmed(true); // ✅ oznacz jako zatwierdzone
-        }
-        };
-
-        fetchInterviewData();
-    }
-    }, [selectedSection]);
-
+// Automatyczny zapis danych medycznych, jeśli nastąpiła zmiana i sekcja została odwiedzona
 useEffect(() => {
   const saveMedicalIfNeeded = async () => {
+    const userId = localStorage.getItem('currentUserID');
     if (
       hasMedicalChanged.current &&
-      patient?.user_id &&
+      userId &&
       Array.isArray(form?.medical) &&
       form.medical.length > 0
     ) {
-      await supabase
+      const { error } = await supabase
         .from('patients')
         .update({
           medical: form.medical,
@@ -90,16 +91,19 @@ useEffect(() => {
           conditionGroups: form.conditionGroups ?? [],
           conditions: form.conditions ?? []
         })
-        .eq('user_id', patient.user_id);
+        .eq('user_id', userId);
 
-      console.log('✅ Dane medyczne zapisane automatycznie');
-      hasMedicalChanged.current = false;
+      if (error) {
+        console.error('❌ Błąd zapisu automatycznego:', error.message);
+      } else {
+        console.log('✅ Dane medyczne zapisane automatycznie');
+        hasMedicalChanged.current = false;
+      }
     }
   };
 
   saveMedicalIfNeeded();
 }, [selectedSection]);
-
 
 return (
   <main className="relative min-h-screen 
@@ -139,76 +143,57 @@ return (
 
  {selectedSection === 'medical' && (
   <>
-    <MedicalForm
-      onChange={async ({ selectedGroups, selectedConditions, testResults, medicalSummary, structuredOutput }) => {
-        hasMedicalChanged.current = true;
+   <MedicalForm
+  onChange={async ({ selectedGroups, selectedConditions, testResults, medicalSummary, structuredOutput }) => {
+    const convertedMedical = selectedConditions.map((condition) => ({
+      condition,
+      tests: Object.entries(testResults)
+        .filter(([key]) => key.startsWith(`${condition}__`))
+        .map(([name, value]) => ({
+          name: name.replace(`${condition}__`, ''),
+          value
+        }))
+    }));
 
-        const convertedMedical = selectedConditions.map((condition) => ({
-          condition,
-          tests: Object.entries(testResults)
-            .filter(([key]) => key.startsWith(`${condition}__`))
-            .map(([name, value]) => ({
-              name: name.replace(`${condition}__`, ''),
-              value
-            }))
-        }));
+    setForm((prev) => ({
+      ...prev,
+      conditionGroups: selectedGroups,
+      conditions: selectedConditions,
+      testResults,
+      medical: convertedMedical
+    }));
 
-        const hasNewMedicalData =
-          JSON.stringify(form.conditionGroups) !== JSON.stringify(selectedGroups) ||
-          JSON.stringify(form.conditions) !== JSON.stringify(selectedConditions) ||
-          JSON.stringify(form.testResults) !== JSON.stringify(testResults) ||
-          JSON.stringify(form.medical) !== JSON.stringify(convertedMedical);
+    setMedicalData({
+      summary: medicalSummary ?? '',
+      json: structuredOutput ?? null
+    });
 
-        if (hasNewMedicalData) {
-          setForm((prev) => ({
-            ...prev,
-            conditionGroups: selectedGroups,
-            conditions: selectedConditions,
-            testResults,
-            medical: convertedMedical
-          }));
-        }
+    const userId = localStorage.getItem('currentUserID');
+    if (userId) {
+      const { error } = await supabase
+        .from('patients')
+        .update({
+          medical: convertedMedical,
+          medical_data: structuredOutput,
+          health_status: medicalSummary,
+          conditionGroups: selectedGroups,
+          conditions: selectedConditions
+        })
+        .eq('user_id', userId);
 
-        setMedicalData((prev: any) => {
-          if (
-            prev?.summary === medicalSummary &&
-            JSON.stringify(prev?.json) === JSON.stringify(structuredOutput)
-          ) {
-            return prev;
-          }
-          return {
-            summary: medicalSummary ?? '',
-            json: structuredOutput ?? null
-          };
-        });
-
+      if (error) {
+        console.error('❌ Błąd zapisu danych medycznych:', error.message);
+      } else {
+        console.log('✅ Dane medyczne zapisane');
         setIsConfirmed(true);
-
-        const userId = localStorage.getItem('currentUserID');
-       if (userId) {
-        const { error } = await supabase
-            .from('patients')
-            .update({
-            medical: convertedMedical,
-            medical_data: structuredOutput,
-            health_status: medicalSummary,
-            conditionGroups: selectedGroups,
-            conditions: selectedConditions
-            })
-            .eq('user_id', userId);
-
-        if (error) {
-            console.error('❌ Błąd zapisu do Supabase:', error.message);
-        } else {
-            console.log('✅ Dane medyczne zapisane do Supabase');
-        }
-        }
-      }}
-      onUpdateMedical={(summary) => {
-        setMedicalData((prev: any) => ({ ...prev, summary }));
-      }}
-      lang={lang}
-    />
+      }
+    }
+  }}
+  onUpdateMedical={(summary) => {
+    setMedicalData((prev: any) => ({ ...prev, summary }));
+  }}
+  lang={lang}
+/>
 
     {isConfirmed && !interviewData?.goal && (
       <div className="mt-6 p-4 bg-emerald-100/80 dark:bg-emerald-900/40 text-base rounded-md text-gray-900 dark:text-white shadow max-w-2xl mx-auto">
