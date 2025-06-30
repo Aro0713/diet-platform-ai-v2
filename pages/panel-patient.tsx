@@ -55,6 +55,7 @@ useEffect(() => {
       });
 
       setInterviewData(data.interview_data || {});
+      isFirstMedicalChange.current = true; // Resetujemy przy nowym zestawie danych
       setInitialMedicalDataLoaded(true);
       console.log('✅ Dane pobrane z Supabase:', data);
     }
@@ -64,7 +65,6 @@ useEffect(() => {
 
   fetchPatientData();
 }, []);
-
 
   // Status i dane
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
@@ -83,7 +83,9 @@ useEffect(() => {
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [isConfirmed, setIsConfirmed] = useState(false);
 const hasMedicalChanged = useRef(false);
+const isFirstMedicalChange = useRef(true);
 const [initialMedicalDataLoaded, setInitialMedicalDataLoaded] = useState(false);
+
 
 // Pobieranie danych z wywiadu, jeśli użytkownik przejdzie do sekcji "interview"
 useEffect(() => {
@@ -184,8 +186,15 @@ return (
 
  {selectedSection === 'medical' && (
   <>
-  <MedicalForm
+ const isFirstMedicalChange = useRef(true);
+
+<MedicalForm
   onChange={async ({ selectedGroups, selectedConditions, testResults, medicalSummary, structuredOutput }) => {
+    if (isFirstMedicalChange.current) {
+      isFirstMedicalChange.current = false;
+      return; // ⛔ Zignoruj pierwszy onChange po initialData
+    }
+
     const convertedMedical = selectedConditions.map((condition) => ({
       condition,
       tests: Object.entries(testResults)
@@ -233,31 +242,31 @@ return (
   onUpdateMedical={(summary) => {
     setMedicalData((prev: any) => ({ ...prev, summary }));
   }}
-    initialData={
+  initialData={
     initialMedicalDataLoaded
-        ? {
-            selectedGroups: Array.isArray(form.conditionGroups) ? form.conditionGroups : [],
-            selectedConditions: Array.isArray(form.conditions) ? form.conditions : [],
-            testResults: Object.fromEntries(
+      ? {
+          selectedGroups: Array.isArray(form.conditionGroups) ? form.conditionGroups : [],
+          selectedConditions: Array.isArray(form.conditions) ? form.conditions : [],
+          testResults: Object.fromEntries(
             Array.isArray(form.medical)
-                ? form.medical.flatMap((c: any) => {
-                    if (!c || typeof c !== 'object' || !Array.isArray(c.tests)) return [];
-                    return c.tests
+              ? form.medical.flatMap((c: any) => {
+                  if (!c || typeof c !== 'object' || !Array.isArray(c.tests)) return [];
+                  return c.tests
                     .filter((t: any) => t && typeof t.name === 'string')
                     .map((t: { name: string; value: any }) => [
-                        `${c.condition ?? 'Nieznane'}__${t.name}`,
-                        t.value
+                      `${c.condition ?? 'Nieznane'}__${t.name}`,
+                      t.value
                     ]);
                 })
-                : []
-            )
+              : []
+          )
         }
-        : undefined
-}
-
+      : undefined
+  }
   existingMedical={medicalData}
   lang={lang}
 />
+
 
     {isConfirmed && !interviewData?.goal && (
       <div className="mt-6 p-4 bg-emerald-100/80 dark:bg-emerald-900/40 text-base rounded-md text-gray-900 dark:text-white shadow max-w-2xl mx-auto">
