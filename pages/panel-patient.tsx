@@ -171,8 +171,7 @@ return (
       </div>
       <LangAndThemeToggle />
     </div>
-    <pre className="text-xs text-white">{JSON.stringify(interviewData, null, 2)}</pre>
-
+  
     {/* Ikony */}
     <PatientIconGrid lang={lang} onSelect={(id) => setSelectedSection(id)} />
 
@@ -263,30 +262,33 @@ return (
 
   {selectedSection === 'interview' && (
   <>
-    <InterviewWizard
-      form={form}
-      lang={lang}
-      onFinish={async (data) => {
-        setInterviewData(data);
-        setForm((prev) => ({
-          ...prev,
-          stressLevel: data.stressLevel,
-          sleepQuality: data.sleepQuality,
-          physicalActivity: data.physicalActivity,
-          mealsPerDay: data.mealsPerDay
-        }));
+<InterviewWizard
+  form={form}
+  lang={lang}
+  onFinish={async (data) => {
+    const isSame = JSON.stringify(data) === JSON.stringify(interviewData);
+    if (isSame) return; // ⛔ nie zapisuj ponownie identycznych danych
 
-        setIsInterviewConfirmed(true); // ✅ oznaczenie zatwierdzenia
+    setInterviewData(data);
+    setForm((prev) => ({
+      ...prev,
+      stressLevel: data.stressLevel,
+      sleepQuality: data.sleepQuality,
+      physicalActivity: data.physicalActivity,
+      mealsPerDay: data.mealsPerDay
+    }));
 
-        const userId = localStorage.getItem('currentUserID');
-        if (userId) {
-          await supabase
-            .from('patients')
-            .update({ interview_data: data })
-            .eq('user_id', userId);
-        }
-      }}
-    />
+    setIsInterviewConfirmed(true);
+
+    const userId = localStorage.getItem('currentUserID');
+    if (userId) {
+      await supabase
+        .from('patients')
+        .update({ interview_data: data })
+        .eq('user_id', userId);
+    }
+  }}
+/>
 
     {isInterviewConfirmed && (
       <div className="mt-6 p-4 bg-sky-100/80 dark:bg-sky-900/40 text-base rounded-md text-gray-900 dark:text-white shadow max-w-2xl mx-auto">
