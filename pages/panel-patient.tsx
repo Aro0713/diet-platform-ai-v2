@@ -27,9 +27,13 @@ export default function PatientPanelPage() {
   }, []);
 
   // Status i dane
-  const [loading, setLoading] = useState(true);
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
-  const [patient, setPatient] = useState<any>(null);
+ const [patient] = useState<any>({
+  name: 'Pacjent',
+  conditionGroups: [],
+  conditions: [],
+  medical: []
+});
 
   const [form, setForm] = useState<PatientData>({} as PatientData);
   const [interviewData, setInterviewData] = useState<any>({});
@@ -40,45 +44,7 @@ export default function PatientPanelPage() {
   const [isConfirmed, setIsConfirmed] = useState(false);
 const hasMedicalChanged = useRef(false);
 
-  // Pobranie danych pacjenta + interview + medical z Supabase
-  useEffect(() => {
-    const fetchPatient = async () => {
-      const userId = localStorage.getItem('currentUserID');
-      if (!userId) {
-        alert('Nie jesteś zalogowany.');
-        router.push('/register');
-        return;
-      }
 
-      const { data, error } = await supabase
-        .from('patients')
-        .select('*, interview_data, medical_data, health_status')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (error || !data) {
-        console.error('❌ Błąd pobierania danych pacjenta:', error);
-        alert('Nie znaleziono danych pacjenta.');
-        router.push('/register');
-        return;
-      }
-
-      setPatient(data);
-      setForm(data);
-
-      if (data.interview_data) setInterviewData(data.interview_data);
-      if (data.health_status || data.medical_data) {
-        setMedicalData({
-          summary: data.health_status ?? '',
-          json: data.medical_data ?? null
-        });
-      }
-
-      setLoading(false);
-    };
-
-    fetchPatient();
-  }, [router]);
 
     useEffect(() => {
     if (selectedSection === 'interview') {
@@ -134,13 +100,6 @@ useEffect(() => {
   saveMedicalIfNeeded();
 }, [selectedSection]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500">Wczytywanie danych pacjenta...</p>
-      </div>
-    );
-  }
 
 return (
   <main className="relative min-h-screen 
