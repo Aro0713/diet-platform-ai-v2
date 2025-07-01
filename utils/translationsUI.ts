@@ -3099,11 +3099,58 @@ dietWritingInProgressExtended: {
   hi: '⏳ डाइट लिखी जा रही है... (कृपया प्रतीक्षा करें, जनरेट हो रहा है)',
   ar: '⏳ يتم كتابة النظام الغذائي... (يرجى الانتظار، يتم الإنشاء)',
   he: '⏳ כותב את הדיאטה... (נא להמתין, מתבצעת יצירה)'
-}
-
-
-
-
-
+},
+generateDiet: {
+  pl: 'Generuj dietę',
+  en: 'Generate diet',
+  de: 'Diät generieren',
+  fr: 'Générer un régime',
+  es: 'Generar dieta',
+  ua: 'Згенерувати дієту',
+  ru: 'Сгенерировать диету',
+  zh: '生成饮食计划',
+  ar: 'إنشاء نظام غذائي',
+  hi: 'आहार तैयार करें',
+  he: 'צור תפריט'
+},
+generatePdf: {
+  pl: 'Generuj PDF',
+  en: 'Generate PDF',
+  de: 'PDF generieren',
+  fr: 'Générer un PDF',
+  es: 'Generar PDF',
+  ua: 'Створити PDF',
+  ru: 'Создать PDF',
+  zh: '生成 PDF',
+  ar: 'إنشاء PDF',
+  hi: 'PDF बनाएं',
+  he: 'צור PDF'
+},
+approveDietAsPatient: {
+  pl: 'Zatwierdź dietę jako pacjent',
+  en: 'Approve diet as patient',
+  de: 'Diät als Patient bestätigen',
+  fr: 'Approuver le régime en tant que patient',
+  es: 'Aprobar dieta como paciente',
+  ua: 'Схвалити дієту як пацієнт',
+  ru: 'Одобрить диету как пациент',
+  zh: '以患者身份批准饮食',
+  ar: 'الموافقة على النظام الغذائي كمريض',
+  hi: 'मरीज़ के रूप में आहार स्वीकृत करें',
+  he: 'אשר תפריט בתור מטופל'
+},
+sendDietToDoctor: {
+  pl: 'Wyślij dietę do lekarza',
+  en: 'Send diet to doctor',
+  de: 'Diät an Arzt senden',
+  fr: 'Envoyer le régime au médecin',
+  es: 'Enviar dieta al médico',
+  ua: 'Надіслати дієту лікарю',
+  ru: 'Отправить диету врачу',
+  zh: '发送饮食计划给医生',
+  ar: 'إرسال النظام الغذائي للطبيب',
+  hi: 'डॉक्टर को आहार भेजें',
+  he: 'שלח את התפריט לרופא'
+},
 };
 

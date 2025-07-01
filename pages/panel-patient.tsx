@@ -346,90 +346,106 @@ const handleGenerateDiet = async () => {
         />
     </div>
 
-    {/* Przyciski */}
+{/* Przyciski */}
 
-       {isGenerating && (
-  <div className="text-sm text-gray-600 italic mt-4 animate-pulse">
-    ⏳ {tUI('writingDiet', lang)} {streamingText.length > 20 && `(${tUI('generatingWait', lang)})`}
-  </div>
-)}
+<div className="space-y-4">
 
-<button
-  className="w-full bg-green-700 text-white px-4 py-3 rounded-md font-medium hover:bg-green-800 disabled:opacity-50"
-  disabled={isGenerating || !editableDiet || Object.keys(editableDiet).length === 0}
-  onClick={async () => {
-    try {
-      setIsGenerating(true);
-      const { generateDietPdf } = await import('@/utils/generateDietPdf');
-      const bmi = form.weight && form.height
-        ? parseFloat((form.weight / ((form.height / 100) ** 2)).toFixed(1))
-        : 0;
-      const mealArray: Meal[] = (Object.values(editableDiet || {}) as Meal[][]).flat();
+  {/* ⏳ Status generowania */}
+  {isGenerating && (
+    <div className="text-sm text-gray-600 italic animate-pulse">
+      ⏳ {tUI('writingDiet', lang)}{' '}
+      {streamingText.length > 20 && `(${tUI('generatingWait', lang)})`}
+    </div>
+  )}
 
-      if (!Array.isArray(mealArray) || mealArray.length === 0) {
-        alert(tUI('dietPlanEmptyOrInvalid', lang));
-        return;
+  {/* 🧠 Generuj dietę */}
+  <button
+    className="w-full bg-emerald-600 text-white px-4 py-3 rounded-md font-medium hover:bg-emerald-700 disabled:opacity-50"
+    disabled={isGenerating}
+    onClick={handleGenerateDiet}
+  >
+    🧠 {tUI('generateDiet', lang)}
+  </button>
+
+  {/* 📄 Generuj PDF */}
+  <button
+    className="w-full bg-green-700 text-white px-4 py-3 rounded-md font-medium hover:bg-green-800 disabled:opacity-50"
+    disabled={isGenerating || !editableDiet || Object.keys(editableDiet).length === 0}
+    onClick={async () => {
+      try {
+        setIsGenerating(true);
+        const { generateDietPdf } = await import('@/utils/generateDietPdf');
+        const bmi = form.weight && form.height
+          ? parseFloat((form.weight / ((form.height / 100) ** 2)).toFixed(1))
+          : 0;
+        const mealArray: Meal[] = (Object.values(editableDiet || {}) as Meal[][]).flat();
+
+        if (!Array.isArray(mealArray) || mealArray.length === 0) {
+          alert(tUI('dietPlanEmptyOrInvalid', lang));
+          return;
+        }
+
+        await generateDietPdf(
+          form,
+          bmi,
+          mealArray,
+          true,
+          notes,
+          lang,
+          interviewData,
+          {
+            bmi: interviewData.bmi,
+            ppm: interviewData.ppm,
+            cpm: interviewData.cpm,
+            pal: interviewData.pal,
+            kcalMaintain: interviewData.kcalMaintain,
+            kcalReduce: interviewData.kcalReduce,
+            kcalGain: interviewData.kcalGain,
+            nmcBroca: interviewData.nmcBroca,
+            nmcLorentz: interviewData.nmcLorentz
+          },
+          'download',
+          narrativeText
+        );
+      } catch (e) {
+        alert(tUI('errorGeneratingPdf', lang));
+        console.error(e);
+      } finally {
+        setIsGenerating(false);
       }
+    }}
+  >
+    📄 {tUI('generatePdf', lang)}
+  </button>
 
-      await generateDietPdf(
-        form,
-        bmi,
-        mealArray,
-        true,
-        notes,
-        lang,
-        interviewData,
-        {
-          bmi: interviewData.bmi,
-          ppm: interviewData.ppm,
-          cpm: interviewData.cpm,
-          pal: interviewData.pal,
-          kcalMaintain: interviewData.kcalMaintain,
-          kcalReduce: interviewData.kcalReduce,
-          kcalGain: interviewData.kcalGain,
-          nmcBroca: interviewData.nmcBroca,
-          nmcLorentz: interviewData.nmcLorentz
-        },
-        'download',
-        narrativeText
-      );
-    } catch (e) {
-      alert(tUI('errorGeneratingPdf', lang));
-      console.error(e);
-    } finally {
-      setIsGenerating(false);
-    }
-  }}
->
-  {isGenerating ? tUI('generating', lang) : `📄 ${tUI('generatePdf', lang)}`}
-</button>
+  {/* ✅ Zatwierdzam dietę */}
+  <button
+    className="w-full bg-purple-700 text-white px-4 py-3 rounded-md font-medium hover:bg-purple-800 disabled:opacity-50"
+    disabled={!editableDiet || Object.keys(editableDiet).length === 0}
+    onClick={async () => {
+      const confirm = window.confirm(tUI('confirmApproveDietAsPatient', lang));
+      if (confirm) {
+        await saveDietToSupabaseAndPdf();
+      }
+    }}
+  >
+    ✅ {tUI('approveDietAsPatient', lang)}
+  </button>
 
-{/* 🔘 Zatwierdzam dietę */}
-<button
-  className="w-full bg-purple-700 text-white px-4 py-3 rounded-md font-medium hover:bg-purple-800 disabled:opacity-50"
-  disabled={!editableDiet || Object.keys(editableDiet).length === 0}
-  onClick={async () => {
-    const confirm = window.confirm(tUI('confirmApproveDietAsPatient', lang));
-    if (confirm) {
-      await saveDietToSupabaseAndPdf();
-    }
-  }}
->
-  ✅ {tUI('approveDietAsPatient', lang)}
-</button>
+  {/* 📤 Wyślij do lekarza */}
+  <button
+    className="w-full bg-blue-500 text-white px-4 py-3 rounded-md font-medium hover:bg-blue-600 disabled:opacity-50"
+    disabled={!editableDiet || Object.keys(editableDiet).length === 0}
+    onClick={async () => {
+      const confirm = window.confirm(tUI('confirmSendDietToDoctor', lang));
+      if (!confirm) return;
+      await saveDraftToSupabase();
+    }}
+  >
+    📤 {tUI('sendDietToDoctor', lang)}
+  </button>
 
-{/* 📤 Wyślij do lekarza */}
-<button
-  className="w-full bg-blue-500 text-white px-4 py-3 rounded-md font-medium hover:bg-blue-600 disabled:opacity-50"
-  disabled={!editableDiet || Object.keys(editableDiet).length === 0}
-  onClick={async () => {
-    const confirm = window.confirm(tUI('confirmSendDietToDoctor', lang));
-    if (!confirm) return;
-    await saveDraftToSupabase();
-  }}
->
-  📤 {tUI('sendDietToDoctor', lang)}
-</button>
+</div>
 
     {/* Tabela diety */}
     {editableDiet && Object.keys(editableDiet).length > 0 && (
