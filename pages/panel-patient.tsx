@@ -5,6 +5,8 @@ import LangAndThemeToggle from '@/components/LangAndThemeToggle';
 import { tUI } from '@/utils/i18n';
 import type { Meal } from '@/types';
 import { usePatientData } from '@/hooks/usePatientData';
+import { tryParseJSON } from '@/utils/tryParseJSON'; 
+import { transformDietPlanToEditableFormat } from '@/utils/transformDietPlan';
 
 import { PatientIconGrid } from '@/components/PatientIconGrid';
 import PatientSelfForm from '@/components/PatientSelfForm';
@@ -56,10 +58,86 @@ export default function PatientPanelPage() {
         fetchPatientData(); // ⬅️ automatyczne ponowne pobranie
     }
     }, [selectedSection]);
-
+const [streamingText, setStreamingText] = useState('');
 const [narrativeText, setNarrativeText] = useState('');
 const [dietApproved, setDietApproved] = useState(false);
 const [isGenerating, setIsGenerating] = useState(false);
+const handleGenerateDiet = async () => {
+  setIsGenerating(true);
+  setStreamingText('');
+  setDietApproved(false);
+
+  if (!medicalData) {
+    alert('⚠️ Musisz zatwierdzić analizę wyników badań przed wygenerowaniem diety.');
+    setIsGenerating(false);
+    return;
+  }
+
+  try {
+    const goalMap: Record<string, string> = {
+      lose: 'The goal is weight reduction.',
+      gain: 'The goal is to gain muscle mass.',
+      maintain: 'The goal is to maintain current weight.',
+      detox: 'The goal is detoxification and cleansing.',
+      regen: 'The goal is regeneration of the body and immune system.',
+      liver: 'The goal is to support liver function and reduce toxin load.',
+      kidney: 'The goal is to support kidney function and manage fluid/sodium balance.'
+    };
+
+    if (!interviewData.mealsPerDay) {
+      interviewData.mealsPerDay = 4;
+    }
+
+    const recommendation = interviewData.recommendation?.trim();
+    const goalExplanation = goalMap[interviewData.goal] || '';
+
+    const res = await fetch('/api/generate-diet', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        form,
+        interviewData,
+        lang,
+        goalExplanation,
+        recommendation,
+        medical: medicalData
+      })
+    });
+
+    if (!res.body) throw new Error('Brak treści w odpowiedzi serwera.');
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let rawText = '';
+    let rawCompleteText = '';
+    let done = false;
+
+    while (!done) {
+      const { value, done: doneReading } = await reader.read();
+      done = doneReading;
+      const chunk = decoder.decode(value, { stream: true });
+      rawText += chunk;
+      rawCompleteText += chunk;
+      setStreamingText(rawText);
+    }
+
+    const json = JSON.parse(rawCompleteText);
+
+    if (json.dietPlan && typeof json.dietPlan === 'object') {
+      const transformed = transformDietPlanToEditableFormat(json.dietPlan, lang);
+      setEditableDiet(transformed);
+      setDietApproved(true);
+      return;
+    }
+
+    alert('❌ Brak poprawnego planu diety w odpowiedzi AI.');
+  } catch (err) {
+    console.error('❌ Błąd podczas generowania diety:', err);
+    alert('❌ Wystąpił błąd przy generowaniu diety.');
+  } finally {
+    setIsGenerating(false);
+  }
+};
 
   return (
     <main className="relative min-h-screen bg-[#0f271e]/70 bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 backdrop-blur-[12px] shadow-[inset_0_0_60px_rgba(255,255,255,0.08)] flex flex-col justify-start items-center pt-10 px-6 text-white transition-all duration-300">
@@ -169,32 +247,21 @@ const [isGenerating, setIsGenerating] = useState(false);
     {/* Przyciski */}
     {interviewData.goal && interviewData.model && interviewData.cuisine && (
       <div className="flex flex-wrap gap-4">
-        <button
-          onClick={async () => {
-            const res = await fetch('/api/generate-diet', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                goal: interviewData.goal,
-                model: interviewData.model,
-                cuisine: interviewData.cuisine,
-                form,
-                interviewData,
-                medicalData,
-                lang
-              })
-            });
-
-            const json = await res.json();
-            setEditableDiet(json.dietPlan || {});
-            setDietApproved(true);
-          }}
-          className="bg-blue-600 text-white font-semibold px-5 py-2.5 rounded-xl"
+       <button
+        onClick={handleGenerateDiet}
+        className="bg-blue-600 text-white font-semibold px-5 py-2.5 rounded-xl"
+        disabled={isGenerating}
         >
-          {tUI('generateDiet', lang)}
+        {isGenerating ? '⏳ Generuję...' : tUI('generateDiet', lang)}
         </button>
+       
+        {isGenerating && (
+        <div className="text-sm text-gray-600 italic mt-4 animate-pulse">
+            ⏳ Piszę dietę... {streamingText.length > 20 && '(czekaj, trwa generowanie)'}
+        </div>
+        )}
 
- <button
+        <button
           className="w-full bg-green-700 text-white px-4 py-3 rounded-md font-medium hover:bg-green-800 disabled:opacity-50"
           disabled={isGenerating || !editableDiet || Object.keys(editableDiet).length === 0}
           onClick={async () => {
