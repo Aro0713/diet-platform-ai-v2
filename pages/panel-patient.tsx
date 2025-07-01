@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import LangAndThemeToggle from '@/components/LangAndThemeToggle';
 import { tUI } from '@/utils/i18n';
+import type { Meal } from '@/types';
 import { usePatientData } from '@/hooks/usePatientData';
 
 import { PatientIconGrid } from '@/components/PatientIconGrid';
@@ -13,6 +14,10 @@ import CalculationBlock from '@/components/CalculationBlock';
 import DietTable from '@/components/DietTable';
 import { extractMappedInterview } from '@/utils/interviewHelpers';
 import type { LangKey } from '@/utils/i18n';
+import DietGoalForm from '@/components/DietGoalForm';
+import SelectModelForm from '@/components/SelectModelForm';
+import SelectCuisineForm from '@/components/SelectCuisineForm';
+import { generateDietPdf } from '@/utils/generateDietPdf';
 
 export default function PatientPanelPage() {
   const router = useRouter();
@@ -52,6 +57,8 @@ export default function PatientPanelPage() {
     }
     }, [selectedSection]);
 
+const [narrativeText, setNarrativeText] = useState('');
+const [dietApproved, setDietApproved] = useState(false);
 
   return (
     <main className="relative min-h-screen bg-[#0f271e]/70 bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 backdrop-blur-[12px] shadow-[inset_0_0_60px_rgba(255,255,255,0.08)] flex flex-col justify-start items-center pt-10 px-6 text-white transition-all duration-300">
@@ -138,17 +145,105 @@ export default function PatientPanelPage() {
           />
         )}
 
-        {selectedSection === 'diet' && editableDiet && Object.keys(editableDiet).length > 0 && (
-          <DietTable
-            editableDiet={editableDiet}
-            setEditableDiet={setEditableDiet}
-            setConfirmedDiet={() => {}}
-            isEditable={false}
-            lang={lang}
-            notes={notes}
-            setNotes={setNotes}
-          />
-        )}
+        {selectedSection === 'diet' && (
+  <div className="space-y-6">
+    {/* Wybór celu, modelu, kuchni */}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <DietGoalForm
+        lang={lang}
+        onChange={(goal) => setInterviewData({ ...interviewData, goal })}
+        />
+
+        <SelectModelForm
+        lang={lang}
+        onChange={(model) => setInterviewData({ ...interviewData, model })}
+        />
+
+        <SelectCuisineForm
+        lang={lang}
+        onChange={(cuisine) => setInterviewData({ ...interviewData, cuisine })}
+        />
+    </div>
+
+    {/* Przyciski */}
+    {interviewData.goal && interviewData.model && interviewData.cuisine && (
+      <div className="flex flex-wrap gap-4">
+        <button
+          onClick={async () => {
+            const res = await fetch('/api/generate-diet', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                goal: interviewData.goal,
+                model: interviewData.model,
+                cuisine: interviewData.cuisine,
+                form,
+                interviewData,
+                medicalData,
+                lang
+              })
+            });
+
+            const json = await res.json();
+            setEditableDiet(json.dietPlan || {});
+            setDietApproved(true);
+          }}
+          className="bg-blue-600 text-white font-semibold px-5 py-2.5 rounded-xl"
+        >
+          {tUI('generateDiet', lang)}
+        </button>
+
+        <button
+          className="bg-green-700 text-white font-semibold px-5 py-2.5 rounded-xl"
+          disabled={!editableDiet || !dietApproved}
+          onClick={async () => {
+            const bmi = form.weight && form.height
+              ? form.weight / ((form.height / 100) ** 2)
+              : 0;
+                await generateDietPdf(
+                form,
+                parseFloat(bmi.toFixed(1)),
+                (Object.values(editableDiet) as Meal[][]).flat(), // ✅ bez błędu
+                true,
+                notes,
+                lang,
+                interviewData,
+                {
+                    bmi: interviewData.bmi,
+                    ppm: interviewData.ppm,
+                    cpm: interviewData.cpm,
+                    pal: interviewData.pal,
+                    kcalMaintain: interviewData.kcalMaintain,
+                    kcalReduce: interviewData.kcalReduce,
+                    kcalGain: interviewData.kcalGain,
+                    nmcBroca: interviewData.nmcBroca,
+                    nmcLorentz: interviewData.nmcLorentz
+                },
+                'download',
+                narrativeText
+                );
+          }}
+        >
+          📄 {tUI('generatePdf', lang)}
+        </button>
+      </div>
+    )}
+
+    {/* Tabela diety */}
+    {editableDiet && Object.keys(editableDiet).length > 0 && (
+      <DietTable
+        editableDiet={editableDiet}
+        setEditableDiet={setEditableDiet}
+        setConfirmedDiet={() => {}}
+        isEditable={false}
+        lang={lang}
+        notes={notes}
+        setNotes={setNotes}
+      />
+    )}
+  </div>
+)}
+
 
         {!selectedSection && (
           <p className="text-center text-gray-300 text-sm max-w-xl mx-auto">
