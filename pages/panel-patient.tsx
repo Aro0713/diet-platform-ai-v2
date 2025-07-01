@@ -1,3 +1,4 @@
+import React from 'react';
 import Head from 'next/head';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
@@ -22,7 +23,8 @@ import SelectModelForm from '@/components/SelectModelForm';
 import SelectCuisineForm from '@/components/SelectCuisineForm';
 import { generateDietPdf } from '@/utils/generateDietPdf';
 
-export default function PatientPanelPage() {
+export default function PatientPanelPage(): React.JSX.Element {
+
   const router = useRouter();
   const [lang, setLang] = useState<LangKey>('pl');
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
@@ -127,8 +129,10 @@ const saveDietToSupabaseAndPdf = async () => {
     );
   } catch (err) {
   console.error(`${tUI('dietApprovalErrorPrefix', lang)} ${err}`);
-  alert(tUI('dietApprovalFailed', lang));
-}
+   alert(tUI('dietApprovalFailed', lang));
+  }
+};
+
 
 const saveDraftToSupabase = async () => {
   try {
@@ -441,8 +445,6 @@ const handleGenerateDiet = async () => {
     )}
   </div>
 )}
-
-
         {!selectedSection && (
           <p className="text-center text-gray-300 text-sm max-w-xl mx-auto">
             {tUI('iconInstructionFull', lang)}
@@ -452,4 +454,3 @@ const handleGenerateDiet = async () => {
     </main>
   );
 }
-};
