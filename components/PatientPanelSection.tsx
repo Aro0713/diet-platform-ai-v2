@@ -1,5 +1,4 @@
-import React from 'react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { PatientData } from '@/types';
 import { LangKey, tUI } from '@/utils/i18n';
@@ -18,10 +17,10 @@ const PatientPanelSection = ({ form, setForm, lang }: Props) => {
   const fetchPatientData = async () => {
     setStatus(tUI('searchingPatient', lang));
     const { data, error } = await supabase
-    .from('patients') 
-    .select('*')
-    .eq('email', emailInput.trim().toLowerCase())
-    .maybeSingle();
+      .from('patients')
+      .select('*')
+      .eq('email', emailInput.trim().toLowerCase())
+      .maybeSingle();
 
     if (error || !data) {
       setStatus(tUI('patientNotFound', lang));
@@ -29,16 +28,15 @@ const PatientPanelSection = ({ form, setForm, lang }: Props) => {
     }
 
     setForm({
-  ...form,
-  name: data.name || '',
-  email: data.email || '',
-  phone: data.phone || '',
-  age: data.age || null,
-  sex: data.sex || '',
-  weight: data.weight || null,
-  height: data.height || null
-});
-
+      ...form,
+      name: data.name || '',
+      email: data.email || '',
+      phone: data.phone || '',
+      age: data.age || null,
+      sex: data.sex || '',
+      weight: data.weight || null,
+      height: data.height || null,
+    });
 
     setStatus(tUI('patientDataLoaded', lang));
   };
@@ -46,57 +44,37 @@ const PatientPanelSection = ({ form, setForm, lang }: Props) => {
   const createPatientAccount = async () => {
     setStatus(tUI('sendingInvitation', lang));
 
-    const tempPassword = crypto.randomUUID();
+    try {
+      const res = await fetch('/api/create-patient', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: form.email,
+          phone: form.phone,
+          name: form.name,
+          lang,
+        }),
+      });
 
-    const { data, error } = await supabase.auth.admin.createUser({
-      email: form.email,
-      phone: form.phone,
-      password: tempPassword,
-      email_confirm: true,
-    });
+      const json = await res.json();
 
-    if (error || !data?.user?.id) {
-      console.error('❌ Błąd tworzenia konta pacjenta:', error);
+      if (!res.ok) {
+        console.error('❌ API error:', json.error);
+        setStatus(tUI('createAccountError', lang));
+        return;
+      }
+
+      console.log('📬 Tymczasowe hasło:', json.password);
+      setStatus(tUI('invitationSent', lang));
+    } catch (err) {
+      console.error('❌ Błąd po stronie klienta:', err);
       setStatus(tUI('createAccountError', lang));
-      return;
     }
-
-    const insertResult = await supabase.from('users').insert([
-      {
-        user_id: data.user.id,
-        name: form.name,
-        email: form.email,
-        phone: form.phone,
-        role: 'patient',
-        lang: lang,
-        jurisdiction: null,
-        license_number: null,
-      },
-    ]);
-
-    if (insertResult.error) {
-      console.error('❌ Błąd zapisu do public.users:', insertResult.error);
-      setStatus(tUI('createAccountError', lang));
-      return;
-    }
-
-    const resetResult = await supabase.auth.resetPasswordForEmail(form.email, {
-      redirectTo: 'https://dcp.care/reset',
-    });
-
-    if (resetResult.error) {
-      console.error('❌ Błąd wysyłania linku resetującego hasło:', resetResult.error);
-      setStatus(tUI('createAccountError', lang));
-      return;
-    }
-
-    console.log('🔐 Tymczasowe hasło pacjenta:', tempPassword);
-    setStatus(tUI('invitationSent', lang));
   };
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold">{`\ud83d\udc64 ${tUI('patientData', lang)}`}</h2>
+      <h2 className="text-lg font-semibold">🧍 {tUI('patientData', lang)}</h2>
 
       <div className="flex gap-4">
         <label className="flex items-center gap-2">
@@ -206,5 +184,6 @@ const PatientPanelSection = ({ form, setForm, lang }: Props) => {
       </div>
     </div>
   );
-}
+};
+
 export default PatientPanelSection;
