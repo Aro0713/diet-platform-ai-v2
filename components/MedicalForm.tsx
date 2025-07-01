@@ -111,6 +111,13 @@ useEffect(() => {
   };
 
   useEffect(() => {
+  const isInitial =
+    selectedGroups.length === 0 &&
+    selectedConditions.length === 0 &&
+    Object.keys(testResults).length === 0;
+
+  if (isInitial) return; // ⛔ nie wysyłaj pustych danych na start
+
   onChange({
     selectedGroups,
     selectedConditions,
@@ -119,6 +126,7 @@ useEffect(() => {
     structuredOutput
   });
 }, [selectedGroups, selectedConditions, testResults]);
+
 
 
 const handleMedicalAnalysis = async () => {
