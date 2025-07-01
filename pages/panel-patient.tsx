@@ -109,9 +109,10 @@ export default function PatientPanelPage() {
         {selectedSection === 'interview' && (
           <>
             <InterviewWizard
-              form={form}
-              onFinish={saveInterviewData}
-              lang={lang}
+            form={form}
+            onFinish={saveInterviewData}
+            lang={lang}
+            initialData={initialInterviewData}
             />
 
             {interviewData?.goal && (

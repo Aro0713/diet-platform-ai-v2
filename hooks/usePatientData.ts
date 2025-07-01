@@ -60,7 +60,8 @@ export function usePatientData(): UsePatientDataResult {
 
     // Wymuszona zmiana referencji obiektu
     setInitialMedicalData(JSON.parse(JSON.stringify(freshInitial)));
-    setInitialInterviewData(data.interview_data || {});
+    const clonedInterview = JSON.parse(JSON.stringify(data.interview_data || {}));
+    setInitialInterviewData(clonedInterview);
   }
 };
 

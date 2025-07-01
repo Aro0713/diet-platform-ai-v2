@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { getInterviewTranslation, type LangKey, tUI } from '@/utils/i18n';
 
 import { section1 } from '@/utils/translations/interview/section1';
@@ -37,13 +37,11 @@ type InterviewAnswers = Record<string, string>;
 
 interface Props {
   onFinish: (data: InterviewAnswers) => void;
-  form: {
-    sex: 'female' | 'male';
-  };
+  form: { sex: 'female' | 'male' };
   lang: LangKey;
-  onUpdateNarrative?: (text: string) => void; 
+  onUpdateNarrative?: (text: string) => void;
+  initialData?: InterviewAnswers; // ✅ dodaj to
 }
-
 
 const getSexString = (sex: 'female' | 'male' | undefined, lang: LangKey): string => {
   const forms: Record<LangKey, { female: string; male: string; default: string }> = {
@@ -123,9 +121,19 @@ const buildStep = (section: Record<LangKey, Record<string, any>>, lang: LangKey,
   return convertSectionFormat(parsed);
 };
 
-export default function InterviewWizard({ onFinish, form, lang, onUpdateNarrative }: Props) {
+export default function InterviewWizard({ onFinish, form, lang, onUpdateNarrative, initialData }: Props) {
   const [currentStep, setCurrentStep] = useState(0);
   const [allAnswers, setAllAnswers] = useState<InterviewAnswers>({});
+
+  useEffect(() => {
+  if (initialData && Object.keys(initialData).length > 0) {
+    setAllAnswers(initialData);
+    if (initialData.narrativeText) {
+      setNarrativeText(initialData.narrativeText);
+      setIsNarrativeFinalized(true);
+    }
+  }
+}, [initialData]);
 
   const steps: Step[] = useMemo(() => {
     const baseSteps = [
