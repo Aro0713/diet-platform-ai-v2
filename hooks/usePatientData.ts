@@ -24,40 +24,45 @@ export function usePatientData(): UsePatientDataResult {
   const [initialInterviewData, setInitialInterviewData] = useState<any>(undefined);
 
   const fetchPatientData = async () => {
-    const userId = localStorage.getItem('currentUserID');
-    if (!userId) return;
+  const userId = localStorage.getItem('currentUserID');
+  if (!userId) return;
 
-    const { data, error } = await supabase
-      .from('patients')
-      .select('*, interview_data, medical_data, health_status')
-      .eq('user_id', userId)
-      .maybeSingle();
+  const { data, error } = await supabase
+    .from('patients')
+    .select('*, interview_data, medical_data, health_status')
+    .eq('user_id', userId)
+    .maybeSingle();
 
-    if (error) {
-      console.error('❌ Błąd pobierania danych pacjenta:', error.message);
-      return;
-    }
+  if (error) {
+    console.error('❌ Błąd pobierania danych pacjenta:', error.message);
+    return;
+  }
 
-    if (data) {
-      const parsedMedical = Array.isArray(data.medical) ? data.medical : [];
+  if (data) {
+    const parsedMedical = Array.isArray(data.medical) ? data.medical : [];
 
-      setForm((prev) => ({
-        ...prev,
-        conditionGroups: Array.isArray(data.conditionGroups) ? data.conditionGroups : [],
-        conditions: Array.isArray(data.conditions) ? data.conditions : [],
-        medical: parsedMedical
-      }));
+    setForm((prev) => ({
+      ...prev,
+      conditionGroups: Array.isArray(data.conditionGroups) ? data.conditionGroups : [],
+      conditions: Array.isArray(data.conditions) ? data.conditions : [],
+      medical: parsedMedical
+    }));
 
-      setMedicalData({
-        summary: data.health_status || '',
-        json: data.medical_data || null
-      });
+    setMedicalData({
+      summary: data.health_status || '',
+      json: data.medical_data || null
+    });
 
-      setInterviewData(data.interview_data || {});
-      setInitialMedicalData(buildInitialDataFromSupabase(data));
-      setInitialInterviewData(data.interview_data || {});
-    }
-  };
+    setInterviewData(data.interview_data || {});
+
+    const freshInitial = buildInitialDataFromSupabase(data);
+    console.log("🔥 initialMedicalData z Supabase:", freshInitial);
+
+    // Wymuszona zmiana referencji obiektu
+    setInitialMedicalData(JSON.parse(JSON.stringify(freshInitial)));
+    setInitialInterviewData(data.interview_data || {});
+  }
+};
 
 const saveMedicalData = async ({
   selectedGroups,
