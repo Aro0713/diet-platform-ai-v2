@@ -73,13 +73,18 @@ useEffect(() => {
 }, [existingMedical]);
 
 useEffect(() => {
-  if (initialData?.selectedGroups) setSelectedGroups(initialData.selectedGroups);
-  if (initialData?.selectedConditions) setSelectedConditions(initialData.selectedConditions);
-  if (initialData?.testResults) setTestResults(initialData.testResults);
-
-  if (initialData) setHasLoadedInitial(true); 
+  if (
+    initialData &&
+    (initialData.selectedGroups?.length ||
+      initialData.selectedConditions?.length ||
+      Object.keys(initialData.testResults || {}).length)
+  ) {
+    setSelectedGroups(initialData.selectedGroups || []);
+    setSelectedConditions(initialData.selectedConditions || []);
+    setTestResults(initialData.testResults || {});
+    setHasLoadedInitial(true);
+  }
 }, [initialData]);
-
 
 
 // ✅ dynamiczne przypisanie availableConditions po zmianie grup
