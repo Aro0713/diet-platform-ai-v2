@@ -1,4 +1,3 @@
-// pages/api/create-patient.ts
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 
@@ -8,38 +7,49 @@ const supabase = createClient(
 );
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') return res.status(405).end();
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
 
   const { email, phone, name, lang } = req.body;
   const password = crypto.randomUUID();
 
   try {
+    console.log('✅ Tworzenie użytkownika...', email);
+
     // 🔐 Tworzymy użytkownika
-    const { data, error } = await supabase.auth.admin.createUser({
+    const { data, error: createError } = await supabase.auth.admin.createUser({
       email,
-      phone,
       password,
-      email_confirm: true
+      email_confirm: true,
+      phone: phone?.startsWith('+') ? phone : undefined, // dodaj tylko poprawne numery
     });
 
-    if (error || !data?.user?.id) {
-      return res.status(500).json({ error: error?.message || 'Brak ID użytkownika' });
+    if (createError || !data?.user?.id) {
+      console.error('❌ Błąd createUser:', createError);
+      return res.status(500).json({ error: createError?.message || 'Brak ID użytkownika' });
     }
 
     const userId = data.user.id;
+    console.log('🔐 Użytkownik utworzony:', userId);
 
     // 🧑 Dodajemy do users
-    await supabase.from('users').insert({
+    const { error: userInsertError } = await supabase.from('users').insert({
       user_id: userId,
       name,
       email,
       phone,
       role: 'patient',
-      lang
+      lang,
     });
 
+    if (userInsertError) {
+      console.error('❌ Błąd insert do users:', userInsertError);
+      return res.status(500).json({ error: userInsertError.message });
+    }
+
     // 🧾 Dodajemy do patients
-    await supabase.from('patients').insert({
+    const { error: patientInsertError } = await supabase.from('patients').insert({
       user_id: userId,
       name,
       email,
@@ -53,16 +63,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       allergies: '',
       conditions: [],
       health_status: '',
-      medical_data: {}
+      medical_data: {},
     });
 
-    // 🔄 Link resetujący hasło
-    await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: 'https://dcp.care/reset',
+    if (patientInsertError) {
+      console.error('❌ Błąd insert do patients:', patientInsertError);
+      return res.status(500).json({ error: patientInsertError.message });
+    }
+
+    // 📧 Link resetujący hasło
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: 'https://dcp.care/reset',
     });
 
-    return res.status(200).json({ success: true, password });
+    if (resetError) {
+      console.error('❌ Błąd resetPassword:', resetError);
+      return res.status(500).json({ error: resetError.message });
+    }
+
+    console.log('✅ Konto pacjenta utworzone pomyślnie');
+
+    return res.status(200).json({ success: true, userId, password });
   } catch (err) {
-    return res.status(500).json({ error: (err as Error).message });
+    console.error('❌ Nieoczekiwany błąd:', err);
+    return res.status(500).json({ error: (err as Error).message || 'Błąd serwera' });
   }
 }
