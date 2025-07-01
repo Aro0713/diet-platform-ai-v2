@@ -104,7 +104,8 @@ useEffect(() => {
   const [dietApproved, setDietApproved] = useState(false);
 
   const router = useRouter();
-  useEffect(() => {
+
+useEffect(() => {
   const fetchUserData = async () => {
     const {
       data: { user },
@@ -129,11 +130,19 @@ useEffect(() => {
       }));
     }
 
+    if (error) {
+      console.error('❌ Błąd pobierania danych użytkownika:', error.message);
+    }
+  };
+
+  fetchUserData();
+}, []);
+
 useEffect(() => {
   const fetchDraftDiets = async () => {
     const { data, error } = await supabase
       .from('patient_diets')
-      .select('*, patients(*)') // ⬅️ zakładamy relację z pacjentem
+      .select('*, patients(*)')
       .eq('status', 'draft');
 
     if (error) {
@@ -143,17 +152,8 @@ useEffect(() => {
     }
   };
 
-  fetchDraftDiets();
+    fetchDraftDiets();
 }, []);
-
-    if (error) console.error('Błąd pobierania danych użytkownika:', error.message);
-  };
-
-  fetchUserData();
-}, []);
-
-  const mapSex = (s: string): 'female' | 'male' =>
-    s.toLowerCase().startsWith('k') ? 'female' : 'male';
 
   useEffect(() => {
     const savedLang = localStorage.getItem('platformLang') as LangKey;
