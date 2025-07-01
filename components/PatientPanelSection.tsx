@@ -29,11 +29,16 @@ const PatientPanelSection = ({ form, setForm, lang }: Props) => {
     }
 
     setForm({
-      ...form,
-      name: data.name || '',
-      email: data.email || '',
-      phone: data.phone || '',
-    });
+  ...form,
+  name: data.name || '',
+  email: data.email || '',
+  phone: data.phone || '',
+  age: data.age || null,
+  sex: data.sex || '',
+  weight: data.weight || null,
+  height: data.height || null
+});
+
 
     setStatus(tUI('patientDataLoaded', lang));
   };
