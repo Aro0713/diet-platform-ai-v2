@@ -11,7 +11,7 @@ import { supabase } from '@/lib/supabaseClient';
 
 // 🧩 Komponenty - główne bloki UI
 import PatientPanelSection from '@/components/PatientPanelSection';
-import PatientDataForm from '@/components/PatientDataForm'; // 
+import PatientDataForm from '@/components/PatientDataForm'; 
 import MedicalForm from '@/components/MedicalForm';
 import SelectConditionForm from '@/components/SelectConditionForm';
 import InterviewWizard from '@/components/InterviewWizard'; 
@@ -128,7 +128,6 @@ useEffect(() => {
         region: data.jurisdiction || '',
       }));
     }
-const [pendingDiets, setPendingDiets] = useState<any[]>([]);
 
 useEffect(() => {
   const fetchDraftDiets = async () => {
