@@ -59,6 +59,7 @@ export default function PatientPanelPage() {
 
 const [narrativeText, setNarrativeText] = useState('');
 const [dietApproved, setDietApproved] = useState(false);
+const [isGenerating, setIsGenerating] = useState(false);
 
   return (
     <main className="relative min-h-screen bg-[#0f271e]/70 bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 backdrop-blur-[12px] shadow-[inset_0_0_60px_rgba(255,255,255,0.08)] flex flex-col justify-start items-center pt-10 px-6 text-white transition-all duration-300">
@@ -193,41 +194,58 @@ const [dietApproved, setDietApproved] = useState(false);
           {tUI('generateDiet', lang)}
         </button>
 
-        <button
-          className="bg-green-700 text-white font-semibold px-5 py-2.5 rounded-xl"
-          disabled={!editableDiet || !dietApproved}
+ <button
+          className="w-full bg-green-700 text-white px-4 py-3 rounded-md font-medium hover:bg-green-800 disabled:opacity-50"
+          disabled={isGenerating || !editableDiet || Object.keys(editableDiet).length === 0}
           onClick={async () => {
-            const bmi = form.weight && form.height
-              ? form.weight / ((form.height / 100) ** 2)
-              : 0;
-                await generateDietPdf(
-                form,
-                parseFloat(bmi.toFixed(1)),
-                (Object.values(editableDiet) as Meal[][]).flat(), // ✅ bez błędu
-                true,
-                notes,
-                lang,
-                interviewData,
-                {
-                    bmi: interviewData.bmi,
-                    ppm: interviewData.ppm,
-                    cpm: interviewData.cpm,
-                    pal: interviewData.pal,
-                    kcalMaintain: interviewData.kcalMaintain,
-                    kcalReduce: interviewData.kcalReduce,
-                    kcalGain: interviewData.kcalGain,
-                    nmcBroca: interviewData.nmcBroca,
-                    nmcLorentz: interviewData.nmcLorentz
-                },
-                'download',
-                narrativeText
-                );
-          }}
-        >
-          📄 {tUI('generatePdf', lang)}
+            try {
+              setIsGenerating(true);
+              const { generateDietPdf } = await import('@/utils/generateDietPdf');
+              const bmi = form.weight && form.height
+                ? parseFloat((form.weight / ((form.height / 100) ** 2)).toFixed(1))
+                : 0;
+              const mealArray: Meal[] = (Object.values(editableDiet || {}) as Meal[][]).flat();
+
+              if (!Array.isArray(mealArray) || mealArray.length === 0) {
+                alert('⚠️ Plan diety jest pusty lub niepoprawny.');
+                return;
+              }
+
+      await generateDietPdf(
+        form,
+        bmi,
+        mealArray,
+        true,
+        notes,
+        lang,
+        interviewData,
+        {
+          bmi: interviewData.bmi,
+          ppm: interviewData.ppm,
+          cpm: interviewData.cpm,
+          pal: interviewData.pal,
+          kcalMaintain: interviewData.kcalMaintain,
+          kcalReduce: interviewData.kcalReduce,
+          kcalGain: interviewData.kcalGain,
+          nmcBroca: interviewData.nmcBroca,
+          nmcLorentz: interviewData.nmcLorentz
+        },
+        'download',
+        narrativeText
+      );
+    } catch (e) {
+      alert('❌ Błąd przy generowaniu PDF');
+      console.error(e);
+    } finally {
+      setIsGenerating(false);
+    }
+  }}
+>
+   {isGenerating ? '⏳ Generowanie...' : `📄 ${tUI('generatePdf', lang)}`}
         </button>
       </div>
     )}
+
 
     {/* Tabela diety */}
     {editableDiet && Object.keys(editableDiet).length > 0 && (
