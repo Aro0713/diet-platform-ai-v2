@@ -116,7 +116,8 @@ useEffect(() => {
     selectedConditions.length === 0 &&
     Object.keys(testResults).length === 0;
 
-  if (isInitial) return; // ⛔ nie wysyłaj pustych danych na start
+    // ⛔ NIE wysyłaj nic, dopóki nie załadowaliśmy initialData
+  if (!hasLoadedInitial || isInitial) return;
 
   onChange({
     selectedGroups,

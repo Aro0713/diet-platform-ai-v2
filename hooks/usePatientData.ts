@@ -59,62 +59,75 @@ export function usePatientData(): UsePatientDataResult {
     }
   };
 
-  const saveMedicalData = async ({
-    selectedGroups,
-    selectedConditions,
-    testResults,
-    medicalSummary,
-    structuredOutput
-  }: {
-    selectedGroups: string[];
-    selectedConditions: string[];
-    testResults: { [testName: string]: string };
-    medicalSummary?: string;
-    structuredOutput?: any;
-  }) => {
-    const convertedMedical = selectedConditions.map((condition) => ({
-      condition,
-      tests: Object.entries(testResults)
-        .filter(([key]) => key.startsWith(`${condition}__`))
-        .map(([name, value]) => ({
-          name: name.replace(`${condition}__`, ''),
-          value
-        }))
-    }));
+const saveMedicalData = async ({
+  selectedGroups,
+  selectedConditions,
+  testResults,
+  medicalSummary,
+  structuredOutput
+}: {
+  selectedGroups: string[];
+  selectedConditions: string[];
+  testResults: { [testName: string]: string };
+  medicalSummary?: string;
+  structuredOutput?: any;
+}) => {
+  const userId = localStorage.getItem('currentUserID');
+  if (!userId) return;
 
-    const userId = localStorage.getItem('currentUserID');
-    if (!userId) return;
+  // 🔒 ZABEZPIECZENIE przed nadpisywaniem pustymi danymi
+  const isEmpty =
+    (!selectedGroups || selectedGroups.length === 0) &&
+    (!selectedConditions || selectedConditions.length === 0) &&
+    (!testResults || Object.keys(testResults).length === 0) &&
+    !structuredOutput &&
+    !medicalSummary;
 
-    const { error } = await supabase
-      .from('patients')
-      .update({
-        medical: convertedMedical,
-        medical_data: structuredOutput,
-        health_status: medicalSummary,
-        conditionGroups: selectedGroups,
-        conditions: selectedConditions
-      })
-      .eq('user_id', userId);
+  if (isEmpty) {
+    console.warn('⚠️ Pominięto zapis pustych danych medycznych');
+    return;
+  }
 
-    if (error) {
-      console.error('❌ Błąd zapisu danych medycznych:', error.message);
-    } else {
-      console.log('✅ Dane medyczne zapisane');
-    }
+  const convertedMedical = selectedConditions.map((condition) => ({
+    condition,
+    tests: Object.entries(testResults)
+      .filter(([key]) => key.startsWith(`${condition}__`))
+      .map(([name, value]) => ({
+        name: name.replace(`${condition}__`, ''),
+        value
+      }))
+  }));
 
-    setForm((prev) => ({
-      ...prev,
+  const { error } = await supabase
+    .from('patients')
+    .update({
+      medical: convertedMedical,
+      medical_data: structuredOutput,
+      health_status: medicalSummary,
       conditionGroups: selectedGroups,
-      conditions: selectedConditions,
-      testResults,
-      medical: convertedMedical
-    }));
+      conditions: selectedConditions
+    })
+    .eq('user_id', userId);
 
-    setMedicalData({
-      summary: medicalSummary ?? '',
-      json: structuredOutput ?? null
-    });
-  };
+  if (error) {
+    console.error('❌ Błąd zapisu danych medycznych:', error.message);
+  } else {
+    console.log('✅ Dane medyczne zapisane');
+  }
+
+  setForm((prev) => ({
+    ...prev,
+    conditionGroups: selectedGroups,
+    conditions: selectedConditions,
+    testResults,
+    medical: convertedMedical
+  }));
+
+  setMedicalData({
+    summary: medicalSummary ?? '',
+    json: structuredOutput ?? null
+  });
+};
 
   const saveInterviewData = async (data: any) => {
     const userId = localStorage.getItem('currentUserID');
