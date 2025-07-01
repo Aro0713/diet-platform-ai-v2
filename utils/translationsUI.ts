@@ -2800,7 +2800,310 @@ medicalDataDeleted: {
   hi: 'मेडिकल डेटा हटाया गया',
   ar: 'تم حذف البيانات الطبية',
   he: 'הנתונים הרפואיים נמחקו'
+},
+  generating: {
+    pl: '⏳ Generuję...',
+    en: '⏳ Generating...',
+    de: '⏳ Generiere...',
+    fr: '⏳ Génération...',
+    es: '⏳ Generando...',
+    ua: '⏳ Генерую...',
+    ru: '⏳ Генерирую...',
+    zh: '⏳ 正在生成...',
+    ar: '⏳ جاري التوليد...',
+    hi: '⏳ जनरेट कर रहा है...',
+    he: '⏳ מייצר...'
+  },
+  writing: {
+    pl: '⏳ Piszę dietę...',
+    en: '⏳ Writing diet...',
+    de: '⏳ Schreibe Diät...',
+    fr: '⏳ Rédaction du régime...',
+    es: '⏳ Escribiendo la dieta...',
+    ua: '⏳ Пишу дієту...',
+    ru: '⏳ Пишу диету...',
+    zh: '⏳ 编写饮食计划...',
+    ar: '⏳ يتم كتابة النظام الغذائي...',
+    hi: '⏳ डाइट लिखी जा रही है...',
+    he: '⏳ כותב את התפריט...'
+  },
+  waitGenerating: {
+    pl: 'czekaj, trwa generowanie',
+    en: 'please wait, generating in progress',
+    de: 'bitte warten, Generierung läuft',
+    fr: 'veuillez patienter, génération en cours',
+    es: 'espera, generación en curso',
+    ua: 'зачекайте, йде генерація',
+    ru: 'подождите, идет генерация',
+    zh: '请稍候，正在生成中',
+    ar: 'يرجى الانتظار، جاري التوليد',
+    hi: 'कृपया प्रतीक्षा करें, निर्माण जारी है',
+    he: 'אנא המתן, מתבצעת יצירה'
+  },
+  noUserId: {
+    pl: '❌ Brak ID użytkownika. Zaloguj się ponownie.',
+    en: '❌ Missing user ID. Please log in again.',
+    de: '❌ Benutzer-ID fehlt. Bitte erneut einloggen.',
+    fr: '❌ ID utilisateur manquant. Veuillez vous reconnecter.',
+    es: '❌ Falta ID de usuario. Vuelve a iniciar sesión.',
+    ua: '❌ Відсутній ID користувача. Увійдіть знову.',
+    ru: '❌ Отсутствует ID пользователя. Войдите снова.',
+    zh: '❌ 缺少用户 ID。请重新登录。',
+    ar: '❌ معرف المستخدم مفقود. الرجاء تسجيل الدخول مرة أخرى.',
+    hi: '❌ उपयोगकर्ता ID नहीं मिला। कृपया दोबारा लॉगिन करें।',
+    he: '❌ חסר מזהה משתמש. התחבר שוב.'
+  },
+  supabaseError: {
+    pl: '❌ Błąd zapisu do Supabase:',
+    en: '❌ Supabase write error:',
+    de: '❌ Fehler beim Schreiben in Supabase:',
+    fr: '❌ Erreur d’écriture dans Supabase :',
+    es: '❌ Error al guardar en Supabase:',
+    ua: '❌ Помилка запису до Supabase:',
+    ru: '❌ Ошибка записи в Supabase:',
+    zh: '❌ Supabase 写入错误：',
+    ar: '❌ خطأ في الحفظ إلى Supabase:',
+    hi: '❌ Supabase में सेव करते समय त्रुटि:',
+    he: '❌ שגיאה בכתיבה ל־Supabase:'
+  },
+  noMeals: {
+    pl: '⚠️ Brak posiłków do zapisania.',
+    en: '⚠️ No meals to save.',
+    de: '⚠️ Keine Mahlzeiten zum Speichern.',
+    fr: '⚠️ Aucun repas à enregistrer.',
+    es: '⚠️ No hay comidas para guardar.',
+    ua: '⚠️ Немає страв для збереження.',
+    ru: '⚠️ Нет блюд для сохранения.',
+    zh: '⚠️ 没有要保存的餐食。',
+    ar: '⚠️ لا توجد وجبات للحفظ.',
+    hi: '⚠️ सेव करने के लिए कोई भोजन नहीं है।',
+    he: '⚠️ אין מנות לשמירה.'
+  },
+  noAnalysis: {
+    pl: '⚠️ Musisz zatwierdzić analizę wyników badań przed wygenerowaniem diety.',
+    en: '⚠️ You must confirm test result analysis before generating a diet.',
+    de: '⚠️ Du musst die Analyse der Testergebnisse bestätigen, bevor du eine Diät generierst.',
+    fr: '⚠️ Vous devez valider l’analyse des résultats avant de générer un régime.',
+    es: '⚠️ Debes confirmar el análisis antes de generar la dieta.',
+    ua: '⚠️ Потрібно підтвердити аналіз результатів перед генерацією дієти.',
+    ru: '⚠️ Необходимо подтвердить анализ результатов перед генерацией диеты.',
+    zh: '⚠️ 在生成饮食前必须确认检查结果分析。',
+    ar: '⚠️ يجب تأكيد تحليل النتائج قبل توليد النظام الغذائي.',
+    hi: '⚠️ डाइट जनरेट करने से पहले आपको परीक्षण विश्लेषण की पुष्टि करनी होगी।',
+    he: '⚠️ עליך לאשר את ניתוח הבדיקות לפני יצירת התפריט.'
+  },
+  noDietInResponse: {
+    pl: '❌ Brak poprawnego planu diety w odpowiedzi AI.',
+    en: '❌ No valid diet plan in AI response.',
+    de: '❌ Kein gültiger Diätplan in der Antwort der KI.',
+    fr: '❌ Aucun plan de régime valide dans la réponse de l’IA.',
+    es: '❌ No hay un plan de dieta válido en la respuesta de la IA.',
+    ua: '❌ У відповіді ШІ відсутній коректний план дієти.',
+    ru: '❌ В ответе ИИ отсутствует корректный план диеты.',
+    zh: '❌ AI 回复中无有效饮食计划。',
+    ar: '❌ لا يوجد خطة نظام غذائي صالحة في رد الذكاء الاصطناعي.',
+    hi: '❌ एआई के उत्तर में कोई वैध डाइट प्लान नहीं है।',
+    he: '❌ אין תפריט תקף בתשובת הבינה המלאכותית.'
+  },
+  generationError: {
+    pl: '❌ Wystąpił błąd przy generowaniu diety.',
+    en: '❌ An error occurred during diet generation.',
+    de: '❌ Fehler beim Generieren der Diät.',
+    fr: '❌ Une erreur s’est produite lors de la génération du régime.',
+    es: '❌ Ocurrió un error al generar la dieta.',
+    ua: '❌ Сталася помилка при генерації дієти.',
+    ru: '❌ Произошла ошибка при генерации диеты.',
+    zh: '❌ 生成饮食时发生错误。',
+    ar: '❌ حدث خطأ أثناء توليد النظام الغذائي.',
+    hi: '❌ डाइट जनरेट करते समय एक त्रुटि हुई।',
+    he: '❌ אירעה שגיאה בעת יצירת התפריט.'
+  },
+  approveConfirmation: {
+    pl: '⚠️ Ta dieta nie została jeszcze zatwierdzona przez lekarza lub dietetyka.\nCzy na pewno chcesz zatwierdzić ją samodzielnie jako pacjent?',
+    en: '⚠️ This diet has not yet been approved by a doctor or dietitian.\nDo you really want to confirm it yourself as a patient?',
+    de: '⚠️ Diese Diät wurde noch nicht von einem Arzt oder Ernährungsberater bestätigt.\nMöchtest du sie wirklich selbst bestätigen?',
+    fr: '⚠️ Ce régime n’a pas encore été validé par un médecin ou un diététicien.\nSouhaitez-vous vraiment le valider vous-même ?',
+    es: '⚠️ Esta dieta aún no ha sido aprobada por un médico o dietista.\n¿Deseas aprobarla tú mismo?',
+    ua: '⚠️ Цю дієту ще не затвердив лікар або дієтолог.\nВи дійсно хочете підтвердити її самостійно?',
+    ru: '⚠️ Диета ещё не утверждена врачом или диетологом.\nВы действительно хотите подтвердить её самостоятельно?',
+    zh: '⚠️ 此饮食尚未获得医生或营养师的批准。\n您确定要自行确认吗？',
+    ar: '⚠️ لم تتم الموافقة على هذا النظام الغذائي بعد من قبل طبيب أو أخصائي تغذية.\nهل تريد تأكيده بنفسك كمريض؟',
+    hi: '⚠️ इस डाइट को अभी डॉक्टर या डाइटिशियन द्वारा मंजूरी नहीं मिली है।\nक्या आप इसे स्वयं मंजूर करना चाहते हैं?',
+    he: '⚠️ תפריט זה טרם אושר על ידי רופא או דיאטן.\nהאם אתה בטוח שברצונך לאשר אותו בעצמך?'
+  },
+  sendToDoctorConfirmation: {
+    pl: '📩 Dieta zostanie wysłana do lekarza lub dietetyka do zatwierdzenia. Czy chcesz kontynuować?',
+    en: '📩 The diet will be sent to a doctor or dietitian for approval. Do you want to continue?',
+    de: '📩 Die Diät wird zur Genehmigung an einen Arzt oder Ernährungsberater gesendet. Möchtest du fortfahren?',
+    fr: '📩 Le régime sera envoyé à un médecin ou un diététicien pour approbation. Voulez-vous continuer ?',
+    es: '📩 La dieta se enviará a un médico o dietista para su aprobación. ¿Deseas continuar?',
+    ua: '📩 Дієта буде надіслана лікарю або дієтологу на затвердження. Продовжити?',
+    ru: '📩 Диета будет отправлена врачу или диетологу на утверждение. Продолжить?',
+    zh: '📩 饮食计划将发送给医生或营养师以供批准。是否继续？',
+    ar: '📩 سيتم إرسال النظام الغذائي إلى الطبيب أو اختصاصي التغذية للموافقة عليه. هل ترغب في المتابعة؟',
+    hi: '📩 डाइट को अनुमोदन के लिए डॉक्टर या डाइटिशियन को भेजा जाएगा। क्या आप जारी रखना चाहते हैं?',
+    he: '📩 התפריט יישלח לרופא או תזונאי לאישור. האם להמשיך?'
+  },
+  supabaseSaveErrorPrefix: {
+  pl: '❌ Błąd zapisu do Supabase:',
+  en: '❌ Error saving to Supabase:',
+  de: '❌ Fehler beim Speichern in Supabase:',
+  fr: '❌ Erreur d’enregistrement dans Supabase :',
+  es: '❌ Error al guardar en Supabase:',
+  ua: '❌ Помилка збереження в Supabase:',
+  ru: '❌ Ошибка сохранения в Supabase:',
+  zh: '❌ 保存到 Supabase 时出错：',
+  hi: '❌ Supabase में सहेजने में त्रुटि:',
+  ar: '❌ خطأ في الحفظ في Supabase:',
+  he: '❌ שגיאה בשמירה ל-Supabase:'
+},
+dietSaveFailed: {
+  pl: '❌ Nie udało się zapisać diety.',
+  en: '❌ Failed to save the diet.',
+  de: '❌ Speichern der Diät fehlgeschlagen.',
+  fr: '❌ Échec de l’enregistrement du régime.',
+  es: '❌ No se pudo guardar la dieta.',
+  ua: '❌ Не вдалося зберегти дієту.',
+  ru: '❌ Не удалось сохранить диету.',
+  zh: '❌ 保存饮食计划失败。',
+  hi: '❌ डाइट सहेजने में विफल।',
+  ar: '❌ فشل في حفظ النظام الغذائي.',
+  he: '❌ לא ניתן לשמור את הדיאטה.'
+},
+dietSaveSuccess: {
+  pl: '✅ Dieta została zapisana.',
+  en: '✅ The diet has been saved.',
+  de: '✅ Die Diät wurde gespeichert.',
+  fr: '✅ Le régime a été enregistré.',
+  es: '✅ La dieta ha sido guardada.',
+  ua: '✅ Дієта збережена.',
+  ru: '✅ Диета сохранена.',
+  zh: '✅ 饮食计划已保存。',
+  hi: '✅ डाइट सफलतापूर्वक सहेजी गई।',
+  ar: '✅ تم حفظ النظام الغذائي.',
+  he: '✅ הדיאטה נשמרה בהצלחה.'
+},
+dietApprovalErrorPrefix: {
+  pl: '❌ Błąd przy zatwierdzaniu diety:',
+  en: '❌ Error during diet approval:',
+  de: '❌ Fehler bei der Diätgenehmigung:',
+  fr: '❌ Erreur lors de l’approbation du régime :',
+  es: '❌ Error al aprobar la dieta:',
+  ua: '❌ Помилка під час затвердження дієти:',
+  ru: '❌ Ошибка при утверждении диеты:',
+  zh: '❌ 批准饮食时出错：',
+  hi: '❌ डाइट को स्वीकृति देते समय त्रुटि:',
+  ar: '❌ خطأ أثناء الموافقة على النظام الغذائي:',
+  he: '❌ שגיאה באישור הדיאטה:'
+},
+dietApprovalFailed: {
+  pl: '❌ Nie udało się zatwierdzić diety.',
+  en: '❌ Failed to approve the diet.',
+  de: '❌ Diät konnte nicht genehmigt werden.',
+  fr: '❌ Impossible d’approuver le régime.',
+  es: '❌ No se pudo aprobar la dieta.',
+  ua: '❌ Не вдалося затвердити дієту.',
+  ru: '❌ Не удалось утвердить диету.',
+  zh: '❌ 无法批准饮食。',
+  hi: '❌ डाइट को स्वीकृति नहीं मिल पाई।',
+  ar: '❌ تعذر الموافقة على النظام الغذائي.',
+  he: '❌ לא ניתן לאשר את הדיאטה.'
+},
+medicalApprovalRequired: {
+  pl: '⚠️ Musisz zatwierdzić analizę wyników badań przed wygenerowaniem diety.',
+  en: '⚠️ You must confirm the lab results before generating the diet.',
+  de: '⚠️ Du musst die Laborergebnisse bestätigen, bevor du den Ernährungsplan erstellst.',
+  fr: '⚠️ Vous devez valider les résultats d’analyse avant de générer le régime.',
+  es: '⚠️ Debes confirmar los resultados del análisis antes de generar la dieta.',
+  ua: '⚠️ Потрібно підтвердити результати аналізів перед створенням дієти.',
+  ru: '⚠️ Необходимо подтвердить результаты анализов перед генерацией диеты.',
+  zh: '⚠️ 必须先确认化验结果才能生成饮食计划。',
+  hi: '⚠️ डाइट जनरेट करने से पहले आपको टेस्ट के परिणामों की पुष्टि करनी होगी।',
+  ar: '⚠️ يجب تأكيد نتائج التحاليل قبل إنشاء النظام الغذائي.',
+  he: '⚠️ יש לאשר את תוצאות הבדיקות לפני יצירת הדיאטה.'
+},
+dietPlanMissing: {
+  pl: '❌ Brak poprawnego planu diety w odpowiedzi AI.',
+  en: '❌ No valid diet plan found in AI response.',
+  de: '❌ Kein gültiger Diätplan in der AI-Antwort gefunden.',
+  fr: '❌ Aucun plan diététique valide dans la réponse de l’IA.',
+  es: '❌ No se encontró un plan de dieta válido en la respuesta de la IA.',
+  ua: '❌ Відповідь ШІ не містить коректного плану дієти.',
+  ru: '❌ В ответе ИИ нет корректного плана диеты.',
+  zh: '❌ AI 响应中未找到有效的饮食计划。',
+  hi: '❌ AI के उत्तर में कोई मान्य डाइट प्लान नहीं मिला।',
+  ar: '❌ لا يوجد خطة غذائية صالحة في رد الذكاء الاصطناعي.',
+  he: '❌ לא נמצא תפריט תקין בתשובת ה-AI.'
+},
+dietGenerationErrorPrefix: {
+  pl: '❌ Błąd podczas generowania diety:',
+  en: '❌ Error while generating diet:',
+  de: '❌ Fehler beim Erstellen der Diät:',
+  fr: '❌ Erreur lors de la génération du régime :',
+  es: '❌ Error al generar la dieta:',
+  ua: '❌ Помилка при створенні дієти:',
+  ru: '❌ Ошибка при генерации диеты:',
+  zh: '❌ 生成饮食计划时出错：',
+  hi: '❌ डाइट जनरेट करते समय त्रुटि:',
+  ar: '❌ خطأ أثناء إنشاء النظام الغذائي:',
+  he: '❌ שגיאה ביצירת הדיאטה:'
+},
+dietGenerationFailed: {
+  pl: '❌ Wystąpił błąd przy generowaniu diety.',
+  en: '❌ An error occurred while generating the diet.',
+  de: '❌ Beim Erstellen der Diät ist ein Fehler aufgetreten.',
+  fr: '❌ Une erreur s’est produite lors de la génération du régime.',
+  es: '❌ Ocurrió un error al generar la dieta.',
+  ua: '❌ Під час створення дієти сталася помилка.',
+  ru: '❌ Произошла ошибка при генерации диеты.',
+  zh: '❌ 生成饮食计划时发生错误。',
+  hi: '❌ डाइट जनरेट करते समय एक त्रुटि हुई।',
+  ar: '❌ حدث خطأ أثناء إنشاء النظام الغذائي.',
+  he: '❌ התרחשה שגיאה ביצירת הדיאטה.'
+},
+dietPlanEmptyOrInvalid: {
+  pl: '⚠️ Plan diety jest pusty lub niepoprawny.',
+  en: '⚠️ The diet plan is empty or invalid.',
+  de: '⚠️ Der Diätplan ist leer oder ungültig.',
+  fr: '⚠️ Le plan diététique est vide ou invalide.',
+  es: '⚠️ El plan de dieta está vacío o no es válido.',
+  ua: '⚠️ План дієти порожній або некоректний.',
+  ru: '⚠️ План диеты пуст или некорректен.',
+  zh: '⚠️ 饮食计划为空或无效。',
+  hi: '⚠️ डाइट प्लान खाली या अमान्य है।',
+  ar: '⚠️ خطة النظام الغذائي فارغة أو غير صالحة.',
+  he: '⚠️ תפריט הדיאטה ריק או שגוי.'
+},
+dietWritingInProgress: {
+  pl: '⏳ Piszę dietę...',
+  en: '⏳ Writing the diet...',
+  de: '⏳ Diät wird geschrieben...',
+  fr: '⏳ Rédaction du régime...',
+  es: '⏳ Escribiendo la dieta...',
+  ua: '⏳ Пишу дієту...',
+  ru: '⏳ Пишу диету...',
+  zh: '⏳ 正在撰写饮食计划...',
+  hi: '⏳ डाइट लिखी जा रही है...',
+  ar: '⏳ يتم كتابة النظام الغذائي...',
+  he: '⏳ כותב את הדיאטה...'
+},
+dietWritingInProgressExtended: {
+  pl: '⏳ Piszę dietę... (czekaj, trwa generowanie)',
+  en: '⏳ Writing the diet... (please wait, generating)',
+  de: '⏳ Diät wird geschrieben... (bitte warten, Generierung läuft)',
+  fr: '⏳ Rédaction du régime... (veuillez patienter, génération en cours)',
+  es: '⏳ Escribiendo la dieta... (por favor espera, generando)',
+  ua: '⏳ Пишу дієту... (чекай, триває генерація)',
+  ru: '⏳ Пишу диету... (подождите, идет генерация)',
+  zh: '⏳ 正在撰写饮食计划...（请稍候，正在生成）',
+  hi: '⏳ डाइट लिखी जा रही है... (कृपया प्रतीक्षा करें, जनरेट हो रहा है)',
+  ar: '⏳ يتم كتابة النظام الغذائي... (يرجى الانتظار، يتم الإنشاء)',
+  he: '⏳ כותב את הדיאטה... (נא להמתין, מתבצעת יצירה)'
 }
+
+
+
+
 
 };
 

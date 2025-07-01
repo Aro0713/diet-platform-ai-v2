@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import LangAndThemeToggle from '@/components/LangAndThemeToggle';
 import { tUI } from '@/utils/i18n';
 import type { Meal } from '@/types';
+import { supabase } from '@/lib/supabaseClient';
 import { usePatientData } from '@/hooks/usePatientData';
 import { tryParseJSON } from '@/utils/tryParseJSON'; 
 import { transformDietPlanToEditableFormat } from '@/utils/transformDietPlan';
@@ -62,13 +63,108 @@ const [streamingText, setStreamingText] = useState('');
 const [narrativeText, setNarrativeText] = useState('');
 const [dietApproved, setDietApproved] = useState(false);
 const [isGenerating, setIsGenerating] = useState(false);
+const saveDietToSupabaseAndPdf = async () => {
+  
+  try {
+    const bmi = form.weight && form.height
+      ? parseFloat((form.weight / ((form.height / 100) ** 2)).toFixed(1))
+      : 0;
+
+    const mealArray: Meal[] = (Object.values(editableDiet || {}) as Meal[][]).flat();
+
+    if (!Array.isArray(mealArray) || mealArray.length === 0) {
+      alert(tUI('noMealsToSave', lang));
+      return;
+    }
+
+    // ZAPISZ DO SUPABASE (do tabeli np. patient_diets)
+    const userId = localStorage.getItem('currentUserID');
+    if (!userId) {
+      alert(tUI('noUserId', lang));
+      return;
+    }
+
+    const { error } = await supabase
+      .from('patient_diets')
+      .insert({
+        user_id: userId,
+        diet_plan: editableDiet,
+        status: 'confirmed',
+        confirmed_at: new Date().toISOString()
+      });
+
+        if (error) {
+    console.error(`${tUI('supabaseSaveErrorPrefix', lang)} ${error.message}`);
+    alert(tUI('dietSaveFailed', lang));
+    return;
+    }
+
+    alert(tUI('dietSaveSuccess', lang));
+
+
+    const { generateDietPdf } = await import('@/utils/generateDietPdf');
+    await generateDietPdf(
+      form,
+      bmi,
+      mealArray,
+      true,
+      notes,
+      lang,
+      interviewData,
+      {
+        bmi: interviewData.bmi,
+        ppm: interviewData.ppm,
+        cpm: interviewData.cpm,
+        pal: interviewData.pal,
+        kcalMaintain: interviewData.kcalMaintain,
+        kcalReduce: interviewData.kcalReduce,
+        kcalGain: interviewData.kcalGain,
+        nmcBroca: interviewData.nmcBroca,
+        nmcLorentz: interviewData.nmcLorentz
+      },
+      'download',
+      narrativeText
+    );
+  } catch (err) {
+  console.error(`${tUI('dietApprovalErrorPrefix', lang)} ${err}`);
+  alert(tUI('dietApprovalFailed', lang));
+}
+
+const saveDraftToSupabase = async () => {
+  try {
+    const userId = localStorage.getItem('currentUserID');
+    if (!userId) {
+      alert(tUI('noUserIdError', lang));
+      return;
+    }
+
+    const { error } = await supabase
+      .from('patient_diets')
+      .insert({
+        user_id: userId,
+        diet_plan: editableDiet,
+        status: 'draft'
+      });
+
+    if (error) {
+  console.error(`${tUI('draftSaveErrorLog', lang)}:`, error.message);
+  alert(tUI('dietSubmissionError', lang));
+  return;
+}
+
+alert(tUI('dietSubmissionSuccess', lang));
+} catch (err) {
+  console.error(`${tUI('draftSaveCatchErrorLog', lang)}:`, err);
+  alert(tUI('dietSaveError', lang));
+}
+};
 const handleGenerateDiet = async () => {
   setIsGenerating(true);
   setStreamingText('');
   setDietApproved(false);
 
   if (!medicalData) {
-    alert('⚠️ Musisz zatwierdzić analizę wyników badań przed wygenerowaniem diety.');
+    alert(tUI('medicalApprovalRequired', lang));
     setIsGenerating(false);
     return;
   }
@@ -87,6 +183,7 @@ const handleGenerateDiet = async () => {
     if (!interviewData.mealsPerDay) {
       interviewData.mealsPerDay = 4;
     }
+
 
     const recommendation = interviewData.recommendation?.trim();
     const goalExplanation = goalMap[interviewData.goal] || '';
@@ -130,13 +227,14 @@ const handleGenerateDiet = async () => {
       return;
     }
 
-    alert('❌ Brak poprawnego planu diety w odpowiedzi AI.');
-  } catch (err) {
-    console.error('❌ Błąd podczas generowania diety:', err);
-    alert('❌ Wystąpił błąd przy generowaniu diety.');
-  } finally {
-    setIsGenerating(false);
-  }
+ alert(tUI('dietPlanMissing', lang));
+} catch (err) {
+  console.error(`${tUI('dietGenerationErrorPrefix', lang)} ${err}`);
+  alert(tUI('dietGenerationFailed', lang));
+} finally {
+  setIsGenerating(false);
+}
+
 };
 
   return (
@@ -245,38 +343,29 @@ const handleGenerateDiet = async () => {
     </div>
 
     {/* Przyciski */}
-    {interviewData.goal && interviewData.model && interviewData.cuisine && (
-      <div className="flex flex-wrap gap-4">
-       <button
-        onClick={handleGenerateDiet}
-        className="bg-blue-600 text-white font-semibold px-5 py-2.5 rounded-xl"
-        disabled={isGenerating}
-        >
-        {isGenerating ? '⏳ Generuję...' : tUI('generateDiet', lang)}
-        </button>
-       
-        {isGenerating && (
-        <div className="text-sm text-gray-600 italic mt-4 animate-pulse">
-            ⏳ Piszę dietę... {streamingText.length > 20 && '(czekaj, trwa generowanie)'}
-        </div>
-        )}
 
-        <button
-          className="w-full bg-green-700 text-white px-4 py-3 rounded-md font-medium hover:bg-green-800 disabled:opacity-50"
-          disabled={isGenerating || !editableDiet || Object.keys(editableDiet).length === 0}
-          onClick={async () => {
-            try {
-              setIsGenerating(true);
-              const { generateDietPdf } = await import('@/utils/generateDietPdf');
-              const bmi = form.weight && form.height
-                ? parseFloat((form.weight / ((form.height / 100) ** 2)).toFixed(1))
-                : 0;
-              const mealArray: Meal[] = (Object.values(editableDiet || {}) as Meal[][]).flat();
+       {isGenerating && (
+  <div className="text-sm text-gray-600 italic mt-4 animate-pulse">
+    ⏳ {tUI('writingDiet', lang)} {streamingText.length > 20 && `(${tUI('generatingWait', lang)})`}
+  </div>
+)}
 
-              if (!Array.isArray(mealArray) || mealArray.length === 0) {
-                alert('⚠️ Plan diety jest pusty lub niepoprawny.');
-                return;
-              }
+<button
+  className="w-full bg-green-700 text-white px-4 py-3 rounded-md font-medium hover:bg-green-800 disabled:opacity-50"
+  disabled={isGenerating || !editableDiet || Object.keys(editableDiet).length === 0}
+  onClick={async () => {
+    try {
+      setIsGenerating(true);
+      const { generateDietPdf } = await import('@/utils/generateDietPdf');
+      const bmi = form.weight && form.height
+        ? parseFloat((form.weight / ((form.height / 100) ** 2)).toFixed(1))
+        : 0;
+      const mealArray: Meal[] = (Object.values(editableDiet || {}) as Meal[][]).flat();
+
+      if (!Array.isArray(mealArray) || mealArray.length === 0) {
+        alert(tUI('dietPlanEmptyOrInvalid', lang));
+        return;
+      }
 
       await generateDietPdf(
         form,
@@ -301,18 +390,42 @@ const handleGenerateDiet = async () => {
         narrativeText
       );
     } catch (e) {
-      alert('❌ Błąd przy generowaniu PDF');
+      alert(tUI('errorGeneratingPdf', lang));
       console.error(e);
     } finally {
       setIsGenerating(false);
     }
   }}
 >
-   {isGenerating ? '⏳ Generowanie...' : `📄 ${tUI('generatePdf', lang)}`}
-        </button>
-      </div>
-    )}
+  {isGenerating ? tUI('generating', lang) : `📄 ${tUI('generatePdf', lang)}`}
+</button>
 
+{/* 🔘 Zatwierdzam dietę */}
+<button
+  className="w-full bg-purple-700 text-white px-4 py-3 rounded-md font-medium hover:bg-purple-800 disabled:opacity-50"
+  disabled={!editableDiet || Object.keys(editableDiet).length === 0}
+  onClick={async () => {
+    const confirm = window.confirm(tUI('confirmApproveDietAsPatient', lang));
+    if (confirm) {
+      await saveDietToSupabaseAndPdf();
+    }
+  }}
+>
+  ✅ {tUI('approveDietAsPatient', lang)}
+</button>
+
+{/* 📤 Wyślij do lekarza */}
+<button
+  className="w-full bg-blue-500 text-white px-4 py-3 rounded-md font-medium hover:bg-blue-600 disabled:opacity-50"
+  disabled={!editableDiet || Object.keys(editableDiet).length === 0}
+  onClick={async () => {
+    const confirm = window.confirm(tUI('confirmSendDietToDoctor', lang));
+    if (!confirm) return;
+    await saveDraftToSupabase();
+  }}
+>
+  📤 {tUI('sendDietToDoctor', lang)}
+</button>
 
     {/* Tabela diety */}
     {editableDiet && Object.keys(editableDiet).length > 0 && (
@@ -339,3 +452,4 @@ const handleGenerateDiet = async () => {
     </main>
   );
 }
+};
