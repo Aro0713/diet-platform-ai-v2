@@ -3152,5 +3152,31 @@ sendDietToDoctor: {
   hi: 'डॉक्टर को आहार भेजें',
   he: 'שלח את התפריט לרופא'
 },
+draftDietsToReview: {
+  pl: 'Diety do zatwierdzenia od pacjentów',
+  en: 'Draft diets submitted by patients',
+  de: 'Entwürfe von Patienten',
+  fr: 'Régimes à valider',
+  es: 'Dietas por validar',
+  ua: 'Чернетки дієт від пацієнтів',
+  ru: 'Черновики диет от пациентов',
+  zh: '待审核的饮食',
+  ar: 'الأنظمة الغذائية المرسلة من المرضى',
+  hi: 'मरीज़ों द्वारा भेजी गई डाइट',
+  he: 'טיוטות תפריטים מהמטופלים'
+},
+load: {
+  pl: 'Wczytaj',
+  en: 'Load',
+  de: 'Laden',
+  fr: 'Charger',
+  es: 'Cargar',
+  ua: 'Завантажити',
+  ru: 'Загрузить',
+  zh: '加载',
+  ar: 'تحميل',
+  hi: 'लोड करें',
+  he: 'טען'
+},
 };
 

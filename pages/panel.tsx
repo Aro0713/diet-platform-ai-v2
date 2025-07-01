@@ -94,6 +94,7 @@ useEffect(() => {
   }, [interviewNarrative]);
   const [history, setHistory] = useState<any[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [pendingDiets, setPendingDiets] = useState<any[]>([]);
   const [drafts, setDrafts] = useState<any[]>([]);
   const [showDrafts, setShowDrafts] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -127,6 +128,24 @@ useEffect(() => {
         region: data.jurisdiction || '',
       }));
     }
+const [pendingDiets, setPendingDiets] = useState<any[]>([]);
+
+useEffect(() => {
+  const fetchDraftDiets = async () => {
+    const { data, error } = await supabase
+      .from('patient_diets')
+      .select('*, patients(*)') // ⬅️ zakładamy relację z pacjentem
+      .eq('status', 'draft');
+
+    if (error) {
+      console.error('❌ Błąd pobierania diet draft:', error.message);
+    } else {
+      setPendingDiets(data || []);
+    }
+  };
+
+  fetchDraftDiets();
+}, []);
 
     if (error) console.error('Błąd pobierania danych użytkownika:', error.message);
   };
@@ -652,6 +671,36 @@ return (
      {/* Sekcja 6: Przyciski akcji */}
 <PanelCard title={tUI('actions', lang)} className="mt-2">
   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+
+{pendingDiets.length > 0 && (
+  <PanelCard title={tUI('draftDietsToReview', lang)} className="bg-yellow-100 dark:bg-yellow-900/30 text-black dark:text-white">
+    <ul className="space-y-2 text-sm">
+      {pendingDiets.map((entry, i) => (
+        <li key={entry.id} className="flex justify-between items-center border-b pb-1">
+          <div>
+            📥 {entry.patients?.name || 'Pacjent nieznany'} – {new Date(entry.created_at).toLocaleDateString()}
+          </div>
+          <button
+            onClick={() => {
+              try {
+                const parsed = typeof entry.diet_plan === 'string' ? JSON.parse(entry.diet_plan) : entry.diet_plan;
+                setEditableDiet(parsed);
+                setDiet(parsed);
+                setConfirmedDiet(null);
+                alert('📂 Wczytano dietę do edycji.');
+              } catch (err) {
+                console.error('❌ Błąd wczytywania diety draft:', err);
+              }
+            }}
+            className="text-sm text-blue-600 hover:underline"
+          >
+            {tUI('load', lang)}
+          </button>
+        </li>
+      ))}
+    </ul>
+  </PanelCard>
+)}
 
     {/* 🔵 Generuj dietę */}
     <button
