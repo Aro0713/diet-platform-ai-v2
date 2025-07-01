@@ -18,10 +18,10 @@ const PatientPanelSection = ({ form, setForm, lang }: Props) => {
   const fetchPatientData = async () => {
     setStatus(tUI('searchingPatient', lang));
     const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', emailInput)
-      .single();
+    .from('patients') 
+    .select('*')
+    .eq('email', emailInput.trim().toLowerCase())
+    .maybeSingle();
 
     if (error || !data) {
       setStatus(tUI('patientNotFound', lang));
