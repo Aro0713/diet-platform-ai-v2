@@ -41,36 +41,46 @@ const PatientPanelSection = ({ form, setForm, lang }: Props) => {
     setStatus(tUI('patientDataLoaded', lang));
   };
 
-  const createPatientAccount = async () => {
-    setStatus(tUI('sendingInvitation', lang));
+const createPatientAccount = async () => {
+  setStatus(tUI('sendingInvitation', lang));
+
+  try {
+    const res = await fetch('/api/create-patient', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: form.email,
+        phone: form.phone,
+        name: form.name,
+        lang,
+      }),
+    });
+
+    let json: any = null;
+    const text = await res.text();
 
     try {
-      const res = await fetch('/api/create-patient', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: form.email,
-          phone: form.phone,
-          name: form.name,
-          lang,
-        }),
-      });
-
-      const json = await res.json();
-
-      if (!res.ok) {
-        console.error('❌ API error:', json.error);
-        setStatus(tUI('createAccountError', lang));
-        return;
-      }
-
-      console.log('📬 Tymczasowe hasło:', json.password);
-      setStatus(tUI('invitationSent', lang));
+      json = text ? JSON.parse(text) : null;
     } catch (err) {
-      console.error('❌ Błąd po stronie klienta:', err);
+      console.error("❌ Invalid JSON from server:", text);
       setStatus(tUI('createAccountError', lang));
+      return;
     }
-  };
+
+    if (!res.ok) {
+      console.error('❌ API error:', json?.error || 'Brak szczegółów');
+      setStatus(tUI('createAccountError', lang));
+      return;
+    }
+
+    console.log('📬 Tymczasowe hasło:', json.password);
+    setStatus(tUI('invitationSent', lang));
+  } catch (err) {
+    console.error('❌ Błąd po stronie klienta:', err);
+    setStatus(tUI('createAccountError', lang));
+  }
+};
+
 
   return (
     <div className="space-y-4">
