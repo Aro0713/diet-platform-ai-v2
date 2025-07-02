@@ -43,6 +43,7 @@ import { translationsUI } from '@/utils/translationsUI';
 
 
 function Panel() {
+  const [initialMedicalData, setInitialMedicalData] = useState<any>(null);
   const [lang, setLang] = useState<LangKey>('pl');
   useEffect(() => {
   const langStorage = localStorage.getItem('platformLang') as LangKey | null;
@@ -597,6 +598,14 @@ const fetchPatientData = async () => {
     conditions: parsedConditions,
     medical: patient.medical || []
   });
+  // ✅ Snapshot do initialData (jednorazowy)
+setInitialMedicalData({
+  medical: patient.medical || {},
+  summary: patient.health_status || '',
+  json: patient.medical_data || {},
+  selectedConditions: parsedConditions,
+  selectedGroups: parsedConditionGroups
+});
 
   // ✅ Dane medyczne z chorobami
   setMedicalData({
@@ -680,23 +689,23 @@ return (
       </PanelCard>
 
       {/* Sekcja 2: Dane medyczne */}
+      {initialMedicalData && (
       <PanelCard className="z-30">
-      <MedicalForm
-        key={JSON.stringify(medicalData)} // 🔁 wymusza rerender przy zmianie danych
-        initialData={medicalData}
-        existingMedical={medicalData}
-        onChange={handleMedicalChange}
-        onUpdateMedical={(summary) => {
-          setMedicalData((prev: any) => ({
-            ...prev,
-            summary,
-            json: null 
-          }));
-        }}
-        lang={lang}
-      />
-
+        <MedicalForm
+          key={JSON.stringify(initialMedicalData)} // użyj tego jako key
+          initialData={initialMedicalData}
+          existingMedical={medicalData}
+          onChange={handleMedicalChange}
+          onUpdateMedical={(summary) => {
+            setMedicalData((prev: any) => ({
+              ...prev,
+              summary
+            }));
+          }}
+          lang={lang}
+        />
       </PanelCard>
+    )}
 
       {/* Sekcja 3: Wywiad pacjenta */}
       <PanelCard title={`🧠 ${tUI('interviewTitle', lang)}`}>
