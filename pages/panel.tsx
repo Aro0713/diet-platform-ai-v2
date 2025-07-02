@@ -155,9 +155,13 @@ useEffect(() => {
     medical: patient.medical || {},
     summary: patient.health_status || '',
     json: patient.medical_data || {},
-    selectedConditions: patient.conditions || [],
-    selectedGroups: patient.conditionGroups || []
-  });
+    selectedConditions: Array.isArray(patient.conditions)
+    ? patient.conditions
+    : JSON.parse(patient.conditions || '[]'),
+     selectedGroups: Array.isArray(patient.conditionGroups)
+    ? patient.conditionGroups
+    : JSON.parse(patient.conditionGroups || '[]'),
+     });
 
   setInterviewData({
     json: patient.interview_data || {},
