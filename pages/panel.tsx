@@ -553,7 +553,6 @@ const fetchPatientData = async () => {
   const userId = localStorage.getItem('currentUserID');
   if (!userId) return;
 
-  // 1. Pobierz dane pacjenta z tabeli `patients`
   const { data: patient, error: patientError } = await supabase
     .from('patients')
     .select('*')
@@ -565,37 +564,57 @@ const fetchPatientData = async () => {
     return;
   }
 
- setForm({
-  age: patient.age,
-  weight: patient.weight,
-  height: patient.height,
-  sex: patient.sex,
-  region: patient.region,
-  name: patient.name,
-  email: patient.email,
-  phone: patient.phone,
-  allergies: patient.allergies || [],
-  goal: patient.goal || '',
-  cuisine: patient.cuisine || '',
-  model: patient.model || '',
-  conditions: patient.conditions || []
-});
+  // 🔒 Najpierw bezpieczne parsowanie chorób
+  const safeParseArray = (input: any): string[] => {
+    if (Array.isArray(input)) return input;
+    if (typeof input === 'string') {
+      try {
+        return JSON.parse(input);
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  };
 
+  const parsedConditions = safeParseArray(patient.conditions);
+  const parsedConditionGroups = safeParseArray(patient.conditionGroups);
+
+  // ✅ Dane główne
+  setForm({
+    age: patient.age,
+    weight: patient.weight,
+    height: patient.height,
+    sex: patient.sex,
+    region: patient.region,
+    name: patient.name,
+    email: patient.email,
+    phone: patient.phone,
+    allergies: patient.allergies || [],
+    goal: patient.goal || '',
+    cuisine: patient.cuisine || '',
+    model: patient.model || '',
+    conditions: parsedConditions,
+    medical: patient.medical || []
+  });
+
+  // ✅ Dane medyczne z chorobami
   setMedicalData({
-    medical: patient.medical, // surowe dane
-    json: patient.medical_data, // dane AI
-    summary: patient.health_status,
-    selectedConditions: patient.conditions || [],
-    selectedGroups: patient.conditionGroups || []
+    medical: patient.medical || {},
+    summary: patient.health_status || '',
+    json: patient.medical_data || {},
+    selectedConditions: parsedConditions,
+    selectedGroups: parsedConditionGroups
   });
 
+  // ✅ Dane z wywiadu
   setInterviewData({
-    json: patient.interview_data,
-    summary: patient.interview_summary,
+    json: patient.interview_data || {},
+    summary: patient.interview_summary || ''
   });
 
-  // 2. Pobierz najnowszą dietę z `patient_diets` o statusie 'draft'
-  const { data: dietDraft, error: dietError } = await supabase
+  // ✅ Dieta draftowa (jeśli jest)
+  const { data: dietDraft } = await supabase
     .from('patient_diets')
     .select('*')
     .eq('user_id', userId)
@@ -604,8 +623,10 @@ const fetchPatientData = async () => {
     .limit(1)
     .maybeSingle();
 
-  if (dietDraft && dietDraft.dietPlan) {
-    setEditableDiet(dietDraft.dietPlan); // ustawiamy plan tygodnia
+  if (dietDraft?.dietPlan) {
+    setEditableDiet(dietDraft.dietPlan);
+  } else if (dietDraft?.diet_plan) {
+    setEditableDiet(dietDraft.diet_plan);
   }
 };
 
