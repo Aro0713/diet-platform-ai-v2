@@ -651,6 +651,7 @@ return (
       {/* Sekcja 2: Dane medyczne */}
       <PanelCard className="z-30">
         <MedicalForm
+        initialData={medicalData}
         onChange={handleMedicalChange}
         onUpdateMedical={(summary) => {
           setMedicalData((prev: any) => ({
@@ -665,21 +666,22 @@ return (
 
       {/* Sekcja 3: Wywiad pacjenta */}
       <PanelCard title={`🧠 ${tUI('interviewTitle', lang)}`}>
-        <InterviewWizard
-          form={form}
-          lang={lang}
-          onFinish={(data) => {
-            setInterviewData(data);
-            setForm((prev) => ({
-              ...prev,
-              stressLevel: data.stressLevel,
-              sleepQuality: data.sleepQuality,
-              physicalActivity: data.physicalActivity,
-              mealsPerDay: data.mealsPerDay
-            }));
-          }}
-          onUpdateNarrative={(text) => setInterviewNarrative(text)}
-        />
+     <InterviewWizard
+      form={form}
+      initialData={interviewData}
+      lang={lang}
+      onFinish={(data) => {
+        setInterviewData(data);
+        setForm((prev) => ({
+          ...prev,
+          stressLevel: data.stressLevel,
+          sleepQuality: data.sleepQuality,
+          physicalActivity: data.physicalActivity,
+          mealsPerDay: data.mealsPerDay
+        }));
+      }}
+      onUpdateNarrative={(text) => setInterviewNarrative(text)}
+    />
       </PanelCard>
 
     {/* Sekcja 3.1: Rekomendacje lekarza i liczba posiłków */}
@@ -750,11 +752,11 @@ return (
       {/* Sekcja 5: Kalkulator */}
       <PanelCard title={`🧮 ${tUI('patientInNumbers', lang)}`} className="h-full">
         <CalculationBlock
-          form={form}
-          interview={extractMappedInterview(interviewData)}
-          lang={lang}
-          onResult={handleCalculationResult}
-        />
+        form={form}
+        interview={extractMappedInterview(interviewData)}
+        lang={lang}
+        onResult={handleCalculationResult}
+      />
       </PanelCard>
 
      {/* Sekcja 6: Przyciski akcji */}
