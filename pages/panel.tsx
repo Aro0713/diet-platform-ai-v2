@@ -512,21 +512,6 @@ const fetchPatientData = async () => {
   const parsedConditions = safeParseArray(patient.conditions);
   const parsedConditionGroups = safeParseArray(patient.conditionGroups);
 
-  // 🔁 Skonwertuj patient.medical na testResults { 'Choroba__Test': value }
-const testResults: Record<string, string> = {};
-
-if (Array.isArray(patient.medical)) {
-  for (const entry of patient.medical) {
-    const condition = entry.condition;
-    if (Array.isArray(entry.tests)) {
-      for (const test of entry.tests) {
-        const key = `${condition}__${test.name}`;
-        testResults[key] = test.value;
-      }
-    }
-  }
-}
-
   // ✅ Dane główne
   setForm({
     age: patient.age,
@@ -545,17 +530,34 @@ if (Array.isArray(patient.medical)) {
     medical: patient.medical || []
   });
 // ✅ Snapshot do initialData — tylko raz
+const testResults: Record<string, string> = {};
+
+if (Array.isArray(patient.medical)) {
+  for (const entry of patient.medical) {
+    const condition = entry.condition;
+    if (Array.isArray(entry.tests)) {
+      for (const test of entry.tests) {
+        const key = `${condition}__${test.name}`;
+        testResults[key] = test.value;
+      }
+    }
+  }
+}
+
 const snapshot = {
-  medical: patient.medical || {},
-  summary: patient.health_status || '',
-  json: patient.medical_data || {},
-  selectedConditions: parsedConditions,
-  selectedGroups: parsedConditionGroups,
-  testResults 
+  medical: patient.medical,
+  summary: patient.health_status,
+  json: patient.medical_data,
+  selectedConditions: Array.isArray(patient.conditions) ? patient.conditions : [],
+  selectedGroups: Array.isArray(patient.conditionGroups) ? patient.conditionGroups : [],
+  testResults
 };
 
 setInitialMedicalData(snapshot);
-console.log("✅ initialMedicalData SET:", snapshot);
+setMedicalData(snapshot);
+
+console.log("✅ final initialMedicalData:", snapshot);
+
 
 
 // ✅ Dane medyczne z chorobami (stan edytowalny)
