@@ -648,6 +648,7 @@ setInitialMedicalData({
 }
 
 };
+console.log("✅ initialMedicalData z Supabase:", initialMedicalData);
 
 return (
 <main className="relative min-h-screen 
