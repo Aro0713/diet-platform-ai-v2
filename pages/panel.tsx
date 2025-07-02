@@ -650,8 +650,10 @@ return (
 
       {/* Sekcja 2: Dane medyczne */}
       <PanelCard className="z-30">
-        <MedicalForm
+      <MedicalForm
+        key={JSON.stringify(medicalData)} // 🔁 wymusza rerender przy zmianie danych
         initialData={medicalData}
+        existingMedical={medicalData}
         onChange={handleMedicalChange}
         onUpdateMedical={(summary) => {
           setMedicalData((prev: any) => ({
@@ -662,6 +664,7 @@ return (
         }}
         lang={lang}
       />
+
       </PanelCard>
 
       {/* Sekcja 3: Wywiad pacjenta */}
