@@ -156,12 +156,18 @@ useEffect(() => {
     summary: patient.health_status || '',
     json: patient.medical_data || {},
     selectedConditions: Array.isArray(patient.conditions)
-    ? patient.conditions
-    : JSON.parse(patient.conditions || '[]'),
-     selectedGroups: Array.isArray(patient.conditionGroups)
-    ? patient.conditionGroups
-    : JSON.parse(patient.conditionGroups || '[]'),
-     });
+      ? patient.conditions
+      : typeof patient.conditions === 'string'
+        ? JSON.parse(patient.conditions)
+        : [],
+    selectedGroups: Array.isArray(patient.conditionGroups)
+      ? patient.conditionGroups
+      : typeof patient.conditionGroups === 'string'
+        ? JSON.parse(patient.conditionGroups)
+        : []
+      });
+    console.log("✅ parsed selectedConditions:", patient.conditions);
+    console.log("✅ parsed selectedGroups:", patient.conditionGroups);
 
   setInterviewData({
     json: patient.interview_data || {},
