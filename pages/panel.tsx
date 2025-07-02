@@ -689,23 +689,21 @@ return (
       </PanelCard>
 
       {/* Sekcja 2: Dane medyczne */}
-      {initialMedicalData && (
       <PanelCard className="z-30">
-        <MedicalForm
-          key={JSON.stringify(initialMedicalData)} // użyj tego jako key
-          initialData={initialMedicalData}
-          existingMedical={medicalData}
-          onChange={handleMedicalChange}
-          onUpdateMedical={(summary) => {
-            setMedicalData((prev: any) => ({
-              ...prev,
-              summary
-            }));
-          }}
-          lang={lang}
-        />
-      </PanelCard>
-    )}
+      <MedicalForm
+        key={JSON.stringify(medicalData)}
+        initialData={initialMedicalData}
+        existingMedical={medicalData}
+        onChange={handleMedicalChange}
+        onUpdateMedical={(summary) => {
+          setMedicalData((prev: any) => ({
+            ...prev,
+            summary
+          }));
+        }}
+        lang={lang}
+      />
+    </PanelCard>
 
       {/* Sekcja 3: Wywiad pacjenta */}
       <PanelCard title={`🧠 ${tUI('interviewTitle', lang)}`}>
