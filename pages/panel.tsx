@@ -151,35 +151,39 @@ useEffect(() => {
       model: patient.model || ''
     }));
 
-    // ✅ Dane medyczne
     setMedicalData({
-      summary: patient.health_status || '',
-      json: patient.medical_data || null
-    });
+    medical: patient.medical || {},
+    summary: patient.health_status || '',
+    json: patient.medical_data || {},
+    selectedConditions: patient.conditions || [],
+    selectedGroups: patient.conditionGroups || []
+  });
 
-    // ✅ Dane z wywiadu
-    setInterviewData(patient.interview_data || {});
-  };
+  setInterviewData({
+    json: patient.interview_data || {},
+    summary: patient.interview_summary || ''
+  });
+    };
 
-  fetchUserData();
-}, []);
+    fetchUserData();
+  }, []);
 
-useEffect(() => {
-  const fetchDraftDiets = async () => {
-    const { data, error } = await supabase
-      .from('patient_diets')
-      .select('*, patients(*)')
-      .eq('status', 'draft');
+    useEffect(() => {
+      const fetchDraftDiets = async () => {
+        const { data, error } = await supabase
+          .from('patient_diets')
+          .select('*, patients(*)')
+          .eq('status', 'draft');
 
-    if (error) {
-      console.error('❌ Błąd pobierania diet draft:', error.message);
-    } else {
-      setPendingDiets(data || []);
-    }
-  };
+        if (error) {
+          console.error('❌ Błąd pobierania diet draft:', error.message);
+        } else {
+          setPendingDiets(data || []);
+        }
+      };
 
-  fetchDraftDiets();
-}, []);
+      fetchDraftDiets();
+    }, []);
 
   useEffect(() => {
     const savedLang = localStorage.getItem('platformLang') as LangKey;
