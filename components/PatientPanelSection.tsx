@@ -59,38 +59,32 @@ const PatientPanelSection = ({ form, setForm, lang }: Props) => {
     setStatus(tUI('sendingInvitation', lang));
 
     try {
-      const res = await fetch('/api/create-patient', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: form.email,
-          phone: form.phone,
-          name: form.name,
-          lang,
-        }),
+      const password = Math.random().toString(36).slice(2, 10) + 'Dcp!'; // tymczasowe hasło
+
+      const { data, error } = await supabase.auth.signUp({
+        email: form.email,
+        password,
+        options: {
+          emailRedirectTo: 'https://dcp.care/register?confirmed=true',
+          data: {
+            name: form.name,
+            phone: form.phone,
+            role: 'patient',
+            lang,
+          },
+        },
       });
 
-      const text = await res.text();
-      let json: any = null;
-
-      try {
-        json = text ? JSON.parse(text) : null;
-      } catch (err) {
-        console.error('❌ Invalid JSON from server:', text);
-        setStatus(tUI('createAccountError', lang));
+      if (error) {
+        console.error('❌ Błąd rejestracji pacjenta:', error.message);
+        setStatus(error.message || tUI('createAccountError', lang));
         return;
       }
 
-      if (!res.ok) {
-      console.error('❌ API error (raw text):', text);
-      setStatus(json?.error || text || '❌ Nieznany błąd z API');
-      return;
-    }
-
-      console.log('📬 Tymczasowe hasło:', json.password);
+      console.log('📬 Link aktywacyjny wysłany do pacjenta:', form.email);
       setStatus(tUI('invitationSent', lang));
     } catch (err) {
-      console.error('❌ Błąd po stronie klienta:', err);
+      console.error('❌ Wyjątek podczas rejestracji:', err);
       setStatus(tUI('createAccountError', lang));
     }
   };
