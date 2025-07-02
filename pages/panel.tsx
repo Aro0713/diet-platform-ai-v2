@@ -512,6 +512,21 @@ const fetchPatientData = async () => {
   const parsedConditions = safeParseArray(patient.conditions);
   const parsedConditionGroups = safeParseArray(patient.conditionGroups);
 
+  // 🔁 Skonwertuj patient.medical na testResults { 'Choroba__Test': value }
+const testResults: Record<string, string> = {};
+
+if (Array.isArray(patient.medical)) {
+  for (const entry of patient.medical) {
+    const condition = entry.condition;
+    if (Array.isArray(entry.tests)) {
+      for (const test of entry.tests) {
+        const key = `${condition}__${test.name}`;
+        testResults[key] = test.value;
+      }
+    }
+  }
+}
+
   // ✅ Dane główne
   setForm({
     age: patient.age,
@@ -536,7 +551,7 @@ const snapshot = {
   json: patient.medical_data || {},
   selectedConditions: parsedConditions,
   selectedGroups: parsedConditionGroups,
-  testResults: patient.testResults || {}
+  testResults 
 };
 
 setInitialMedicalData(snapshot);
