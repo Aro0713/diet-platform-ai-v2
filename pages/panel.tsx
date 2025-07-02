@@ -110,10 +110,6 @@ useEffect(() => {
 
   const router = useRouter();
 
-      useEffect(() => {
-      fetchPatientData();
-      }, []);
-
     useEffect(() => {
       const fetchDraftDiets = async () => {
         const { data, error } = await supabase
