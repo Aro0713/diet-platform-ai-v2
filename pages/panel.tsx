@@ -530,19 +530,18 @@ const fetchPatientData = async () => {
     medical: patient.medical || []
   });
 // ✅ Snapshot do initialData — tylko raz
-if (!initialMedicalData) {
-  const snapshot = {
-    medical: patient.medical || {},
-    summary: patient.health_status || '',
-    json: patient.medical_data || {},
-    selectedConditions: parsedConditions,
-    selectedGroups: parsedConditionGroups,
-    testResults: patient.testResults || {}
-  };
+const snapshot = {
+  medical: patient.medical || {},
+  summary: patient.health_status || '',
+  json: patient.medical_data || {},
+  selectedConditions: parsedConditions,
+  selectedGroups: parsedConditionGroups,
+  testResults: patient.testResults || {}
+};
 
-  setInitialMedicalData(snapshot);
-  console.log("✅ ✅ initialMedicalData SET:", snapshot);
-}
+setInitialMedicalData(snapshot);
+console.log("✅ initialMedicalData SET:", snapshot);
+
 
 // ✅ Dane medyczne z chorobami (stan edytowalny)
 setMedicalData({
