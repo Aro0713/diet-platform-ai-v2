@@ -22,12 +22,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       email,
       password,
       email_confirm: true,
-      phone: phone?.startsWith('+') ? phone : undefined, // dodaj tylko poprawne numery
+      phone: phone?.startsWith('+') ? phone : undefined,
     });
 
     if (createError || !data?.user?.id) {
       console.error('❌ Błąd createUser:', createError);
-      return res.status(500).json({ error: createError?.message || 'Brak ID użytkownika' });
+      return res.status(500).json({
+        error: createError?.message || 'Błąd tworzenia użytkownika (brak ID)',
+      });
     }
 
     const userId = data.user.id;
@@ -45,7 +47,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (userInsertError) {
       console.error('❌ Błąd insert do users:', userInsertError);
-      return res.status(500).json({ error: userInsertError.message });
+      return res.status(500).json({
+        error: userInsertError.message || 'Błąd zapisu do tabeli users',
+      });
     }
 
     // 🧾 Dodajemy do patients
@@ -68,7 +72,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (patientInsertError) {
       console.error('❌ Błąd insert do patients:', patientInsertError);
-      return res.status(500).json({ error: patientInsertError.message });
+      return res.status(500).json({
+        error: patientInsertError.message || 'Błąd zapisu do tabeli patients',
+      });
     }
 
     // 📧 Link resetujący hasło
@@ -78,14 +84,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (resetError) {
       console.error('❌ Błąd resetPassword:', resetError);
-      return res.status(500).json({ error: resetError.message });
+      return res.status(500).json({
+        error: resetError.message || 'Błąd przy generowaniu linku resetującego hasło',
+      });
     }
 
     console.log('✅ Konto pacjenta utworzone pomyślnie');
 
     return res.status(200).json({ success: true, userId, password });
-  } catch (err) {
+  } catch (err: any) {
     console.error('❌ Nieoczekiwany błąd:', err);
-    return res.status(500).json({ error: (err as Error).message || 'Błąd serwera' });
+
+    const message =
+      typeof err === 'string'
+        ? err
+        : err?.message || 'Błąd serwera – brak szczegółów';
+
+    return res.status(500).json({ error: message });
   }
 }

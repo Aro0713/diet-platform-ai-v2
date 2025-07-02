@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { PatientData } from '@/types';
 import { LangKey, tUI } from '@/utils/i18n';
+import { PhoneInput } from 'react-international-phone';
+import 'react-international-phone/style.css';
 
 interface Props {
   form: PatientData;
@@ -13,14 +15,26 @@ const PatientPanelSection = ({ form, setForm, lang }: Props) => {
   const [mode, setMode] = useState<'lookup' | 'create'>('lookup');
   const [emailInput, setEmailInput] = useState('');
   const [status, setStatus] = useState('');
+  const [detectedCountry, setDetectedCountry] = useState<'pl'>('pl');
+
+  useEffect(() => {
+    fetch('https://ip-api.com/json/')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.countryCode) {
+          setDetectedCountry(data.countryCode.toLowerCase());
+        }
+      })
+      .catch(() => setDetectedCountry('pl'));
+  }, []);
 
   const fetchPatientData = async () => {
     setStatus(tUI('searchingPatient', lang));
     const { data, error } = await supabase
-    .from('patients')
-    .select('*')
-    .ilike('email', emailInput.trim()) 
-    .maybeSingle();
+      .from('patients')
+      .select('*')
+      .ilike('email', emailInput.trim())
+      .maybeSingle();
 
     if (error || !data) {
       setStatus(tUI('patientNotFound', lang));
@@ -41,46 +55,45 @@ const PatientPanelSection = ({ form, setForm, lang }: Props) => {
     setStatus(tUI('patientDataLoaded', lang));
   };
 
-const createPatientAccount = async () => {
-  setStatus(tUI('sendingInvitation', lang));
-
-  try {
-    const res = await fetch('/api/create-patient', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: form.email,
-        phone: form.phone,
-        name: form.name,
-        lang,
-      }),
-    });
-
-    let json: any = null;
-    const text = await res.text();
+  const createPatientAccount = async () => {
+    setStatus(tUI('sendingInvitation', lang));
 
     try {
-      json = text ? JSON.parse(text) : null;
+      const res = await fetch('/api/create-patient', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: form.email,
+          phone: form.phone,
+          name: form.name,
+          lang,
+        }),
+      });
+
+      const text = await res.text();
+      let json: any = null;
+
+      try {
+        json = text ? JSON.parse(text) : null;
+      } catch (err) {
+        console.error('❌ Invalid JSON from server:', text);
+        setStatus(tUI('createAccountError', lang));
+        return;
+      }
+
+      if (!res.ok) {
+        console.error('❌ API error:', json?.error || 'Brak szczegółów');
+        setStatus(tUI('createAccountError', lang));
+        return;
+      }
+
+      console.log('📬 Tymczasowe hasło:', json.password);
+      setStatus(tUI('invitationSent', lang));
     } catch (err) {
-      console.error("❌ Invalid JSON from server:", text);
+      console.error('❌ Błąd po stronie klienta:', err);
       setStatus(tUI('createAccountError', lang));
-      return;
     }
-
-    if (!res.ok) {
-      console.error('❌ API error:', json?.error || 'Brak szczegółów');
-      setStatus(tUI('createAccountError', lang));
-      return;
-    }
-
-    console.log('📬 Tymczasowe hasło:', json.password);
-    setStatus(tUI('invitationSent', lang));
-  } catch (err) {
-    console.error('❌ Błąd po stronie klienta:', err);
-    setStatus(tUI('createAccountError', lang));
-  }
-};
-
+  };
 
   return (
     <div className="space-y-4">
@@ -141,12 +154,18 @@ const createPatientAccount = async () => {
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
           />
-          <input
-            type="tel"
-            placeholder={tUI('phone', lang)}
-            className="border px-3 py-2 rounded bg-white text-black border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600"
+          <PhoneInput
+            defaultCountry={detectedCountry}
             value={form.phone}
-            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            onChange={(phone) => setForm({ ...form, phone })}
+            inputClassName="w-full h-[44px] text-sm bg-white dark:bg-gray-800 text-black dark:text-white border border-gray-300 dark:border-gray-600 rounded px-3 py-2"
+            inputProps={{
+              name: 'phone',
+              required: true,
+              id: 'phone',
+              'aria-label': tUI('phone', lang),
+              placeholder: tUI('phone', lang),
+            }}
           />
           <button
             type="button"
