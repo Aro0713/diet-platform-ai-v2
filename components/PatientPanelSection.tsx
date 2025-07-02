@@ -28,8 +28,10 @@ const PatientPanelSection = ({ form, setForm, lang }: Props) => {
       .catch(() => setDetectedCountry('pl'));
   }, []);
 
-  const fetchPatientData = async () => {
-    setStatus(tUI('searchingPatient', lang));
+const fetchPatientData = async () => {
+  setStatus(tUI('searchingPatient', lang));
+
+  try {
     const { data, error } = await supabase
       .from('patients')
       .select('*')
@@ -37,23 +39,50 @@ const PatientPanelSection = ({ form, setForm, lang }: Props) => {
       .maybeSingle();
 
     if (error || !data) {
+      console.warn('❌ Nie znaleziono pacjenta:', emailInput);
       setStatus(tUI('patientNotFound', lang));
       return;
     }
 
-    setForm({
-      ...form,
-      name: data.name || '',
-      email: data.email || '',
-      phone: data.phone || '',
-      age: data.age || null,
-      sex: data.sex || '',
-      weight: data.weight || null,
-      height: data.height || null,
-    });
+    console.log('✅ Dane pacjenta z Supabase:', data);
+
+     setForm({
+    name: data.name || '',
+    email: data.email || '',
+    phone: data.phone || '',
+    age: data.age || null,
+    sex: data.sex || '',
+    weight: data.weight || null,
+    height: data.height || null,
+    region: data.region || '',
+    allergies: data.allergies || '',
+    conditions: data.conditions || [],
+    medical: data.medical || [],
+    goal: data.goal || '',
+    cuisine: data.cuisine || '',
+    model: data.model || '',
+  });
+
+    // Dane medyczne (jeśli przekazujesz funkcję setMedicalData jako globalny callback lub hook)
+    if (typeof window !== 'undefined' && (window as any).setMedicalDataFromPanel) {
+      (window as any).setMedicalDataFromPanel({
+        summary: data.health_status || '',
+        json: data.medical_data || null,
+      });
+    }
+
+    // Dane z wywiadu (jeśli masz globalny setInterviewData)
+    if (typeof window !== 'undefined' && (window as any).setInterviewDataFromPanel) {
+      (window as any).setInterviewDataFromPanel(data.interview_data || {});
+    }
 
     setStatus(tUI('patientDataLoaded', lang));
-  };
+  } catch (err) {
+    console.error('❌ Błąd podczas pobierania pacjenta:', err);
+    setStatus('Błąd po stronie klienta.');
+  }
+};
+
 
   const createPatientAccount = async () => {
     setStatus(tUI('sendingInvitation', lang));

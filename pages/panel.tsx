@@ -88,6 +88,10 @@ useEffect(() => {
   });
 
   const [interviewData, setInterviewData] = useState<any>({});
+  useEffect(() => {
+  (window as any).setMedicalDataFromPanel = setMedicalData;
+  (window as any).setInterviewDataFromPanel = setInterviewData;
+  }, []);
   const [interviewNarrative, setInterviewNarrative] = useState<string>('');
   useEffect(() => {
   console.log("📘 Opis wywiadu zapisany:", interviewNarrative);
@@ -199,7 +203,7 @@ setMedicalData((prev: any) => {
   };
 });
 };
-
+  
   const handleDietSave = (meals: Meal[]) => {
     const errors = validateDiet(meals);
     setValidationErrors(errors);
