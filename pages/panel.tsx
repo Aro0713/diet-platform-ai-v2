@@ -113,30 +113,52 @@ useEffect(() => {
   const fetchUserData = async () => {
     const {
       data: { user },
+      error: userError
     } = await supabase.auth.getUser();
 
-    if (!user) return;
+    if (userError || !user) {
+      console.error("❌ Brak zalogowanego użytkownika");
+      return;
+    }
 
-    const { data, error } = await supabase
-      .from('users')
+    const { data: patient, error: patientError } = await supabase
+      .from('patients')
       .select('*')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
-    if (data) {
-      setUserData(data);
-      setForm((prev) => ({
-        ...prev,
-        name: data.name || '',
-        email: data.email || '',
-        phone: data.phone || '',
-        region: data.jurisdiction || '',
-      }));
+    if (patientError || !patient) {
+      console.error("❌ Nie znaleziono pacjenta:", patientError?.message);
+      return;
     }
 
-    if (error) {
-      console.error('❌ Błąd pobierania danych użytkownika:', error.message);
-    }
+    // ✅ Dane osobowe
+    setForm((prev) => ({
+      ...prev,
+      name: patient.name || '',
+      email: patient.email || '',
+      phone: patient.phone || '',
+      age: patient.age || null,
+      sex: patient.sex || '',
+      weight: patient.weight || null,
+      height: patient.height || null,
+      region: patient.region || '',
+      allergies: patient.allergies || '',
+      conditions: patient.conditions || [],
+      medical: patient.medical || [],
+      goal: patient.goal || '',
+      cuisine: patient.cuisine || '',
+      model: patient.model || ''
+    }));
+
+    // ✅ Dane medyczne
+    setMedicalData({
+      summary: patient.health_status || '',
+      json: patient.medical_data || null
+    });
+
+    // ✅ Dane z wywiadu
+    setInterviewData(patient.interview_data || {});
   };
 
   fetchUserData();
@@ -156,7 +178,7 @@ useEffect(() => {
     }
   };
 
-    fetchDraftDiets();
+  fetchDraftDiets();
 }, []);
 
   useEffect(() => {
@@ -835,13 +857,48 @@ return (
 
   </div>
 
-  {/* Pasek ładowania */}
-  {isGenerating && (
-    <div className="text-sm text-gray-600 italic mt-4 animate-pulse">
-      ⏳ Piszę dietę... {streamingText.length > 20 && '(czekaj, trwa generowanie)'}
-    </div>
-  )}
-</PanelCard>
+      {/* Pasek ładowania */}
+      {isGenerating && (
+        <div className="text-sm text-gray-600 italic mt-4 animate-pulse">
+          ⏳ Piszę dietę... {streamingText.length > 20 && '(czekaj, trwa generowanie)'}
+        </div>
+      )}
+    </PanelCard>
+    {pendingDiets.length > 0 && (
+      <PanelCard title={tUI('draftDietsToReview', lang)} className="bg-yellow-100 dark:bg-yellow-900/30 text-black dark:text-white">
+        <ul className="space-y-2 text-sm">
+          {pendingDiets.map((entry, i) => (
+            <li key={entry.id} className="flex justify-between items-center border-b pb-1">
+              <div>
+                📥 {entry.patients?.name || 'Pacjent nieznany'} – {new Date(entry.created_at).toLocaleDateString()}
+              </div>
+              <button
+                onClick={() => {
+                  try {
+                    const parsed = typeof entry.diet_plan === 'string'
+                      ? JSON.parse(entry.diet_plan)
+                      : entry.diet_plan;
+
+                    setEditableDiet(parsed);
+                    setDiet(parsed);
+                    setConfirmedDiet(null);
+                    setDietApproved(false);
+
+                    alert(tUI('dietDraftLoaded', lang));
+                  } catch (err) {
+                    console.error('❌ Błąd ładowania szkicu diety:', err);
+                    alert(tUI('errorLoadingDietDraft', lang));
+                  }
+                }}
+                className="text-sm text-blue-600 hover:underline"
+              >
+                {tUI('load', lang)}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </PanelCard>
+    )}
 
       {/* Sekcja 7: Tabela z dietą */}
       {editableDiet && Object.keys(editableDiet).length > 0 && (
