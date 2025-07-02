@@ -598,23 +598,26 @@ const fetchPatientData = async () => {
     conditions: parsedConditions,
     medical: patient.medical || []
   });
-  // ✅ Snapshot do initialData (jednorazowy)
+  // ✅ Snapshot do initialData 
 setInitialMedicalData({
   medical: patient.medical || {},
   summary: patient.health_status || '',
   json: patient.medical_data || {},
   selectedConditions: parsedConditions,
-  selectedGroups: parsedConditionGroups
+  selectedGroups: parsedConditionGroups,
+  testResults: patient.testResults || {} 
 });
 
   // ✅ Dane medyczne z chorobami
   setMedicalData({
-    medical: patient.medical || {},
-    summary: patient.health_status || '',
-    json: patient.medical_data || {},
-    selectedConditions: parsedConditions,
-    selectedGroups: parsedConditionGroups
-  });
+  medical: patient.medical || {},
+  summary: patient.health_status || '',
+  json: patient.medical_data || {},
+  selectedConditions: parsedConditions,
+  selectedGroups: parsedConditionGroups,
+  testResults: patient.testResults || {}
+});
+
 
   // ✅ Dane z wywiadu
   setInterviewData({
@@ -632,11 +635,18 @@ setInitialMedicalData({
     .limit(1)
     .maybeSingle();
 
-  if (dietDraft?.dietPlan) {
-    setEditableDiet(dietDraft.dietPlan);
-  } else if (dietDraft?.diet_plan) {
-    setEditableDiet(dietDraft.diet_plan);
+ try {
+  const raw = dietDraft?.dietPlan || dietDraft?.diet_plan;
+
+  if (typeof raw === 'string') {
+    setEditableDiet(JSON.parse(raw)); // ← parsujemy string JSON
+  } else if (typeof raw === 'object' && raw !== null) {
+    setEditableDiet(raw); // ← gotowy obiekt
   }
+} catch (err) {
+  console.error('❌ Błąd parsowania diety draft:', err);
+}
+
 };
 
 return (
@@ -690,9 +700,9 @@ return (
 
       {/* Sekcja 2: Dane medyczne */}
       <PanelCard className="z-30">
-      <MedicalForm
-        key={JSON.stringify(medicalData)}
-        initialData={initialMedicalData}
+        <MedicalForm
+        key={JSON.stringify(medicalData)} // 🔁 wymusza rerender, jeśli coś się zmieni
+        initialData={initialMedicalData || {}} // 🧩 pusta struktura jeśli brak danych
         existingMedical={medicalData}
         onChange={handleMedicalChange}
         onUpdateMedical={(summary) => {
