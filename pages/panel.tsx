@@ -535,6 +535,66 @@ const handleCalculationResult = ({ suggestedModel, ...rest }: any) => {
     model: suggestedModel,
   }));
 };
+const fetchPatientData = async () => {
+  const userId = localStorage.getItem('currentUserID');
+  if (!userId) return;
+
+  // 1. Pobierz dane pacjenta z tabeli `patients`
+  const { data: patient, error: patientError } = await supabase
+    .from('patients')
+    .select('*')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (patientError || !patient) {
+    console.error('❌ Błąd ładowania danych pacjenta:', patientError);
+    return;
+  }
+
+ setForm({
+  age: patient.age,
+  weight: patient.weight,
+  height: patient.height,
+  sex: patient.sex,
+  region: patient.region,
+  name: patient.name,
+  email: patient.email,
+  phone: patient.phone,
+  allergies: patient.allergies || [],
+  goal: patient.goal || '',
+  cuisine: patient.cuisine || '',
+  model: patient.model || '',
+  conditions: patient.conditions || []
+});
+
+  setMedicalData({
+    medical: patient.medical, // surowe dane
+    json: patient.medical_data, // dane AI
+    summary: patient.health_status,
+    selectedConditions: patient.conditions || [],
+    selectedGroups: patient.conditionGroups || []
+  });
+
+  setInterviewData({
+    json: patient.interview_data,
+    summary: patient.interview_summary,
+  });
+
+  // 2. Pobierz najnowszą dietę z `patient_diets` o statusie 'draft'
+  const { data: dietDraft, error: dietError } = await supabase
+    .from('patient_diets')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('status', 'draft')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (dietDraft && dietDraft.dietPlan) {
+    setEditableDiet(dietDraft.dietPlan); // ustawiamy plan tygodnia
+  }
+};
+
 return (
 <main className="relative min-h-screen 
   bg-[#0f271e]/70 
