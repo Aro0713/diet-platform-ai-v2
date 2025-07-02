@@ -82,10 +82,10 @@ const PatientPanelSection = ({ form, setForm, lang }: Props) => {
       }
 
       if (!res.ok) {
-        console.error('❌ API error:', json?.error || 'Brak szczegółów');
-        setStatus(tUI('createAccountError', lang));
-        return;
-      }
+      console.error('❌ API error (raw text):', text);
+      setStatus(json?.error || text || '❌ Nieznany błąd z API');
+      return;
+    }
 
       console.log('📬 Tymczasowe hasło:', json.password);
       setStatus(tUI('invitationSent', lang));

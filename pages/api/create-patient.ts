@@ -6,22 +6,33 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// 🔧 Normalizacja numeru – usuwamy spacje, myślniki, nawiasy i dodajemy +48 jeśli trzeba
+// 🔧 Oczyszcza numer z niepotrzebnych znaków i sprawdza czy zaczyna się od "+"
 function normalizePhone(phone: string): string | undefined {
-  const cleaned = phone.replace(/[\s\-\(\)]/g, ''); // usuń spacje, myślniki, nawiasy
-  if (cleaned.startsWith('+')) return cleaned;
-  if (/^\d{9}$/.test(cleaned)) return `+48${cleaned}`;
-  return undefined;
+  if (!phone) return undefined;
+  const cleaned = phone.replace(/[\s\-\(\)]/g, '');
+  return cleaned.startsWith('+') ? cleaned : undefined;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
+    console.warn('❌ Zła metoda HTTP:', req.method);
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
   const { email, phone, name, lang } = req.body;
+
+  if (!email || !phone || !name || !lang) {
+    console.warn('❌ Brak wymaganych pól:', { email, phone, name, lang });
+    return res.status(400).json({ error: 'Brakuje wymaganych danych (email, telefon, imię, język)' });
+  }
+
   const password = crypto.randomUUID();
   const normalizedPhone = normalizePhone(phone);
+
+  if (!normalizedPhone) {
+    console.warn('❌ Nieprawidłowy numer telefonu:', phone);
+    return res.status(400).json({ error: 'Nieprawidłowy numer telefonu' });
+  }
 
   try {
     console.log('✅ 1️⃣ Tworzenie użytkownika:', email, normalizedPhone);
