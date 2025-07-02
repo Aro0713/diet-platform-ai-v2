@@ -529,18 +529,23 @@ const fetchPatientData = async () => {
     conditions: parsedConditions,
     medical: patient.medical || []
   });
-  // ✅ Snapshot do initialData 
-setInitialMedicalData({
-  medical: patient.medical || {},
-  summary: patient.health_status || '',
-  json: patient.medical_data || {},
-  selectedConditions: parsedConditions,
-  selectedGroups: parsedConditionGroups,
-  testResults: patient.testResults || {} 
-});
+// ✅ Snapshot do initialData — tylko raz
+if (!initialMedicalData) {
+  const snapshot = {
+    medical: patient.medical || {},
+    summary: patient.health_status || '',
+    json: patient.medical_data || {},
+    selectedConditions: parsedConditions,
+    selectedGroups: parsedConditionGroups,
+    testResults: patient.testResults || {}
+  };
 
-  // ✅ Dane medyczne z chorobami
-  setMedicalData({
+  setInitialMedicalData(snapshot);
+  console.log("✅ ✅ initialMedicalData SET:", snapshot);
+}
+
+// ✅ Dane medyczne z chorobami (stan edytowalny)
+setMedicalData({
   medical: patient.medical || {},
   summary: patient.health_status || '',
   json: patient.medical_data || {},
