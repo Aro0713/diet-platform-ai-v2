@@ -556,9 +556,13 @@ const snapshot = {
 setInitialMedicalData(snapshot);
 setMedicalData(snapshot);
 
-console.log("✅ final initialMedicalData:", snapshot);
-
-
+useEffect(() => {
+  if (initialMedicalData) {
+    console.log("✅ 🎯 initialMedicalData dostępne:", initialMedicalData);
+  } else {
+    console.log("🚫 initialMedicalData nadal null");
+  }
+}, [initialMedicalData]);
 
 // ✅ Dane medyczne z chorobami (stan edytowalny)
 setMedicalData({
