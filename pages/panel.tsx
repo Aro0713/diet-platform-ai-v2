@@ -110,74 +110,9 @@ useEffect(() => {
 
   const router = useRouter();
 
-useEffect(() => {
-  const fetchUserData = async () => {
-    const {
-      data: { user },
-      error: userError
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      console.error("❌ Brak zalogowanego użytkownika");
-      return;
-    }
-
-    const { data: patient, error: patientError } = await supabase
-      .from('patients')
-      .select('*')
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    if (patientError || !patient) {
-      console.error("❌ Nie znaleziono pacjenta:", patientError?.message);
-      return;
-    }
-
-    // ✅ Dane osobowe
-    setForm((prev) => ({
-      ...prev,
-      name: patient.name || '',
-      email: patient.email || '',
-      phone: patient.phone || '',
-      age: patient.age || null,
-      sex: patient.sex || '',
-      weight: patient.weight || null,
-      height: patient.height || null,
-      region: patient.region || '',
-      allergies: patient.allergies || '',
-      conditions: patient.conditions || [],
-      medical: patient.medical || [],
-      goal: patient.goal || '',
-      cuisine: patient.cuisine || '',
-      model: patient.model || ''
-    }));
-
-    setMedicalData({
-    medical: patient.medical || {},
-    summary: patient.health_status || '',
-    json: patient.medical_data || {},
-    selectedConditions: Array.isArray(patient.conditions)
-      ? patient.conditions
-      : typeof patient.conditions === 'string'
-        ? JSON.parse(patient.conditions)
-        : [],
-    selectedGroups: Array.isArray(patient.conditionGroups)
-      ? patient.conditionGroups
-      : typeof patient.conditionGroups === 'string'
-        ? JSON.parse(patient.conditionGroups)
-        : []
-      });
-    console.log("✅ parsed selectedConditions:", patient.conditions);
-    console.log("✅ parsed selectedGroups:", patient.conditionGroups);
-
-  setInterviewData({
-    json: patient.interview_data || {},
-    summary: patient.interview_summary || ''
-  });
-    };
-
-    fetchUserData();
-  }, []);
+      useEffect(() => {
+      fetchPatientData();
+      }, []);
 
     useEffect(() => {
       const fetchDraftDiets = async () => {
