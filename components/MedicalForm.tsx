@@ -15,7 +15,7 @@ import PanelCard from '@/components/PanelCard';
 import SelectGroupForm from './SelectGroupForm';
 
 interface MedicalFormProps {
-  userId?: string; 
+  userId?: string;
   onChange: (data: {
     selectedGroups: string[];
     selectedConditions: string[];
@@ -33,8 +33,8 @@ interface MedicalFormProps {
   };
   lang: LangKey;
 }
-
 const MedicalForm: React.FC<MedicalFormProps> = ({
+  userId,
   onChange,
   onUpdateMedical,
   onDeleteMedical,
@@ -42,6 +42,7 @@ const MedicalForm: React.FC<MedicalFormProps> = ({
   initialData,
   lang
 }) => {
+
 
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [availableConditions, setAvailableConditions] = useState<string[]>([]);
@@ -190,9 +191,8 @@ const handleConfirmAnalysis = async () => {
     structuredOutput
   });
 
-  const userId = localStorage.getItem('currentUserID');
   if (!userId) {
-    console.error("❌ Brak user_id w localStorage");
+    console.error("❌ Brak userId w MedicalForm – lekarz nie wskazał pacjenta.");
     return;
   }
 
@@ -215,7 +215,7 @@ const handleConfirmAnalysis = async () => {
       conditionGroups: selectedGroups,
       conditions: selectedConditions
     })
-    .eq('user_id', userId);
+    .eq('user_id', userId); // ✅ użycie z propsa
 
   if (error) {
     console.error('❌ Błąd zapisu danych medycznych:', error.message);
