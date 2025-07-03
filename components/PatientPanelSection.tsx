@@ -47,21 +47,23 @@ const fetchPatientData = async () => {
     console.log('✅ Dane pacjenta z Supabase:', data);
 
      setForm({
-    name: data.name || '',
-    email: data.email || '',
-    phone: data.phone || '',
-    age: data.age || null,
-    sex: data.sex || '',
-    weight: data.weight || null,
-    height: data.height || null,
-    region: data.region || '',
-    allergies: data.allergies || '',
-    conditions: data.conditions || [],
-    medical: data.medical || [],
-    goal: data.goal || '',
-    cuisine: data.cuisine || '',
-    model: data.model || '',
-  });
+       user_id: '',
+       name: data.name || '',
+       email: data.email || '',
+       phone: data.phone || '',
+       age: data.age || null,
+       sex: data.sex || '',
+       weight: data.weight || null,
+       height: data.height || null,
+       region: data.region || '',
+       allergies: data.allergies || '',
+       conditions: data.conditions || [],
+       medical: data.medical || [],
+       goal: data.goal || '',
+       cuisine: data.cuisine || '',
+       model: data.model || '',
+       
+     });
 
     // Dane medyczne (jeśli przekazujesz funkcję setMedicalData jako globalny callback lub hook)
     if (typeof window !== 'undefined' && (window as any).setMedicalDataFromPanel) {

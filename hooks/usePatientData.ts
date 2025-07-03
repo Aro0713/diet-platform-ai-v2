@@ -27,7 +27,8 @@ export function usePatientData(): UsePatientDataResult {
   const [editableDiet, setEditableDiet] = useState<any>({});
 
   const fetchPatientData = async () => {
-    const userId = localStorage.getItem('currentUserID');
+    const userId = form?.user_id || localStorage.getItem('currentUserID');
+
     if (!userId) return;
 
     const { data, error } = await supabase

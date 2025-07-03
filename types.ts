@@ -44,6 +44,7 @@ export type ConditionWithTests = {
 };
 
 export interface PatientData {
+  user_id: string; 
   name: string;
   age: number;
   sex: 'male' | 'female';
