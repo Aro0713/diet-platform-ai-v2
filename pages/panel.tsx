@@ -53,15 +53,7 @@ export default function PatientPanelPage(): React.JSX.Element {
   const [notes, setNotes] = useState({});
   const [isConfirmed, setIsConfirmed] = useState(false);
 
-    useEffect(() => {
-    fetchPatientData();
-    }, []);
 
-    useEffect(() => {
-    if (selectedSection === 'medical') {
-        fetchPatientData(); // ⬅️ automatyczne ponowne pobranie
-    }
-    }, [selectedSection]);
 const [streamingText, setStreamingText] = useState('');
 const [narrativeText, setNarrativeText] = useState('');
 const [dietApproved, setDietApproved] = useState(false);
