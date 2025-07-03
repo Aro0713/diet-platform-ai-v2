@@ -287,8 +287,31 @@ const handleGenerateDiet = async () => {
             </div>
 
             {/* ✅ tylko jeśli pacjent został wskazany */}
-            {form?.user_id && (
-              <PatientSelfForm lang={lang} userId={form.user_id} />
+           {patientOption === 'existing' && (
+              <div className="space-y-4">
+                <input
+                  type="email"
+                  placeholder={tUI('enterPatientEmail', lang)}
+                  value={form?.email || ''}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  className="w-full px-4 py-2 rounded-md bg-white text-black border dark:bg-gray-800 dark:text-white"
+                />
+                <button
+                  onClick={fetchPatientData}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                >
+                  {tUI('loadPatientData', lang)}
+                </button>
+
+                {/* ✅ pokazujemy formularz tylko jeśli userId został znaleziony */}
+                {form?.user_id && (
+                  <PatientSelfForm lang={lang} userId={form.user_id} />
+                )}
+              </div>
+            )}
+
+            {patientOption === 'new' && (
+              <PatientSelfForm lang={lang} userId={form?.user_id} />
             )}
           </>
         )}

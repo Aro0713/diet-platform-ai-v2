@@ -3190,6 +3190,19 @@ selectPatientFirst: {
   hi: 'कृपया पहले एक मरीज चुनें',
   ar: 'يرجى اختيار المريض أولاً',
   he: 'בחר מטופל קודם'
-}
+},
+loadPatientData: {
+  pl: 'Pobierz dane pacjenta',
+  en: 'Load patient data',
+  es: 'Cargar datos del paciente',
+  fr: 'Charger les données du patient',
+  de: 'Patientendaten laden',
+  ua: 'Завантажити дані пацієнта',
+  ru: 'Загрузить данные пациента',
+  zh: '加载患者数据',
+  hi: 'मरीज़ का डेटा लोड करें',
+  ar: 'تحميل بيانات المريض',
+  he: 'טען את נתוני המטופל'
+},
 };
 
