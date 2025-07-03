@@ -125,7 +125,7 @@ const saveDietToSupabaseAndPdf = async () => {
 
 const saveDraftToSupabase = async () => {
   try {
-    const userId = localStorage.getItem('currentUserID');
+    const userId = form?.user_id;
     if (!userId) {
       alert(tUI('noUserIdError', lang));
       return;
@@ -140,17 +140,18 @@ const saveDraftToSupabase = async () => {
       });
 
     if (error) {
-  console.error(`${tUI('draftSaveErrorLog', lang)}:`, error.message);
-  alert(tUI('dietSubmissionError', lang));
-  return;
-}
+      console.error(`${tUI('draftSaveErrorLog', lang)}:`, error.message);
+      alert(tUI('dietSubmissionError', lang));
+      return;
+    }
 
-alert(tUI('dietSubmissionSuccess', lang));
-} catch (err) {
-  console.error(`${tUI('draftSaveCatchErrorLog', lang)}:`, err);
-  alert(tUI('dietSaveError', lang));
-}
+    alert(tUI('dietSubmissionSuccess', lang));
+  } catch (err) {
+    console.error(`${tUI('draftSaveCatchErrorLog', lang)}:`, err);
+    alert(tUI('dietSaveError', lang));
+  }
 };
+;
 const handleGenerateDiet = async () => {
   setIsGenerating(true);
   setStreamingText('');
