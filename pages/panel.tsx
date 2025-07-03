@@ -1,4 +1,4 @@
-﻿// ✅ PEŁNA ZREFEKTORYZOWANA WERSJA panel.tsx z zapisem i odczytem danych pacjenta
+﻿// ✅ PEŁNA ZREFEKTORYZOWANA WERSJA panel.tsx z zapisem, odczytem i generowaniem diety
 
 import Head from 'next/head';
 import { useState, useEffect } from 'react';
@@ -37,6 +37,9 @@ export default function Panel() {
   const [editableDiet, setEditableDiet] = useState<Record<string, Meal[]>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [userData, setUserData] = useState<any>(null);
+
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [streamingText, setStreamingText] = useState('');
 
   const t = (key: keyof typeof translationsUI) => tUI(key, lang);
 
@@ -85,6 +88,27 @@ export default function Panel() {
       ...patient
     });
 
+    // ✅ Dieta draftowa (jeśli istnieje)
+    const { data: draftDiet } = await supabase
+      .from('patient_diets')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('status', 'draft')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    try {
+      const raw = draftDiet?.dietPlan || draftDiet?.diet_plan;
+      if (typeof raw === 'string') {
+        setEditableDiet(JSON.parse(raw));
+      } else if (typeof raw === 'object' && raw !== null) {
+        setEditableDiet(raw);
+      }
+    } catch (err) {
+      console.error('❌ Błąd parsowania diety draft:', err);
+    }
+
     alert('📥 Dane pacjenta zostały pobrane.');
   };
 
@@ -129,8 +153,56 @@ export default function Panel() {
     }
   };
 
+  const handleGenerateDiet = async () => {
+    setIsGenerating(true);
+    setStreamingText('');
+
+    try {
+      const res = await fetch('/api/generate-diet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          form,
+          interviewData,
+          lang,
+          goalExplanation: '',
+          recommendation: interviewData.recommendation || '',
+          medical: medicalData
+        })
+      });
+
+      if (!res.body) throw new Error('Brak treści odpowiedzi.');
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let rawText = '', done = false;
+
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        const chunk = decoder.decode(value, { stream: true });
+        rawText += chunk;
+        setStreamingText(rawText);
+      }
+
+      const parsed = JSON.parse(rawText);
+      if (parsed?.dietPlan) {
+        const transformed = transformDietPlanToEditableFormat(parsed.dietPlan, lang);
+        setEditableDiet(transformed);
+        alert('✅ Dieta wygenerowana.');
+      } else {
+        alert('❌ Nie udało się wygenerować diety.');
+      }
+    } catch (err) {
+      console.error('❌ Błąd generowania diety:', err);
+      alert('❌ Błąd generowania diety.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
-    <main className="min-h-screen bg-gray-50 dark:bg-black text-black dark:text-white">
+    <main className="relative min-h-screen bg-[#0f271e]/70 bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 backdrop-blur-[12px] shadow-[inset_0_0_60px_rgba(255,255,255,0.08)] flex flex-col justify-start items-center pt-10 px-6 text-white transition-all duration-300">
       <Head><title>Panel lekarza</title></Head>
 
       <div className="flex justify-between items-center p-4">
@@ -183,7 +255,17 @@ export default function Panel() {
             <button onClick={savePatientData} className="bg-green-600 text-white px-4 py-2 rounded">
               💾 {tUI('savePatientData', lang)}
             </button>
+            <button
+              onClick={handleGenerateDiet}
+              disabled={isGenerating}
+              className="bg-purple-700 text-white px-4 py-2 rounded disabled:opacity-50"
+            >
+              🧠 {isGenerating ? tUI('writingDiet', lang) : tUI('generateDiet', lang)}
+            </button>
           </div>
+          {isGenerating && streamingText && (
+            <p className="mt-2 text-sm italic text-gray-500 dark:text-gray-300">{streamingText}</p>
+          )}
         </PanelCard>
 
         {editableDiet && Object.keys(editableDiet).length > 0 && (
