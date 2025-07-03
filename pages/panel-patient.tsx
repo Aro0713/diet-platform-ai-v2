@@ -53,9 +53,15 @@ export default function DoctorPanelPage(): React.JSX.Element {
     initialInterviewData
   } = usePatientData();
 
-  useEffect(() => {
+useEffect(() => {
+  const userId = localStorage.getItem('currentUserID');
+  if (userId) {
     fetchPatientData();
-  }, []);
+  } else {
+    console.warn('⛔ Brak user_id – panel pacjenta pomija fetch');
+  }
+}, []);
+;
 
   useEffect(() => {
     if (selectedSection === 'medical') {
