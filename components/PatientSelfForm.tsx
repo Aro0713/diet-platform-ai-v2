@@ -25,9 +25,8 @@ const PatientSelfForm: React.FC<Props> = ({ lang, userId }) => {
 
 useEffect(() => {
   const fetchPatient = async () => {
-    const currentUserId = userId || localStorage.getItem('currentUserID');
     if (!userId) {
-      console.error('❌ Brak user_id w localStorage');
+      console.error('❌ Brak userId – lekarz nie wskazał pacjenta');
       return;
     }
 
@@ -60,7 +59,8 @@ useEffect(() => {
   };
 
   fetchPatient();
-}, []);
+}, [userId]);
+
 
 const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
   const { name, value } = e.target;
@@ -68,9 +68,8 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
 };
 
 const handleSave = async () => {
-  const userId = localStorage.getItem('currentUserID');
   if (!userId) {
-    console.error('❌ Brak user_id podczas zapisu');
+    console.error('❌ Brak userId podczas zapisu');
     setMessage(tUI('saveError', lang));
     return;
   }
@@ -89,14 +88,14 @@ const handleSave = async () => {
   setSaving(true);
   setMessage('');
 
-    const { error } = await supabase
+  const { error } = await supabase
     .from('patients')
     .upsert([{
-        user_id: userId,
-        ...patient,
-        age: patient.age ? parseInt(patient.age) : null,
-        height: patient.height ? parseInt(patient.height) : null,
-        weight: patient.weight ? parseInt(patient.weight) : null,
+      user_id: userId,
+      ...patient,
+      age: patient.age ? parseInt(patient.age) : null,
+      height: patient.height ? parseInt(patient.height) : null,
+      weight: patient.weight ? parseInt(patient.weight) : null,
     }], { onConflict: 'user_id' });
 
   if (error) {
@@ -109,7 +108,6 @@ const handleSave = async () => {
 
   setSaving(false);
 };
-
 
 if (loading) {
   return <p className="text-sm text-gray-500">{tUI('loading', lang)}...</p>;
