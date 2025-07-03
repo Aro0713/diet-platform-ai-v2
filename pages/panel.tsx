@@ -6,7 +6,7 @@ import LangAndThemeToggle from '@/components/LangAndThemeToggle';
 import { tUI } from '@/utils/i18n';
 import type { Meal } from '@/types';
 import { supabase } from '@/lib/supabaseClient';
-import { usePatientData } from '@/hooks/usePatientData';
+import { useDoctorPatientData } from '@/hooks/useDoctorPatientData';
 import { tryParseJSON } from '@/utils/tryParseJSON'; 
 import { transformDietPlanToEditableFormat } from '@/utils/transformDietPlan';
 
@@ -47,7 +47,7 @@ export default function PatientPanelPage(): React.JSX.Element {
     saveInterviewData,
     initialMedicalData,
     initialInterviewData
-  } = usePatientData();
+  } = useDoctorPatientData();
 
   const [editableDiet, setEditableDiet] = useState({});
   const [notes, setNotes] = useState({});
@@ -285,7 +285,7 @@ const handleGenerateDiet = async () => {
           checked={patientOption === 'new'}
           onChange={() => setPatientOption('new')}
         />
-        {tUI('createPatientAccount', lang)}
+        {tUI('createAccountForPatient', lang)}
       </label>
     </div>
 
