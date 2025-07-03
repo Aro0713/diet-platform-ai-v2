@@ -293,17 +293,19 @@ const handleGenerateDiet = async () => {
 
         {selectedSection === 'medical' && (
           <>
-            <MedicalForm
-              onChange={(data) => {
-                saveMedicalData(data).then(() => setIsConfirmed(true));
-              }}
-              onUpdateMedical={(summary) => {
-                setMedicalData((prev: any) => ({ ...prev, summary }));
-              }}
-              initialData={initialMedicalData}
-              existingMedical={medicalData}
-              lang={lang}
-            />
+           <MedicalForm
+  userId={form?.user_id} // ✅ tu dodaj
+  onChange={(data) => {
+    saveMedicalData(data).then(() => setIsConfirmed(true));
+  }}
+  onUpdateMedical={(summary) => {
+    setMedicalData((prev: any) => ({ ...prev, summary }));
+  }}
+  initialData={initialMedicalData}
+  existingMedical={medicalData}
+  lang={lang}
+/>
+
 
             {isConfirmed && !interviewData?.goal && (
               <div className="mt-6 p-4 bg-emerald-100/80 dark:bg-emerald-900/40 text-base rounded-md text-gray-900 dark:text-white shadow max-w-2xl mx-auto">

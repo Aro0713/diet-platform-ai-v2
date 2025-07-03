@@ -15,6 +15,7 @@ import PanelCard from '@/components/PanelCard';
 import SelectGroupForm from './SelectGroupForm';
 
 interface MedicalFormProps {
+  userId?: string; 
   onChange: (data: {
     selectedGroups: string[];
     selectedConditions: string[];
