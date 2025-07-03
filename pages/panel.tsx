@@ -78,17 +78,19 @@ export default function Panel() {
       testResults: patient.testResults || {}
     });
 
+    setInitialMedicalData({
+      json: patient.medical_data || {},
+      summary: patient.health_status || '',
+      selectedConditions: patient.conditions || [],
+      selectedGroups: patient.conditionGroups || [],
+      testResults: patient.testResults || {}
+    });
+
     setInterviewData({
       ...patient.interview_data,
       summary: patient.interview_summary || ''
     });
 
-    setInitialMedicalData({
-      ...medicalData,
-      ...patient
-    });
-
-    // ✅ Dieta draftowa (jeśli istnieje)
     const { data: draftDiet } = await supabase
       .from('patient_diets')
       .select('*')
@@ -213,6 +215,24 @@ export default function Panel() {
       <div className="max-w-6xl mx-auto space-y-6 p-6">
         <PanelCard>
           <PatientPanelSection form={form} setForm={setForm} lang={lang} />
+          <div className="mt-4 flex flex-wrap gap-4">
+            <button onClick={fetchPatientData} className="bg-blue-600 text-white px-4 py-2 rounded">
+              📥 {tUI('fetchPatientData', lang)}
+            </button>
+            <button onClick={savePatientData} className="bg-green-600 text-white px-4 py-2 rounded">
+              💾 {tUI('savePatientData', lang)}
+            </button>
+            <button
+              onClick={handleGenerateDiet}
+              disabled={isGenerating}
+              className="bg-purple-700 text-white px-4 py-2 rounded disabled:opacity-50"
+            >
+              🧠 {isGenerating ? tUI('writingDiet', lang) : tUI('generateDiet', lang)}
+            </button>
+          </div>
+          {isGenerating && streamingText && (
+            <p className="mt-2 text-sm italic text-gray-500 dark:text-gray-300">{streamingText}</p>
+          )}
         </PanelCard>
 
         <PanelCard>
@@ -245,27 +265,6 @@ export default function Panel() {
             lang={lang}
             onResult={(res) => setInterviewData((prev: any) => ({ ...prev, ...res }))}
           />
-        </PanelCard>
-
-        <PanelCard>
-          <div className="flex flex-wrap gap-4">
-            <button onClick={fetchPatientData} className="bg-blue-600 text-white px-4 py-2 rounded">
-              📥 {tUI('fetchPatientData', lang)}
-            </button>
-            <button onClick={savePatientData} className="bg-green-600 text-white px-4 py-2 rounded">
-              💾 {tUI('savePatientData', lang)}
-            </button>
-            <button
-              onClick={handleGenerateDiet}
-              disabled={isGenerating}
-              className="bg-purple-700 text-white px-4 py-2 rounded disabled:opacity-50"
-            >
-              🧠 {isGenerating ? tUI('writingDiet', lang) : tUI('generateDiet', lang)}
-            </button>
-          </div>
-          {isGenerating && streamingText && (
-            <p className="mt-2 text-sm italic text-gray-500 dark:text-gray-300">{streamingText}</p>
-          )}
         </PanelCard>
 
         {editableDiet && Object.keys(editableDiet).length > 0 && (
