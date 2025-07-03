@@ -1,3 +1,5 @@
+// pages/panel.tsx – dokładna kopia panel-patient.tsx, dostosowana dla lekarza
+
 import React from 'react';
 import Head from 'next/head';
 import { useState, useEffect } from 'react';
@@ -7,9 +9,7 @@ import { tUI } from '@/utils/i18n';
 import type { Meal } from '@/types';
 import { supabase } from '@/lib/supabaseClient';
 import { usePatientData } from '@/hooks/usePatientData';
-import { tryParseJSON } from '@/utils/tryParseJSON'; 
 import { transformDietPlanToEditableFormat } from '@/utils/transformDietPlan';
-
 import { PatientIconGrid } from '@/components/PatientIconGrid';
 import PatientSelfForm from '@/components/PatientSelfForm';
 import MedicalForm from '@/components/MedicalForm';
@@ -23,11 +23,17 @@ import SelectModelForm from '@/components/SelectModelForm';
 import SelectCuisineForm from '@/components/SelectCuisineForm';
 import { generateDietPdf } from '@/utils/generateDietPdf';
 
-export default function PatientPanelPage(): React.JSX.Element {
-
+export default function DoctorPanelPage(): React.JSX.Element {
   const router = useRouter();
   const [lang, setLang] = useState<LangKey>('pl');
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
+  const [editableDiet, setEditableDiet] = useState({});
+  const [notes, setNotes] = useState({});
+  const [isConfirmed, setIsConfirmed] = useState(false);
+  const [streamingText, setStreamingText] = useState('');
+  const [narrativeText, setNarrativeText] = useState('');
+  const [dietApproved, setDietApproved] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
     const storedLang = localStorage.getItem('platformLang');
@@ -36,7 +42,6 @@ export default function PatientPanelPage(): React.JSX.Element {
 
   const {
     form,
-    setForm,
     interviewData,
     setInterviewData,
     medicalData,
@@ -48,90 +53,80 @@ export default function PatientPanelPage(): React.JSX.Element {
     initialInterviewData
   } = usePatientData();
 
-  const [editableDiet, setEditableDiet] = useState({});
-  const [notes, setNotes] = useState({});
-  const [isConfirmed, setIsConfirmed] = useState(false);
-
-    useEffect(() => {
+  useEffect(() => {
     fetchPatientData();
-    }, []);
+  }, []);
 
-    useEffect(() => {
+  useEffect(() => {
     if (selectedSection === 'medical') {
-        fetchPatientData(); // ⬅️ automatyczne ponowne pobranie
+      fetchPatientData();
     }
-    }, [selectedSection]);
-const [streamingText, setStreamingText] = useState('');
-const [narrativeText, setNarrativeText] = useState('');
-const [dietApproved, setDietApproved] = useState(false);
-const [isGenerating, setIsGenerating] = useState(false);
-const saveDietToSupabaseAndPdf = async () => {
-  
-  try {
-    const bmi = form.weight && form.height
-      ? parseFloat((form.weight / ((form.height / 100) ** 2)).toFixed(1))
-      : 0;
+  }, [selectedSection]);
 
-    const mealArray: Meal[] = (Object.values(editableDiet || {}) as Meal[][]).flat();
+  const saveDietToSupabaseAndPdf = async () => {
+    try {
+      const bmi = form.weight && form.height
+        ? parseFloat((form.weight / ((form.height / 100) ** 2)).toFixed(1))
+        : 0;
 
-    if (!Array.isArray(mealArray) || mealArray.length === 0) {
-      alert(tUI('noMealsToSave', lang));
-      return;
+      const mealArray: Meal[] = (Object.values(editableDiet || {}) as Meal[][]).flat();
+
+      if (!Array.isArray(mealArray) || mealArray.length === 0) {
+        alert(tUI('noMealsToSave', lang));
+        return;
+      }
+
+      const userId = localStorage.getItem('currentUserID');
+      if (!userId) {
+        alert(tUI('noUserId', lang));
+        return;
+      }
+
+      const { error } = await supabase
+        .from('patient_diets')
+        .insert({
+          user_id: userId,
+          diet_plan: editableDiet,
+          status: 'confirmed',
+          confirmed_at: new Date().toISOString()
+        });
+
+      if (error) {
+        console.error(`${tUI('supabaseSaveErrorPrefix', lang)} ${error.message}`);
+        alert(tUI('dietSaveFailed', lang));
+        return;
+      }
+
+      alert(tUI('dietSaveSuccess', lang));
+
+      const { generateDietPdf } = await import('@/utils/generateDietPdf');
+      await generateDietPdf(
+        form,
+        bmi,
+        mealArray,
+        true,
+        notes,
+        lang,
+        interviewData,
+        {
+          bmi: interviewData.bmi,
+          ppm: interviewData.ppm,
+          cpm: interviewData.cpm,
+          pal: interviewData.pal,
+          kcalMaintain: interviewData.kcalMaintain,
+          kcalReduce: interviewData.kcalReduce,
+          kcalGain: interviewData.kcalGain,
+          nmcBroca: interviewData.nmcBroca,
+          nmcLorentz: interviewData.nmcLorentz
+        },
+        'download',
+        narrativeText
+      );
+    } catch (err) {
+      console.error(`${tUI('dietApprovalErrorPrefix', lang)} ${err}`);
+      alert(tUI('dietApprovalFailed', lang));
     }
-
-    // ZAPISZ DO SUPABASE (do tabeli np. patient_diets)
-    const userId = localStorage.getItem('currentUserID');
-    if (!userId) {
-      alert(tUI('noUserId', lang));
-      return;
-    }
-
-    const { error } = await supabase
-      .from('patient_diets')
-      .insert({
-        user_id: userId,
-        diet_plan: editableDiet,
-        status: 'confirmed',
-        confirmed_at: new Date().toISOString()
-      });
-
-        if (error) {
-    console.error(`${tUI('supabaseSaveErrorPrefix', lang)} ${error.message}`);
-    alert(tUI('dietSaveFailed', lang));
-    return;
-    }
-
-    alert(tUI('dietSaveSuccess', lang));
-
-
-    const { generateDietPdf } = await import('@/utils/generateDietPdf');
-    await generateDietPdf(
-      form,
-      bmi,
-      mealArray,
-      true,
-      notes,
-      lang,
-      interviewData,
-      {
-        bmi: interviewData.bmi,
-        ppm: interviewData.ppm,
-        cpm: interviewData.cpm,
-        pal: interviewData.pal,
-        kcalMaintain: interviewData.kcalMaintain,
-        kcalReduce: interviewData.kcalReduce,
-        kcalGain: interviewData.kcalGain,
-        nmcBroca: interviewData.nmcBroca,
-        nmcLorentz: interviewData.nmcLorentz
-      },
-      'download',
-      narrativeText
-    );
-  } catch (err) {
-  console.error(`${tUI('dietApprovalErrorPrefix', lang)} ${err}`);
-   alert(tUI('dietApprovalFailed', lang));
-  }
-};
+  };
 
 
 const saveDraftToSupabase = async () => {
@@ -244,7 +239,8 @@ const handleGenerateDiet = async () => {
   return (
     <main className="relative min-h-screen bg-[#0f271e]/70 bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 backdrop-blur-[12px] shadow-[inset_0_0_60px_rgba(255,255,255,0.08)] flex flex-col justify-start items-center pt-10 px-6 text-white transition-all duration-300">
       <Head>
-        <title>Panel pacjenta</title>
+        <title>{tUI('doctorPanelTitle', lang)}</title>
+
       </Head>
 
       {/* Pasek nagłówka */}
