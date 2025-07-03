@@ -70,12 +70,29 @@ const saveDietToSupabaseAndPdf = async () => {
       alert(tUI('noMealsToSave', lang));
       return;
     }
-
-    const userId = form?.user_id;
-    if (!userId) {
-      alert(tUI('noUserId', lang));
+    if (!form?.email) {
+      alert(tUI('enterEmailFirst', lang));
       return;
     }
+
+    const { data: patientData, error: patientError } = await supabase
+      .from('patients')
+      .select('*')
+      .eq('email', form.email)
+      .maybeSingle();
+
+    if (patientError || !patientData) {
+      alert(tUI('patientNotFound', lang));
+      return;
+    }
+
+    setForm((prev) => ({
+      ...prev,
+      ...patientData
+    }));
+
+const userId = patientData.user_id;
+
 
     const { error } = await supabase
       .from('patient_diets')
