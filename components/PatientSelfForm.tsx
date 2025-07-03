@@ -109,9 +109,14 @@ const handleSave = async () => {
   setSaving(false);
 };
 
+if (!userId) {
+  return <p className="text-sm text-gray-500">{tUI('selectPatientFirst', lang)}...</p>;
+}
+
 if (loading) {
   return <p className="text-sm text-gray-500">{tUI('loading', lang)}...</p>;
 }
+
 
   return (
   <div className="space-y-4 max-w-xl mx-auto">

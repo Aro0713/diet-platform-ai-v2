@@ -3178,5 +3178,18 @@ load: {
   hi: 'लोड करें',
   he: 'טען'
 },
+selectPatientFirst: {
+  pl: 'Wybierz najpierw pacjenta',
+  en: 'Select a patient first',
+  de: 'Bitte zuerst einen Patienten auswählen',
+  fr: 'Veuillez d\'abord sélectionner un patient',
+  es: 'Primero seleccione un paciente',
+  ua: 'Спочатку виберіть пацієнта',
+  ru: 'Сначала выберите пациента',
+  zh: '请先选择患者',
+  hi: 'कृपया पहले एक मरीज चुनें',
+  ar: 'يرجى اختيار المريض أولاً',
+  he: 'בחר מטופל קודם'
+}
 };
 
