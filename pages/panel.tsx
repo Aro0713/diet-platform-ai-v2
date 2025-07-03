@@ -1,4 +1,4 @@
-﻿// ✅ ZREFEKTORYZOWANY panel.tsx oparty na usePatientData (jak panel-patient)
+﻿// ✅ ZREFEKTORYZOWANY panel.tsx oparty na usePatientData (jak panel-patient) + WSPARCIE DLA DRAFT DIETY
 
 import Head from 'next/head';
 import { useState, useEffect } from 'react';
@@ -38,10 +38,11 @@ export default function Panel() {
     saveMedicalData,
     saveInterviewData,
     initialMedicalData,
-    initialInterviewData
+    initialInterviewData,
+    editableDiet,
+    setEditableDiet
   } = usePatientData();
 
-  const [editableDiet, setEditableDiet] = useState<Record<string, Meal[]>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [narrativeText, setNarrativeText] = useState('');
 
@@ -103,7 +104,7 @@ export default function Panel() {
   };
 
   return (
-       <main className="relative min-h-screen bg-[#0f271e]/70 bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 backdrop-blur-[12px] shadow-[inset_0_0_60px_rgba(255,255,255,0.08)] flex flex-col justify-start items-center pt-10 px-6 text-white transition-all duration-300">
+    <main className="relative min-h-screen bg-[#0f271e]/70 bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 backdrop-blur-[12px] shadow-[inset_0_0_60px_rgba(255,255,255,0.08)] flex flex-col justify-start items-center pt-10 px-6 text-white transition-all duration-300">
       <Head><title>Panel lekarza</title></Head>
 
       <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between px-4">

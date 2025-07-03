@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import type { PatientData } from '@/types';
 
@@ -14,6 +14,8 @@ interface UsePatientDataResult {
   saveInterviewData: (data: any) => Promise<void>;
   initialMedicalData: any;
   initialInterviewData: any;
+  editableDiet: any;
+  setEditableDiet: (diet: any) => void;
 }
 
 export function usePatientData(): UsePatientDataResult {
@@ -22,118 +24,138 @@ export function usePatientData(): UsePatientDataResult {
   const [medicalData, setMedicalData] = useState<any>(null);
   const [initialMedicalData, setInitialMedicalData] = useState<any>(undefined);
   const [initialInterviewData, setInitialInterviewData] = useState<any>(undefined);
+  const [editableDiet, setEditableDiet] = useState<any>({});
 
   const fetchPatientData = async () => {
-  const userId = localStorage.getItem('currentUserID');
-  if (!userId) return;
+    const userId = localStorage.getItem('currentUserID');
+    if (!userId) return;
 
-  const { data, error } = await supabase
-    .from('patients')
-    .select('*, interview_data, medical_data, health_status')
-    .eq('user_id', userId)
-    .maybeSingle();
+    const { data, error } = await supabase
+      .from('patients')
+      .select('*, interview_data, medical_data, health_status')
+      .eq('user_id', userId)
+      .maybeSingle();
 
-  if (error) {
-    console.error('❌ Błąd pobierania danych pacjenta:', error.message);
-    return;
-  }
+    if (error) {
+      console.error('❌ Błąd pobierania danych pacjenta:', error.message);
+      return;
+    }
 
-  if (data) {
-    const parsedMedical = Array.isArray(data.medical) ? data.medical : [];
+    if (data) {
+      const parsedMedical = Array.isArray(data.medical) ? data.medical : [];
+
+      setForm((prev) => ({
+        ...prev,
+        conditionGroups: Array.isArray(data.conditionGroups) ? data.conditionGroups : [],
+        conditions: Array.isArray(data.conditions) ? data.conditions : [],
+        medical: parsedMedical
+      }));
+
+      setMedicalData({
+        summary: data.health_status || '',
+        json: data.medical_data || null
+      });
+
+      setInterviewData(data.interview_data || {});
+
+      const freshInitial = buildInitialDataFromSupabase(data);
+      console.log("🔥 initialMedicalData z Supabase:", freshInitial);
+
+      setInitialMedicalData(JSON.parse(JSON.stringify(freshInitial)));
+      const clonedInterview = JSON.parse(JSON.stringify(data.interview_data || {}));
+      setInitialInterviewData(clonedInterview);
+
+      // ✅ Pobierz dietę typu draft
+      const { data: draft } = await supabase
+        .from('patient_diets')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('status', 'draft')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (draft?.diet_plan) {
+        try {
+          const parsed = typeof draft.diet_plan === 'string'
+            ? JSON.parse(draft.diet_plan)
+            : draft.diet_plan;
+          setEditableDiet(parsed);
+        } catch (err) {
+          console.error('❌ Błąd parsowania diet_plan:', err);
+        }
+      }
+    }
+  };
+
+  const saveMedicalData = async ({
+    selectedGroups,
+    selectedConditions,
+    testResults,
+    medicalSummary,
+    structuredOutput
+  }: {
+    selectedGroups: string[];
+    selectedConditions: string[];
+    testResults: { [testName: string]: string };
+    medicalSummary?: string;
+    structuredOutput?: any;
+  }) => {
+    const userId = localStorage.getItem('currentUserID');
+    if (!userId) return;
+
+    const isEmpty =
+      (!selectedGroups || selectedGroups.length === 0) &&
+      (!selectedConditions || selectedConditions.length === 0) &&
+      (!testResults || Object.keys(testResults).length === 0) &&
+      !structuredOutput &&
+      !medicalSummary;
+
+    if (isEmpty) {
+      console.warn('⚠️ Pominięto zapis pustych danych medycznych');
+      return;
+    }
+
+    const convertedMedical = selectedConditions.map((condition) => ({
+      condition,
+      tests: Object.entries(testResults)
+        .filter(([key]) => key.startsWith(`${condition}__`))
+        .map(([name, value]) => ({
+          name: name.replace(`${condition}__`, ''),
+          value
+        }))
+    }));
+
+    const { error } = await supabase
+      .from('patients')
+      .update({
+        medical: convertedMedical,
+        medical_data: structuredOutput,
+        health_status: medicalSummary,
+        conditionGroups: selectedGroups,
+        conditions: selectedConditions
+      })
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('❌ Błąd zapisu danych medycznych:', error.message);
+    } else {
+      console.log('✅ Dane medyczne zapisane');
+    }
 
     setForm((prev) => ({
       ...prev,
-      conditionGroups: Array.isArray(data.conditionGroups) ? data.conditionGroups : [],
-      conditions: Array.isArray(data.conditions) ? data.conditions : [],
-      medical: parsedMedical
+      conditionGroups: selectedGroups,
+      conditions: selectedConditions,
+      testResults,
+      medical: convertedMedical
     }));
 
     setMedicalData({
-      summary: data.health_status || '',
-      json: data.medical_data || null
+      summary: medicalSummary ?? '',
+      json: structuredOutput ?? null
     });
-
-    setInterviewData(data.interview_data || {});
-
-    const freshInitial = buildInitialDataFromSupabase(data);
-    console.log("🔥 initialMedicalData z Supabase:", freshInitial);
-
-    // Wymuszona zmiana referencji obiektu
-    setInitialMedicalData(JSON.parse(JSON.stringify(freshInitial)));
-    const clonedInterview = JSON.parse(JSON.stringify(data.interview_data || {}));
-    setInitialInterviewData(clonedInterview);
-  }
-};
-
-const saveMedicalData = async ({
-  selectedGroups,
-  selectedConditions,
-  testResults,
-  medicalSummary,
-  structuredOutput
-}: {
-  selectedGroups: string[];
-  selectedConditions: string[];
-  testResults: { [testName: string]: string };
-  medicalSummary?: string;
-  structuredOutput?: any;
-}) => {
-  const userId = localStorage.getItem('currentUserID');
-  if (!userId) return;
-
-  // 🔒 ZABEZPIECZENIE przed nadpisywaniem pustymi danymi
-  const isEmpty =
-    (!selectedGroups || selectedGroups.length === 0) &&
-    (!selectedConditions || selectedConditions.length === 0) &&
-    (!testResults || Object.keys(testResults).length === 0) &&
-    !structuredOutput &&
-    !medicalSummary;
-
-  if (isEmpty) {
-    console.warn('⚠️ Pominięto zapis pustych danych medycznych');
-    return;
-  }
-
-  const convertedMedical = selectedConditions.map((condition) => ({
-    condition,
-    tests: Object.entries(testResults)
-      .filter(([key]) => key.startsWith(`${condition}__`))
-      .map(([name, value]) => ({
-        name: name.replace(`${condition}__`, ''),
-        value
-      }))
-  }));
-
-  const { error } = await supabase
-    .from('patients')
-    .update({
-      medical: convertedMedical,
-      medical_data: structuredOutput,
-      health_status: medicalSummary,
-      conditionGroups: selectedGroups,
-      conditions: selectedConditions
-    })
-    .eq('user_id', userId);
-
-  if (error) {
-    console.error('❌ Błąd zapisu danych medycznych:', error.message);
-  } else {
-    console.log('✅ Dane medyczne zapisane');
-  }
-
-  setForm((prev) => ({
-    ...prev,
-    conditionGroups: selectedGroups,
-    conditions: selectedConditions,
-    testResults,
-    medical: convertedMedical
-  }));
-
-  setMedicalData({
-    summary: medicalSummary ?? '',
-    json: structuredOutput ?? null
-  });
-};
+  };
 
   const saveInterviewData = async (data: any) => {
     const userId = localStorage.getItem('currentUserID');
@@ -169,7 +191,9 @@ const saveMedicalData = async ({
     saveMedicalData,
     saveInterviewData,
     initialMedicalData,
-    initialInterviewData
+    initialInterviewData,
+    editableDiet,
+    setEditableDiet
   };
 }
 
