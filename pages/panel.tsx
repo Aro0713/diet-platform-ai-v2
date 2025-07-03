@@ -1,4 +1,4 @@
-﻿// ✅ PANEL LEKARZA — pełna logika skopiowana z panel-patient.tsx, z zachowaniem stylu lekarza
+﻿// ✅ PANEL LEKARZA — pełna logika z panel-patient.tsx + poprawki rerenderów + logi diagnostyczne
 
 import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
@@ -53,6 +53,14 @@ export default function Panel(): React.JSX.Element {
     if (storedLang) setLang(storedLang as LangKey);
     fetchPatientData();
   }, []);
+
+  useEffect(() => {
+    console.log('🧪 form', form);
+    console.log('🧪 initialMedicalData', initialMedicalData);
+    console.log('🧪 medicalData', medicalData);
+    console.log('🧪 initialInterviewData', initialInterviewData);
+    console.log('🧪 editableDiet', editableDiet);
+  }, [form, initialMedicalData, medicalData, initialInterviewData, editableDiet]);
 
   const saveDietToSupabaseAndPdf = async () => {
     try {
@@ -211,7 +219,8 @@ export default function Panel(): React.JSX.Element {
 
         <PanelCard>
           <MedicalForm
-            initialData={initialMedicalData}
+            key={JSON.stringify(initialMedicalData)}
+            initialData={initialMedicalData || {}}
             existingMedical={medicalData}
             onChange={(data) => saveMedicalData(data).then(() => setIsConfirmed(true))}
             onUpdateMedical={(summary) => setMedicalData((prev: any) => ({ ...prev, summary }))}
@@ -221,6 +230,7 @@ export default function Panel(): React.JSX.Element {
 
         <PanelCard>
           <InterviewWizard
+            key={JSON.stringify(initialInterviewData)}
             form={form}
             initialData={initialInterviewData}
             lang={lang}
