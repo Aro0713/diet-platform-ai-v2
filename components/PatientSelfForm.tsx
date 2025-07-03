@@ -4,9 +4,11 @@ import { tUI, type LangKey } from '@/utils/i18n';
 
 interface Props {
   lang: LangKey;
+  userId?: string;
 }
 
-const PatientSelfForm: React.FC<Props> = ({ lang }) => {
+
+const PatientSelfForm: React.FC<Props> = ({ lang, userId }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -23,7 +25,7 @@ const PatientSelfForm: React.FC<Props> = ({ lang }) => {
 
 useEffect(() => {
   const fetchPatient = async () => {
-    const userId = localStorage.getItem('currentUserID');
+    const currentUserId = userId || localStorage.getItem('currentUserID');
     if (!userId) {
       console.error('❌ Brak user_id w localStorage');
       return;
