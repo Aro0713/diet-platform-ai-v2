@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import type { PatientData } from '@/types';
 
@@ -25,6 +25,13 @@ export function useDoctorPatientData(): UseDoctorPatientDataResult {
   const [initialMedicalData, setInitialMedicalData] = useState<any>(undefined);
   const [initialInterviewData, setInitialInterviewData] = useState<any>(undefined);
   const [editableDiet, setEditableDiet] = useState<any>({});
+
+  useEffect(() => {
+    const userId = localStorage.getItem('currentUserID');
+    if (userId && !form?.user_id) {
+      setForm((prev) => ({ ...prev, user_id: userId }));
+    }
+  }, [form?.user_id]);
 
   const fetchPatientData = async () => {
     const userId = form?.user_id;
@@ -62,9 +69,8 @@ export function useDoctorPatientData(): UseDoctorPatientDataResult {
       setInterviewData(data.interview_data || {});
 
       const freshInitial = buildInitialDataFromSupabase(data);
-      console.log('🔥 initialMedicalData z Supabase:', freshInitial);
-
       setInitialMedicalData(JSON.parse(JSON.stringify(freshInitial)));
+
       const clonedInterview = JSON.parse(JSON.stringify(data.interview_data || {}));
       setInitialInterviewData(clonedInterview);
 
