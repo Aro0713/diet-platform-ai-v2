@@ -1,40 +1,47 @@
-﻿import React from 'react';
+﻿// 🔁 React / Next
 import Head from 'next/head';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import LangAndThemeToggle from '@/components/LangAndThemeToggle';
-import { tUI } from '@/utils/i18n';
-import type { Meal } from '@/types';
-import { supabase } from '@/lib/supabaseClient';
-import { useDoctorPatientData } from '@/hooks/useDoctorPatientData';
-import { tryParseJSON } from '@/utils/tryParseJSON'; 
-import { transformDietPlanToEditableFormat } from '@/utils/transformDietPlan';
+import PanelCard from '@/components/PanelCard';
+import { translatedTitles } from '@/utils/translatedTitles';
 
-import { PatientIconGrid } from '@/components/PatientIconGrid';
-import PatientSelfForm from '@/components/PatientSelfForm';
+// 🔌 Supabase
+import { supabase } from '@/lib/supabaseClient';
+
+// 🧩 Komponenty
+import PatientPanelSection from '@/components/PatientPanelSection';
+import PatientDataForm from '@/components/PatientDataForm';
 import MedicalForm from '@/components/MedicalForm';
+import SelectConditionForm from '@/components/SelectConditionForm';
 import InterviewWizard from '@/components/InterviewWizard';
+import DietGoalForm from '@/components/DietGoalForm';
+import SelectCuisineForm from '@/components/SelectCuisineForm';
+import SelectModelForm from '@/components/SelectModelForm';
 import CalculationBlock from '@/components/CalculationBlock';
 import DietTable from '@/components/DietTable';
-import { extractMappedInterview } from '@/utils/interviewHelpers';
-import type { LangKey } from '@/utils/i18n';
-import DietGoalForm from '@/components/DietGoalForm';
-import SelectModelForm from '@/components/SelectModelForm';
-import SelectCuisineForm from '@/components/SelectCuisineForm';
+import ConfirmationModal from '@/components/ConfirmationModal';
+
+// 🧠 AI i utils
+import { convertInterviewAnswers, extractMappedInterview } from '@/utils/interviewHelpers';
+import { tryParseJSON } from '@/utils/tryParseJSON';
+import { transformDietPlanToEditableFormat } from '@/utils/transformDietPlan';
 import { generateDietPdf } from '@/utils/generateDietPdf';
+import { validateDiet } from '@/utils/validateDiet';
+import { sendToPatient } from '@/utils/sendToPatient';
 
-export default function PatientPanelPage(): React.JSX.Element {
+// 🌍 Tłumaczenia
+import { tUI } from '@/utils/i18n';
+import { translationsUI } from '@/utils/translationsUI';
+import type { LangKey } from '@/utils/i18n';
 
-  const router = useRouter();
-  const [lang, setLang] = useState<LangKey>('pl');
-  const [patientOption, setPatientOption] = useState<'existing' | 'new'>('existing');
-  const [selectedSection, setSelectedSection] = useState<string | null>(null);
+// 🩺 Hook danych pacjenta
+import { useDoctorPatientData } from '@/hooks/useDoctorPatientData';
 
-  useEffect(() => {
-    const storedLang = localStorage.getItem('platformLang');
-    if (storedLang) setLang(storedLang as LangKey);
-  }, []);
+// 📊 Typy
+import type { Meal } from '@/types';
 
+function Panel() {
   const {
     form,
     setForm,
@@ -46,136 +53,117 @@ export default function PatientPanelPage(): React.JSX.Element {
     saveMedicalData,
     saveInterviewData,
     initialMedicalData,
-    initialInterviewData
+    initialInterviewData,
+    editableDiet,
+    setEditableDiet
   } = useDoctorPatientData();
 
-  const [editableDiet, setEditableDiet] = useState({});
-  const [notes, setNotes] = useState({});
-  const [isConfirmed, setIsConfirmed] = useState(false);
+  const [lang, setLang] = useState<LangKey>('pl');
+  const [userData, setUserData] = useState<any>(null);
+  const [mealPlan, setMealPlan] = useState<Record<string, Meal[]>>({});
+  const [diet, setDiet] = useState<Record<string, Meal[]> | null>(null);
+  const [streamingText, setStreamingText] = useState('');
+  const [confirmedDiet, setConfirmedDiet] = useState<Meal[] | null>(null);
+  const [validationErrors, setValidationErrors] = useState<Record<number, string[]>>({});
+  const [bmi, setBmi] = useState<number | null>(null);
+  const [interviewNarrative, setInterviewNarrative] = useState('');
+  const [pendingDiets, setPendingDiets] = useState<any[]>([]);
+  const [showDrafts, setShowDrafts] = useState(false);
+  const [drafts, setDrafts] = useState<any[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [missingFields, setMissingFields] = useState<string[]>([]);
+  const [submitPending, setSubmitPending] = useState<(() => void) | null>(null);
+  const [dietApproved, setDietApproved] = useState(false);
+  const [notes, setNotes] = useState<Record<string, string>>({});
+  const [narrativeText, setNarrativeText] = useState('');
+  const [history, setHistory] = useState<any[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const router = useRouter();
 
+  const t = (key: keyof typeof translationsUI): string => tUI(key, lang);
 
-const [streamingText, setStreamingText] = useState('');
-const [narrativeText, setNarrativeText] = useState('');
-const [dietApproved, setDietApproved] = useState(false);
-const [isGenerating, setIsGenerating] = useState(false);
-const saveDietToSupabaseAndPdf = async () => {
-  try {
-    const bmi = form.weight && form.height
-      ? parseFloat((form.weight / ((form.height / 100) ** 2)).toFixed(1))
-      : 0;
+  useEffect(() => {
+    const langStorage = localStorage.getItem('platformLang') as LangKey | null;
+    if (langStorage) setLang(langStorage);
+  }, []);
 
-    const mealArray: Meal[] = (Object.values(editableDiet || {}) as Meal[][]).flat();
-
-    if (!Array.isArray(mealArray) || mealArray.length === 0) {
-      alert(tUI('noMealsToSave', lang));
-      return;
+  useEffect(() => {
+    const storedTheme = localStorage.getItem('theme');
+    if (storedTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
     }
-    if (!form?.email) {
-      alert(tUI('enterEmailFirst', lang));
-      return;
-    }
+  }, []);
 
-    const { data: patientData, error: patientError } = await supabase
-      .from('patients')
-      .select('*')
-      .eq('email', form.email)
-      .maybeSingle();
+  useEffect(() => {
+    fetchPatientData();
+  }, []);
 
-    if (patientError || !patientData) {
-      alert(tUI('patientNotFound', lang));
-      return;
-    }
+  useEffect(() => {
+    console.log('📘 Opis wywiadu zapisany:', interviewNarrative);
+  }, [interviewNarrative]);
 
-    setForm((prev) => ({
-      ...prev,
-      ...patientData
-    }));
+  useEffect(() => {
+    const fetchDraftDiets = async () => {
+      const { data, error } = await supabase
+        .from('patient_diets')
+        .select('*, patients(*)')
+        .eq('status', 'draft');
+      if (!error) setPendingDiets(data || []);
+    };
+    fetchDraftDiets();
+  }, []);
 
-const userId = patientData.user_id;
+  const handleMedicalChange = (data: {
+    selectedGroups: string[];
+    selectedConditions: string[];
+    testResults: { [testName: string]: string };
+    medicalSummary?: string;
+    structuredOutput?: any;
+  }) => {
+    saveMedicalData(data);
+  };
 
+  const handleCalculationResult = ({ suggestedModel, ...rest }: any) => {
+    setInterviewData((prev: any) => ({ ...prev, ...rest, model: suggestedModel }));
+  };
 
-    const { error } = await supabase
-      .from('patient_diets')
-      .insert({
-        user_id: userId,
-        diet_plan: editableDiet,
-        status: 'confirmed',
-        confirmed_at: new Date().toISOString()
-      });
+  const getRecommendedMealsPerDay = (form: any, interviewData: any): number => {
+    const bmi = form.weight && form.height ? form.weight / ((form.height / 100) ** 2) : null;
+    if (['diabetes', 'insulin', 'pcos', 'ibs', 'reflux', 'ulcer'].some(c => form.conditions?.includes(c))) return 5;
+    if (interviewData.goal === 'gain' || interviewData.goal === 'regen' || (bmi && bmi < 18.5)) return 5;
+    if (interviewData.goal === 'lose' || (bmi && bmi > 30)) return 3;
+    return 4;
+  };
 
-    if (error) {
-      console.error(`${tUI('supabaseSaveErrorPrefix', lang)} ${error.message}`);
-      alert(tUI('dietSaveFailed', lang));
-      return;
-    }
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    alert(tUI('dietSaveSuccess', lang));
+  const missing: string[] = [];
+  if (!form.age) missing.push(t('age'));
+  if (!form.sex) missing.push(t('sex'));
+  if (!form.weight) missing.push(t('weight'));
+  if (!form.height) missing.push(t('height'));
+  if (!interviewData.goal) missing.push(t('goal'));
+  if (!interviewData.cuisine) missing.push(t('cuisine'));
 
-    const { generateDietPdf } = await import('@/utils/generateDietPdf');
-    await generateDietPdf(
-      form,
-      bmi,
-      mealArray,
-      true,
-      notes,
-      lang,
-      interviewData,
-      {
-        bmi: interviewData.bmi,
-        ppm: interviewData.ppm,
-        cpm: interviewData.cpm,
-        pal: interviewData.pal,
-        kcalMaintain: interviewData.kcalMaintain,
-        kcalReduce: interviewData.kcalReduce,
-        kcalGain: interviewData.kcalGain,
-        nmcBroca: interviewData.nmcBroca,
-        nmcLorentz: interviewData.nmcLorentz
-      },
-      'download',
-      narrativeText
-    );
-  } catch (err) {
-    console.error(`${tUI('dietApprovalErrorPrefix', lang)} ${err}`);
-    alert(tUI('dietApprovalFailed', lang));
+  if (missing.length > 0) {
+    setMissingFields(missing);
+    setShowConfirmModal(true);
+    setSubmitPending(() => () => handleSubmit(e));
+    return;
   }
-};
 
-const saveDraftToSupabase = async () => {
-  try {
-    const userId = form?.user_id;
-    if (!userId) {
-      alert(tUI('noUserIdError', lang));
-      return;
-    }
-
-    const { error } = await supabase
-      .from('patient_diets')
-      .insert({
-        user_id: userId,
-        diet_plan: editableDiet,
-        status: 'draft'
-      });
-
-    if (error) {
-      console.error(`${tUI('draftSaveErrorLog', lang)}:`, error.message);
-      alert(tUI('dietSubmissionError', lang));
-      return;
-    }
-
-    alert(tUI('dietSubmissionSuccess', lang));
-  } catch (err) {
-    console.error(`${tUI('draftSaveCatchErrorLog', lang)}:`, err);
-    alert(tUI('dietSaveError', lang));
-  }
-};
-;
-const handleGenerateDiet = async () => {
+  const bmiCalc = form.weight / ((form.height / 100) ** 2);
+  setBmi(parseFloat(bmiCalc.toFixed(1)));
   setIsGenerating(true);
   setStreamingText('');
   setDietApproved(false);
 
   if (!medicalData) {
-    alert(tUI('medicalApprovalRequired', lang));
+    alert(tUI('confirmMedicalWarning', lang));
     setIsGenerating(false);
     return;
   }
@@ -192,9 +180,8 @@ const handleGenerateDiet = async () => {
     };
 
     if (!interviewData.mealsPerDay) {
-      interviewData.mealsPerDay = 4;
+      interviewData.mealsPerDay = getRecommendedMealsPerDay(form, interviewData);
     }
-
 
     const recommendation = interviewData.recommendation?.trim();
     const goalExplanation = goalMap[interviewData.goal] || '';
@@ -229,229 +216,286 @@ const handleGenerateDiet = async () => {
       setStreamingText(rawText);
     }
 
-    const json = JSON.parse(rawCompleteText);
+    const parsed = tryParseJSON(rawCompleteText);
 
-    if (json.dietPlan && typeof json.dietPlan === 'object') {
-      const transformed = transformDietPlanToEditableFormat(json.dietPlan, lang);
+    const mapDaysToPolish: Record<string, string> = {
+      Monday: 'Poniedziałek',
+      Tuesday: 'Wtorek',
+      Wednesday: 'Środa',
+      Thursday: 'Czwartek',
+      Friday: 'Piątek',
+      Saturday: 'Sobota',
+      Sunday: 'Niedziela'
+    };
+
+    if (parsed.dietPlan && typeof parsed.dietPlan === 'object') {
+      const transformed = transformDietPlanToEditableFormat(parsed.dietPlan, lang);
+      setMealPlan(transformed);
+      setDiet(transformed);
       setEditableDiet(transformed);
-      setDietApproved(true);
       return;
     }
 
- alert(tUI('dietPlanMissing', lang));
-} catch (err) {
-  console.error(`${tUI('dietGenerationErrorPrefix', lang)} ${err}`);
-  alert(tUI('dietGenerationFailed', lang));
-} finally {
-  setIsGenerating(false);
-}
+    if (parsed.weekPlan && Array.isArray(parsed.weekPlan)) {
+      const converted: Record<string, Meal[]> = {};
+      for (const { day, meals } of parsed.weekPlan) {
+        converted[mapDaysToPolish[day] || day] = meals.map((meal: any) => ({
+          name: meal.name || '',
+          description: meal.menu || '',
+          ingredients: Array.isArray(meal.ingredients) ? meal.ingredients : [],
+          calories: meal.kcal || 0,
+          glycemicIndex: meal.glycemicIndex || 0,
+          time: meal.time || ''
+        }));
+      }
+      setMealPlan(converted);
+      setDiet(converted);
+      setEditableDiet(converted);
+      return;
+    }
 
+    if (parsed.mealPlan && Array.isArray(parsed.mealPlan)) {
+      const converted: Record<string, Meal[]> = {};
+      for (const entry of parsed.mealPlan) {
+        const { day, meals } = entry;
+        converted[mapDaysToPolish[day] || day] = meals.map((m: any) => ({
+          name: m.name || '',
+          description: m.description || '',
+          ingredients: [],
+          calories: m.kcal || 0,
+          glycemicIndex: m.glycemicIndex || 0,
+          time: m.time || ''
+        }));
+      }
+      setMealPlan(converted);
+      setDiet(converted);
+      setEditableDiet(converted);
+      return;
+    }
+
+    throw new Error('Brak poprawnego planu posiłków.');
+  } catch (err) {
+    console.error('❌ Błąd przy generowaniu:', err);
+    alert(tUI('dietGenerationError', lang));
+  } finally {
+    setIsGenerating(false);
+  }
 };
 
-  return (
-    <main className="relative min-h-screen bg-[#0f271e]/70 bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 backdrop-blur-[12px] shadow-[inset_0_0_60px_rgba(255,255,255,0.08)] flex flex-col justify-start items-center pt-10 px-6 text-white transition-all duration-300">
-      <Head>
-       <title>Panel lekarza</title>
-      </Head>
+const handleGenerateNarrative = async () => {
+  try {
+    const { narrativeInput } = convertInterviewAnswers(interviewData);
+    const response = await fetch('/api/interview-narrative', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        interviewData: narrativeInput,
+        goal: interviewData.goal,
+        recommendation: interviewData.recommendation,
+        lang
+      })
+    });
 
-      {/* Pasek nagłówka */}
-      <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between px-4">
-        <div className="flex flex-col">
-          {form?.name && (
-            <span className="text-sm font-medium text-gray-800 dark:text-white">
-              {form.name}
-            </span>
-          )}
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
-            {tUI('patientPanelTitle', lang)}
-          </h1>
+    const fullResult = await response.text();
+   const jsonMatch = fullResult.match(/```json\s*([\s\S]*?)```/);
+
+    let parsed: Record<string, any> | null = null;
+
+    if (jsonMatch && jsonMatch[1]) {
+      try {
+        parsed = JSON.parse(jsonMatch[1].trim());
+      } catch {}
+    }
+   
+    const summary = fullResult.split('```json')[0].trim();
+    setNarrativeText(summary);
+    setInterviewData((prev: any) => ({
+      ...prev,
+      narrativeText: summary,
+      narrativeJson: parsed || null
+    }));
+  } catch (err) {
+    alert('⚠️ Nie udało się połączyć z AI.');
+  }
+};
+
+
+  return (
+  <main className="relative min-h-screen
+    bg-[#0f271e]/70
+    bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60
+    backdrop-blur-[12px]
+    shadow-[inset_0_0_60px_rgba(255,255,255,0.08)]
+    flex flex-col justify-start items-center pt-10 px-6
+    text-white transition-all duration-300"
+  >
+    {/* Pasek z nagłówkiem i przełącznikiem */}
+    <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between px-4">
+      <div className="flex flex-col">
+        {userData?.name && (
+          <span className="text-sm font-medium text-gray-800 dark:text-white">
+            {userData.title &&
+              translatedTitles[userData.title as 'dr' | 'drhab' | 'prof']?.[lang] && (
+                <>{translatedTitles[userData.title as 'dr' | 'drhab' | 'prof'][lang]} </>
+              )}
+            {userData.name}
+            {userData.role &&
+              translationsUI[userData.role as 'doctor' | 'dietitian']?.[lang] && (
+                <> – {translationsUI[userData.role as 'doctor' | 'dietitian'][lang]}</>
+              )}
+          </span>
+        )}
+        <h1 className="text-2xl font-bold text-gray-800">{tUI('doctorPanelTitle', lang)}</h1>
+      </div>
+      <LangAndThemeToggle />
+    </div>
+
+    {/* Główna zawartość */}
+    <div className="z-10 flex flex-col w-full max-w-[1400px] mx-auto gap-6 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 mt-20 dark:text-white transition-colors">
+
+      {/* Sekcja 1: Dane pacjenta */}
+      <PanelCard>
+        <PatientPanelSection form={form} setForm={setForm} lang={lang} />
+      </PanelCard>
+
+      {/* Sekcja 2: Dane medyczne */}
+      <PanelCard className="z-30">
+        <MedicalForm
+          key={JSON.stringify(medicalData)}
+          initialData={initialMedicalData || {}}
+          existingMedical={medicalData}
+          onChange={handleMedicalChange}
+          onUpdateMedical={(summary) => {
+            setMedicalData((prev: any) => ({
+              ...prev,
+              summary
+            }));
+          }}
+          lang={lang}
+        />
+      </PanelCard>
+
+      {/* Sekcja 3: Wywiad pacjenta */}
+      <PanelCard title={`🧠 ${tUI('interviewTitle', lang)}`}>
+        <InterviewWizard
+          form={form}
+          initialData={interviewData}
+          lang={lang}
+          onFinish={saveInterviewData}
+          onUpdateNarrative={(text) => setNarrativeText(text)}
+        />
+      </PanelCard>
+
+      {/* Sekcja 3.1: Rekomendacje i liczba posiłków */}
+      <PanelCard className="h-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="flex flex-col space-y-2">
+            <label className="text-sm font-medium text-black dark:text-white">
+              {tUI('doctorRecommendation', lang)}
+            </label>
+            <textarea
+              rows={4}
+              className="w-full border rounded px-3 py-2 text-sm text-gray-800 dark:text-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+              value={interviewData.recommendation || ''}
+              onChange={(e) =>
+                setInterviewData({ ...interviewData, recommendation: e.target.value })
+              }
+            />
+          </div>
+          <div className="flex flex-col space-y-2">
+            <label className="text-sm font-medium text-black dark:text-white">
+              {tUI('mealsPerDay', lang)}
+            </label>
+            <select
+              className="w-full border rounded px-3 py-2 text-sm text-gray-800 dark:text-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+              value={interviewData.mealsPerDay || ''}
+              onChange={(e) =>
+                setInterviewData({ ...interviewData, mealsPerDay: parseInt(e.target.value) })
+              }
+            >
+              <option value="">{`-- ${tUI('selectOption', lang)} --`}</option>
+              {[2, 3, 4, 5, 6].map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-        <LangAndThemeToggle />
+      </PanelCard>
+
+      {/* Sekcja 4: Cel, model, kuchnia */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 items-start">
+        <PanelCard className="h-full">
+          <DietGoalForm
+            onChange={(goal) => setInterviewData({ ...interviewData, goal })}
+            lang={lang}
+          />
+        </PanelCard>
+        <PanelCard className="h-full">
+          <SelectModelForm
+            onChange={(model) => setInterviewData({ ...interviewData, model })}
+            lang={lang}
+          />
+        </PanelCard>
+        <PanelCard className="h-full">
+          <SelectCuisineForm
+            onChange={(cuisine) => setInterviewData({ ...interviewData, cuisine })}
+            lang={lang}
+          />
+        </PanelCard>
       </div>
 
-      {/* Ikony */}
-      <PatientIconGrid
-        lang={lang}
-        onSelect={(id) => setSelectedSection(id)}
-      />
-
-      {/* Główna zawartość */}
-      <div className="z-10 flex flex-col w-full max-w-[1000px] mx-auto gap-6 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 mt-20 dark:text-white transition-colors animate-flip-in origin-center">
-        {selectedSection === 'data' && (
-          <>
-            <div className="flex gap-6 items-center mb-4">
-              <label className="flex items-center gap-2 text-sm font-medium text-white">
-                <input
-                  type="radio"
-                  name="patientOption"
-                  value="existing"
-                  checked={patientOption === 'existing'}
-                  onChange={() => setPatientOption('existing')}
-                />
-                {tUI('patientHasAccount', lang)}
-              </label>
-
-              <label className="flex items-center gap-2 text-sm font-medium text-white">
-                <input
-                  type="radio"
-                  name="patientOption"
-                  value="new"
-                  checked={patientOption === 'new'}
-                  onChange={() => setPatientOption('new')}
-                />
-                {tUI('createAccountForPatient', lang)}
-              </label>
-            </div>
-
-            {/* ✅ tylko jeśli pacjent został wskazany */}
-           {patientOption === 'existing' && (
-              <div className="space-y-4">
-                <input
-                  type="email"
-                  placeholder={tUI('enterPatientEmail', lang)}
-                  value={form?.email || ''}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  className="w-full px-4 py-2 rounded-md bg-white text-black border dark:bg-gray-800 dark:text-white"
-                />
-                <button
-                  onClick={fetchPatientData}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-                >
-                  {tUI('loadPatientData', lang)}
-                </button>
-
-                {/* ✅ pokazujemy formularz tylko jeśli userId został znaleziony */}
-                {form?.user_id && (
-                  <PatientSelfForm lang={lang} userId={form.user_id} />
-                )}
-              </div>
-            )}
-
-            {patientOption === 'new' && (
-              <PatientSelfForm lang={lang} userId={form?.user_id} />
-            )}
-          </>
-        )}
-        {selectedSection === 'medical' && (
-          <>
-           <MedicalForm
-  userId={form?.user_id} // ✅ tu dodaj
-  onChange={(data) => {
-    saveMedicalData(data).then(() => setIsConfirmed(true));
-  }}
-  onUpdateMedical={(summary) => {
-    setMedicalData((prev: any) => ({ ...prev, summary }));
-  }}
-  initialData={initialMedicalData}
-  existingMedical={medicalData}
-  lang={lang}
-/>
-
-
-            {isConfirmed && !interviewData?.goal && (
-              <div className="mt-6 p-4 bg-emerald-100/80 dark:bg-emerald-900/40 text-base rounded-md text-gray-900 dark:text-white shadow max-w-2xl mx-auto">
-                {tUI('medicalConfirmationMessage', lang)}
-              </div>
-            )}
-          </>
-        )}
-
-        {selectedSection === 'interview' && (
-          <>
-            <InterviewWizard
-            form={form}
-            onFinish={saveInterviewData}
-            lang={lang}
-            initialData={initialInterviewData}
-            />
-
-            {interviewData?.goal && (
-              <div className="mt-6 p-4 bg-sky-100/80 dark:bg-sky-900/40 text-base rounded-md text-gray-900 dark:text-white shadow max-w-2xl mx-auto">
-                {tUI('interviewConfirmationMessage', lang)}
-              </div>
-            )}
-          </>
-        )}
-
-        {selectedSection === 'calculator' && (
-          <CalculationBlock
-            form={form}
-            interview={extractMappedInterview(interviewData)}
-            lang={lang}
-            onResult={(result) => {
-              setInterviewData((prev: any) => ({
-                ...prev,
-                ...result,
-                model: result.suggestedModel
-              }));
-            }}
-          />
-        )}
-
-        {selectedSection === 'diet' && (
-  <div className="space-y-6">
-    {/* Wybór celu, modelu, kuchni */}
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <DietGoalForm
-        lang={lang}
-        onChange={(goal) => setInterviewData({ ...interviewData, goal })}
+      {/* Sekcja 5: Kalkulator */}
+      <PanelCard title={`🧮 ${tUI('patientInNumbers', lang)}`} className="h-full">
+        <CalculationBlock
+          form={form}
+          interview={extractMappedInterview(interviewData)}
+          lang={lang}
+          onResult={handleCalculationResult}
         />
+      </PanelCard>
 
-        <SelectModelForm
-        lang={lang}
-        onChange={(model) => setInterviewData({ ...interviewData, model })}
-        />
-
-        <SelectCuisineForm
-        lang={lang}
-        onChange={(cuisine) => setInterviewData({ ...interviewData, cuisine })}
-        />
-    </div>
-
-{/* Przyciski */}
-
-<div className="space-y-4">
-
-  {/* ⏳ Status generowania */}
-  {isGenerating && (
-    <div className="text-sm text-gray-600 italic animate-pulse">
-      ⏳ {tUI('writingDiet', lang)}{' '}
-      {streamingText.length > 20 && `(${tUI('generatingWait', lang)})`}
-    </div>
-  )}
-
-  {/* 🧠 Generuj dietę */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+  {/* 🔵 Generuj dietę */}
   <button
-    className="w-full bg-emerald-600 text-white px-4 py-3 rounded-md font-medium hover:bg-emerald-700 disabled:opacity-50"
+    type="button"
+    onClick={handleSubmit}
+    className="w-full bg-blue-600 text-white px-4 py-3 rounded-md font-medium hover:bg-blue-700 disabled:opacity-50"
     disabled={isGenerating}
-    onClick={handleGenerateDiet}
   >
-    🧠 {tUI('generateDiet', lang)}
+    {isGenerating ? (
+      <span className="flex items-center gap-2">
+        <span className="animate-spin">⚙️</span>
+        {tUI('writingDiet', lang)}
+      </span>
+    ) : tUI('generate', lang)}
   </button>
 
-  {/* 📄 Generuj PDF */}
+  {/* 🟣 Zatwierdź dietę */}
   <button
+    type="button"
+    className="w-full bg-purple-700 text-white px-4 py-3 rounded-md font-medium hover:bg-purple-800 disabled:opacity-50"
+    onClick={() => setDietApproved(true)}
+    disabled={isGenerating || !confirmedDiet}
+  >
+    {isGenerating ? '⏳ Czekaj...' : `✅ ${tUI('approvedDiet', lang)}`}
+  </button>
+
+  {/* ✅ Pobierz PDF */}
+  <button
+    type="button"
     className="w-full bg-green-700 text-white px-4 py-3 rounded-md font-medium hover:bg-green-800 disabled:opacity-50"
-    disabled={isGenerating || !editableDiet || Object.keys(editableDiet).length === 0}
+    disabled={isGenerating || !confirmedDiet || !dietApproved}
     onClick={async () => {
       try {
         setIsGenerating(true);
         const { generateDietPdf } = await import('@/utils/generateDietPdf');
-        const bmi = form.weight && form.height
-          ? parseFloat((form.weight / ((form.height / 100) ** 2)).toFixed(1))
-          : 0;
-        const mealArray: Meal[] = (Object.values(editableDiet || {}) as Meal[][]).flat();
-
-        if (!Array.isArray(mealArray) || mealArray.length === 0) {
-          alert(tUI('dietPlanEmptyOrInvalid', lang));
-          return;
-        }
-
         await generateDietPdf(
           form,
           bmi,
-          mealArray,
-          true,
+          confirmedDiet!,
+          dietApproved,
           notes,
           lang,
           interviewData,
@@ -470,64 +514,106 @@ const handleGenerateDiet = async () => {
           narrativeText
         );
       } catch (e) {
-        alert(tUI('errorGeneratingPdf', lang));
+        alert('❌ Błąd przy generowaniu PDF');
         console.error(e);
       } finally {
         setIsGenerating(false);
       }
     }}
   >
-    📄 {tUI('generatePdf', lang)}
+    {isGenerating ? '⏳ Generowanie...' : `📄 ${tUI('pdf', lang)}`}
   </button>
 
- {/* ✅ Zatwierdź dietę */}
-<button
-  className="w-full bg-purple-700 text-white px-4 py-3 rounded-md font-medium hover:bg-purple-800 disabled:opacity-50"
-  disabled={!editableDiet || Object.keys(editableDiet).length === 0}
-  onClick={async () => {
-    const confirm = window.confirm(tUI('confirmApproveDietAsDoctor', lang));
-    if (confirm) {
-      await saveDietToSupabaseAndPdf();
-    }
-  }}
->
-  ✅ {tUI('approvedDiet', lang)}
-</button>
-
   {/* 📤 Wyślij pacjentowi */}
-<button
-  className="w-full bg-blue-500 text-white px-4 py-3 rounded-md font-medium hover:bg-blue-600 disabled:opacity-50"
-  disabled={!editableDiet || Object.keys(editableDiet).length === 0}
-  onClick={async () => {
-    const confirm = window.confirm(tUI('confirmSendDietToPatient', lang));
-    if (!confirm) return;
-    await saveDraftToSupabase();
-  }}
->
-  📤 {tUI('sendToPatient', lang)}
-</button>
+  <button
+    type="button"
+    className="w-full bg-blue-500 text-white px-4 py-3 rounded-md font-medium hover:bg-blue-600 disabled:opacity-50"
+    disabled={isGenerating || !confirmedDiet || !dietApproved || !form.email}
+    onClick={async () => {
+      try {
+        setIsGenerating(true);
+        const pdfMake = (await import('pdfmake/build/pdfmake')).default;
+        const pdfFonts = (await import('pdfmake/build/vfs_fonts')).default;
+        pdfMake.vfs = pdfFonts.vfs;
+
+        const { generateDietPdf } = await import('@/utils/generateDietPdf');
+       const docDefinition = await generateDietPdf(
+        form,
+        bmi,
+        confirmedDiet!,
+        dietApproved,
+        notes,
+        lang,
+        interviewData,
+        {
+          bmi: interviewData.bmi,
+          ppm: interviewData.ppm,
+          cpm: interviewData.cpm,
+          pal: interviewData.pal,
+          kcalMaintain: interviewData.kcalMaintain,
+          kcalReduce: interviewData.kcalReduce,
+          kcalGain: interviewData.kcalGain,
+          nmcBroca: interviewData.nmcBroca,
+          nmcLorentz: interviewData.nmcLorentz
+        },
+        'returnDoc', // ✅ zamiast 'email'
+        narrativeText
+      );
+
+        const formattedDate = new Date().toISOString().slice(0, 10);
+        const safeName = form.name?.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "") || "pacjent";
+        const filename = `dieta_${safeName}_${formattedDate}.pdf`;
+
+        pdfMake.createPdf(docDefinition).getBlob(async (blob: Blob) => {
+          const success = await sendToPatient(form.email, blob, lang, filename);
+          if (success) {
+            alert('📤 Dieta została wysłana pacjentowi!');
+          } else {
+            alert('❌ Wysyłka nie powiodła się. Sprawdź adres e-mail lub połączenie.');
+          }
+        });
+      } catch (err) {
+        console.error(err);
+        alert('❌ Błąd podczas wysyłania diety.');
+      } finally {
+        setIsGenerating(false);
+      }
+    }}
+  >
+    {isGenerating ? '⏳ Wysyłanie...' : `📤 ${tUI('sendToPatient', lang)}`}
+  </button>
 </div>
 
-    {/* Tabela diety */}
-    {editableDiet && Object.keys(editableDiet).length > 0 && (
-      <DietTable
-        editableDiet={editableDiet}
-        setEditableDiet={setEditableDiet}
-        setConfirmedDiet={() => {}}
-        isEditable={false}
-        lang={lang}
-        notes={notes}
-        setNotes={setNotes}
-      />
-    )}
+{isGenerating && (
+  <div className="text-sm text-gray-600 italic mt-4 animate-pulse">
+    ⏳ Piszę dietę... {streamingText.length > 20 && '(czekaj, trwa generowanie)'}
   </div>
 )}
-        {!selectedSection && (
-          <p className="text-center text-gray-300 text-sm max-w-xl mx-auto">
-            {tUI('iconInstructionFull', lang)}
-          </p>
-        )}
-      </div>
-    </main>
-  );
+
+
+      {/* Sekcja 7: Tabela z dietą */}
+      {editableDiet && Object.keys(editableDiet).length > 0 && (
+        <PanelCard>
+          <DietTable
+            editableDiet={editableDiet}
+            setEditableDiet={setEditableDiet}
+            setConfirmedDiet={(dietByDay) => {
+              const mealsWithDays = Object.entries(dietByDay).flatMap(([day, meals]) =>
+                meals.map((meal) => ({ ...meal, day }))
+              );
+              setConfirmedDiet(mealsWithDays);
+              setDietApproved(true);
+            }}
+            isEditable={!dietApproved}
+            lang={lang}
+            notes={notes}
+            setNotes={setNotes}
+          />
+        </PanelCard>
+      )}
+    </div>
+  </main>
+);
 }
+
+export default Panel;
