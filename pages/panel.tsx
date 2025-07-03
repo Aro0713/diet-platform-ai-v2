@@ -260,37 +260,38 @@ const handleGenerateDiet = async () => {
 
       {/* Główna zawartość */}
       <div className="z-10 flex flex-col w-full max-w-[1000px] mx-auto gap-6 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 mt-20 dark:text-white transition-colors animate-flip-in origin-center">
-       {selectedSection === 'data' && (
-  <>
-    <div className="flex gap-6 items-center mb-4">
-      <label className="flex items-center gap-2 text-sm font-medium text-white">
-        <input
-          type="radio"
-          name="patientOption"
-          value="existing"
-          checked={patientOption === 'existing'}
-          onChange={() => setPatientOption('existing')}
-        />
-        {tUI('patientHasAccount', lang)}
-      </label>
+        {selectedSection === 'data' && (
+          <>
+            <div className="flex gap-6 items-center mb-4">
+              <label className="flex items-center gap-2 text-sm font-medium text-white">
+                <input
+                  type="radio"
+                  name="patientOption"
+                  value="existing"
+                  checked={patientOption === 'existing'}
+                  onChange={() => setPatientOption('existing')}
+                />
+                {tUI('patientHasAccount', lang)}
+              </label>
 
-      <label className="flex items-center gap-2 text-sm font-medium text-white">
-        <input
-          type="radio"
-          name="patientOption"
-          value="new"
-          checked={patientOption === 'new'}
-          onChange={() => setPatientOption('new')}
-        />
-        {tUI('createAccountForPatient', lang)}
-      </label>
-    </div>
+              <label className="flex items-center gap-2 text-sm font-medium text-white">
+                <input
+                  type="radio"
+                  name="patientOption"
+                  value="new"
+                  checked={patientOption === 'new'}
+                  onChange={() => setPatientOption('new')}
+                />
+                {tUI('createAccountForPatient', lang)}
+              </label>
+            </div>
 
-    <PatientSelfForm lang={lang} />
-  </>
-)}
-
-
+            {/* ✅ tylko jeśli pacjent został wskazany */}
+            {form?.user_id && (
+              <PatientSelfForm lang={lang} userId={form.user_id} />
+            )}
+          </>
+        )}
         {selectedSection === 'medical' && (
           <>
            <MedicalForm
