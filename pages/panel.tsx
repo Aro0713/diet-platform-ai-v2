@@ -59,7 +59,6 @@ const [narrativeText, setNarrativeText] = useState('');
 const [dietApproved, setDietApproved] = useState(false);
 const [isGenerating, setIsGenerating] = useState(false);
 const saveDietToSupabaseAndPdf = async () => {
-  
   try {
     const bmi = form.weight && form.height
       ? parseFloat((form.weight / ((form.height / 100) ** 2)).toFixed(1))
@@ -72,8 +71,7 @@ const saveDietToSupabaseAndPdf = async () => {
       return;
     }
 
-    // ZAPISZ DO SUPABASE (do tabeli np. patient_diets)
-    const userId = localStorage.getItem('currentUserID');
+    const userId = form?.user_id;
     if (!userId) {
       alert(tUI('noUserId', lang));
       return;
@@ -88,14 +86,13 @@ const saveDietToSupabaseAndPdf = async () => {
         confirmed_at: new Date().toISOString()
       });
 
-        if (error) {
-    console.error(`${tUI('supabaseSaveErrorPrefix', lang)} ${error.message}`);
-    alert(tUI('dietSaveFailed', lang));
-    return;
+    if (error) {
+      console.error(`${tUI('supabaseSaveErrorPrefix', lang)} ${error.message}`);
+      alert(tUI('dietSaveFailed', lang));
+      return;
     }
 
     alert(tUI('dietSaveSuccess', lang));
-
 
     const { generateDietPdf } = await import('@/utils/generateDietPdf');
     await generateDietPdf(
@@ -121,11 +118,10 @@ const saveDietToSupabaseAndPdf = async () => {
       narrativeText
     );
   } catch (err) {
-  console.error(`${tUI('dietApprovalErrorPrefix', lang)} ${err}`);
-   alert(tUI('dietApprovalFailed', lang));
+    console.error(`${tUI('dietApprovalErrorPrefix', lang)} ${err}`);
+    alert(tUI('dietApprovalFailed', lang));
   }
 };
-
 
 const saveDraftToSupabase = async () => {
   try {
