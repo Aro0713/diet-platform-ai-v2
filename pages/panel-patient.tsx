@@ -150,7 +150,7 @@ const saveDietToSupabaseOnly = async () => {
       .from("patient_diets")
       .upsert({
         user_id: userId,
-        diet_json: editableDiet,
+        diet_plan: editableDiet,
         status: "approved"
       });
 
