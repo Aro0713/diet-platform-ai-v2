@@ -113,7 +113,17 @@ Generate a complete 7-day diet plan. DO NOT stop after 1 or 2 days.
 YOU MUST include:
 - All 7 days in the target language (${lang}):
 ${daysList}
-- All meals per day (e.g. Śniadanie, II śniadanie, Obiad, Kolacja, Snack if needed)
+- The number of meals per day must be:
+  - If mealsPerDay is provided: use exactly that number → ${mealsPerDay}
+  - If not provided: intelligently determine the best number of meals (between 2–6) based on medical condition, BMI, PAL, stress, activity level, and goal
+
+- Use meal names localized to language "${lang}". 
+  For example:
+  - pl: Śniadanie, Drugie śniadanie, Obiad, Kolacja, Podwieczorek
+  - en: Breakfast, Lunch, Dinner, Supper, Snack
+  - es: Desayuno, Almuerzo, Comida, Cena, Merienda
+  (Adapt accordingly to the selected language.)
+
 - Full ingredient and macro data for each meal
 - Do not use phrases like "continue similarly", "example", or "partial"
 
