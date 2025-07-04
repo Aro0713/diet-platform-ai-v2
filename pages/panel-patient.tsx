@@ -406,17 +406,20 @@ const handleGenerateRecipes = async () => {
     </div>
   )}
 
-<div className="flex flex-wrap justify-center gap-4 mt-6">
-
+<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-6">
+  {/* 🧠 Generuj dietę */}
   <button
     onClick={handleGenerateDiet}
     disabled={isGenerating}
-    className="w-28 h-28 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center transition disabled:opacity-50"
+    className="w-28 h-28 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition disabled:opacity-50"
   >
-    <span className="text-3xl leading-none">🧠</span>
-    <span className="text-center text-sm mt-2 leading-tight truncate w-full">{tUI('generateDiet', lang)}</span>
+    <span className="text-4xl leading-none">🧠</span>
+    <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
+      {tUI('generateDiet', lang)}
+    </span>
   </button>
 
+  {/* 📄 Generuj PDF */}
   <button
     onClick={async () => {
       try {
@@ -462,12 +465,15 @@ const handleGenerateRecipes = async () => {
       }
     }}
     disabled={isGenerating || !editableDiet || Object.keys(editableDiet).length === 0}
-    className="w-28 h-28 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center transition disabled:opacity-50"
+    className="w-28 h-28 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition disabled:opacity-50"
   >
-    <span className="text-3xl leading-none">📄</span>
-    <span className="text-center text-sm mt-2 leading-tight truncate w-full">{tUI('generatePdf', lang)}</span>
+    <span className="text-4xl leading-none">📄</span>
+    <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
+      {tUI('generatePdf', lang)}
+    </span>
   </button>
 
+  {/* ✅ Zatwierdź dietę */}
   <button
     onClick={async () => {
       const confirm = window.confirm(tUI('confirmApproveDietAsPatient', lang));
@@ -476,23 +482,29 @@ const handleGenerateRecipes = async () => {
       }
     }}
     disabled={!editableDiet || Object.keys(editableDiet).length === 0}
-    className="w-28 h-28 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center transition disabled:opacity-50"
+    className="w-28 h-28 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition disabled:opacity-50"
   >
-    <span className="text-3xl leading-none">✅</span>
-    <span className="text-center text-sm mt-2 leading-tight truncate w-full">{tUI('approveDietAsPatient', lang)}</span>
+    <span className="text-4xl leading-none">✅</span>
+    <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
+      {tUI('approveDietAsPatient', lang)}
+    </span>
   </button>
 
+  {/* 🍽️ Generuj przepisy */}
   {editableDiet && Object.keys(editableDiet).length > 0 && (
     <button
       onClick={handleGenerateRecipes}
       disabled={isGeneratingRecipes}
-      className="w-28 h-28 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center transition disabled:opacity-50"
+      className="w-28 h-28 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition disabled:opacity-50"
     >
-      <span className="text-3xl leading-none">🍽️</span>
-      <span className="text-center text-sm mt-2 leading-tight truncate w-full">{tUI('generateRecipes', lang)}</span>
+      <span className="text-4xl leading-none">🍽️</span>
+      <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
+        {tUI('generateRecipes', lang)}
+      </span>
     </button>
   )}
 
+  {/* 📤 Wyślij do lekarza */}
   <button
     onClick={async () => {
       const confirm = window.confirm(tUI('confirmSendDietToDoctor', lang));
@@ -500,10 +512,12 @@ const handleGenerateRecipes = async () => {
       await saveDraftToSupabase();
     }}
     disabled={!editableDiet || Object.keys(editableDiet).length === 0}
-    className="w-28 h-28 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center transition disabled:opacity-50"
+    className="w-28 h-28 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition disabled:opacity-50"
   >
-    <span className="text-3xl leading-none">📤</span>
-    <span className="text-center text-sm mt-2 leading-tight truncate w-full">{tUI('sendDietToDoctor', lang)}</span>
+    <span className="text-4xl leading-none">📤</span>
+    <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
+      {tUI('sendDietToDoctor', lang)}
+    </span>
   </button>
 
 </div>
