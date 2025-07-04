@@ -3334,6 +3334,31 @@ dietApproved: {
   ar: "تمت الموافقة على النظام الغذائي",
   he: "התפריט אושר"
 },
-
+generatingWait: {
+  pl: "Trwa generowanie...",
+  en: "Generating...",
+  de: "Generierung läuft...",
+  fr: "Génération en cours...",
+  es: "Generando...",
+  ua: "Генерується...",
+  ru: "Генерация...",
+  zh: "正在生成...",
+  ar: "جاري التوليد...",
+  hi: "जनरेट किया जा रहा है...",
+  he: "מייצר..."
+},
+undefined: {
+  pl: "Brak danych",
+  en: "No data",
+  de: "Keine Daten",
+  fr: "Pas de données",
+  es: "Sin datos",
+  ua: "Немає даних",
+  ru: "Нет данных",
+  zh: "无数据",
+  ar: "لا توجد بيانات",
+  hi: "कोई डेटा नहीं",
+  he: "אין נתונים"
+},
 };
 

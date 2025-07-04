@@ -459,15 +459,15 @@ const handleGenerateNarrative = async () => {
           return;
         }
 
-        await generateDietPdf(
-          form,
-          bmi,
-          mealArray,
-          true,
-          notes,
-          lang,
-          interviewData,
-          {
+       await generateDietPdf(
+        form,
+        bmi,
+        mealArray,
+        true,
+        notes,
+        lang,
+        interviewData,
+        {
             bmi: interviewData.bmi,
             ppm: interviewData.ppm,
             cpm: interviewData.cpm,
@@ -477,9 +477,10 @@ const handleGenerateNarrative = async () => {
             kcalGain: interviewData.kcalGain,
             nmcBroca: interviewData.nmcBroca,
             nmcLorentz: interviewData.nmcLorentz
-          },
-          'download',
-          narrativeText
+        },
+        'download',
+        narrativeText,
+        recipes // 🟢 DODAJ TO
         );
       } catch (e) {
         alert(tUI('errorGeneratingPdf', lang));
