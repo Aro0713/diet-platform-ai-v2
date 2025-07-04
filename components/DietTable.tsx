@@ -253,8 +253,9 @@ const DietTable: React.FC<DietTableProps> = ({
 
                         {meal.macros && (
                           <div className="text-xs mt-1 text-gray-500">
-                            B: {meal.macros.protein ?? '–'}g, T: {meal.macros.fat ?? '–'}g, W: {meal.macros.carbs ?? '–'}g, 
-                            błonnik: {meal.macros.fiber ?? '–'}g, K: {meal.macros.potassium ?? '–'}mg
+                            B: {meal.macros.protein ?? '–'}g, T: {meal.macros.fat ?? '–'}g, W: {meal.macros.carbs ?? '–'}g
+                            {meal.macros?.fiber && meal.macros.fiber > 0 && `, błonnik: ${meal.macros.fiber}g`}
+                            {meal.macros?.potassium && meal.macros.potassium > 0 && `, K: ${meal.macros.potassium}mg`}
                           </div>
                         )}
                         </>
@@ -271,12 +272,12 @@ const DietTable: React.FC<DietTableProps> = ({
               const macros = sumDailyMacros(editableDiet[day] || []);
               return (
                 <td key={day + '_sum'} className="border border-gray-600 px-2 py-1 text-xs text-gray-300">
-                  B: {macros.protein}g<br />
-                  T: {macros.fat}g<br />
-                  W: {macros.carbs}g<br />
-                  błonnik: {macros.fiber}g<br />
-                  K: {macros.potassium}mg
-                </td>
+                B: {macros.protein}g<br />
+                T: {macros.fat}g<br />
+                W: {macros.carbs}g<br />
+                {macros.fiber > 0 && <>błonnik: {macros.fiber}g<br /></>}
+                {macros.potassium > 0 && <>K: {macros.potassium}mg</>}
+              </td>
               );
             })}
           </tr>
@@ -291,12 +292,12 @@ const DietTable: React.FC<DietTableProps> = ({
               >
                 {idx === 0 ? (
                   <>
-                    B: {weekly.protein}g<br />
-                    T: {weekly.fat}g<br />
-                    W: {weekly.carbs}g<br />
-                    błonnik: {weekly.fiber}g<br />
-                    K: {weekly.potassium}mg
-                  </>
+                  B: {weekly.protein}g<br />
+                  T: {weekly.fat}g<br />
+                  W: {weekly.carbs}g<br />
+                  {weekly.fiber > 0 && <>błonnik: {weekly.fiber}g<br /></>}
+                  {weekly.potassium > 0 && <>K: {weekly.potassium}mg</>}
+                </>
                 ) : null}
               </td>
             ));
