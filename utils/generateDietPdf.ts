@@ -70,6 +70,29 @@ export async function generateDietPdf(
 
   const pdfFonts = (await import('pdfmake/build/vfs_fonts')).default;
   pdfMake.vfs = pdfFonts.vfs;
+let finalNarrative = narrativeText;
+
+if (!finalNarrative) {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || ''}/api/interviewNarrativeAgent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        interviewData: interview,
+        goal: '', // jeśli masz dostępne: zamień na `goal`
+        recommendation: '', // jeśli masz dostępne: zamień na `recommendation`
+        lang
+      })
+    });
+
+    if (!response.ok) throw new Error(`AI API failed with status ${response.status}`);
+    const json = await response.json();
+    finalNarrative = json.narrativeText?.trim() || '';
+  } catch (err) {
+    console.error('❌ Błąd agent interviewNarrativeAgent (fetch):', err);
+    finalNarrative = '⚠️ Błąd generowania opisu wywiadu przez AI';
+  }
+}
 
   const content: any[] = [];
   const allergyList: string[] = [];
@@ -134,27 +157,9 @@ ${tUI('region', lang)}: ${patient.region ? await getTranslation(patient.region, 
 
     content.push({ text: `🧠 ${tUI('interviewTitle', lang)}`, style: 'subheader', margin: [0, 10, 0, 4] });
 
-try {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || ''}/api/interviewNarrativeAgent`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      interviewData: narrativeInput,
-      goal: patient.goal || '',
-      recommendation: (patient as any).recommendation || '',
-      lang
-    })
-  });
-
-  if (!response.ok) throw new Error(`AI API failed with status ${response.status}`);
-const { narrativeText } = await response.json();
-
-  content.push({ text: narrativeText || '⚠️ Brak opisu.', margin: [0, 0, 0, 6] });
-} catch (err) {
-  console.error('❌ Błąd agent interviewNarrativeAgent (fetch):', err);
-  content.push({ text: '⚠️ Błąd generowania opisu wywiadu przez AI', color: 'red' });
-}
+    content.push({ text: finalNarrative || '⚠️ Brak opisu narracyjnego', margin: [0, 0, 0, 6] });
   }
+  
   const groupedByDay: Record<string, Meal[]> = {};
   diet.forEach((meal) => {
     const day = (meal as any).day || 'Inne';
