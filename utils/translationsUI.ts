@@ -3294,6 +3294,20 @@ dish: {
   ar: "الطبق",
   hi: "व्यंजन",
   he: "מנה"
+},
+przekąska: {
+  pl: "Przekąska",
+  en: "Snack",
+  de: "Snack",
+  fr: "Collation",
+  es: "Merienda",
+  ua: "Перекус",
+  ru: "Перекус",
+  zh: "加餐",
+  ar: "وجبة خفيفة",
+  hi: "नाश्ता",
+  he: "חטיף"
 }
+
 };
 

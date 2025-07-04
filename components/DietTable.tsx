@@ -12,6 +12,7 @@ interface DietTableProps {
   notes: Record<string, string>;
   setNotes: React.Dispatch<React.SetStateAction<Record<string, string>>>;
 }
+
 const getFallbackMeal = (): Meal => ({
   name: '',
   menu: '',
@@ -26,9 +27,10 @@ const getFallbackMeal = (): Meal => ({
     carbs: 0,
     sodium: 0,
     fiber: 0,
-    potassium: 0
-  }
+    potassium: 0,
+  },
 });
+
 const sumDailyMacros = (meals: Meal[]) => {
   return meals.reduce(
     (acc, meal) => {
@@ -59,43 +61,16 @@ const DietTable: React.FC<DietTableProps> = ({
 }) => {
   const [saveMessage, setSaveMessage] = useState('');
 
-  const getFoodIcon = (product: string): string | null => {
-    const p = product.toLowerCase();
-    if (p.includes('brokuł') || p.includes('marchew') || p.includes('sałata') || p.includes('pomidor')) return '🥦';
-    if (p.includes('kurczak') || p.includes('indyk')) return '🐓';
-    if (p.includes('wołowina') || p.includes('wieprzowina') || p.includes('jagnięcina')) return '🐄';
-    if (p.includes('ryba') || p.includes('łosoś') || p.includes('tuńczyk')) return '🐟';
-    if (p.includes('ser') || p.includes('mozarella') || p.includes('feta')) return '🧀';
-    if (p.includes('szynka') || p.includes('kiełbasa') || p.includes('boczek')) return '🥩';
-    if (p.includes('napój') || p.includes('herbata') || p.includes('sok') || p.includes('kawa')) return '☕';
-    if (p.includes('ciasto') || p.includes('deser') || p.includes('lody') || p.includes('czekolada')) return '🍰';
-    return null;
-  };
-
   const dayKeys = Object.keys(editableDiet);
   const translatedDays = dayKeys.map((dayKey) =>
     translationsUI[dayKey.toLowerCase()]?.[lang] || dayKey || '???'
   );
 
-  const uniqueMealNames = Array.from(
-    new Set(
-      Object.values(editableDiet)
-        .flat()
-        .map((meal) => meal.name || '')
-        .filter(Boolean)
-    )
-  );
+  const maxMealCount = Math.max(...Object.values(editableDiet).map((meals) => meals.length));
 
-  const translatedMeals = uniqueMealNames.map((mealName) => ({
-    label: translationsUI[mealName.toLowerCase()]?.[lang] || mealName || '???',
-    key: mealName,
-  }));
-
-  const handleInputChange = (day: string, mealName: string, field: keyof Meal, value: string) => {
+  const handleInputChange = (day: string, mealIndex: number, field: keyof Meal, value: string) => {
     const updatedDayMeals = [...(editableDiet[day] || [])];
-    const index = updatedDayMeals.findIndex((m) => m.name === mealName);
-    if (index === -1) return;
-    const meal = { ...updatedDayMeals[index] };
+    const meal = updatedDayMeals[mealIndex] ? { ...updatedDayMeals[mealIndex] } : getFallbackMeal();
 
     if (field === 'calories' || field === 'glycemicIndex') {
       (meal as any)[field] = Number(value);
@@ -112,7 +87,7 @@ const DietTable: React.FC<DietTableProps> = ({
       (meal as any)[field] = value;
     }
 
-    updatedDayMeals[index] = meal;
+    updatedDayMeals[mealIndex] = meal;
     setEditableDiet({ ...editableDiet, [day]: updatedDayMeals });
   };
 
@@ -123,7 +98,7 @@ const DietTable: React.FC<DietTableProps> = ({
         if (!meal.name || meal.name.trim() === '') return false;
         for (const ing of meal.ingredients || []) {
           if (!ing.product?.trim()) return false;
-        if (typeof ing.weight !== 'number' || ing.weight <= 0) return false;
+          if (typeof ing.weight !== 'number' || ing.weight <= 0) return false;
         }
       }
     }
@@ -146,7 +121,6 @@ const DietTable: React.FC<DietTableProps> = ({
       <table className="min-w-full border border-gray-600 bg-[#1a1e2c]/90 text-white shadow-md rounded-md overflow-hidden">
         <thead>
           <tr>
-            <th className="border border-gray-600 bg-gray-800 text-sm font-semibold text-white px-4 py-2 text-center">#</th>
             {translatedDays.map((day, idx) => (
               <th
                 key={day + idx}
@@ -158,17 +132,12 @@ const DietTable: React.FC<DietTableProps> = ({
           </tr>
         </thead>
         <tbody>
-          {translatedMeals.map(({ label, key }, mealIndex) => (
+          {Array.from({ length: maxMealCount }).map((_, mealIndex) => (
             <tr key={mealIndex}>
-              <td className="border border-gray-600 bg-[#0d1117] px-3 py-2 align-top font-medium">
-                {label}
-              </td>
               {dayKeys.map((day) => {
-              const meal: Meal = (editableDiet[day] || []).find((m) => m.name === key) ?? getFallbackMeal();
-
-
+                const meal = editableDiet[day]?.[mealIndex] ?? getFallbackMeal();
                 return (
-                  <td key={day + key} className="border border-gray-600 bg-[#0d1117] px-3 py-2 align-top text-white">
+                  <td key={day + mealIndex} className="border border-gray-600 bg-[#0d1117] px-3 py-2 align-top text-white">
                     <div className="space-y-2">
                       {isEditable ? (
                         <>
@@ -176,52 +145,50 @@ const DietTable: React.FC<DietTableProps> = ({
                             type="text"
                             className="w-full border rounded-md px-2 py-1 mb-1 font-semibold text-base bg-[#0d1117] text-white border-gray-600"
                             value={meal.name}
-                            onChange={(e) => handleInputChange(day, key, 'name', e.target.value)}
+                            onChange={(e) => handleInputChange(day, mealIndex, 'name', e.target.value)}
                             placeholder="Nazwa"
                           />
                           <input
                             type="text"
                             className="w-full border rounded-md px-2 py-1 mb-1 text-xs bg-[#0d1117] text-white border-gray-600"
                             value={meal.time}
-                            onChange={(e) => handleInputChange(day, key, 'time', e.target.value)}
+                            onChange={(e) => handleInputChange(day, mealIndex, 'time', e.target.value)}
                             placeholder="Godzina"
                           />
                           <textarea
                             className="w-full border rounded-md px-2 py-1 mb-1 text-sm bg-[#0d1117] text-white border-gray-600"
                             rows={2}
                             value={meal.description || ''}
-                            onChange={(e) => handleInputChange(day, key, 'description', e.target.value)}
+                            onChange={(e) => handleInputChange(day, mealIndex, 'description', e.target.value)}
                             placeholder="Opis (AI)"
                           />
                           <textarea
                             className="w-full border rounded-md px-2 py-1 mb-1 text-sm bg-[#0d1117] text-white border-gray-600"
                             rows={2}
                             value={(meal.ingredients ?? []).map(i => `${i.product} (${i.weight}g)`).join(', ')}
-                            onChange={(e) => handleInputChange(day, key, 'ingredients', e.target.value)}
+                            onChange={(e) => handleInputChange(day, mealIndex, 'ingredients', e.target.value)}
                             placeholder="Składniki"
                           />
-                         <div className="flex items-center gap-1">
-                          <input
-                            type="number"
-                            className="w-full border rounded-md px-2 py-1 mb-1 text-xs bg-[#0d1117] text-white border-gray-600"
-                            value={meal.calories}
-                            onChange={(e) => handleInputChange(day, key, 'calories', e.target.value)}
-                            placeholder="Kalorie"
-                          />
-                          <span className="text-xs text-gray-400">kcal</span>
-                        </div>
-
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="number"
+                              className="w-full border rounded-md px-2 py-1 mb-1 text-xs bg-[#0d1117] text-white border-gray-600"
+                              value={meal.calories}
+                              onChange={(e) => handleInputChange(day, mealIndex, 'calories', e.target.value)}
+                              placeholder="Kalorie"
+                            />
+                            <span className="text-xs text-gray-400">kcal</span>
+                          </div>
                           <div className="flex items-center gap-1">
                             <input
                               type="number"
                               className="w-full border rounded-md px-2 py-1 mb-1 text-xs bg-[#0d1117] text-white border-gray-600"
                               value={meal.glycemicIndex}
-                              onChange={(e) => handleInputChange(day, key, 'glycemicIndex', e.target.value)}
+                              onChange={(e) => handleInputChange(day, mealIndex, 'glycemicIndex', e.target.value)}
                               placeholder="IG"
                             />
                             <span className="text-xs text-gray-400">IG</span>
                           </div>
-
                         </>
                       ) : (
                         <>
@@ -232,32 +199,6 @@ const DietTable: React.FC<DietTableProps> = ({
                               {meal.description}
                             </div>
                           )}
-                          <ul className="text-sm list-inside space-y-1">
-                            {(meal.ingredients || []).length > 0 ? (
-                              meal.ingredients.map((i, idx) => {
-                                const icon = getFoodIcon(i.product);
-                                return (
-                                  <li key={idx} className="flex items-center gap-2">
-                                    {icon && <span className="text-lg">{icon}</span>}
-                                    <span>{i.product} ({i.weight}g)</span>
-                                  </li>
-                                );
-                              })
-                            ) : (
-                              <li className="text-gray-500 italic">Brak składników</li>
-                            )}
-                          </ul>
-                           <div className="text-xs mt-1 text-gray-400">
-                          Kalorie: {meal.calories > 0 ? `${meal.calories} kcal` : '–'} | IG: {meal.glycemicIndex > 0 ? meal.glycemicIndex : '–'}
-                        </div>
-
-                        {meal.macros && (
-                          <div className="text-xs mt-1 text-gray-500">
-                            B: {meal.macros.protein ?? '–'}g, T: {meal.macros.fat ?? '–'}g, W: {meal.macros.carbs ?? '–'}g
-                            {meal.macros?.fiber && meal.macros.fiber > 0 && `, błonnik: ${meal.macros.fiber}g`}
-                            {meal.macros?.potassium && meal.macros.potassium > 0 && `, K: ${meal.macros.potassium}mg`}
-                          </div>
-                        )}
                         </>
                       )}
                     </div>
@@ -266,63 +207,6 @@ const DietTable: React.FC<DietTableProps> = ({
               })}
             </tr>
           ))}
-          <tr className="bg-[#222c3f] font-semibold text-sm text-white">
-            <td className="border border-gray-600 px-2 py-1 text-right">Suma</td>
-            {dayKeys.map((day) => {
-              const macros = sumDailyMacros(editableDiet[day] || []);
-              return (
-                <td key={day + '_sum'} className="border border-gray-600 px-2 py-1 text-xs text-gray-300">
-                B: {macros.protein}g<br />
-                T: {macros.fat}g<br />
-                W: {macros.carbs}g<br />
-                {macros.fiber > 0 && <>błonnik: {macros.fiber}g<br /></>}
-                {macros.potassium > 0 && <>K: {macros.potassium}mg</>}
-              </td>
-              );
-            })}
-          </tr>
-          <tr className="bg-[#1f2a3c] font-semibold text-sm text-white">
-          <td className="border border-gray-600 px-2 py-1 text-right">Suma tygodnia</td>
-          {(() => {
-            const weekly = sumWeeklyMacros(editableDiet);
-            return dayKeys.map((_, idx) => (
-              <td
-                key={`week_sum_${idx}`}
-                className="border border-gray-600 px-2 py-1 text-xs text-gray-300"
-              >
-                {idx === 0 ? (
-                  <>
-                  B: {weekly.protein}g<br />
-                  T: {weekly.fat}g<br />
-                  W: {weekly.carbs}g<br />
-                  {weekly.fiber > 0 && <>błonnik: {weekly.fiber}g<br /></>}
-                  {weekly.potassium > 0 && <>K: {weekly.potassium}mg</>}
-                </>
-                ) : null}
-              </td>
-            ));
-          })()}
-          </tr>
-          <tr>
-            <td className="font-semibold bg-gray-800 border border-gray-600 px-2 py-1">Uwagi</td>
-            {dayKeys.map((day) => (
-              <td key={day + '_note'} className="border border-gray-600 px-2 py-1 bg-[#0d1117] text-white align-top">
-                {isEditable ? (
-                  <textarea
-                    className="w-full border rounded-md px-2 py-1 text-sm bg-[#0d1117] text-white border-gray-600"
-                    rows={2}
-                    value={notes[day] || ''}
-                    onChange={(e) => setNotes({ ...notes, [day]: e.target.value })}
-                    placeholder="Uwagi dietetyczne / indywidualne"
-                  />
-                ) : (
-                  <div className="text-sm italic text-gray-400 whitespace-pre-wrap">
-                    {notes[day] || '–'}
-                  </div>
-                )}
-              </td>
-            ))}
-          </tr>
         </tbody>
       </table>
 
@@ -346,4 +230,3 @@ const DietTable: React.FC<DietTableProps> = ({
 };
 
 export default React.memo(DietTable);
-
