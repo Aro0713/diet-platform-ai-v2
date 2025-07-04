@@ -24,12 +24,9 @@ const PatientSelfForm: React.FC<Props> = ({ lang, userId }) => {
   });
 
 useEffect(() => {
-  const fetchPatient = async () => {
-    if (!userId) {
-      console.error('❌ Brak userId – lekarz nie wskazał pacjenta');
-      return;
-    }
+  if (!userId) return; // 👈 Bez logowania błędu – pacjent może nie mieć userId jako props
 
+  const fetchPatient = async () => {
     const { data, error } = await supabase
       .from('patients')
       .select('*')
