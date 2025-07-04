@@ -1,5 +1,3 @@
-// pages/panel.tsx – dokładna kopia panel-patient.tsx, dostosowana dla lekarza
-
 import React from 'react';
 import Head from 'next/head';
 import { useState, useEffect } from 'react';
@@ -147,12 +145,13 @@ const saveDietToSupabaseOnly = async () => {
 
   try {
     const { error } = await supabase
-      .from("patient_diets")
-      .upsert({
-        user_id: userId,
-        diet_plan: editableDiet,
-        status: "approved"
-      });
+  .from("patient_diets")
+  .insert({
+    user_id: userId,
+    diet_plan: editableDiet,
+    status: "confirmed",
+    confirmed_at: new Date().toISOString()
+  });
 
     if (error) {
       console.error("❌ Błąd zapisu diety:", error.message);
@@ -538,7 +537,7 @@ const handleGenerateRecipes = async () => {
   </div>
 )}
 {/* 📖 Wyświetlenie przepisów */}
-{recipes && Object.keys(recipes).length > 0 && (
+{selectedSection === 'diet' && recipes && Object.keys(recipes).length > 0 && (
   <div className="mt-6 space-y-6">
     {Object.entries(recipes).map(([day, meals]: any) => (
       <div key={day} className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow">

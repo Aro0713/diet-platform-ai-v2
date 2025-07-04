@@ -3307,7 +3307,33 @@ przekąska: {
   ar: "وجبة خفيفة",
   hi: "नाश्ता",
   he: "חטיף"
-}
+},
+errorSavingDiet: {
+  pl: "Błąd zapisu diety",
+  en: "Error saving diet",
+  de: "Fehler beim Speichern der Diät",
+  fr: "Erreur lors de l'enregistrement du régime",
+  es: "Error al guardar la dieta",
+  ua: "Помилка збереження дієти",
+  ru: "Ошибка сохранения диеты",
+  zh: "保存饮食计划时出错",
+  hi: "आहार सहेजने में त्रुटि",
+  ar: "حدث خطأ أثناء حفظ النظام الغذائي",
+  he: "שגיאה בשמירת התפריט"
+},
+dietApproved: {
+  pl: "Dieta została zatwierdzona",
+  en: "The diet has been approved",
+  de: "Die Diät wurde genehmigt",
+  fr: "Le régime a été approuvé",
+  es: "La dieta ha sido aprobada",
+  ua: "Дієта була затверджена",
+  ru: "Диета была одобрена",
+  zh: "饮食计划已获批准",
+  hi: "आहार स्वीकृत हो गया है",
+  ar: "تمت الموافقة على النظام الغذائي",
+  he: "התפריט אושר"
+},
 
 };
 
