@@ -43,6 +43,19 @@ Clinical nutrition guidelines:
 - ESMO (Oncology), IASO (Obesity), IBD Standards UK
 - PubMed & Cochrane Library (https://pubmed.ncbi.nlm.nih.gov, https://www.cochranelibrary.com)
 `;
+const dayNames: Record<string, string[]> = {
+  pl: ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota", "Niedziela"],
+  en: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+  de: ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"],
+  fr: ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"],
+  es: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"],
+  ua: ["Понеділок", "Вівторок", "Середа", "Четвер", "П’ятниця", "Субота", "Неділя"],
+  ru: ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"],
+  zh: ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"],
+  ar: ["الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت", "الأحد"],
+  hi: ["सोमवार", "मंगलवार", "बुधवार", "गुरुवार", "शुक्रवार", "शनिवार", "रविवार"],
+  he: ["יום שני", "יום שלישי", "יום רביעי", "יום חמישי", "יום שישי", "שבת", "יום ראשון"]
+};
 
 export const generateDietTool = tool({
   name: "generate_diet_plan",
@@ -62,6 +75,8 @@ export const generateDietTool = tool({
   async execute(input: any) {
     const { input: nested } = input;
     const { form, interviewData, lang = "pl", goalExplanation = "", recommendation = "", medical } = nested;
+    const daysInLang = dayNames[lang] || dayNames['pl'];
+    const daysList = daysInLang.map(d => `- ${d}`).join('\n');
 
     const selectedLang = languageMap[lang] || "polski";
 
@@ -75,6 +90,7 @@ export const generateDietTool = tool({
     const modelDiet = form.model?.toLowerCase();
     const cuisine = interviewData.cuisine?.toLowerCase() || "global";
     const cuisineContext = cuisineContextMap[interviewData.cuisine] || "general healthy cooking style";
+    const jsonFormatPreview = daysInLang.map(day => `    "${day}": { ... }`).join(',\n');
 
     const patientData = {
       ...form,
@@ -89,13 +105,14 @@ export const generateDietTool = tool({
       medical
     };
 
-    const prompt = `
+   const prompt = `
 You are a clinical dietitian AI.
 
 Generate a complete 7-day diet plan. DO NOT stop after 1 or 2 days.
 
 YOU MUST include:
-- All 7 days (Monday to Sunday)
+- All 7 days in the target language (${lang}):
+${daysList}
 - All meals per day (e.g. Śniadanie, II śniadanie, Obiad, Kolacja, Snack if needed)
 - Full ingredient and macro data for each meal
 - Do not use phrases like "continue similarly", "example", or "partial"
@@ -147,14 +164,13 @@ Your response MUST have this format:
 
 {
   "dietPlan": {
-    "Monday": { ... },
-    ...
+${jsonFormatPreview}
   },
   "weeklyOverview": { ... },
   "shoppingList": [ ... ]
 }
 
-Do not return top-level "Monday", "Tuesday" etc. — wrap all days inside "dietPlan".
+Do not return top-level "Monday", "Tuesday" etc. — use localized day names in dietPlan.
 `;
 
     const completion = await openai.chat.completions.create({
