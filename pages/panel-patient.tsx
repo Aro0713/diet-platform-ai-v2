@@ -368,8 +368,6 @@ const handleGenerateRecipes = async () => {
         />
     </div>
 
-{/* Przyciski */}
-
 <div className="space-y-4">
 
   {/* ⏳ Status generowania */}
@@ -382,17 +380,15 @@ const handleGenerateRecipes = async () => {
 
   {/* 🧠 Generuj dietę */}
   <button
-    className="w-full bg-emerald-600 text-white px-4 py-3 rounded-md font-medium hover:bg-emerald-700 disabled:opacity-50"
-    disabled={isGenerating}
     onClick={handleGenerateDiet}
+    disabled={isGenerating}
+    className="w-full flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white text-base font-semibold py-3 px-6 rounded-xl shadow-md transition disabled:opacity-50"
   >
     🧠 {tUI('generateDiet', lang)}
   </button>
 
   {/* 📄 Generuj PDF */}
   <button
-    className="w-full bg-green-700 text-white px-4 py-3 rounded-md font-medium hover:bg-green-800 disabled:opacity-50"
-    disabled={isGenerating || !editableDiet || Object.keys(editableDiet).length === 0}
     onClick={async () => {
       try {
         setIsGenerating(true);
@@ -436,48 +432,52 @@ const handleGenerateRecipes = async () => {
         setIsGenerating(false);
       }
     }}
+    disabled={isGenerating || !editableDiet || Object.keys(editableDiet).length === 0}
+    className="w-full flex items-center justify-center bg-sky-600 hover:bg-sky-700 text-white text-base font-semibold py-3 px-6 rounded-xl shadow-md transition disabled:opacity-50"
   >
     📄 {tUI('generatePdf', lang)}
   </button>
 
   {/* ✅ Zatwierdzam dietę */}
   <button
-    className="w-full bg-purple-700 text-white px-4 py-3 rounded-md font-medium hover:bg-purple-800 disabled:opacity-50"
-    disabled={!editableDiet || Object.keys(editableDiet).length === 0}
     onClick={async () => {
       const confirm = window.confirm(tUI('confirmApproveDietAsPatient', lang));
       if (confirm) {
         await saveDietToSupabaseAndPdf();
       }
     }}
+    disabled={!editableDiet || Object.keys(editableDiet).length === 0}
+    className="w-full flex items-center justify-center bg-purple-600 hover:bg-purple-700 text-white text-base font-semibold py-3 px-6 rounded-xl shadow-md transition disabled:opacity-50"
   >
     ✅ {tUI('approveDietAsPatient', lang)}
   </button>
-  {/* 🍽️ Guzik */}
-{editableDiet && Object.keys(editableDiet).length > 0 && (
-  <button
-    onClick={handleGenerateRecipes}
-    disabled={isGeneratingRecipes}
-    className="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-3 rounded-md font-medium disabled:opacity-50"
-  >
-    🍽️ {tUI('generateRecipes', lang)}
-  </button>
-)}
+
+  {/* 🍽️ Generuj przepisy */}
+  {editableDiet && Object.keys(editableDiet).length > 0 && (
+    <button
+      onClick={handleGenerateRecipes}
+      disabled={isGeneratingRecipes}
+      className="w-full flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white text-base font-semibold py-3 px-6 rounded-xl shadow-md transition disabled:opacity-50"
+    >
+      🍽️ {tUI('generateRecipes', lang)}
+    </button>
+  )}
 
   {/* 📤 Wyślij do lekarza */}
   <button
-    className="w-full bg-blue-500 text-white px-4 py-3 rounded-md font-medium hover:bg-blue-600 disabled:opacity-50"
-    disabled={!editableDiet || Object.keys(editableDiet).length === 0}
     onClick={async () => {
       const confirm = window.confirm(tUI('confirmSendDietToDoctor', lang));
       if (!confirm) return;
       await saveDraftToSupabase();
     }}
+    disabled={!editableDiet || Object.keys(editableDiet).length === 0}
+    className="w-full flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold py-3 px-6 rounded-xl shadow-md transition disabled:opacity-50"
   >
     📤 {tUI('sendDietToDoctor', lang)}
   </button>
 
 </div>
+
 
     {/* Tabela diety */}
     {editableDiet && Object.keys(editableDiet).length > 0 && (

@@ -3,13 +3,21 @@ import { LangKey } from '@/utils/i18n';
 import { tUI } from '@/utils/i18n';
 import { translationsUI } from '@/utils/translationsUI';
 import QRCode from 'qrcode';
-import { generateInterviewNarrative } from '@/utils/interview/interviewNarrativeMap';
+import generateInterviewNarrative from '@/utils/interview/interviewNarrativeMap';
 import { generateShoppingList } from '@/utils/generateShoppingList';
 import { getTranslation } from '@/utils/translations/useTranslationAgent';
 import { convertInterviewAnswers } from '@/utils/interviewHelpers';
 import { supabase } from '@/lib/supabaseClient';
 import { translatedTitles } from '@/utils/translatedTitles';
 
+type Recipe = {
+  dish: string;
+  description: string;
+  servings: number;
+  ingredients: { product: string; weight: number; unit: string }[];
+  steps: string[];
+  time?: string;
+};
 
 export async function generateDietPdf(
   patient: PatientData,
@@ -30,9 +38,12 @@ export async function generateDietPdf(
     nmcBroca: number;
     nmcLorentz: number;
   },
-    mode: 'download' | 'returnDoc' = 'download',
-  narrativeText?: string
-) {
+  mode: 'download' | 'returnDoc' = 'download',
+  narrativeText?: string,
+  recipes?: Record<string, Record<string, Recipe>>
+)
+
+{
   const pdfMake = (await import('pdfmake/build/pdfmake')).default;
   let dietitianSignature = tUI('missingData', lang);
 
@@ -163,6 +174,7 @@ const { narrativeText } = await response.json();
       ]
     ];
 
+
     const rows = await Promise.all(meals.map(async (meal) => {
   const image = meal.imageUrl 
     ? meal.imageUrl 
@@ -253,6 +265,46 @@ const { narrativeText } = await response.json();
   layout: 'lightHorizontalLines',
   margin: [0, 0, 0, 10]
 });
+
+// 📖 Sekcja: Przepisy kulinarne
+if (recipes && Object.keys(recipes).length > 0) {
+  content.push({
+    text: tUI('recipesTitle', lang),
+    style: 'header',
+    margin: [0, 20, 0, 10]
+  });
+
+  for (const [day, meals] of Object.entries(recipes)) {
+    content.push({ text: day, style: 'subheader', margin: [0, 10, 0, 6] });
+
+    for (const [mealName, recipe] of Object.entries(meals)) {
+      content.push(
+        { text: `${tUI(mealName.toLowerCase(), lang)}: ${recipe.dish}`, style: 'boldCell' },
+        { text: recipe.description, italics: true, fontSize: 10, margin: [0, 2, 0, 4] },
+        { text: `${tUI('ingredients', lang)}:`, style: 'smallCell' },
+        {
+          ul: recipe.ingredients.map((ing) =>
+            `${ing.product} – ${ing.weight} ${ing.unit}`
+          ),
+          margin: [0, 2, 0, 4]
+        },
+        { text: `${tUI('steps', lang)}:`, style: 'smallCell' },
+        {
+          ol: recipe.steps,
+          margin: [0, 2, 0, 6]
+        },
+        recipe.time
+          ? {
+              text: `⏱️ ${tUI('time', lang)}: ${recipe.time}`,
+              style: 'smallCell',
+              margin: [0, 0, 0, 10]
+            }
+          : {}
+      );
+    }
+  }
+}
+
   }
   // ➕ Lista zakupów z podziałem na kategorie
   const categorized: Record<string, [string, string, string][]> = {
