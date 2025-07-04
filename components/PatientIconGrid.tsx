@@ -17,14 +17,51 @@ interface PatientIconGridProps {
 export const PatientIconGrid: React.FC<PatientIconGridProps> = ({ lang, onSelect }) => {
   const [activeId, setActiveId] = useState<string | null>(null);
 
-  const icons = [
-    { id: 'data', label: tUI('patientData', lang), icon: NotebookPen },
-    { id: 'medical', label: tUI('medicalAnalysis', lang), icon: Stethoscope },
-    { id: 'interview', label: tUI('interviewTitle', lang), icon: FileText },
-    { id: 'calculator', label: tUI('patientInNumbers', lang), icon: Calculator },
-    { id: 'diet', label: tUI('dietPlan', lang), icon: ChefHat },
-    { id: 'scan', label: tUI('scanProduct', lang), icon: ScanLine }
-  ];
+const icons = [
+  {
+    id: 'data',
+    label: tUI('patientData', lang),
+    icon: NotebookPen,
+    color: 'text-red-600',
+    bg: 'bg-white/80 shadow-lg dark:bg-white/10'
+  },
+  {
+    id: 'medical',
+    label: tUI('medicalAnalysis', lang),
+    icon: Stethoscope,
+    color: 'text-orange-600',
+    bg: 'bg-white/80 shadow-lg dark:bg-white/10'
+  },
+  {
+    id: 'interview',
+    label: tUI('interviewTitle', lang),
+    icon: FileText,
+    color: 'text-yellow-600',
+    bg: 'bg-white/80 shadow-lg dark:bg-white/10'
+  },
+  {
+    id: 'calculator',
+    label: tUI('patientInNumbers', lang),
+    icon: Calculator,
+    color: 'text-green-600',
+    bg: 'bg-white/80 shadow-lg dark:bg-white/10'
+  },
+  {
+    id: 'diet',
+    label: tUI('dietPlan', lang),
+    icon: ChefHat,
+    color: 'text-blue-600',
+    bg: 'bg-white/80 shadow-lg dark:bg-white/10'
+  },
+  {
+    id: 'scan',
+    label: tUI('scanProduct', lang),
+    icon: ScanLine,
+    color: 'text-purple-600',
+    bg: 'bg-white/80 shadow-lg dark:bg-white/10'
+  }
+];
+
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 mt-12 px-4">
