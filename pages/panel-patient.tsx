@@ -27,7 +27,6 @@ export default function DoctorPanelPage(): React.JSX.Element {
   const router = useRouter();
   const [lang, setLang] = useState<LangKey>('pl');
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
-  const [editableDiet, setEditableDiet] = useState({});
   const [notes, setNotes] = useState({});
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [streamingText, setStreamingText] = useState('');
@@ -41,17 +40,19 @@ export default function DoctorPanelPage(): React.JSX.Element {
   }, []);
 
   const {
-    form,
-    interviewData,
-    setInterviewData,
-    medicalData,
-    setMedicalData,
-    fetchPatientData,
-    saveMedicalData,
-    saveInterviewData,
-    initialMedicalData,
-    initialInterviewData
-  } = usePatientData();
+  form,
+  interviewData,
+  setInterviewData,
+  medicalData,
+  setMedicalData,
+  fetchPatientData,
+  saveMedicalData,
+  saveInterviewData,
+  initialMedicalData,
+  initialInterviewData,
+  editableDiet,
+  setEditableDiet
+} = usePatientData();
 
 useEffect(() => {
   const userId = localStorage.getItem('currentUserID');
