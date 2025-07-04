@@ -19,7 +19,8 @@ export function convertSectionFormat(
 
       if (key.endsWith('_dependsOn')) continue;
 
-      const value = translations[langKey];
+      const rawValue = translations[langKey];
+      const value = typeof rawValue === 'string' || Array.isArray(rawValue) ? rawValue : '';
       const isOptionsKey = key.endsWith('_options');
       const baseKey = isOptionsKey ? key.replace('_options', '') : key;
       const dependsKey = `${key}_dependsOn`;

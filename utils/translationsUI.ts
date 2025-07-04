@@ -3360,5 +3360,58 @@ undefined: {
   hi: "कोई डेटा नहीं",
   he: "אין נתונים"
 },
+śniadanie: {
+  pl: "Śniadanie",
+  en: "Breakfast",
+  de: "Frühstück",
+  fr: "Petit-déjeuner",
+  es: "Desayuno",
+  ua: "Сніданок",
+  ru: "Завтрак",
+  zh: "早餐",
+  ar: "فطور",
+  hi: "नाश्ता",
+  he: "ארוחת בוקר"
+},
+"drugie śniadanie": {
+  pl: "Drugie śniadanie",
+  en: "Brunch",
+  de: "Zweites Frühstück",
+  fr: "Brunch",
+  es: "Almuerzo",
+  ua: "Другий сніданок",
+  ru: "Второй завтрак",
+  zh: "早午餐",
+  ar: "وجبة خفيفة صباحية",
+  hi: "ब्रंच",
+  he: "ארוחת בוקר שנייה"
+},
+obiad: {
+  pl: "Obiad",
+  en: "Lunch",
+  de: "Mittagessen",
+  fr: "Déjeuner",
+  es: "Comida",
+  ua: "Обід",
+  ru: "Обед",
+  zh: "午餐",
+  ar: "غداء",
+  hi: "दोपहर का भोजन",
+  he: "ארוחת צהריים"
+},
+kolacja: {
+  pl: "Kolacja",
+  en: "Dinner",
+  de: "Abendessen",
+  fr: "Dîner",
+  es: "Cena",
+  ua: "Вечеря",
+  ru: "Ужин",
+  zh: "晚餐",
+  ar: "عشاء",
+  hi: "रात का खाना",
+  he: "ארוחת ערב"
+}
+
 };
 
