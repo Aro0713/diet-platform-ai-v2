@@ -290,6 +290,27 @@ const handleGenerateRecipes = async () => {
     setIsGeneratingRecipes(false);
   }
 };
+const handleGenerateNarrative = async () => {
+  try {
+    const response = await fetch('/api/interview-narrative', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        interviewData,
+        goal: interviewData.goal,
+        recommendation: interviewData.recommendation,
+        lang
+      })
+    });
+
+    const { narrativeText } = await response.json();
+    if (narrativeText) setNarrativeText(narrativeText);
+  } catch (err) {
+    console.error('❌ Błąd przy pobieraniu opisu AI:', err);
+    setNarrativeText('⚠️ Błąd generowania opisu wywiadu przez AI');
+  }
+};
+
   return (
     <main className="relative min-h-screen bg-[#0f271e]/70 bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 backdrop-blur-[12px] shadow-[inset_0_0_60px_rgba(255,255,255,0.08)] flex flex-col justify-start items-center pt-10 px-6 text-white transition-all duration-300">
       <Head>
@@ -348,7 +369,10 @@ const handleGenerateRecipes = async () => {
           <>
             <InterviewWizard
             form={form}
-            onFinish={saveInterviewData}
+           onFinish={async (data) => {
+            await saveInterviewData(data);
+            await handleGenerateNarrative();
+            }}
             lang={lang}
             initialData={initialInterviewData}
             />
