@@ -298,13 +298,13 @@ if (recipes && Object.keys(recipes).length > 0) {
           ol: recipe.steps,
           margin: [0, 2, 0, 6]
         },
-        recipe.time
-          ? {
-              text: `⏱️ ${tUI('time', lang)}: ${recipe.time}`,
-              style: 'smallCell',
-              margin: [0, 0, 0, 10]
-            }
-          : {}
+        ...(recipe.time
+        ? [{
+            text: `⏱️ ${tUI('time', lang)}: ${recipe.time}`,
+            style: 'smallCell',
+            margin: [0, 0, 0, 10]
+          }]
+        : [])
       );
     }
   }
