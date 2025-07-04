@@ -106,7 +106,6 @@ useEffect(() => {
 
       alert(tUI('dietSaveSuccess', lang));
 
-      const { generateDietPdf } = await import('@/utils/generateDietPdf');
       await generateDietPdf(
         form,
         bmi,
@@ -116,19 +115,21 @@ useEffect(() => {
         lang,
         interviewData,
         {
-          bmi: interviewData.bmi,
-          ppm: interviewData.ppm,
-          cpm: interviewData.cpm,
-          pal: interviewData.pal,
-          kcalMaintain: interviewData.kcalMaintain,
-          kcalReduce: interviewData.kcalReduce,
-          kcalGain: interviewData.kcalGain,
-          nmcBroca: interviewData.nmcBroca,
-          nmcLorentz: interviewData.nmcLorentz
+            bmi: interviewData.bmi,
+            ppm: interviewData.ppm,
+            cpm: interviewData.cpm,
+            pal: interviewData.pal,
+            kcalMaintain: interviewData.kcalMaintain,
+            kcalReduce: interviewData.kcalReduce,
+            kcalGain: interviewData.kcalGain,
+            nmcBroca: interviewData.nmcBroca,
+            nmcLorentz: interviewData.nmcLorentz
         },
         'download',
-        narrativeText
-      );
+        narrativeText,
+        recipes
+        );
+
     } catch (err) {
       console.error(`${tUI('dietApprovalErrorPrefix', lang)} ${err}`);
       alert(tUI('dietApprovalFailed', lang));
