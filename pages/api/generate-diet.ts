@@ -10,12 +10,39 @@ export const config = {
   }
 };
 
+const cuisineContextMap: Record<string, string> = {
+  "Śródziemnomorska": "Mediterranean cuisine with olive oil, legumes, vegetables, and fish.",
+  "Japońska": "Traditional Japanese diet including rice, fish, seaweed, and fermented foods.",
+  "Chińska": "Chinese food principles with a balance of yin-yang ingredients, vegetables, rice.",
+  "Tajska": "Thai cuisine rich in herbs, spices, vegetables, coconut milk, and rice.",
+  "Wietnamska": "Vietnamese cuisine with fresh herbs, fish sauce, rice noodles, and vegetables.",
+  "Indyjska": "Indian cuisine rich in legumes, spices (turmeric, cumin), and vegetarian dishes.",
+  "Koreańska": "Korean diet based on kimchi, rice, fermented foods, and low-fat meats.",
+  "Bliskowschodnia": "Middle Eastern dishes with legumes, olive oil, grains, and lamb.",
+  "Polska": "Traditional Polish foods including root vegetables, fermented cabbage, and rye.",
+  "Francuska": "French cuisine with emphasis on dairy, sauces, meats, and wine-based dishes.",
+  "Włoska": "Italian dishes with pasta, tomatoes, olive oil, and herbs like basil.",
+  "Hiszpańska": "Spanish meals including legumes, seafood, olive oil, and paprika.",
+  "Skandynawska": "Nordic foods including fish, rye, root vegetables, and berries.",
+  "Północnoamerykańska": "North American eating patterns with variety of global influences.",
+  "Brazylijska": "Brazilian meals rich in beans, rice, cassava, and tropical fruits.",
+  "Afrykańska": "Traditional African dishes with millet, yams, legumes, and peanut sauces.",
+  "Dieta arktyczna / syberyjska": "Arctic/Siberian diet focused on fish, game meat, animal fat, berries."
+};
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
 
   try {
     const body = req.body;
-    const { form, interviewData, lang = "pl", goalExplanation = "", recommendation = "", medical } = body;
+    const {
+      form,
+      interviewData,
+      lang = "pl",
+      goalExplanation = "",
+      recommendation = "",
+      medical
+    } = body;
 
     const bmi = form.bmi ?? (form.weight && form.height
       ? parseFloat((form.weight / ((form.height / 100) ** 2)).toFixed(1))
@@ -23,6 +50,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const pal = form.pal ?? 1.6;
     const cpm = form.cpm ?? (form.weight && pal ? Math.round(form.weight * 24 * pal) : null);
     const mealsPerDay = interviewData.mealsPerDay ?? "not provided";
+
+    const cuisineNote = cuisineContextMap[interviewData.cuisine] ?
+      `Patient's cuisine preference: ${interviewData.cuisine}. Follow culinary context: ${cuisineContextMap[interviewData.cuisine]}`
+      : "";
 
     const patientData = {
       ...form,
@@ -74,7 +105,8 @@ Strict rules:
 Language: ${lang}
 Goal: ${goalExplanation}
 Doctor's notes: ${recommendation}
-Adapt to allergies, conditions, stress, culture.
+Cuisine: ${interviewData.cuisine || "not specified"}
+${cuisineNote}
 CPM: ${cpm}, mealsPerDay: ${mealsPerDay}
 
 Patient data:

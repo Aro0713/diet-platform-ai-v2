@@ -33,6 +33,8 @@ export default function DoctorPanelPage(): React.JSX.Element {
   const [narrativeText, setNarrativeText] = useState('');
   const [dietApproved, setDietApproved] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [recipes, setRecipes] = useState<any>(null);
+  const [isGeneratingRecipes, setIsGeneratingRecipes] = useState(false)
 
   useEffect(() => {
     const storedLang = localStorage.getItem('platformLang');
@@ -242,7 +244,24 @@ const handleGenerateDiet = async () => {
 }
 
 };
+const handleGenerateRecipes = async () => {
+  try {
+    setIsGeneratingRecipes(true);
+    const res = await fetch('/api/generate-recipes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dietPlan: editableDiet })
+    });
 
+    const json = await res.json();
+    setRecipes(json.recipes);
+  } catch (err) {
+    console.error('❌ Błąd generowania przepisów:', err);
+    alert(tUI('errorGeneratingRecipes', lang));
+  } finally {
+    setIsGeneratingRecipes(false);
+  }
+};
   return (
     <main className="relative min-h-screen bg-[#0f271e]/70 bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 backdrop-blur-[12px] shadow-[inset_0_0_60px_rgba(255,255,255,0.08)] flex flex-col justify-start items-center pt-10 px-6 text-white transition-all duration-300">
       <Head>
@@ -434,6 +453,16 @@ const handleGenerateDiet = async () => {
   >
     ✅ {tUI('approveDietAsPatient', lang)}
   </button>
+  {/* 🍽️ Guzik */}
+{editableDiet && Object.keys(editableDiet).length > 0 && (
+  <button
+    onClick={handleGenerateRecipes}
+    disabled={isGeneratingRecipes}
+    className="w-full bg-orange-500 hover:bg-orange-600 text-white px-4 py-3 rounded-md font-medium disabled:opacity-50"
+  >
+    🍽️ {tUI('generateRecipes', lang)}
+  </button>
+)}
 
   {/* 📤 Wyślij do lekarza */}
   <button
@@ -462,6 +491,28 @@ const handleGenerateDiet = async () => {
         setNotes={setNotes}
       />
     )}
+  </div>
+)}
+{/* 📖 Wyświetlenie przepisów */}
+{recipes && Object.keys(recipes).length > 0 && (
+  <div className="mt-6 space-y-6">
+    {Object.entries(recipes).map(([day, meals]: any) => (
+      <div key={day} className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow">
+        <h3 className="text-lg font-bold mb-2">{day}</h3>
+        {Object.entries(meals as any).map(([mealName, recipe]: any) => (
+          <div key={mealName} className="mb-4">
+            <h4 className="font-semibold">{mealName}</h4>
+            <p className="italic text-sm text-gray-600 dark:text-gray-400 mb-1">{recipe.title}</p>
+            <ul className="list-disc pl-5 text-sm">
+              {recipe.ingredients.map((ing: any, i: number) => (
+                <li key={i}>{ing.product} – {ing.weight} {ing.unit}</li>
+              ))}
+            </ul>
+            <p className="mt-2 text-sm whitespace-pre-line">{recipe.instructions}</p>
+          </div>
+        ))}
+      </div>
+    ))}
   </div>
 )}
         {!selectedSection && (

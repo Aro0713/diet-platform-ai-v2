@@ -8,18 +8,23 @@ const languageMap: Record<string, string> = {
   ua: "українська", ru: "русский", zh: "中文", hi: "हिन्दी", ar: "العربية", he: "עברית"
 };
 
-const culturalContextMap: Record<string, string> = {
-  pl: "Polish and Central European dietary traditions",
-  en: "Anglo-American dietary habits",
-  es: "Mediterranean and Latin American dietary culture",
-  fr: "French and Western European cuisine",
-  de: "Germanic and Central European dietary preferences",
-  ua: "Ukrainian and Eastern European food culture",
-  ru: "Russian and Slavic food heritage",
-  zh: "Chinese and East Asian culinary traditions",
-  hi: "Indian dietary principles and traditional spices",
-  ar: "Arabic and Middle Eastern dietary customs",
-  he: "Kosher food rules and Israeli cuisine"
+const cuisineContextMap: Record<string, string> = {
+  "Polska": "Polish culinary traditions: soups, fermented foods, root vegetables",
+  "Włoska": "Italian style: pasta, olive oil, tomatoes, basil, Mediterranean balance",
+  "Japońska": "Japanese cuisine: rice, miso, seaweed, tofu, umami minimalism",
+  "Chińska": "Chinese culinary principles: stir-fry, ginger, garlic, soy-based sauces",
+  "Tajska": "Thai cuisine: coconut milk, chili, lemongrass, coriander",
+  "Wietnamska": "Vietnamese: fresh herbs, rice noodles, fish sauce, light soups",
+  "Indyjska": "Indian: rich spices, lentils, curries, turmeric, ghee",
+  "Koreańska": "Korean: fermented vegetables, gochujang, rice dishes, barbecue",
+  "Bliskowschodnia": "Middle Eastern: legumes, olive oil, tahini, flatbreads, spices",
+  "Francuska": "French: sauces, butter, herbs de Provence, refined technique",
+  "Hiszpańska": "Spanish: olive oil, garlic, paprika, tapas, seafood",
+  "Skandynawska": "Scandinavian: rye, fish, root vegetables, dairy",
+  "Północnoamerykańska": "North American: diverse, fusion, whole grains, lean proteins",
+  "Brazylijska": "Brazilian: rice and beans, tropical fruits, cassava",
+  "Afrykańska": "African: grains like millet, legumes, stews, bold spices",
+  "Dieta arktyczna / syberyjska": "Arctic/Siberian: fish, berries, root vegetables, minimal spices"
 };
 
 const dataSources = `
@@ -56,10 +61,9 @@ export const generateDietTool = tool({
   } as const,
   async execute(input: any) {
     const { input: nested } = input;
-    const { form, interviewData, lang = "pl", goalExplanation = "", recommendation = "" } = nested;
+    const { form, interviewData, lang = "pl", goalExplanation = "", recommendation = "", medical } = nested;
 
     const selectedLang = languageMap[lang] || "polski";
-    const culturalContext = culturalContextMap[lang] || "general international dietary style";
 
     const bmi = form.bmi ?? (form.weight && form.height
       ? parseFloat((form.weight / ((form.height / 100) ** 2)).toFixed(1))
@@ -68,9 +72,9 @@ export const generateDietTool = tool({
     const pal = form.pal ?? 1.6;
     const cpm = form.cpm ?? (form.weight && pal ? Math.round(form.weight * 24 * pal) : null);
     const mealsPerDay = interviewData.mealsPerDay ?? "not provided";
-
     const modelDiet = form.model?.toLowerCase();
     const cuisine = interviewData.cuisine?.toLowerCase() || "global";
+    const cuisineContext = cuisineContextMap[interviewData.cuisine] || "general healthy cooking style";
 
     const patientData = {
       ...form,
@@ -81,7 +85,8 @@ export const generateDietTool = tool({
       goalExplanation,
       recommendation,
       language: selectedLang,
-      mealsPerDay
+      mealsPerDay,
+      medical
     };
 
     const prompt = `
@@ -101,11 +106,20 @@ The plan must:
 
 ✔ Be customized based on:
 - Patient interview, test results, medical history
-- Cultural context: ${culturalContext}
 - Diet model: ${modelDiet}, Cuisine: ${cuisine}
+- Cultural style: ${cuisineContext}
 - Energy targets (CPM: ${cpm}), BMI: ${bmi}, PAL: ${pal}
 - Number of meals: ${mealsPerDay}, Goal: ${goalExplanation}
 - Doctor's notes: ${recommendation}
+- Allergies to avoid: ${form.allergies || "none"}
+
+✔ Take into account lifestyle:
+- Stress level: ${interviewData.stressLevel}
+- Sleep quality: ${interviewData.sleepQuality}
+- Physical activity: ${interviewData.physicalActivity}
+
+✔ Take into account clinical risks and recommendations:
+${JSON.stringify(medical, null, 2)}
 
 ✔ For EACH meal include:
 - Polish name (Śniadanie, II śniadanie, Obiad, Kolacja)
