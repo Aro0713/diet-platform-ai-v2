@@ -3204,5 +3204,19 @@ loadPatientData: {
   ar: 'تحميل بيانات المريض',
   he: 'טען את נתוני המטופל'
 },
+generateRecipes: {
+  pl: "Generuj przepisy",
+  en: "Generate recipes",
+  es: "Generar recetas",
+  fr: "Générer des recettes",
+  de: "Rezepte generieren",
+  ua: "Створити рецепти",
+  ru: "Создать рецепты",
+  zh: "生成食谱",
+  hi: "व्यंजन विधि तैयार करें",
+  ar: "إنشاء وصفات",
+  he: "צור מתכונים"
+}
+
 };
 
