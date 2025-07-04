@@ -43,7 +43,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const prompt = `
 You are a culinary assistant AI specialized in healthy and clinical diets.
-Generate detailed recipes for all dishes listed in the following 7-day diet plan.
+Generate full culinary recipes for each meal in the diet plan below.
+Each meal has a dish name and a list of ingredients.
+
+For each meal, generate:
+- dish name (preserve as is),
+- description (1–2 sentences),
+- ingredients (from the plan),
+- 3–6 numbered preparation steps,
+- total preparation time.
 
 All recipes should reflect the regional cooking style and culinary ingredients typical of: ${cuisineNote}.
 

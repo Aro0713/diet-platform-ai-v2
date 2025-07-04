@@ -3216,7 +3216,84 @@ generateRecipes: {
   hi: "व्यंजन विधि तैयार करें",
   ar: "إنشاء وصفات",
   he: "צור מתכונים"
+}, 
+confirmApproveDietAsPatient: {
+  pl: "Zatwierdź dietę jako pacjent",
+  en: "Confirm diet as patient",
+  de: "Diät als Patient bestätigen",
+  fr: "Confirmer le régime en tant que patient",
+  es: "Confirmar la dieta como paciente",
+  ua: "Підтвердити дієту як пацієнт",
+  ru: "Подтвердить диету как пациент",
+  zh: "以患者身份确认饮食",
+  ar: "تأكيد النظام الغذائي كمريض",
+  hi: "रोगी के रूप में आहार की पुष्टि करें",
+  he: "אשר את הדיאטה בתור מטופל"
+},
+recipesTitle: {
+  pl: "Przepisy kulinarne",
+  en: "Cooking Recipes",
+  de: "Kochrezepte",
+  fr: "Recettes de cuisine",
+  es: "Recetas de cocina",
+  ua: "Кулінарні рецепти",
+  ru: "Кулинарные рецепты",
+  zh: "食谱",
+  ar: "وصفات الطبخ",
+  hi: "खाना पकाने की विधियाँ",
+  he: "מתכונים"
+},
+steps: {
+  pl: "Kroki",
+  en: "Steps",
+  de: "Schritte",
+  fr: "Étapes",
+  es: "Pasos",
+  ua: "Кроки",
+  ru: "Шаги",
+  zh: "步骤",
+  ar: "الخطوات",
+  hi: "कदम",
+  he: "שלבים"
+},
+servings: {
+  pl: "Porcje",
+  en: "Servings",
+  de: "Portionen",
+  fr: "Portions",
+  es: "Raciones",
+  ua: "Порції",
+  ru: "Порции",
+  zh: "份量",
+  ar: "عدد الحصص",
+  hi: "सेविंग्स",
+  he: "מנות"
+},
+description: {
+  pl: "Opis dania",
+  en: "Dish description",
+  de: "Gerichtsbeschreibung",
+  fr: "Description du plat",
+  es: "Descripción del plato",
+  ua: "Опис страви",
+  ru: "Описание блюда",
+  zh: "菜品描述",
+  ar: "وصف الطبق",
+  hi: "व्यंजन विवरण",
+  he: "תיאור המנה"
+},
+dish: {
+  pl: "Danie",
+  en: "Dish",
+  de: "Gericht",
+  fr: "Plat",
+  es: "Plato",
+  ua: "Страва",
+  ru: "Блюдо",
+  zh: "菜品",
+  ar: "الطبق",
+  hi: "व्यंजन",
+  he: "מנה"
 }
-
 };
 

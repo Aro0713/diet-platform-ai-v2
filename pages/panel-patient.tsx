@@ -499,22 +499,35 @@ const handleGenerateRecipes = async () => {
     {Object.entries(recipes).map(([day, meals]: any) => (
       <div key={day} className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow">
         <h3 className="text-lg font-bold mb-2">{day}</h3>
-        {Object.entries(meals as any).map(([mealName, recipe]: any) => (
+        {Object.entries(meals).map(([mealName, recipe]: any) => (
           <div key={mealName} className="mb-4">
-            <h4 className="font-semibold">{mealName}</h4>
-            <p className="italic text-sm text-gray-600 dark:text-gray-400 mb-1">{recipe.title}</p>
+            <h4 className="font-semibold">{mealName}: {recipe.dish}</h4>
+            <p className="italic text-sm text-gray-600 dark:text-gray-400 mb-1">{recipe.description}</p>
             <ul className="list-disc pl-5 text-sm">
-              {recipe.ingredients.map((ing: any, i: number) => (
+              {recipe.ingredients?.map((ing: any, i: number) => (
                 <li key={i}>{ing.product} – {ing.weight} {ing.unit}</li>
               ))}
             </ul>
-            <p className="mt-2 text-sm whitespace-pre-line">{recipe.instructions}</p>
+            {recipe.steps && (
+              <div className="mt-2 text-sm">
+                <strong>Kroki:</strong>
+                <ol className="list-decimal ml-4">
+                  {recipe.steps.map((step: string, i: number) => (
+                    <li key={i}>{step}</li>
+                  ))}
+                </ol>
+              </div>
+            )}
+            {recipe.time && (
+              <p className="mt-1 text-sm text-gray-500">⏱️ {recipe.time}</p>
+            )}
           </div>
         ))}
       </div>
     ))}
   </div>
 )}
+
         {!selectedSection && (
           <p className="text-center text-gray-300 text-sm max-w-xl mx-auto">
             {tUI('iconInstructionFull', lang)}
