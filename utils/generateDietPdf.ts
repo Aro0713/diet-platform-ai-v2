@@ -74,7 +74,7 @@ let finalNarrative = narrativeText;
 
 if (!finalNarrative) {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || ''}/api/interviewNarrativeAgent`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || ''}/api/interview-narrative`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -159,7 +159,7 @@ ${tUI('region', lang)}: ${patient.region ? await getTranslation(patient.region, 
 
     content.push({ text: finalNarrative || '⚠️ Brak opisu narracyjnego', margin: [0, 0, 0, 6] });
   }
-  
+
   const groupedByDay: Record<string, Meal[]> = {};
   diet.forEach((meal) => {
     const day = (meal as any).day || 'Inne';
