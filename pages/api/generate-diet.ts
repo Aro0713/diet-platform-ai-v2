@@ -99,7 +99,16 @@ Strict rules:
 - Top-level key: "dietPlan"
 - 7 days: Monday to Sunday
 - Day keys in English, meal names in Polish
-- Each meal must include: time, menu, kcal, glycemicIndex, ingredients[], and macros
+Each meal must include:
+- time (e.g. 07:30)
+- menu (dish name)
+- ingredients[] with product name, weight in grams, and unit – including:
+  - spices (e.g. salt, pepper, curry)
+  - herbs (e.g. basil, dill, parsley)
+  - oils and fats (e.g. olive oil, butter, ghee)
+- kcal, glycemicIndex
+- macros: protein, fat, carbs, fiber, potassium, calcium, sodium, magnesium, vit. C, D, B12
+
 - JSON only – no markdown, no commentary
 
 Language: ${lang}
@@ -108,6 +117,10 @@ Doctor's notes: ${recommendation}
 Cuisine: ${interviewData.cuisine || "not specified"}
 ${cuisineNote}
 CPM: ${cpm}, mealsPerDay: ${mealsPerDay}
+
+❗Do not omit seasoning, oil or sauces. They contribute to calories, fat, sodium, and micronutrients.
+
+Use real food composition data. Use values based on ingredient weight, from trusted sources (USDA, Open Food Facts, Polish IŻŻ).
 
 Patient data:
 ${JSON.stringify(patientData, null, 2)}

@@ -149,11 +149,21 @@ The plan must:
 ${JSON.stringify(medical, null, 2)}
 
 ✔ For EACH meal include:
-- Polish name (Śniadanie, II śniadanie, Obiad, Kolacja)
+- Use culturally appropriate meal names in the target language (${lang}), e.g. in Polish: Śniadanie, Obiad, Kolacja
 - Time (e.g., 07:30)
-- Dish name (menu), Ingredients list (product, weight, unit)
+- Dish name (menu)
+- Ingredients list (product, weight in grams, unit) – include ALL ingredients including:
+  - Spices (e.g. salt, pepper, curry)
+  - Herbs (e.g. basil, parsley, dill)
+  - Oils (e.g. olive oil, sunflower oil)
+  - Sauces or condiments if used
+
 - Detailed cooking method (preparation)
-- Nutrients: kcal, protein, fat, carbs, fiber, Ca, K, Mg, vit. C, D, B12
+- Nutritional values calculated from ALL ingredients:
+  - kcal, protein, fat, carbs, fiber, sodium, potassium, calcium, magnesium, vitamin C, D, B12
+
+🚨 Do not omit seasoning or oil. They impact calories, fats, sodium and micronutrients.
+
 
 **Nutrients must reflect real food values based on actual ingredient weights. Use reliable scientific food composition sources (USDA, Open Food Facts, Polish IŻŻ). Do not estimate or round randomly.**
 
