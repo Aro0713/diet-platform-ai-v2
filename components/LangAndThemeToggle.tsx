@@ -44,16 +44,16 @@ export default function LangAndThemeToggle() {
     <div className="flex items-center gap-4">
       {/* LANGUAGE SELECTOR */}
       <select
-        className="px-2 py-1 rounded-md border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-        value={lang}
-        onChange={handleLangChange}
-      >
-        {Object.entries(languageLabels).map(([key, label]) => (
-          <option key={key} value={key}>
-            {label}
-          </option>
-        ))}
-      </select>
+    className="px-2 py-1 rounded-md border border-gray-300 text-black bg-white dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+    value={lang}
+    onChange={handleLangChange}
+  >
+    {Object.entries(languageLabels).map(([key, label]) => (
+      <option key={key} value={key}>
+        {label}
+      </option>
+    ))}
+  </select>
 
       {/* THEME TOGGLE */}
       <button

@@ -375,7 +375,7 @@ return (
           setLang(selected);
           localStorage.setItem('platformLang', selected);
         }}
-        className="border rounded px-3 py-1 shadow bg-white/80 backdrop-blur dark:bg-gray-800 dark:text-white"
+        className="border rounded px-3 py-1 shadow bg-white/80 text-black backdrop-blur dark:bg-gray-800 dark:text-white"
         aria-label="Language selection"
       >
         {Object.entries(languageLabels).map(([key, label]) => (
