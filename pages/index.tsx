@@ -70,7 +70,7 @@ export default function Home() {
               setLang(selected);
               localStorage.setItem('platformLang', selected);
             }}
-            className="border rounded px-3 py-1 shadow bg-white/80 backdrop-blur dark:bg-gray-800 dark:text-white"
+            className="border rounded px-3 py-1 shadow bg-white/80 text-black backdrop-blur dark:bg-gray-800 dark:text-white"
             aria-label="Language selection"
           >
             {Object.entries(languageLabels).map(([key, label]) => (
@@ -145,7 +145,7 @@ export default function Home() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.5, duration: 1 }}
-          className="absolute bottom-[160px] right-[40px] text-[2.6rem] font-handwriting tracking-wide drop-shadow-xl recommended-by"
+          className="mt-6 text-2xl md:text-[1.7rem] font-serif text-[#f1f1f1] dark:text-[#e4e4e4] max-w-4xl leading-relaxed whitespace-pre-line drop-shadow"
         >
           {tUI('slogan', lang)}
         </motion.p>
@@ -177,7 +177,7 @@ export default function Home() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 3.5, duration: 1 }}
-        className="absolute bottom-[160px] right-[40px] text-[2.6rem] font-handwriting text-[#0d1b2a] tracking-wide drop-shadow-xl"
+        className="absolute bottom-[160px] right-[40px] text-[2.6rem] font-handwriting text-[#f8f9fa] tracking-wide drop-shadow-xl"
         style={{ transform: 'rotate(-28deg)' }}
       >
         {tUI('signature', lang)}

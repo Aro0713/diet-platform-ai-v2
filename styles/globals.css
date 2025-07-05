@@ -118,11 +118,15 @@ html.light select {
 .animate-fade-in {
   animation: fade-in 0.3s ease-out;
 }
-
-/* 🌟 Styl podpisu na stronie głównej (w trybie jasnym) */
-html.light .recommended-by {
-  color: #1f2937 !important; /* text-gray-800 */
+.font-handwriting {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
+html.light select option {
+  color: #000000 !important;
+  background-color: #ffffff !important;
+}
+
+
 
 
 
