@@ -30,6 +30,14 @@ const [confirmation, setConfirmation] = useState(false);
 const [langReady, setLangReady] = useState(false);
 
 useEffect(() => {
+  supabase.auth.getUser().then(({ data }) => {
+    if (!data?.user) {
+      localStorage.removeItem('currentUserID');
+    }
+  });
+}, []);
+
+useEffect(() => {
   const runInsert = async () => {
     if (!router.isReady || !langReady || router.query.confirmed !== 'true') return;
 
@@ -38,10 +46,17 @@ useEffect(() => {
     const { data: authUser, error: authError } = await supabase.auth.getUser();
     if (authError || !authUser?.user) return;
 
+    // ✅ Zapisz user_id do localStorage — niezależnie od roli
+    if (authUser.user.id) {
+      localStorage.setItem('currentUserID', authUser.user.id);
+      console.log('✅ currentUserID zapisany po rejestracji:', authUser.user.id);
+    }
+
     const metadata = authUser.user.user_metadata || {};
     const role = metadata.role || 'patient';
     const langFromMeta = metadata.lang || 'pl';
 
+    // 🩺 Lekarz lub dietetyk → insert do tabeli `users`
     if (role === 'doctor' || role === 'dietitian') {
       const { data: exists } = await supabase
         .from('users')
@@ -67,6 +82,7 @@ useEffect(() => {
       }
     }
 
+    // 👨‍⚕️ Każdy użytkownik (w tym pacjent) → insert do tabeli `patients`
     const { error: patientError } = await supabase.from('patients').upsert({
       user_id: authUser.user.id,
       name: metadata.name || 'Nieznany',
@@ -90,8 +106,8 @@ useEffect(() => {
   };
 
   runInsert();
-
 }, [router.query.confirmed, langReady, router.isReady]);
+
 
   const [selectedRoleLabel, setSelectedRoleLabel] = useState('');
   const [lang, setLang] = useState<LangKey>('pl');
