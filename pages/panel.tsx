@@ -401,19 +401,20 @@ const handleGenerateNarrative = async () => {
 
       {/* Sekcja 2: Dane medyczne */}
       <PanelCard className="z-30">
-       <MedicalForm
-          key={JSON.stringify(initialMedicalData || {})}
-          initialData={initialMedicalData || {}}
-          existingMedical={medicalData}
-          onChange={handleMedicalChange}
-          onUpdateMedical={(summary) => {
-            setMedicalData((prev: any) => ({
-              ...prev,
-              summary
-            }));
-          }}
-          lang={lang}
-        />
+      <MedicalForm
+        key={JSON.stringify(initialMedicalData || {})}
+        initialData={initialMedicalData || {}}
+        existingMedical={medicalData}
+        onChange={handleMedicalChange}
+        onUpdateMedical={(summary) => {
+          setMedicalData((prev: any) => ({
+            ...prev,
+            summary
+          }));
+        }}
+        userId={form.user_id} // ✅ to jest kluczowe
+        lang={lang}
+      />
       </PanelCard>
 
       {/* Sekcja 3: Wywiad pacjenta */}
