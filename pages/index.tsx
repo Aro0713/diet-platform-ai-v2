@@ -150,28 +150,34 @@ export default function Home() {
           {tUI('slogan', lang)}
         </motion.p>
 
-        {/* Buttons */}
+       {/* Buttons */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 2.5, duration: 0.8 }}
           className="mt-10 flex flex-col md:flex-row gap-4"
         >
-          <Link
-            href={{ pathname: '/register', query: { mode: 'doctor' } }}
+          <button
+            onClick={() => {
+              localStorage.setItem('entryMode', 'doctor');
+              window.location.href = '/register?mode=doctor';
+            }}
             className="bg-blue-600 text-white px-6 py-3 rounded-lg text-lg shadow hover:bg-blue-700 transition text-center"
           >
             {tUI('enterAsDoctor', lang)}
-          </Link>
-          <Link
-            href={{ pathname: '/register', query: { mode: 'patient' } }}
+          </button>
+
+          <button
+            onClick={() => {
+              localStorage.setItem('entryMode', 'patient');
+              window.location.href = '/register?mode=patient';
+            }}
             className="bg-green-600 text-white px-6 py-3 rounded-lg text-lg shadow hover:bg-green-700 transition text-center"
           >
             {tUI('enterAsPatient', lang)}
-          </Link>
+          </button>
         </motion.div>
       </div>
-
       {/* ✍️ Podpis */}
       <motion.p
         initial={{ opacity: 0 }}
@@ -183,5 +189,6 @@ export default function Home() {
         {tUI('signature', lang)}
       </motion.p>
     </main>
+    
   );
 }
