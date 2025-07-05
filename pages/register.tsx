@@ -135,6 +135,15 @@ useEffect(() => {
   const [login, setLogin] = useState({ email: '', password: '' });
   const [loginConsent, setLoginConsent] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '' });
+  const [consentPrefix, setConsentPrefix] = useState('');
+const [termsLinkText, setTermsLinkText] = useState('');
+const [privacyLinkText, setPrivacyLinkText] = useState('');
+const [rolePatientLabel, setRolePatientLabel] = useState('');
+const [roleDoctorLabel, setRoleDoctorLabel] = useState('');
+const [roleDietitianLabel, setRoleDietitianLabel] = useState('');
+const [continueWithoutRegister, setContinueWithoutRegister] = useState('');
+const [disclaimer, setDisclaimer] = useState('');
+
   const [jurisdiction, setJurisdiction] = useState('');
   const [licenseNumber, setLicenseNumber] = useState('');
   const [recoveryID, setRecoveryID] = useState('');
@@ -194,6 +203,24 @@ useEffect(() => {
     setUserType(mode as 'doctor' | 'dietitian' | 'patient');
   }
 }, [router.isReady, router.query.mode, userType]);
+
+useEffect(() => {
+  if (!userType || !lang) return;
+
+  setConsentPrefix(t('consentPrefix'));
+  setTermsLinkText(t('termsLinkText'));
+  setPrivacyLinkText(t('privacyLinkText'));
+
+  if (userType === 'patient') {
+    setRolePatientLabel(t('rolePatient'));
+    setContinueWithoutRegister(t('continueWithoutRegister'));
+    setDisclaimer(t('disclaimer'));
+  } else if (userType === 'doctor') {
+    setRoleDoctorLabel(t('roleDoctor'));
+  } else if (userType === 'dietitian') {
+    setRoleDietitianLabel(t('roleDietitian'));
+  }
+}, [userType, lang]);
 
   // 🔎 DEBUG LANG + TŁUMACZENIA
   useEffect(() => {
@@ -280,16 +307,7 @@ const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     if (error) return alert(tUI('passwordResetError') + ': ' + error.message);
    alert(tUI('passwordResetSent'));
   };
-
-const rolePatientLabel = userType === 'patient' ? t('rolePatient') : '';
-const roleDoctorLabel = userType === 'doctor' ? t('roleDoctor') : '';
-const roleDietitianLabel = userType === 'dietitian' ? t('roleDietitian') : '';
-const continueWithoutRegister = userType === 'patient' ? t('continueWithoutRegister') : '';
-const disclaimer = userType === 'patient' ? t('disclaimer') : '';
-const consentPrefix = t('consentPrefix'); // zawsze wymagane
-const termsLinkText = t('termsLinkText');
-const privacyLinkText = t('privacyLinkText');
-
+  
 console.log({
   lang,
   disclaimer,
