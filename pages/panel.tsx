@@ -120,6 +120,29 @@ function Panel() {
   useEffect(() => {
     console.log('📘 Opis wywiadu zapisany:', interviewNarrative);
   }, [interviewNarrative]);
+  useEffect(() => {
+  const fetchUserData = async () => {
+    const userId = localStorage.getItem('currentUserID');
+    if (!userId) return;
+
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('❌ Błąd pobierania danych użytkownika:', error.message);
+      return;
+    }
+
+    if (data) {
+      setUserData(data); // 🔥 teraz userData.name i userData.role będą działać
+    }
+  };
+
+  fetchUserData();
+}, []);
 
   useEffect(() => {
     const fetchDraftDiets = async () => {
