@@ -336,7 +336,7 @@ const handleGenerateNarrative = async () => {
     <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between px-4">
       <div className="flex flex-col">
         {userData?.name && (
-          <span className="text-sm font-medium text-gray-800 dark:text-white">
+          <span className="text-sm font-medium text-white dark:text-white">
             {userData.title &&
               translatedTitles[userData.title as 'dr' | 'drhab' | 'prof']?.[lang] && (
                 <>{translatedTitles[userData.title as 'dr' | 'drhab' | 'prof'][lang]} </>
@@ -348,7 +348,8 @@ const handleGenerateNarrative = async () => {
               )}
           </span>
         )}
-        <h1 className="text-2xl font-bold text-gray-800">{tUI('doctorPanelTitle', lang)}</h1>
+        <h1 className="text-2xl font-bold text-white dark:text-white">{tUI('doctorPanelTitle', lang)}</h1>
+
       </div>
       <LangAndThemeToggle />
     </div>

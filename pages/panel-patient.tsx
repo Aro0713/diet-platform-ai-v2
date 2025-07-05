@@ -319,14 +319,14 @@ const handleGenerateNarrative = async () => {
       </Head>
 
       {/* Pasek nagłówka */}
-      <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between px-4">
+     <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between px-4">
         <div className="flex flex-col">
           {form?.name && (
-            <span className="text-sm font-medium text-gray-800 dark:text-white">
+            <span className="text-sm font-medium text-white dark:text-white">
               {form.name}
             </span>
           )}
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
+          <h1 className="text-2xl font-bold text-white dark:text-white">
             {tUI('patientPanelTitle', lang)}
           </h1>
         </div>
