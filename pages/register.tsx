@@ -281,14 +281,15 @@ const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
    alert(tUI('passwordResetSent'));
   };
 
-const rolePatientLabel = t('rolePatient');
-const roleDoctorLabel = t('roleDoctor');
-const roleDietitianLabel = t('roleDietitian');
-const disclaimer = t('disclaimer');
-const consentPrefix = t('consentPrefix');
+const rolePatientLabel = userType === 'patient' ? t('rolePatient') : '';
+const roleDoctorLabel = userType === 'doctor' ? t('roleDoctor') : '';
+const roleDietitianLabel = userType === 'dietitian' ? t('roleDietitian') : '';
+const continueWithoutRegister = userType === 'patient' ? t('continueWithoutRegister') : '';
+const disclaimer = userType === 'patient' ? t('disclaimer') : '';
+const consentPrefix = t('consentPrefix'); // zawsze wymagane
 const termsLinkText = t('termsLinkText');
 const privacyLinkText = t('privacyLinkText');
-const continueWithoutRegister = t('continueWithoutRegister');
+
 console.log({
   lang,
   disclaimer,
