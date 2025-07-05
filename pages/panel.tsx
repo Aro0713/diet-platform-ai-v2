@@ -401,8 +401,8 @@ const handleGenerateNarrative = async () => {
 
       {/* Sekcja 2: Dane medyczne */}
       <PanelCard className="z-30">
-        <MedicalForm
-          key={JSON.stringify(medicalData)}
+       <MedicalForm
+          key={JSON.stringify(initialMedicalData || {})}
           initialData={initialMedicalData || {}}
           existingMedical={medicalData}
           onChange={handleMedicalChange}
@@ -419,6 +419,7 @@ const handleGenerateNarrative = async () => {
       {/* Sekcja 3: Wywiad pacjenta */}
       <PanelCard title={`🧠 ${tUI('interviewTitle', lang)}`}>
         <InterviewWizard
+          key={JSON.stringify(interviewData || {})}
           form={form}
           initialData={interviewData}
           lang={lang}
