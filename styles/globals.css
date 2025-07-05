@@ -104,6 +104,11 @@ html.dark .react-international-phone-input {
   background-color: #1f2937 !important;   /* gray-800 */
   color: #ffffff !important;
 }
+html.light select {
+  color: #111 !important;
+  background-color: #fff !important;
+  border: 1px solid #ccc !important;
+}
 
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(20px); }
@@ -113,6 +118,12 @@ html.dark .react-international-phone-input {
 .animate-fade-in {
   animation: fade-in 0.3s ease-out;
 }
+
+/* 🌟 Styl podpisu na stronie głównej (w trybie jasnym) */
+html.light .recommended-by {
+  color: #1f2937 !important; /* text-gray-800 */
+}
+
 
 
 

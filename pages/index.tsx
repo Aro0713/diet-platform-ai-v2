@@ -145,7 +145,7 @@ export default function Home() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.5, duration: 1 }}
-          className="mt-6 text-2xl md:text-[1.7rem] font-serif text-gray-800 dark:text-gray-300 max-w-4xl leading-relaxed whitespace-pre-line"
+          className="absolute bottom-[160px] right-[40px] text-[2.6rem] font-handwriting tracking-wide drop-shadow-xl recommended-by"
         >
           {tUI('slogan', lang)}
         </motion.p>
