@@ -98,6 +98,13 @@ function Panel() {
   }, []);
 
   useEffect(() => {
+    const storedUserId = localStorage.getItem('currentUserID');
+    if (storedUserId && !form?.user_id) {
+      setForm((prev) => ({ ...prev, user_id: storedUserId }));
+    }
+  }, []);
+
+  useEffect(() => {
   if (form?.user_id) {
     fetchPatientData();
   }
