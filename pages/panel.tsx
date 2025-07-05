@@ -84,6 +84,12 @@ function Panel() {
   const t = (key: keyof typeof translationsUI): string => tUI(key, lang);
 
   useEffect(() => {
+  const role = localStorage.getItem('currentUserRole');
+  const userId = localStorage.getItem('currentUserID');
+  console.log('👤 Zalogowano jako:', role, userId);
+}, []);
+
+  useEffect(() => {
     const langStorage = localStorage.getItem('platformLang') as LangKey | null;
     if (langStorage) setLang(langStorage);
   }, []);
@@ -355,8 +361,9 @@ const handleGenerateNarrative = async () => {
               )}
           </span>
         )}
-        <h1 className="text-2xl font-bold text-white dark:text-white">{tUI('doctorPanelTitle', lang)}</h1>
-
+        <h1 className="text-2xl font-bold text-white dark:text-white">
+        {tUI('doctorPanelTitle', lang)}
+      </h1>
       </div>
       <LangAndThemeToggle />
     </div>
