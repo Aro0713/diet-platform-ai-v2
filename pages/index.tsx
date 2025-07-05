@@ -1,5 +1,4 @@
 import Head from 'next/head';
-import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
@@ -10,14 +9,14 @@ export default function Home() {
   const [darkMode, setDarkMode] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  // 🌓 Ustawienie darkMode i mounted po stronie klienta
+  // Ustawienie darkMode i mounted po stronie klienta
   useEffect(() => {
     const theme = localStorage.getItem('theme');
     setDarkMode(theme === 'dark');
     setMounted(true);
   }, []);
 
-  // 🔁 Synchronizacja z klasą HTML i localStorage
+  // Synchronizacja z klasą HTML i localStorage
   useEffect(() => {
     if (!mounted) return;
     if (darkMode) {
@@ -29,7 +28,7 @@ export default function Home() {
     }
   }, [darkMode, mounted]);
 
-  // 🌐 Wykrywanie języka
+  // Wykrywanie języka
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const supportedLangs: LangKey[] = ['pl', 'en', 'ua', 'es', 'fr', 'de', 'ru', 'zh', 'hi', 'ar', 'he'];
@@ -40,26 +39,16 @@ export default function Home() {
     }
   }, []);
 
-  // ⛔️ Unikamy renderowania przed mounted
   if (!mounted) return null;
 
   return (
- <main className="relative min-h-screen 
-  bg-[#0f271e]/70 
-  bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 
-  backdrop-blur-[12px] 
-  shadow-[inset_0_0_60px_rgba(255,255,255,0.08)] 
-  flex flex-col justify-start items-center pt-10 px-6 
-  text-white transition-all duration-300">
-
-
+    <main className="relative min-h-screen bg-[#0f271e]/70 bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 backdrop-blur-[12px] shadow-[inset_0_0_60px_rgba(255,255,255,0.08)] flex flex-col justify-start items-center pt-10 px-6 text-white transition-all duration-300">
       <Head>
         <title>Diet Care Platform</title>
       </Head>
 
-      {/* 🌐 Pasek języka i pstryczek */}
+      {/* Pasek języka i trybu ciemnego */}
       <nav className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between px-4">
-        {/* 🌍 Wybór języka */}
         <div className="flex items-center gap-2">
           <label htmlFor="language-select" className="sr-only">Wybierz język</label>
           <select
@@ -79,42 +68,22 @@ export default function Home() {
           </select>
         </div>
 
-        {/* 🔘 Tryb ciemny */}
         <div className="flex items-center gap-2 group" title={darkMode ? tUI('lightMode', lang) : tUI('darkMode', lang)}>
           <span className="text-xs text-black dark:text-white">{tUI('toggleContrast', lang)}</span>
           <button
             onClick={() => setDarkMode(!darkMode)}
-            className={`relative inline-flex items-center h-6 w-11 rounded-full transition-colors ${
-              darkMode ? 'bg-gray-700' : 'bg-yellow-400'
-            }`}
+            className={`relative inline-flex items-center h-6 w-11 rounded-full transition-colors ${darkMode ? 'bg-gray-700' : 'bg-yellow-400'}`}
             aria-label={tUI('toggleContrast', lang)}
           >
-            <span
-              className={`absolute left-1 text-sm transition-opacity duration-200 ${
-                darkMode ? 'opacity-0' : 'opacity-100'
-              }`}
-            >
-              ☀️
-            </span>
-            <span
-              className={`absolute right-1 text-sm transition-opacity duration-200 ${
-                darkMode ? 'opacity-100' : 'opacity-0'
-              }`}
-            >
-              🌙
-            </span>
-            <span
-              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-300 ${
-                darkMode ? 'translate-x-5' : 'translate-x-1'
-              }`}
-            />
+            <span className={`absolute left-1 text-sm transition-opacity duration-200 ${darkMode ? 'opacity-0' : 'opacity-100'}`}>☀️</span>
+            <span className={`absolute right-1 text-sm transition-opacity duration-200 ${darkMode ? 'opacity-100' : 'opacity-0'}`}>🌙</span>
+            <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-300 ${darkMode ? 'translate-x-5' : 'translate-x-1'}`} />
           </button>
         </div>
       </nav>
 
-      {/* 📦 Główna zawartość */}
+      {/* Główna zawartość */}
       <div className="z-10 flex flex-col items-center justify-start text-center px-4 mt-6 w-full max-w-5xl bg-white/30 backdrop-blur-md rounded-2xl shadow-xl p-10 dark:bg-gray-900/30 dark:text-white transition-colors">
-        {/* Logo */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -130,7 +99,6 @@ export default function Home() {
           />
         </motion.div>
 
-        {/* Welcome */}
         <motion.h1
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -140,7 +108,6 @@ export default function Home() {
           {tUI('welcome', lang)}
         </motion.h1>
 
-        {/* Slogan */}
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -150,7 +117,6 @@ export default function Home() {
           {tUI('slogan', lang)}
         </motion.p>
 
-       {/* Buttons */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -178,7 +144,7 @@ export default function Home() {
           </button>
         </motion.div>
       </div>
-      {/* ✍️ Podpis */}
+
       <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -189,6 +155,5 @@ export default function Home() {
         {tUI('signature', lang)}
       </motion.p>
     </main>
-    
   );
 }

@@ -183,14 +183,17 @@ useEffect(() => {
   };
 
   // 🌐 TRYB: doctor | dietitian | patient
-  useEffect(() => {
-    if (!router.isReady) return;
-    const rawMode = router.query.mode;
-    const mode = Array.isArray(rawMode) ? rawMode[0] : rawMode;
-    if (!userType && (mode === 'doctor' || mode === 'dietitian' || mode === 'patient')) {
-      setUserType(mode as 'doctor' | 'dietitian' | 'patient');
-    }
-  }, [router.isReady, router.query.mode, userType]);
+useEffect(() => {
+  if (!router.isReady) return;
+
+  const entryMode = localStorage.getItem('entryMode');
+  const rawMode = router.query.mode || entryMode || 'patient';
+  const mode = Array.isArray(rawMode) ? rawMode[0] : rawMode;
+
+  if (!userType && (mode === 'doctor' || mode === 'dietitian' || mode === 'patient')) {
+    setUserType(mode as 'doctor' | 'dietitian' | 'patient');
+  }
+}, [router.isReady, router.query.mode, userType]);
 
   // 🔎 DEBUG LANG + TŁUMACZENIA
   useEffect(() => {
@@ -367,6 +370,13 @@ const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
 
   alert('📩 Link aktywacyjny został wysłany na e-mail.');
 };
+if (!langReady || !router.isReady || !userType) {
+  return (
+    <main className="min-h-screen flex items-center justify-center">
+      <p className="text-gray-500 text-sm">⏳ Trwa przygotowanie formularza rejestracji...</p>
+    </main>
+  );
+}
 
 return (
 <main className="relative min-h-screen 
