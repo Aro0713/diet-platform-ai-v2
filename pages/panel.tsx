@@ -87,15 +87,6 @@ function Panel() {
   console.log("📊 initialInterviewData:", initialInterviewData);
 }, [form, initialMedicalData, initialInterviewData]);
 
-  // 🛡️ Teraz już PO hookach — bezpieczny warunek
-  if (!form.user_id || !initialMedicalData || !initialInterviewData) {
-  return (
-    <div className="text-white p-10">
-      ⏳ Ładowanie danych pacjenta...
-    </div>
-  );
-}
-
   const t = (key: keyof typeof translationsUI): string => tUI(key, lang);
 
   useEffect(() => {

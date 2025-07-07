@@ -10,6 +10,7 @@ interface UseDoctorPatientDataResult {
   medicalData: any;
   setMedicalData: (data: any) => void;
   fetchPatientData: () => Promise<void>;
+  loadPatientData: (userId: string) => Promise<void>; 
   saveMedicalData: (data: any) => Promise<void>;
   saveInterviewData: (data: any) => Promise<void>;
   initialMedicalData: any;
@@ -104,6 +105,11 @@ export function useDoctorPatientData(): UseDoctorPatientDataResult {
       }
     }
   };
+const loadPatientData = async (userId: string) => {
+  console.log('📥 [HOOK] Ręczne ładowanie danych pacjenta:', userId);
+  setForm((prev) => ({ ...prev, user_id: userId }));
+  await fetchPatientData();
+};
 
   const saveMedicalData = async ({
     selectedGroups,
@@ -183,7 +189,7 @@ export function useDoctorPatientData(): UseDoctorPatientDataResult {
     }));
   };
 
-  return {
+    return {
     form,
     setForm,
     interviewData,
@@ -191,6 +197,7 @@ export function useDoctorPatientData(): UseDoctorPatientDataResult {
     medicalData,
     setMedicalData,
     fetchPatientData,
+    loadPatientData, 
     saveMedicalData,
     saveInterviewData,
     initialMedicalData,
@@ -198,6 +205,7 @@ export function useDoctorPatientData(): UseDoctorPatientDataResult {
     editableDiet,
     setEditableDiet
   };
+
 }
 
 function buildInitialDataFromSupabase(data: any) {
