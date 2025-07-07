@@ -81,6 +81,12 @@ function Panel() {
     setEditableDiet
   } = useDoctorPatientData();
 
+  useEffect(() => {
+  console.log("📊 form.user_id:", form?.user_id);
+  console.log("📊 initialMedicalData:", initialMedicalData);
+  console.log("📊 initialInterviewData:", initialInterviewData);
+}, [form, initialMedicalData, initialInterviewData]);
+
   // 🛡️ Teraz już PO hookach — bezpieczny warunek
   if (!form.user_id || !initialMedicalData || !initialInterviewData) {
   return (
@@ -89,9 +95,6 @@ function Panel() {
     </div>
   );
 }
-console.log("🧩 form.user_id:", form.user_id);
-console.log("🧩 initialMedicalData:", initialMedicalData);
-console.log("🧩 initialInterviewData:", initialInterviewData);
 
   const t = (key: keyof typeof translationsUI): string => tUI(key, lang);
 
@@ -115,12 +118,14 @@ console.log("🧩 initialInterviewData:", initialInterviewData);
     }
   }, []);
 
-  useEffect(() => {
-    const storedUserId = localStorage.getItem('currentUserID');
-    if (storedUserId && !form?.user_id) {
-      setForm((prev) => ({ ...prev, user_id: storedUserId }));
-    }
-  }, []);
+ useEffect(() => {
+  const storedUserId = localStorage.getItem('currentUserID');
+  if (storedUserId && !form.user_id) {
+    console.log("💾 Ustawiam user_id z localStorage:", storedUserId);
+    setForm((prev) => ({ ...prev, user_id: storedUserId }));
+  }
+}, [form.user_id]);
+
 
   useEffect(() => {
     console.log('📘 Opis wywiadu zapisany:', interviewNarrative);
