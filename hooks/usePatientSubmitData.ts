@@ -55,22 +55,25 @@ export function usePatientSubmitData(form: PatientData) {
       .eq('user_id', userId);
   };
 
-  const saveDietPlan = async (dietPlan: any) => {
-    const userId = form?.user_id;
-    if (!userId) return;
+const saveDietPlan = async (dietPlan: any) => {
+  const userId = form?.user_id;
+  if (!userId) return;
 
-    const { error } = await supabase
-      .from('patient_diets')
-      .upsert({
-        user_id: userId,
-        diet_plan: JSON.stringify(dietPlan),
-        status: 'draft'
-      }, { onConflict: 'user_id' });
+  const { error } = await supabase
+    .from('patient_diets')
+    .upsert({
+      user_id: userId,
+      diet_plan: JSON.stringify(dietPlan),
+      status: 'draft'
+    }, {
+      onConflict: 'user_id'  // ✅ string, nie tablica
+    });
 
-    if (error) {
-      console.error('❌ Błąd zapisu planu diety:', error.message);
-    }
-  };
+  if (error) {
+    console.error('❌ Błąd zapisu planu diety:', error.message);
+  }
+};
+
 
   return {
     saveMedicalData,
