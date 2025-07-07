@@ -473,7 +473,8 @@ if (form.user_id && (!initialMedicalData || !initialInterviewData)) {
   </PanelCard>
 )}
 
-      {/* Sekcja 4: Cel, model, kuchnia */}
+          {/* Sekcja 4: Cel, model, kuchnia */}
+    {initialInterviewData && (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 items-start">
         <PanelCard className="h-full">
           <DietGoalForm
@@ -494,9 +495,10 @@ if (form.user_id && (!initialMedicalData || !initialInterviewData)) {
           />
         </PanelCard>
       </div>
+    )}
 
-      {/* Sekcja 5: Kalkulator */}
-      {initialInterviewData && (
+    {/* Sekcja 5: Kalkulator */}
+    {initialInterviewData && (
       <PanelCard title={`🧮 ${tUI('patientInNumbers', lang)}`} className="h-full">
         <CalculationBlock
           form={form}
