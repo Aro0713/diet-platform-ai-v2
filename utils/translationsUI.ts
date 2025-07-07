@@ -3411,7 +3411,110 @@ kolacja: {
   ar: "عشاء",
   hi: "रात का खाना",
   he: "ארוחת ערב"
-}
-
+}, 
+accessRequestSent: {
+  pl: '📨 Wysłano prośbę o dostęp do danych pacjenta. Pacjent musi ją zaakceptować.',
+  en: '📨 Access request has been sent. The patient must approve it.',
+  de: '📨 Zugriffsanfrage wurde gesendet. Der Patient muss sie genehmigen.',
+  fr: '📨 La demande d’accès a été envoyée. Le patient doit l’approuver.',
+  es: '📨 Solicitud de acceso enviada. El paciente debe aprobarla.',
+  ua: '📨 Запит на доступ надіслано. Пацієнт повинен його підтвердити.',
+  ru: '📨 Запрос на доступ отправлен. Пациент должен его подтвердить.',
+  zh: '📨 已发送访问请求。患者必须批准该请求。',
+  hi: '📨 एक्सेस अनुरोध भेजा गया है। मरीज को इसे स्वीकार करना होगा।',
+  ar: '📨 تم إرسال طلب الوصول. يجب على المريض الموافقة عليه.',
+  he: '📨 הבקשה לגישה נשלחה. המטופל צריך לאשר אותה.'
+},
+accessRequestEmailSubject: {
+  pl: '🔐 Prośba o dostęp do Twoich danych medycznych',
+  en: '🔐 Request for access to your medical data',
+  de: '🔐 Anfrage zum Zugriff auf Ihre medizinischen Daten',
+  fr: '🔐 Demande d’accès à vos données médicales',
+  es: '🔐 Solicitud de acceso a tus datos médicos',
+  ua: '🔐 Запит на доступ до ваших медичних даних',
+  ru: '🔐 Запрос на доступ к вашим медицинским данным',
+  zh: '🔐 访问您的医疗数据的请求',
+  hi: '🔐 आपके चिकित्सा डेटा तक पहुंच के लिए अनुरोध',
+  ar: '🔐 طلب الوصول إلى بياناتك الطبية',
+  he: '🔐 בקשה לגישה לנתונים הרפואיים שלך'
+},
+accessRequestEmailBody: {
+  pl: 'Lekarz lub dietetyk poprosił o dostęp do Twoich danych medycznych i planu diety. Aby kontynuować, kliknij poniższy link i zatwierdź prośbę.',
+  en: 'A doctor or dietitian has requested access to your medical data and diet plan. To continue, click the link below and approve the request.',
+  de: 'Ein Arzt oder Ernährungsberater hat Zugriff auf Ihre medizinischen Daten und Ihren Diätplan angefordert. Bitte klicken Sie unten, um dies zu genehmigen.',
+  fr: 'Un médecin ou un diététicien a demandé l’accès à vos données médicales et à votre plan alimentaire. Cliquez sur le lien ci-dessous pour approuver la demande.',
+  es: 'Un médico o dietista ha solicitado acceso a tus datos médicos y plan de dieta. Haz clic en el siguiente enlace para aprobar la solicitud.',
+  ua: 'Лікар або дієтолог надіслав запит на доступ до ваших медичних даних та плану дієти. Натисніть посилання нижче, щоб підтвердити.',
+  ru: 'Врач или диетолог запросил доступ к вашим медицинским данным и плану питания. Нажмите на ссылку ниже, чтобы подтвердить.',
+  zh: '医生或营养师请求访问您的医疗数据和饮食计划。请点击下方链接以批准请求。',
+  hi: 'एक डॉक्टर या डाइटिशियन ने आपके चिकित्सा डेटा और डाइट प्लान तक पहुंच का अनुरोध किया है। जारी रखने के लिए नीचे दिए गए लिंक पर क्लिक करें और अनुरोध को स्वीकार करें।',
+  ar: 'طلب طبيب أو اختصاصي تغذية الوصول إلى بياناتك الطبية وخطة نظامك الغذائي. انقر على الرابط أدناه للموافقة على الطلب.',
+  he: 'רופא או דיאטן ביקש גישה לנתונים הרפואיים ולתוכנית התזונה שלך. לחץ על הקישור למטה כדי לאשר את הבקשה.'
+},
+accessRequestProcessing: {
+  pl: "Przetwarzanie prośby...",
+  en: "Processing access request...",
+  de: "Zugriffsanfrage wird verarbeitet...",
+  fr: "Traitement de la demande d’accès...",
+  es: "Procesando la solicitud de acceso...",
+  ua: "Обробка запиту на доступ...",
+  ru: "Обработка запроса на доступ...",
+  zh: "正在处理访问请求...",
+  ar: "جارٍ معالجة طلب الوصول...",
+  hi: "पहुंच अनुरोध प्रोसेस हो रहा है...",
+  he: "מעבד בקשת גישה..."
+},
+accessGranted: {
+  pl: "Dostęp zatwierdzony",
+  en: "Access granted",
+  de: "Zugriff gewährt",
+  fr: "Accès accordé",
+  es: "Acceso concedido",
+  ua: "Доступ надано",
+  ru: "Доступ предоставлен",
+  zh: "访问已批准",
+  ar: "تم منح الوصول",
+  hi: "एक्सेस स्वीकृत",
+  he: "הגישה אושרה"
+},
+accessGrantedDescription: {
+  pl: "Lekarz lub dietetyk może teraz zobaczyć Twoje dane.",
+  en: "A doctor or dietitian can now view your data.",
+  de: "Ein Arzt oder Ernährungsberater kann jetzt Ihre Daten einsehen.",
+  fr: "Un médecin ou un diététicien peut maintenant voir vos données.",
+  es: "Un médico o dietista puede ahora ver tus datos.",
+  ua: "Лікар або дієтолог тепер може переглядати ваші дані.",
+  ru: "Врач или диетолог теперь может просматривать ваши данные.",
+  zh: "医生或营养师现在可以查看您的数据。",
+  ar: "يمكن للطبيب أو اختصاصي التغذية الآن رؤية بياناتك.",
+  hi: "अब डॉक्टर या आहार विशेषज्ञ आपके डेटा को देख सकता है।",
+  he: "רופא או דיאטן יכולים כעת לצפות בנתוניך."
+},
+accessError: {
+  pl: "Błąd",
+  en: "Error",
+  de: "Fehler",
+  fr: "Erreur",
+  es: "Error",
+  ua: "Помилка",
+  ru: "Ошибка",
+  zh: "错误",
+  ar: "خطأ",
+  hi: "त्रुटि",
+  he: "שגיאה"
+},
+accessErrorDescription: {
+  pl: "Nie udało się zatwierdzić prośby. Skontaktuj się z obsługą.",
+  en: "Failed to confirm request. Please contact support.",
+  de: "Anfrage konnte nicht bestätigt werden. Bitte wenden Sie sich an den Support.",
+  fr: "Impossible de confirmer la demande. Veuillez contacter le support.",
+  es: "No se pudo confirmar la solicitud. Contacta con soporte.",
+  ua: "Не вдалося підтвердити запит. Зверніться до підтримки.",
+  ru: "Не удалось подтвердить запрос. Свяжитесь с поддержкой.",
+  zh: "无法确认请求。请联系支持人员。",
+  ar: "تعذر تأكيد الطلب. يرجى الاتصال بالدعم.",
+  hi: "अनुरोध की पुष्टि नहीं हो सकी। कृपया सहायता से संपर्क करें।",
+  he: "לא ניתן לאשר את הבקשה. פנה לתמיכה."
+},
 };
 

@@ -385,21 +385,28 @@ const [patientEmailInput, setPatientEmailInput] = useState('');
 const [patientLoadStatus, setPatientLoadStatus] = useState<'idle' | 'loading' | 'notFound' | 'success'>('idle');
 
 const handleSearchPatient = async () => {
+  const doctorId = localStorage.getItem('currentUserID');
+  const email = patientEmailInput.trim().toLowerCase();
   setPatientLoadStatus('loading');
-  const { data: patient, error } = await supabase
-    .from('patients')
-    .select('*')
-    .eq('email', patientEmailInput.trim().toLowerCase())
-    .maybeSingle();
 
-  if (error || !patient) {
+  // 📨 Utwórz wpis w patient_access_requests
+  const { error: insertError } = await supabase
+    .from('patient_access_requests')
+    .insert({
+      doctor_id: doctorId,
+      patient_email: email,
+      status: 'pending'
+    });
+
+  if (insertError) {
+    console.error('❌ Błąd podczas tworzenia zgłoszenia:', insertError.message);
     setPatientLoadStatus('notFound');
     return;
   }
 
-  await loadPatientData(patient.user_id);
-  setPatientLoadStatus('success');
+ alert(tUI('accessRequestSent', lang));
 };
+
 const handleCreatePatient = async () => {
   setCreateStatus('creating');
 
