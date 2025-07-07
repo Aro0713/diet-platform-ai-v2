@@ -644,27 +644,30 @@ if (form.user_id && (!initialMedicalData || !initialInterviewData)) {
   </div>
 )}
 
-
       {/* Sekcja 7: Tabela z dietą */}
-      {editableDiet && Object.keys(editableDiet).length > 0 && (
-        <PanelCard>
-          <DietTable
-            editableDiet={editableDiet}
-            setEditableDiet={setEditableDiet}
-            setConfirmedDiet={(dietByDay) => {
-              const mealsWithDays = Object.entries(dietByDay).flatMap(([day, meals]) =>
-                meals.map((meal) => ({ ...meal, day }))
-              );
-              setConfirmedDiet(mealsWithDays);
-              setDietApproved(true);
-            }}
-            isEditable={!dietApproved}
-            lang={lang}
-            notes={notes}
-            setNotes={setNotes}
-          />
-        </PanelCard>
-      )}
+      {form.user_id &&
+        editableDiet &&
+        typeof editableDiet === 'object' &&
+        Object.keys(editableDiet).length > 0 && (
+          <PanelCard>
+            <DietTable
+              editableDiet={editableDiet}
+              setEditableDiet={setEditableDiet}
+              setConfirmedDiet={(dietByDay) => {
+                const mealsWithDays = Object.entries(dietByDay).flatMap(([day, meals]) =>
+                  meals.map((meal) => ({ ...meal, day }))
+                );
+                setConfirmedDiet(mealsWithDays);
+                setDietApproved(true);
+              }}
+              isEditable={!dietApproved}
+              lang={lang}
+              notes={notes}
+              setNotes={setNotes}
+            />
+          </PanelCard>
+        )}
+      )
     </div>
   </main>
 );
