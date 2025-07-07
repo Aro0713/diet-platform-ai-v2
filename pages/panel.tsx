@@ -356,6 +356,25 @@ const handleGenerateNarrative = async () => {
     alert('⚠️ Nie udało się połączyć z AI.');
   }
 };
+const [patientEmailInput, setPatientEmailInput] = useState('');
+const [patientLoadStatus, setPatientLoadStatus] = useState<'idle' | 'loading' | 'notFound' | 'success'>('idle');
+
+const handleSearchPatient = async () => {
+  setPatientLoadStatus('loading');
+  const { data: patient, error } = await supabase
+    .from('patients')
+    .select('*')
+    .eq('email', patientEmailInput.trim().toLowerCase())
+    .maybeSingle();
+
+  if (error || !patient) {
+    setPatientLoadStatus('notFound');
+    return;
+  }
+
+  await loadPatientData(patient.user_id);
+  setPatientLoadStatus('success');
+};
 
   return (
   <main className="relative min-h-screen
@@ -394,8 +413,32 @@ const handleGenerateNarrative = async () => {
 
       {/* Sekcja 1: Dane pacjenta */}
       <PanelCard>
-        <PatientPanelSection form={form} setForm={setForm} lang={lang} />
-      </PanelCard>
+  <div className="flex flex-col gap-4">
+    <label className="text-sm font-medium text-white">
+      Wprowadź e-mail pacjenta
+    </label>
+    <input
+      type="email"
+      value={patientEmailInput}
+      onChange={(e) => setPatientEmailInput(e.target.value)}
+      placeholder="adres@example.com"
+      className="rounded px-4 py-2 text-black w-full"
+    />
+    <button
+      onClick={handleSearchPatient}
+      className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+    >
+      🔍 Pobierz dane pacjenta
+    </button>
+
+    {patientLoadStatus === 'notFound' && (
+      <div className="text-yellow-400 mt-2">❌ Nie znaleziono pacjenta</div>
+    )}
+    {patientLoadStatus === 'success' && (
+      <div className="text-green-400 mt-2">✅ Dane pacjenta zostały załadowane</div>
+    )}
+  </div>
+</PanelCard>
 
       {/* Sekcja 2: Dane medyczne */}
       <PanelCard className="z-30">
