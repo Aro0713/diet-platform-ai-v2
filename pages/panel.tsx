@@ -433,44 +433,45 @@ if (form.user_id && (!initialMedicalData || !initialInterviewData)) {
           />
         </PanelCard>
       )}
-
-      {/* Sekcja 3.1: Rekomendacje i liczba posiłków */}
-      <PanelCard className="h-full">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="flex flex-col space-y-2">
-            <label className="text-sm font-medium text-black dark:text-white">
-              {tUI('doctorRecommendation', lang)}
-            </label>
-            <textarea
-              rows={4}
-              className="w-full border rounded px-3 py-2 text-sm text-gray-800 dark:text-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
-              value={interviewData.recommendation || ''}
-              onChange={(e) =>
-                setInterviewData({ ...interviewData, recommendation: e.target.value })
-              }
-            />
-          </div>
-          <div className="flex flex-col space-y-2">
-            <label className="text-sm font-medium text-black dark:text-white">
-              {tUI('mealsPerDay', lang)}
-            </label>
-            <select
-              className="w-full border rounded px-3 py-2 text-sm text-gray-800 dark:text-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
-              value={interviewData.mealsPerDay || ''}
-              onChange={(e) =>
-                setInterviewData({ ...interviewData, mealsPerDay: parseInt(e.target.value) })
-              }
-            >
-              <option value="">{`-- ${tUI('selectOption', lang)} --`}</option>
-              {[2, 3, 4, 5, 6].map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </PanelCard>
+{/* Sekcja 3.1: Rekomendacje i liczba posiłków */}
+{initialInterviewData && (
+  <PanelCard className="h-full">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="flex flex-col space-y-2">
+        <label className="text-sm font-medium text-black dark:text-white">
+          {tUI('doctorRecommendation', lang)}
+        </label>
+        <textarea
+          rows={4}
+          className="w-full border rounded px-3 py-2 text-sm text-gray-800 dark:text-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+          value={interviewData.recommendation || ''}
+          onChange={(e) =>
+            setInterviewData({ ...interviewData, recommendation: e.target.value })
+          }
+        />
+      </div>
+      <div className="flex flex-col space-y-2">
+        <label className="text-sm font-medium text-black dark:text-white">
+          {tUI('mealsPerDay', lang)}
+        </label>
+        <select
+          className="w-full border rounded px-3 py-2 text-sm text-gray-800 dark:text-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+          value={interviewData.mealsPerDay || ''}
+          onChange={(e) =>
+            setInterviewData({ ...interviewData, mealsPerDay: parseInt(e.target.value) })
+          }
+        >
+          <option value="">{`-- ${tUI('selectOption', lang)} --`}</option>
+          {[2, 3, 4, 5, 6].map((n) => (
+            <option key={n} value={n}>
+              {n}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+  </PanelCard>
+)}
 
       {/* Sekcja 4: Cel, model, kuchnia */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 items-start">
