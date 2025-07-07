@@ -42,27 +42,6 @@ import { useDoctorPatientData } from '@/hooks/useDoctorPatientData';
 import type { Meal } from '@/types';
 
 function Panel() {
-  const {
-    form,
-    setForm,
-    interviewData,
-    setInterviewData,
-    medicalData,
-    setMedicalData,
-    fetchPatientData,
-    saveMedicalData,
-    saveInterviewData,
-    initialMedicalData,
-    initialInterviewData,
-    editableDiet,
-    setEditableDiet
-  } = useDoctorPatientData();
-
-  // 🛡️ Zabezpieczenie: nie renderuj panelu dopóki dane nie są gotowe
-  if (form.user_id && (!initialMedicalData || !initialInterviewData)) {
-    return null;
-  }
-
   const [lang, setLang] = useState<LangKey>('pl');
   const [userData, setUserData] = useState<any>(null);
   const [mealPlan, setMealPlan] = useState<Record<string, Meal[]>>({});
@@ -85,6 +64,27 @@ function Panel() {
   const [history, setHistory] = useState<any[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const router = useRouter();
+
+  const {
+    form,
+    setForm,
+    interviewData,
+    setInterviewData,
+    medicalData,
+    setMedicalData,
+    fetchPatientData,
+    saveMedicalData,
+    saveInterviewData,
+    initialMedicalData,
+    initialInterviewData,
+    editableDiet,
+    setEditableDiet
+  } = useDoctorPatientData();
+
+  // 🛡️ Teraz już PO hookach — bezpieczny warunek
+  if (!form.user_id || !initialMedicalData || !initialInterviewData) {
+    return null;
+  }
 
   const t = (key: keyof typeof translationsUI): string => tUI(key, lang);
 
@@ -632,25 +632,23 @@ const handleGenerateNarrative = async () => {
 )}
 
       {/* Sekcja 7: Tabela z dietą */}
-      {editableDiet && typeof editableDiet === 'object' && Object.keys(editableDiet).length > 0 && (
-          <PanelCard>
-            <DietTable
-              editableDiet={editableDiet}
-              setEditableDiet={setEditableDiet}
-              setConfirmedDiet={(dietByDay) => {
-                const mealsWithDays = Object.entries(dietByDay).flatMap(([day, meals]) =>
-                  meals.map((meal) => ({ ...meal, day }))
-                );
-                setConfirmedDiet(mealsWithDays);
-                setDietApproved(true);
-              }}
-              isEditable={!dietApproved}
-              lang={lang}
-              notes={notes}
-              setNotes={setNotes}
-            />
-          </PanelCard>
-        )}
+       <PanelCard>
+          <DietTable
+            editableDiet={editableDiet}
+            setEditableDiet={setEditableDiet}
+            setConfirmedDiet={(dietByDay) => {
+              const mealsWithDays = Object.entries(dietByDay).flatMap(([day, meals]) =>
+                meals.map((meal) => ({ ...meal, day }))
+              );
+              setConfirmedDiet(mealsWithDays);
+              setDietApproved(true);
+            }}
+            isEditable={!dietApproved}
+            lang={lang}
+            notes={notes}
+            setNotes={setNotes}
+          />
+        </PanelCard>
     </div>
   </main>
 );
