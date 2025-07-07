@@ -34,7 +34,7 @@ const fetchPatientData = async () => {
   try {
     const { data, error } = await supabase
       .from('patients')
-      .select('*')
+      .select('*, user_id')
       .ilike('email', emailInput.trim())
       .maybeSingle();
 
@@ -46,26 +46,25 @@ const fetchPatientData = async () => {
 
     console.log('✅ Dane pacjenta z Supabase:', data);
 
-     setForm({
-       user_id: '',
-       name: data.name || '',
-       email: data.email || '',
-       phone: data.phone || '',
-       age: data.age || null,
-       sex: data.sex || '',
-       weight: data.weight || null,
-       height: data.height || null,
-       region: data.region || '',
-       allergies: data.allergies || '',
-       conditions: data.conditions || [],
-       medical: data.medical || [],
-       goal: data.goal || '',
-       cuisine: data.cuisine || '',
-       model: data.model || '',
-       
-     });
+    setForm({
+      user_id: data.user_id || '',
+      name: data.name || '',
+      email: data.email || '',
+      phone: data.phone || '',
+      age: data.age || null,
+      sex: data.sex || '',
+      weight: data.weight || null,
+      height: data.height || null,
+      region: data.region || '',
+      allergies: data.allergies || '',
+      conditions: data.conditions || [],
+      medical: data.medical || [],
+      goal: data.goal || '',
+      cuisine: data.cuisine || '',
+      model: data.model || '',
+    });
 
-    // Dane medyczne (jeśli przekazujesz funkcję setMedicalData jako globalny callback lub hook)
+    // Dane medyczne
     if (typeof window !== 'undefined' && (window as any).setMedicalDataFromPanel) {
       (window as any).setMedicalDataFromPanel({
         summary: data.health_status || '',
@@ -73,7 +72,7 @@ const fetchPatientData = async () => {
       });
     }
 
-    // Dane z wywiadu (jeśli masz globalny setInterviewData)
+    // Dane z wywiadu
     if (typeof window !== 'undefined' && (window as any).setInterviewDataFromPanel) {
       (window as any).setInterviewDataFromPanel(data.interview_data || {});
     }
@@ -84,7 +83,6 @@ const fetchPatientData = async () => {
     setStatus('Błąd po stronie klienta.');
   }
 };
-
 
   const createPatientAccount = async () => {
     setStatus(tUI('sendingInvitation', lang));

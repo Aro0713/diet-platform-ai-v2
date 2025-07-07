@@ -111,13 +111,6 @@ function Panel() {
   }, []);
 
   useEffect(() => {
-  if (form?.user_id) {
-    fetchPatientData();
-  }
-}, [form?.user_id]);
-
-
-  useEffect(() => {
     console.log('📘 Opis wywiadu zapisany:', interviewNarrative);
   }, [interviewNarrative]);
   useEffect(() => {
