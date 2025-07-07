@@ -57,17 +57,11 @@ function Panel() {
     editableDiet,
     setEditableDiet
   } = useDoctorPatientData();
-  // 🛡️ Blokada renderowania formularzy zanim dane się załadują
-if (form.user_id && (!initialMedicalData || !initialInterviewData)) {
-  return (
-    <main className="min-h-screen flex items-center justify-center text-white text-lg">
-      ⏳ Oczekiwanie na wybór pacjenta...
-    </main>
-  );
-}
 
-  console.log('🩺 initialMedicalData:', initialMedicalData);
-  console.log('🧠 initialInterviewData:', initialInterviewData);
+  // 🛡️ Zabezpieczenie: nie renderuj panelu dopóki dane nie są gotowe
+  if (form.user_id && (!initialMedicalData || !initialInterviewData)) {
+    return null;
+  }
 
   const [lang, setLang] = useState<LangKey>('pl');
   const [userData, setUserData] = useState<any>(null);
@@ -361,7 +355,10 @@ const handleGenerateNarrative = async () => {
     alert('⚠️ Nie udało się połączyć z AI.');
   }
 };
-
+// 🛡️ Zabezpieczenie przed przedwczesnym renderowaniem
+if (form.user_id && (!initialMedicalData || !initialInterviewData)) {
+  return null;
+}
 
   return (
   <main className="relative min-h-screen
