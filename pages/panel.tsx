@@ -272,6 +272,12 @@ const {
 
     if (parsed.dietPlan && typeof parsed.dietPlan === 'object') {
   const transformed = transformDietPlanToEditableFormat(parsed.dietPlan, lang);
+
+  if (Object.keys(transformed).length === 0) {
+    console.warn('⚠️ Brak danych w dietPlan – nie zapisano.');
+    return;
+  }
+
   setMealPlan(transformed);
   setDiet(transformed);
   setEditableDiet(transformed);
@@ -279,8 +285,7 @@ const {
   return;
 }
 
-
-    if (parsed.weekPlan && Array.isArray(parsed.weekPlan)) {
+if (parsed.weekPlan && Array.isArray(parsed.weekPlan)) {
   const converted: Record<string, Meal[]> = {};
   for (const { day, meals } of parsed.weekPlan) {
     converted[mapDaysToPolish[day] || day] = meals.map((meal: any) => ({
@@ -292,12 +297,19 @@ const {
       time: meal.time || ''
     }));
   }
+
+  if (Object.keys(converted).length === 0) {
+    console.warn('⚠️ Brak danych do zapisania w saveDietPlan – weekPlan był pusty.');
+    return;
+  }
+
   setMealPlan(converted);
   setDiet(converted);
   setEditableDiet(converted);
   await saveDietPlan(converted);
   return;
 }
+
 
     if (parsed.mealPlan && Array.isArray(parsed.mealPlan)) {
   const converted: Record<string, Meal[]> = {};
@@ -312,6 +324,11 @@ const {
       time: m.time || ''
     }));
   }
+  if (Object.keys(converted).length === 0) {
+    console.warn('⚠️ Brak danych do zapisania w saveDietPlan – weekPlan był pusty.');
+    return;
+  }
+
   setMealPlan(converted);
   setDiet(converted);
   setEditableDiet(converted);
