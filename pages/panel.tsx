@@ -57,6 +57,8 @@ function Panel() {
     editableDiet,
     setEditableDiet
   } = useDoctorPatientData();
+  console.log('🩺 initialMedicalData:', initialMedicalData);
+  console.log('🧠 initialInterviewData:', initialInterviewData);
 
   const [lang, setLang] = useState<LangKey>('pl');
   const [userData, setUserData] = useState<any>(null);
