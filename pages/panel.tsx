@@ -667,7 +667,6 @@ if (form.user_id && (!initialMedicalData || !initialInterviewData)) {
             />
           </PanelCard>
         )}
-      )
     </div>
   </main>
 );
