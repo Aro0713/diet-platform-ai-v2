@@ -495,6 +495,7 @@ if (form.user_id && (!initialMedicalData || !initialInterviewData)) {
       </div>
 
       {/* Sekcja 5: Kalkulator */}
+      {initialInterviewData && (
       <PanelCard title={`🧮 ${tUI('patientInNumbers', lang)}`} className="h-full">
         <CalculationBlock
           form={form}
@@ -503,6 +504,8 @@ if (form.user_id && (!initialMedicalData || !initialInterviewData)) {
           onResult={handleCalculationResult}
         />
       </PanelCard>
+    )}
+
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
   {/* 🔵 Generuj dietę */}
