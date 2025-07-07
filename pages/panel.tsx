@@ -355,10 +355,6 @@ const handleGenerateNarrative = async () => {
     alert('⚠️ Nie udało się połączyć z AI.');
   }
 };
-// 🛡️ Zabezpieczenie przed przedwczesnym renderowaniem
-if (form.user_id && (!initialMedicalData || !initialInterviewData)) {
-  return null;
-}
 
   return (
   <main className="relative min-h-screen
@@ -401,28 +397,20 @@ if (form.user_id && (!initialMedicalData || !initialInterviewData)) {
       </PanelCard>
 
       {/* Sekcja 2: Dane medyczne */}
-      {initialMedicalData && (
-        <PanelCard className="z-30">
+      <PanelCard className="z-30">
           <MedicalForm
             key={JSON.stringify(initialMedicalData)}
             initialData={initialMedicalData}
             existingMedical={medicalData}
             onChange={handleMedicalChange}
-            onUpdateMedical={(summary) => {
-              setMedicalData((prev: any) => ({
-                ...prev,
-                summary
-              }));
-            }}
+            onUpdateMedical={(summary) => setMedicalData((prev: any) => ({ ...prev, summary }))}
             userId={form.user_id}
             lang={lang}
           />
         </PanelCard>
-      )}
 
       {/* Sekcja 3: Wywiad pacjenta */}
-      {initialInterviewData && (
-        <PanelCard title={`🧠 ${tUI('interviewTitle', lang)}`}>
+              <PanelCard title={`🧠 ${tUI('interviewTitle', lang)}`}>
           <InterviewWizard
             key={JSON.stringify(initialInterviewData)}
             form={form}
@@ -432,9 +420,9 @@ if (form.user_id && (!initialMedicalData || !initialInterviewData)) {
             onUpdateNarrative={(text) => setNarrativeText(text)}
           />
         </PanelCard>
-      )}
+  
 {/* Sekcja 3.1: Rekomendacje i liczba posiłków */}
-{initialInterviewData && (
+
   <PanelCard className="h-full">
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div className="flex flex-col space-y-2">
@@ -471,10 +459,10 @@ if (form.user_id && (!initialMedicalData || !initialInterviewData)) {
       </div>
     </div>
   </PanelCard>
-)}
+
 
           {/* Sekcja 4: Cel, model, kuchnia */}
-    {initialInterviewData && (
+    
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 items-start">
         <PanelCard className="h-full">
           <DietGoalForm
@@ -495,10 +483,10 @@ if (form.user_id && (!initialMedicalData || !initialInterviewData)) {
           />
         </PanelCard>
       </div>
-    )}
+
 
     {/* Sekcja 5: Kalkulator */}
-    {initialInterviewData && (
+    
       <PanelCard title={`🧮 ${tUI('patientInNumbers', lang)}`} className="h-full">
         <CalculationBlock
           form={form}
@@ -507,8 +495,7 @@ if (form.user_id && (!initialMedicalData || !initialInterviewData)) {
           onResult={handleCalculationResult}
         />
       </PanelCard>
-    )}
-
+    
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
   {/* 🔵 Generuj dietę */}
@@ -645,10 +632,7 @@ if (form.user_id && (!initialMedicalData || !initialInterviewData)) {
 )}
 
       {/* Sekcja 7: Tabela z dietą */}
-      {form.user_id &&
-        editableDiet &&
-        typeof editableDiet === 'object' &&
-        Object.keys(editableDiet).length > 0 && (
+      {editableDiet && typeof editableDiet === 'object' && Object.keys(editableDiet).length > 0 && (
           <PanelCard>
             <DietTable
               editableDiet={editableDiet}
