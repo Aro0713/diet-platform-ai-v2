@@ -58,7 +58,7 @@ function Panel() {
     setEditableDiet
   } = useDoctorPatientData();
   // 🛡️ Blokada renderowania formularzy zanim dane się załadują
-if (!initialMedicalData || !initialInterviewData) {
+if (form.user_id && (!initialMedicalData || !initialInterviewData)) {
   return (
     <main className="min-h-screen flex items-center justify-center text-white text-lg">
       ⏳ Oczekiwanie na wybór pacjenta...
