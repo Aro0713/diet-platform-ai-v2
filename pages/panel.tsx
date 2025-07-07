@@ -494,28 +494,29 @@ const handleCreatePatient = async () => {
       {/* Sekcja 1: Dane pacjenta */}
           <PanelCard>
             <div className="flex flex-col gap-4">
-              <label className="text-sm font-medium text-white">Dane pacjenta</label>
+              <label className="text-sm font-medium text-black dark:text-white">Dane pacjenta</label>
 
               {/* 🔘 Wybór trybu */}
               <div className="flex gap-6">
-                <label className="text-sm text-white">
+                <label className="text-sm text-black dark:text-white">
                   <input
                     type="radio"
                     value="existing"
                     checked={patientOption === 'existing'}
                     onChange={() => setPatientOption('existing')}
                     className="mr-2"
-                  /> Pacjent ma konto
+                  />
+                  Pacjent ma konto
                 </label>
-
-                <label className="text-sm text-white">
+                <label className="text-sm text-black dark:text-white">
                   <input
                     type="radio"
                     value="new"
                     checked={patientOption === 'new'}
                     onChange={() => setPatientOption('new')}
                     className="mr-2"
-                  /> Załóż konto pacjentowi
+                  />
+                  Załóż konto pacjentowi
                 </label>
               </div>
 
@@ -541,158 +542,156 @@ const handleCreatePatient = async () => {
                   )}
 
                   {patientLoadStatus === 'success' && (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <input
-                  type="text"
-                  value={form.name || ''}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="Imię i nazwisko"
-                  className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white"
-                />
-                <input
-                  type="email"
-                  value={form.email || ''}
-                  disabled
-                  className="rounded px-3 py-2 bg-gray-200 text-black dark:bg-gray-700 dark:text-white cursor-not-allowed"
-                />
-                <input
-                  type="tel"
-                  value={form.phone || ''}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  placeholder="Telefon"
-                  className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white"
-                />
-                <select
-                  value={form.sex || ''}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (value === 'male' || value === 'female') {
-                      setForm({ ...form, sex: value });
-                    }
-                  }}
-                  className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white"
-                >
-                  <option value="">-- Wybierz płeć --</option>
-                  <option value="male">Mężczyzna</option>
-                  <option value="female">Kobieta</option>
-                </select>
-                <input
-                  type="number"
-                  value={form.age || ''}
-                  onChange={(e) => setForm({ ...form, age: Number(e.target.value) })}
-                  placeholder="Wiek"
-                  className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white"
-                />
-                <input
-                  type="number"
-                  value={form.height || ''}
-                  onChange={(e) => setForm({ ...form, height: Number(e.target.value) })}
-                  placeholder="Wzrost (cm)"
-                  className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white"
-                />
-                <input
-                  type="number"
-                  value={form.weight || ''}
-                  onChange={(e) => setForm({ ...form, weight: Number(e.target.value) })}
-                  placeholder="Waga (kg)"
-                  className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white"
-                />
-                <select
-                  value={form.region || ''}
-                  onChange={(e) => setForm({ ...form, region: e.target.value })}
-                  className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white"
-                >
-                  <option value="">-- Wybierz region --</option>
-                  <option value="Europa">Europa</option>
-                  <option value="Ameryka Północna">Ameryka Północna</option>
-                  <option value="Ameryka Południowa">Ameryka Południowa</option>
-                  <option value="Azja">Azja</option>
-                  <option value="Afryka">Afryka</option>
-                  <option value="Australia">Australia</option>
-                </select>
-              </div>
+                    <>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <input
+                          type="text"
+                          value={form.name || ''}
+                          onChange={(e) => setForm({ ...form, name: e.target.value })}
+                          placeholder="Imię i nazwisko"
+                          className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white"
+                        />
+                        <input
+                          type="email"
+                          value={form.email || ''}
+                          disabled
+                          className="rounded px-3 py-2 bg-gray-200 text-black dark:bg-gray-700 dark:text-white cursor-not-allowed"
+                        />
+                        <input
+                          type="tel"
+                          value={form.phone || ''}
+                          onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                          placeholder="Telefon"
+                          className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white"
+                        />
+                        <select
+                          value={form.sex || ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === 'male' || val === 'female') {
+                              setForm({ ...form, sex: val as 'male' | 'female' });
+                            }
+                          }}
+                          className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white"
+                        >
+                          <option value="">-- Wybierz płeć --</option>
+                          <option value="male">Mężczyzna</option>
+                          <option value="female">Kobieta</option>
+                        </select>
+                        <input
+                          type="number"
+                          value={form.age || ''}
+                          onChange={(e) => setForm({ ...form, age: Number(e.target.value) })}
+                          placeholder="Wiek"
+                          className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white"
+                        />
+                        <input
+                          type="number"
+                          value={form.height || ''}
+                          onChange={(e) => setForm({ ...form, height: Number(e.target.value) })}
+                          placeholder="Wzrost (cm)"
+                          className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white"
+                        />
+                        <input
+                          type="number"
+                          value={form.weight || ''}
+                          onChange={(e) => setForm({ ...form, weight: Number(e.target.value) })}
+                          placeholder="Waga (kg)"
+                          className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white"
+                        />
+                        <select
+                          value={form.region || ''}
+                          onChange={(e) => setForm({ ...form, region: e.target.value })}
+                          className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white"
+                        >
+                          <option value="">-- Wybierz region --</option>
+                          <option value="Europa">Europa</option>
+                          <option value="Ameryka Północna">Ameryka Północna</option>
+                          <option value="Ameryka Południowa">Ameryka Południowa</option>
+                          <option value="Azja">Azja</option>
+                          <option value="Afryka">Afryka</option>
+                          <option value="Australia">Australia</option>
+                        </select>
+                      </div>
 
-              <button
-                onClick={async () => {
-                  const { error } = await supabase
-                    .from('patients')
-                    .update({
-                      name: form.name,
-                      phone: form.phone,
-                      sex: form.sex,
-                      age: form.age,
-                      height: form.height,
-                      weight: form.weight,
-                      region: form.region
-                    })
-                    .eq('user_id', form.user_id);
+                      <button
+                        onClick={async () => {
+                          const { error } = await supabase
+                            .from('patients')
+                            .update({
+                              name: form.name,
+                              phone: form.phone,
+                              sex: form.sex,
+                              age: form.age,
+                              height: form.height,
+                              weight: form.weight,
+                              region: form.region
+                            })
+                            .eq('user_id', form.user_id);
 
-                  if (!error) {
-                    alert('✅ Dane pacjenta zostały zapisane');
-                  } else {
-                    alert('❌ Błąd przy zapisie danych pacjenta: ' + error.message);
-                  }
-                }}
-                className="mt-4 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded"
-              >
-                💾 Zapisz dane pacjenta
-              </button>
-            </>
-          )}
+                          if (!error) {
+                            alert('✅ Dane pacjenta zostały zapisane');
+                          } else {
+                            alert('❌ Błąd przy zapisie danych pacjenta: ' + error.message);
+                          }
+                        }}
+                        className="mt-4 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded"
+                      >
+                        💾 Zapisz dane pacjenta
+                      </button>
+                    </>
+                  )}
+                </>
+              )}
 
-      </>
-    )}
+              {/* 🆕 Nowy pacjent */}
+              {patientOption === 'new' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <input
+                    type="text"
+                    placeholder="Imię i nazwisko"
+                    className="rounded px-3 py-2 text-black"
+                    value={newPatientForm.name}
+                    onChange={(e) => setNewPatientForm({ ...newPatientForm, name: e.target.value })}
+                  />
+                  <input
+                    type="email"
+                    placeholder="E-mail pacjenta"
+                    className="rounded px-3 py-2 text-black"
+                    value={newPatientForm.email}
+                    onChange={(e) => setNewPatientForm({ ...newPatientForm, email: e.target.value })}
+                  />
+                  <input
+                    type="tel"
+                    placeholder="Telefon"
+                    className="rounded px-3 py-2 text-black"
+                    value={newPatientForm.phone}
+                    onChange={(e) => setNewPatientForm({ ...newPatientForm, phone: e.target.value })}
+                  />
+                  <input
+                    type="password"
+                    placeholder="Hasło tymczasowe"
+                    className="rounded px-3 py-2 text-black"
+                    value={newPatientForm.password}
+                    onChange={(e) => setNewPatientForm({ ...newPatientForm, password: e.target.value })}
+                  />
+                  <button
+                    onClick={handleCreatePatient}
+                    className="col-span-2 mt-2 bg-green-700 hover:bg-green-800 text-white py-2 rounded"
+                  >
+                    ➕ Zarejestruj pacjenta
+                  </button>
 
-    {/* 🆕 Nowy pacjent */}
-    {patientOption === 'new' && (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-        <input
-          type="text"
-          placeholder="Imię i nazwisko"
-          className="rounded px-3 py-2 text-black"
-          value={newPatientForm.name}
-          onChange={(e) => setNewPatientForm({ ...newPatientForm, name: e.target.value })}
-        />
-        <input
-          type="email"
-          placeholder="E-mail pacjenta"
-          className="rounded px-3 py-2 text-black"
-          value={newPatientForm.email}
-          onChange={(e) => setNewPatientForm({ ...newPatientForm, email: e.target.value })}
-        />
-        <input
-          type="tel"
-          placeholder="Telefon"
-          className="rounded px-3 py-2 text-black"
-          value={newPatientForm.phone}
-          onChange={(e) => setNewPatientForm({ ...newPatientForm, phone: e.target.value })}
-        />
-        <input
-          type="password"
-          placeholder="Hasło tymczasowe"
-          className="rounded px-3 py-2 text-black"
-          value={newPatientForm.password}
-          onChange={(e) => setNewPatientForm({ ...newPatientForm, password: e.target.value })}
-        />
-        <button
-          onClick={handleCreatePatient}
-          className="col-span-2 mt-2 bg-green-700 hover:bg-green-800 text-white py-2 rounded"
-        >
-          ➕ Zarejestruj pacjenta
-        </button>
-
-        {createStatus === 'success' && (
-          <div className="text-green-400 col-span-2">✅ Konto pacjenta zostało utworzone</div>
-        )}
-        {createStatus === 'error' && (
-          <div className="text-red-400 col-span-2">❌ Wystąpił błąd przy tworzeniu konta pacjenta</div>
-        )}
-      </div>
-    )}
-  </div>
-</PanelCard>
-
+                  {createStatus === 'success' && (
+                    <div className="text-green-400 col-span-2">✅ Konto pacjenta zostało utworzone</div>
+                  )}
+                  {createStatus === 'error' && (
+                    <div className="text-red-400 col-span-2">❌ Wystąpił błąd przy tworzeniu konta pacjenta</div>
+                  )}
+                </div>
+              )}
+            </div>
+          </PanelCard>
 
       {/* Sekcja 2: Dane medyczne */}
       <PanelCard className="z-30">
