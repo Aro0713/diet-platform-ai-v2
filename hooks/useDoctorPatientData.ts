@@ -27,13 +27,6 @@ export function useDoctorPatientData(): UseDoctorPatientDataResult {
   const [initialInterviewData, setInitialInterviewData] = useState<any>(undefined);
   const [editableDiet, setEditableDiet] = useState<any>({});
 
-  useEffect(() => {
-    const userId = localStorage.getItem('currentUserID');
-    if (userId && !form?.user_id) {
-      setForm((prev) => ({ ...prev, user_id: userId }));
-    }
-  }, [form?.user_id]);
-
  const fetchPatientData = async () => {
   console.log('📥 [HOOK] Wywołano fetchPatientData');
 
