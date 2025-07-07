@@ -35,8 +35,9 @@ import { tUI } from '@/utils/i18n';
 import { translationsUI } from '@/utils/translationsUI';
 import type { LangKey } from '@/utils/i18n';
 
-// 🩺 Hook danych pacjenta
-import { useDoctorPatientData } from '@/hooks/useDoctorPatientData';
+import { usePatientFetchData } from '@/hooks/usePatientFetchData';
+import { usePatientSubmitData } from '@/hooks/usePatientSubmitData';
+
 
 // 📊 Typy
 import type { Meal } from '@/types';
@@ -65,21 +66,23 @@ function Panel() {
   const [showHistory, setShowHistory] = useState(false);
   const router = useRouter();
 
-  const {
-    form,
-    setForm,
-    interviewData,
-    setInterviewData,
-    medicalData,
-    setMedicalData,
-    fetchPatientData,
-    saveMedicalData,
-    saveInterviewData,
-    initialMedicalData,
-    initialInterviewData,
-    editableDiet,
-    setEditableDiet
-  } = useDoctorPatientData();
+ const {
+  form, setForm,
+  interviewData, setInterviewData,
+  medicalData, setMedicalData,
+  loadPatientData,
+  initialMedicalData,
+  initialInterviewData,
+  editableDiet,
+  setEditableDiet
+} = usePatientFetchData();
+
+const {
+  saveMedicalData,
+  saveInterviewData,
+  saveDietPlan
+} = usePatientSubmitData(form);
+
 
   useEffect(() => {
   console.log("📊 form.user_id:", form?.user_id);
@@ -108,15 +111,6 @@ function Panel() {
       document.documentElement.classList.remove('dark');
     }
   }, []);
-
- useEffect(() => {
-  const storedUserId = localStorage.getItem('currentUserID');
-  if (storedUserId && !form.user_id) {
-    console.log("💾 Ustawiam user_id z localStorage:", storedUserId);
-    setForm((prev) => ({ ...prev, user_id: storedUserId }));
-  }
-}, [form.user_id]);
-
 
   useEffect(() => {
     console.log('📘 Opis wywiadu zapisany:', interviewNarrative);
@@ -269,49 +263,53 @@ function Panel() {
     };
 
     if (parsed.dietPlan && typeof parsed.dietPlan === 'object') {
-      const transformed = transformDietPlanToEditableFormat(parsed.dietPlan, lang);
-      setMealPlan(transformed);
-      setDiet(transformed);
-      setEditableDiet(transformed);
-      return;
-    }
+  const transformed = transformDietPlanToEditableFormat(parsed.dietPlan, lang);
+  setMealPlan(transformed);
+  setDiet(transformed);
+  setEditableDiet(transformed);
+  await saveDietPlan(transformed);
+  return;
+}
+
 
     if (parsed.weekPlan && Array.isArray(parsed.weekPlan)) {
-      const converted: Record<string, Meal[]> = {};
-      for (const { day, meals } of parsed.weekPlan) {
-        converted[mapDaysToPolish[day] || day] = meals.map((meal: any) => ({
-          name: meal.name || '',
-          description: meal.menu || '',
-          ingredients: Array.isArray(meal.ingredients) ? meal.ingredients : [],
-          calories: meal.kcal || 0,
-          glycemicIndex: meal.glycemicIndex || 0,
-          time: meal.time || ''
-        }));
-      }
-      setMealPlan(converted);
-      setDiet(converted);
-      setEditableDiet(converted);
-      return;
-    }
+  const converted: Record<string, Meal[]> = {};
+  for (const { day, meals } of parsed.weekPlan) {
+    converted[mapDaysToPolish[day] || day] = meals.map((meal: any) => ({
+      name: meal.name || '',
+      description: meal.menu || '',
+      ingredients: Array.isArray(meal.ingredients) ? meal.ingredients : [],
+      calories: meal.kcal || 0,
+      glycemicIndex: meal.glycemicIndex || 0,
+      time: meal.time || ''
+    }));
+  }
+  setMealPlan(converted);
+  setDiet(converted);
+  setEditableDiet(converted);
+  await saveDietPlan(converted);
+  return;
+}
 
     if (parsed.mealPlan && Array.isArray(parsed.mealPlan)) {
-      const converted: Record<string, Meal[]> = {};
-      for (const entry of parsed.mealPlan) {
-        const { day, meals } = entry;
-        converted[mapDaysToPolish[day] || day] = meals.map((m: any) => ({
-          name: m.name || '',
-          description: m.description || '',
-          ingredients: [],
-          calories: m.kcal || 0,
-          glycemicIndex: m.glycemicIndex || 0,
-          time: m.time || ''
-        }));
-      }
-      setMealPlan(converted);
-      setDiet(converted);
-      setEditableDiet(converted);
-      return;
-    }
+  const converted: Record<string, Meal[]> = {};
+  for (const entry of parsed.mealPlan) {
+    const { day, meals } = entry;
+    converted[mapDaysToPolish[day] || day] = meals.map((m: any) => ({
+      name: m.name || '',
+      description: m.description || '',
+      ingredients: [],
+      calories: m.kcal || 0,
+      glycemicIndex: m.glycemicIndex || 0,
+      time: m.time || ''
+    }));
+  }
+  setMealPlan(converted);
+  setDiet(converted);
+  setEditableDiet(converted);
+  await saveDietPlan(converted); 
+  return;
+}
 
     throw new Error('Brak poprawnego planu posiłków.');
   } catch (err) {
