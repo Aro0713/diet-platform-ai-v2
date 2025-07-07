@@ -404,34 +404,38 @@ const handleGenerateNarrative = async () => {
       </PanelCard>
 
       {/* Sekcja 2: Dane medyczne */}
-      <PanelCard className="z-30">
-      <MedicalForm
-        key={JSON.stringify(initialMedicalData || {})}
-        initialData={initialMedicalData || {}}
-        existingMedical={medicalData}
-        onChange={handleMedicalChange}
-        onUpdateMedical={(summary) => {
-          setMedicalData((prev: any) => ({
-            ...prev,
-            summary
-          }));
-        }}
-        userId={form.user_id} // ✅ to jest kluczowe
-        lang={lang}
-      />
-      </PanelCard>
+      {initialMedicalData && (
+        <PanelCard className="z-30">
+          <MedicalForm
+            key={JSON.stringify(initialMedicalData)}
+            initialData={initialMedicalData}
+            existingMedical={medicalData}
+            onChange={handleMedicalChange}
+            onUpdateMedical={(summary) => {
+              setMedicalData((prev: any) => ({
+                ...prev,
+                summary
+              }));
+            }}
+            userId={form.user_id}
+            lang={lang}
+          />
+        </PanelCard>
+      )}
 
       {/* Sekcja 3: Wywiad pacjenta */}
-      <PanelCard title={`🧠 ${tUI('interviewTitle', lang)}`}>
-        <InterviewWizard
-        key={JSON.stringify(initialInterviewData || {})}
-        form={form}
-        initialData={initialInterviewData}
-        lang={lang}
-        onFinish={saveInterviewData}
-        onUpdateNarrative={(text) => setNarrativeText(text)}
-      />
-      </PanelCard>
+      {initialInterviewData && (
+        <PanelCard title={`🧠 ${tUI('interviewTitle', lang)}`}>
+          <InterviewWizard
+            key={JSON.stringify(initialInterviewData)}
+            form={form}
+            initialData={initialInterviewData}
+            lang={lang}
+            onFinish={saveInterviewData}
+            onUpdateNarrative={(text) => setNarrativeText(text)}
+          />
+        </PanelCard>
+      )}
 
       {/* Sekcja 3.1: Rekomendacje i liczba posiłków */}
       <PanelCard className="h-full">
