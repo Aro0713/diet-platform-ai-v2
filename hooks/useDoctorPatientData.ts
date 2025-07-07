@@ -33,26 +33,32 @@ export function useDoctorPatientData(): UseDoctorPatientDataResult {
     }
   }, [form?.user_id]);
 
-  const fetchPatientData = async () => {
-    const userId = form?.user_id;
-    if (!userId) {
-      console.warn('❌ Brak user_id w form – nie można pobrać danych pacjenta');
-      return;
-    }
+ const fetchPatientData = async () => {
+  console.log('📥 [HOOK] Wywołano fetchPatientData');
 
-    const { data, error } = await supabase
-      .from('patients')
-      .select('*, interview_data, medical_data, health_status')
-      .eq('user_id', userId)
-      .maybeSingle();
+  const userId = form?.user_id;
+  if (!userId) {
+    console.warn('❌ Brak user_id w form – nie można pobrać danych pacjenta');
+    return;
+  }
 
-    if (error) {
-      console.error('❌ Błąd pobierania danych pacjenta:', error.message);
-      return;
-    }
+  const { data, error } = await supabase
+    .from('patients')
+    .select('*, interview_data, medical_data, health_status')
+    .eq('user_id', userId)
+    .maybeSingle();
 
-    if (data) {
-      const parsedMedical = Array.isArray(data.medical) ? data.medical : [];
+  console.log('📦 Otrzymane dane z Supabase:', data);
+
+  if (error) {
+    console.error('❌ Błąd pobierania danych pacjenta:', error.message);
+    return;
+  }
+
+  if (data) {
+    console.log('✅ Dane są dostępne – ustawiamy initialMedicalData i interviewData');
+    const parsedMedical = Array.isArray(data.medical) ? data.medical : [];
+
 
       setForm((prev) => ({
         ...prev,
