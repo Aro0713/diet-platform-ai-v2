@@ -264,7 +264,7 @@ const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
   }
 
   const userId = data.user.id;
-  localStorage.setItem('currentUserID', userId);
+  
 
   // ✅ najpierw próbujemy z tabeli users
   const { data: userData, error: userError } = await supabase
@@ -307,7 +307,7 @@ const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     if (error) return alert(tUI('passwordResetError') + ': ' + error.message);
    alert(tUI('passwordResetSent'));
   };
-  
+
 console.log({
   lang,
   disclaimer,
