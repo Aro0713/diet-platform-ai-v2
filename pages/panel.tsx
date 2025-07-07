@@ -420,13 +420,13 @@ const handleGenerateNarrative = async () => {
       {/* Sekcja 3: Wywiad pacjenta */}
       <PanelCard title={`🧠 ${tUI('interviewTitle', lang)}`}>
         <InterviewWizard
-          key={JSON.stringify(interviewData || {})}
-          form={form}
-          initialData={interviewData}
-          lang={lang}
-          onFinish={saveInterviewData}
-          onUpdateNarrative={(text) => setNarrativeText(text)}
-        />
+        key={JSON.stringify(initialInterviewData || {})}
+        form={form}
+        initialData={initialInterviewData}
+        lang={lang}
+        onFinish={saveInterviewData}
+        onUpdateNarrative={(text) => setNarrativeText(text)}
+      />
       </PanelCard>
 
       {/* Sekcja 3.1: Rekomendacje i liczba posiłków */}

@@ -69,9 +69,12 @@ export function useDoctorPatientData(): UseDoctorPatientDataResult {
       setInterviewData(data.interview_data || {});
 
       const freshInitial = buildInitialDataFromSupabase(data);
-      setInitialMedicalData(JSON.parse(JSON.stringify(freshInitial)));
+      const clonedMedical = JSON.parse(JSON.stringify(freshInitial));
+      console.log('✅ initialMedicalData z Supabase:', clonedMedical);
+      setInitialMedicalData(clonedMedical);
 
       const clonedInterview = JSON.parse(JSON.stringify(data.interview_data || {}));
+      console.log('✅ initialInterviewData z Supabase:', clonedInterview);
       setInitialInterviewData(clonedInterview);
 
       const { data: draft } = await supabase
