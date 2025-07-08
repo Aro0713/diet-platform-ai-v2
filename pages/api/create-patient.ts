@@ -1,23 +1,25 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 
-// 🔍 LOG środowiska – nie usuwaj
-console.log('🔐 INIT create-patient.ts', {
-  SUPABASE_URL: !!process.env.SUPABASE_URL,
-  SERVICE_ROLE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY
-});
-
-if (!process.env.SUPABASE_SERVICE_ROLE_KEY || !process.env.SUPABASE_URL) {
-  throw new Error('❌ Brak SUPABASE_SERVICE_ROLE_KEY lub SUPABASE_URL w .env lub Vercel');
-}
-
-const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   console.log('📥 [API] POST /api/create-patient INIT');
+
+  // ✅ Zmienne środowiskowe – bezpieczne pobranie i log
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  console.log('🔐 ENV check:', {
+    SUPABASE_URL: !!supabaseUrl,
+    SERVICE_ROLE_KEY: !!serviceRoleKey,
+  });
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    console.error('❌ Brak SUPABASE_SERVICE_ROLE_KEY lub SUPABASE_URL w .env lub Vercel');
+    return res.status(500).json({ error: 'Brak SUPABASE_SERVICE_ROLE_KEY lub SUPABASE_URL' });
+  }
+
+  // ✅ Utwórz klienta dopiero wewnątrz handlera
+  const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
   if (req.method !== 'POST') {
     console.warn('⛔ Method not allowed:', req.method);

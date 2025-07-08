@@ -458,14 +458,14 @@ const handleCreatePatient = async () => {
       body: JSON.stringify({ email, password, name, phone, lang })
     });
 
-    // 🛡️ Awaryjny fallback — jeśli nie ma JSON
-    let json: any = null;
+    const text = await res.text(); // <-- czytaj jako tekst
+    let json;
+
     try {
-      const text = await res.text();
-      json = text ? JSON.parse(text) : {};
-    } catch (err) {
-      console.error('❌ Błąd parsowania JSON:', err);
-      alert('❌ Błąd serwera: odpowiedź nie była poprawnym JSON-em');
+      json = text ? JSON.parse(text) : null;
+    } catch (e) {
+      console.error('❌ Odpowiedź z backendu nie była poprawnym JSON-em:', e);
+      alert('❌ Błąd tworzenia konta: Odpowiedź nie była poprawnym JSON-em');
       setCreateStatus('error');
       return;
     }
@@ -481,7 +481,7 @@ const handleCreatePatient = async () => {
     }
   } catch (err) {
     console.error('❌ Wyjątek sieciowy przy tworzeniu pacjenta:', err);
-    alert('❌ Błąd sieci lub połączenia z serwerem');
+    alert('❌ Błąd połączenia z serwerem.');
     setCreateStatus('error');
   }
 };
