@@ -404,12 +404,17 @@ const handleSearchPatient = async () => {
   const email = patientEmailInput.trim().toLowerCase();
 
   if (!email.includes('@')) {
-    alert('📛 Wprowadź poprawny e-mail pacjenta.');
+    alert('📛 Wprowadź poprawny adres e-mail pacjenta.');
     setPatientLoadStatus('notFound');
     return;
   }
 
-  const { data: { user }, error } = await supabase.auth.getUser();
+  // 🔐 Pobierz aktualnego użytkownika (lekarza/dietetyka)
+  const {
+    data: { user },
+    error
+  } = await supabase.auth.getUser();
+
   if (error || !user?.id) {
     console.error("❌ Nie udało się pobrać użytkownika (auth.uid())", error?.message);
     setPatientLoadStatus('notFound');
@@ -418,6 +423,7 @@ const handleSearchPatient = async () => {
 
   const doctorId = user.id;
 
+  // 📨 Zgłoszenie dostępu
   const { error: insertError } = await supabase
     .from('patient_access_requests')
     .insert([{
@@ -432,9 +438,23 @@ const handleSearchPatient = async () => {
     return;
   }
 
-  alert(tUI('accessRequestSent', lang));
-  setPatientLoadStatus('success');
+  // 🔁 Pobierz dane pacjenta (jeśli istnieje)
+  const { data: patient } = await supabase
+    .from('patients')
+    .select('user_id')
+    .eq('email', email)
+    .maybeSingle();
+
+  if (patient?.user_id) {
+    console.log('📥 Załadowano dane pacjenta:', patient.user_id);
+    await loadPatientData(patient.user_id);
+    setPatientLoadStatus('success');
+  } else {
+    alert(tUI('accessRequestSent', lang)); // jeśli pacjent jeszcze nie istnieje
+    setPatientLoadStatus('idle');
+  }
 };
+
 
 
 const handleCreatePatient = async () => {
