@@ -1,4 +1,3 @@
-// usePatientSubmitData.ts
 import { supabase } from '@/lib/supabaseClient';
 import type { PatientData } from '@/types';
 
@@ -42,38 +41,55 @@ export function usePatientSubmitData(form: PatientData) {
 
     if (error) {
       console.error('❌ Błąd zapisu danych medycznych:', error.message);
+      return false;
     }
+
+    return true;
   };
 
   const saveInterviewData = async (data: any) => {
     const userId = form?.user_id;
     if (!userId) return;
 
-    await supabase
-      .from('patients')
-      .update({ interview_data: data })
-      .eq('user_id', userId);
+    try {
+      const { error } = await supabase
+        .from('patients')
+        .update({ interview_data: data })
+        .eq('user_id', userId);
+
+      if (error) {
+        console.error('❌ Błąd zapisu danych wywiadu:', error.message);
+        return false;
+      }
+
+      return true;
+    } catch (err) {
+      console.error('❌ Wyjątek przy zapisie wywiadu:', err);
+      return false;
+    }
   };
 
-const saveDietPlan = async (dietPlan: any) => {
-  const userId = form?.user_id;
-  if (!userId) return;
+  const saveDietPlan = async (dietPlan: any) => {
+    const userId = form?.user_id;
+    if (!userId) return;
 
-  const { error } = await supabase
-    .from('patient_diets')
-    .upsert({
-      user_id: userId,
-      diet_plan: JSON.stringify(dietPlan),
-      status: 'draft'
-    }, {
-      onConflict: 'user_id'  // ✅ string, nie tablica
-    });
+    const { error } = await supabase
+      .from('patient_diets')
+      .upsert({
+        user_id: userId,
+        diet_plan: JSON.stringify(dietPlan),
+        status: 'draft'
+      }, {
+        onConflict: 'user_id'  // ✅ string, nie tablica
+      });
 
-  if (error) {
-    console.error('❌ Błąd zapisu planu diety:', error.message);
-  }
-};
+    if (error) {
+      console.error('❌ Błąd zapisu planu diety:', error.message);
+      return false;
+    }
 
+    return true;
+  };
 
   return {
     saveMedicalData,

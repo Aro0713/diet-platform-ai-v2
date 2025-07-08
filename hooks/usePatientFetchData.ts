@@ -1,4 +1,3 @@
-// usePatientFetchData.ts
 import { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import type { PatientData } from '@/types';
@@ -16,12 +15,17 @@ export function usePatientFetchData() {
 
     const { data, error } = await supabase
       .from('patients')
-      .select('*, interview_data, medical_data, health_status')
+      .select('*') // ✅ NIE używaj '*, interview_data...' – Supabase nie pozwala
       .eq('user_id', userId)
       .maybeSingle();
 
     if (error || !data) {
       console.error('❌ Błąd pobierania pacjenta:', error?.message);
+      return;
+    }
+
+    if (!data.user_id || !data.name) {
+      console.warn("⚠️ Dane niepełne — SELECT mógł zostać ograniczony przez RLS.");
       return;
     }
 
@@ -37,8 +41,8 @@ export function usePatientFetchData() {
       weight: data.weight,
       region: data.region,
       medical: Array.isArray(data.medical) ? data.medical : [],
-      conditionGroups: data.conditionGroups ?? [],
-      conditions: data.conditions ?? []
+      conditionGroups: Array.isArray(data.conditionGroups) ? data.conditionGroups : [],
+      conditions: Array.isArray(data.conditions) ? data.conditions : []
     }));
 
     setMedicalData({
@@ -69,6 +73,7 @@ export function usePatientFetchData() {
         setEditableDiet(parsed);
       } catch (err) {
         console.error('❌ Błąd parsowania diet_plan:', err);
+        setEditableDiet({});
       }
     }
   };

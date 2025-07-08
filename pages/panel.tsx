@@ -403,12 +403,13 @@ const handleSearchPatient = async () => {
   setPatientLoadStatus('loading');
   const email = patientEmailInput.trim().toLowerCase();
 
-  // ✅ Pobierz aktualnie zalogowanego użytkownika (lekarza/dietetyka)
-  const {
-    data: { user },
-    error
-  } = await supabase.auth.getUser();
+  if (!email.includes('@')) {
+    alert('📛 Wprowadź poprawny e-mail pacjenta.');
+    setPatientLoadStatus('notFound');
+    return;
+  }
 
+  const { data: { user }, error } = await supabase.auth.getUser();
   if (error || !user?.id) {
     console.error("❌ Nie udało się pobrać użytkownika (auth.uid())", error?.message);
     setPatientLoadStatus('notFound');
@@ -417,14 +418,13 @@ const handleSearchPatient = async () => {
 
   const doctorId = user.id;
 
-  // 📨 INSERT do patient_access_requests – zgodnie z polityką RLS
   const { error: insertError } = await supabase
     .from('patient_access_requests')
-    .insert({
+    .insert([{
       doctor_id: doctorId,
       patient_email: email,
       status: 'pending'
-    });
+    }]);
 
   if (insertError) {
     console.error('❌ Błąd podczas tworzenia zgłoszenia:', insertError.message);
@@ -435,6 +435,7 @@ const handleSearchPatient = async () => {
   alert(tUI('accessRequestSent', lang));
   setPatientLoadStatus('success');
 };
+
 
 const handleCreatePatient = async () => {
   setCreateStatus('creating');
