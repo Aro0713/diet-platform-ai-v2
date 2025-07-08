@@ -54,10 +54,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (insert.error) {
       return res.status(500).json({ error: insert.error.message });
     }
-    
+
+    // ✅ Gwarantujemy JSON response
     return res.status(200).json({ user_id: data.user.id });
   } catch (err) {
     console.error('❌ Błąd serwera:', err);
-    return res.status(500).json({ error: 'Server error' });
+
+    // 🛡️ gwarancja odpowiedzi JSON
+    return res.status(500).json({ error: (err as Error).message || 'Server error' });
   }
 }

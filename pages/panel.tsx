@@ -459,24 +459,34 @@ const handleCreatePatient = async () => {
       body: JSON.stringify({ email, password, name, phone, lang })
     });
 
-    const json = await res.json();
+    let json: any = null;
 
-    if (res.ok && json.user_id) {
+    try {
+      json = await res.json();
+    } catch (err) {
+      console.error('❌ Odpowiedź z backendu nie była poprawnym JSON-em:', err);
+      alert('❌ Błąd serwera: niepoprawna odpowiedź. Spróbuj ponownie.');
+      setCreateStatus('error');
+      return;
+    }
+
+    if (res.ok && json?.user_id) {
       await loadPatientData(json.user_id);
       alert('📩 Konto utworzone. Pacjent otrzyma e-mail aktywacyjny.');
       setCreateStatus('success');
     } else {
-      console.error('❌ Błąd zakładania konta pacjenta:', json.error);
+      console.error('❌ Błąd zakładania konta pacjenta:', json?.error || 'Brak szczegółów');
+      alert('❌ Błąd tworzenia konta: ' + (json?.error || 'Brak szczegółów'));
       setCreateStatus('error');
     }
   } catch (err) {
     console.error('❌ Wyjątek przy tworzeniu pacjenta:', err);
+    alert('❌ Błąd sieci lub serwera');
     setCreateStatus('error');
   }
 };
 
-
-  return (
+return (
   <main className="relative min-h-screen
     bg-[#0f271e]/70
     bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60
