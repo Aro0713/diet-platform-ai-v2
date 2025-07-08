@@ -1,4 +1,3 @@
-/// pages/api/create-patient.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 
@@ -19,11 +18,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // 1. Utwórz konto pacjenta
     const { data, error } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: false, // wysyłka e-maila aktywacyjnego
+      email_confirm: false,
       user_metadata: {
         name,
         phone,
@@ -32,11 +30,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     });
 
-    if (error || !data.user?.id) {
+    if (error || !data?.user?.id) {
       return res.status(500).json({ error: error?.message || 'Create user error' });
     }
 
-    // 2. Wstaw do tabeli patients
     const insert = await supabaseAdmin.from('patients').insert({
       user_id: data.user.id,
       email,
@@ -57,8 +54,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (insert.error) {
       return res.status(500).json({ error: insert.error.message });
     }
-
-    // ✅ Wszystko OK
+    
     return res.status(200).json({ user_id: data.user.id });
   } catch (err) {
     console.error('❌ Błąd serwera:', err);
