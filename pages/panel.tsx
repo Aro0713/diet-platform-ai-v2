@@ -452,56 +452,29 @@ const handleCreatePatient = async () => {
   const { name, email, phone, password } = newPatientForm;
 
   try {
-    // 🔐 Rejestracja pacjenta z e-mailowym potwierdzeniem
-    const { data, error } = await supabase.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: false, // ❗ pacjent otrzyma maila aktywacyjnego
-      user_metadata: {
-        name,
-        phone,
-        role: 'patient',
-        lang
-      }
+    // 🔐 Rejestracja pacjenta z e-mailowym potwierdzeniem (backend)
+    const res = await fetch('/api/create-patient', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, name, phone, lang })
     });
 
-    if (error || !data.user?.id) {
-      console.error('❌ Błąd rejestracji pacjenta:', error?.message);
+    const json = await res.json();
+
+    if (res.ok && json.user_id) {
+      await loadPatientData(json.user_id);
+      alert('📩 Konto utworzone. Pacjent otrzyma e-mail aktywacyjny.');
+      setCreateStatus('success');
+    } else {
+      console.error('❌ Błąd zakładania konta pacjenta:', json.error);
       setCreateStatus('error');
-      return;
     }
-
-    // ⏳ Pacjent nie potwierdził jeszcze maila, ale konto istnieje
-    const insert = await supabase.from('patients').insert({
-      user_id: data.user.id,
-      name,
-      email,
-      phone,
-      lang,
-      sex: 'unknown',
-      age: null,
-      height: null,
-      weight: null,
-      region: 'default',
-      allergies: '',
-      conditions: [],
-      health_status: '',
-      medical_data: {}
-    });
-
-    if (insert.error) {
-      console.error('❌ Błąd insertu do patients:', insert.error.message);
-      setCreateStatus('error');
-      return;
-    }
-
-    alert('📩 Konto utworzone. Pacjent otrzyma e-mail aktywacyjny.');
-    setCreateStatus('success');
   } catch (err) {
     console.error('❌ Wyjątek przy tworzeniu pacjenta:', err);
     setCreateStatus('error');
   }
 };
+
 
   return (
   <main className="relative min-h-screen
