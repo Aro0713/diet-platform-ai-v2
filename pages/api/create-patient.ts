@@ -4,32 +4,25 @@ import { createClient } from '@supabase/supabase-js';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   console.log('📥 [API] POST /api/create-patient INIT');
 
-  // ✅ Zmienne środowiskowe – bezpieczne pobranie i log
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const SUPABASE_URL = process.env.SUPABASE_URL;
+  const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  console.log('🔐 ENV check:', {
-    SUPABASE_URL: !!supabaseUrl,
-    SERVICE_ROLE_KEY: !!serviceRoleKey,
-  });
-
-  if (!supabaseUrl || !serviceRoleKey) {
-    console.error('❌ Brak SUPABASE_SERVICE_ROLE_KEY lub SUPABASE_URL w .env lub Vercel');
-    return res.status(500).json({ error: 'Brak SUPABASE_SERVICE_ROLE_KEY lub SUPABASE_URL' });
+  if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
+    console.error('❌ ENV problem: SUPABASE_URL or SERVICE_ROLE_KEY is missing');
+    return res.status(500).json({
+      error: '❌ Brak SUPABASE_SERVICE_ROLE_KEY lub SUPABASE_URL w konfiguracji Vercel'
+    });
   }
 
-  // ✅ Utwórz klienta dopiero wewnątrz handlera
-  const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+  const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
   if (req.method !== 'POST') {
-    console.warn('⛔ Method not allowed:', req.method);
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
   const { email, password, name, phone, lang = 'pl' } = req.body;
 
   if (!email || !password || !name) {
-    console.warn('⛔ Missing required fields');
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
@@ -78,7 +71,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log('✅ Pacjent utworzony:', data.user.id);
     return res.status(200).json({ user_id: data.user.id });
   } catch (err) {
-    console.error('❌ Błąd serwera (exception):', err);
-    return res.status(500).json({ error: (err as Error).message || 'Server error' });
+    console.error('❌ Wyjątek:', err);
+    return res.status(500).json({ error: 'Server error' });
   }
 }
