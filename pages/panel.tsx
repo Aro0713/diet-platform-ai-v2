@@ -100,11 +100,26 @@ const {
 
   const t = (key: keyof typeof translationsUI): string => tUI(key, lang);
 
-  useEffect(() => {
-  const role = localStorage.getItem('currentUserRole');
-  const userId = localStorage.getItem('currentUserID');
-  console.log('👤 Zalogowano jako:', role, userId);
+ useEffect(() => {
+  const fetchUserData = async () => {
+    const role = localStorage.getItem('currentUserRole');
+    const {
+      data: { user },
+      error
+    } = await supabase.auth.getUser();
+
+    if (error) {
+      console.error('❌ Błąd pobierania użytkownika:', error.message);
+      return;
+    }
+
+    const userId = user?.id;
+    console.log('👤 Zalogowano jako:', role, userId);
+  };
+
+  fetchUserData();
 }, []);
+
 
   useEffect(() => {
     const langStorage = localStorage.getItem('platformLang') as LangKey | null;
@@ -385,11 +400,24 @@ const [patientEmailInput, setPatientEmailInput] = useState('');
 const [patientLoadStatus, setPatientLoadStatus] = useState<'idle' | 'loading' | 'notFound' | 'success'>('idle');
 
 const handleSearchPatient = async () => {
-  const doctorId = localStorage.getItem('currentUserID');
-  const email = patientEmailInput.trim().toLowerCase();
   setPatientLoadStatus('loading');
+  const email = patientEmailInput.trim().toLowerCase();
 
-  // 📨 Utwórz wpis w patient_access_requests
+  // ✅ Pobierz aktualnie zalogowanego użytkownika (lekarza/dietetyka)
+  const {
+    data: { user },
+    error
+  } = await supabase.auth.getUser();
+
+  if (error || !user?.id) {
+    console.error("❌ Nie udało się pobrać użytkownika (auth.uid())", error?.message);
+    setPatientLoadStatus('notFound');
+    return;
+  }
+
+  const doctorId = user.id;
+
+  // 📨 INSERT do patient_access_requests – zgodnie z polityką RLS
   const { error: insertError } = await supabase
     .from('patient_access_requests')
     .insert({
@@ -404,7 +432,8 @@ const handleSearchPatient = async () => {
     return;
   }
 
- alert(tUI('accessRequestSent', lang));
+  alert(tUI('accessRequestSent', lang));
+  setPatientLoadStatus('success');
 };
 
 const handleCreatePatient = async () => {
@@ -413,11 +442,11 @@ const handleCreatePatient = async () => {
   const { name, email, phone, password } = newPatientForm;
 
   try {
-    // 🔐 rejestracja pacjenta przez lekarza (bez potwierdzania e-maila)
+    // 🔐 Rejestracja pacjenta z e-mailowym potwierdzeniem
     const { data, error } = await supabase.auth.admin.createUser({
       email,
       password,
-      email_confirm: true,
+      email_confirm: false, // ❗ pacjent otrzyma maila aktywacyjnego
       user_metadata: {
         name,
         phone,
@@ -432,6 +461,7 @@ const handleCreatePatient = async () => {
       return;
     }
 
+    // ⏳ Pacjent nie potwierdził jeszcze maila, ale konto istnieje
     const insert = await supabase.from('patients').insert({
       user_id: data.user.id,
       name,
@@ -455,7 +485,7 @@ const handleCreatePatient = async () => {
       return;
     }
 
-    await loadPatientData(data.user.id);
+    alert('📩 Konto utworzone. Pacjent otrzyma e-mail aktywacyjny.');
     setCreateStatus('success');
   } catch (err) {
     console.error('❌ Wyjątek przy tworzeniu pacjenta:', err);
