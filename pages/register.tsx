@@ -43,32 +43,37 @@ useEffect(() => {
 
     setConfirmation(true);
 
-    const { data: authUser, error: authError } = await supabase.auth.getUser();
-    if (authError || !authUser?.user) return;
+    // 🔄 Odśwież sesję i pobierz użytkownika
+    await supabase.auth.refreshSession();
+    const {
+      data: { user },
+      error
+    } = await supabase.auth.getUser();
 
-    // ✅ Zapisz user_id do localStorage — niezależnie od roli
-    if (authUser.user.id) {
-      localStorage.setItem('currentUserID', authUser.user.id);
-      console.log('✅ currentUserID zapisany po rejestracji:', authUser.user.id);
+    if (error || !user?.id) {
+      console.error('❌ Brak aktywnej sesji po aktywacji konta:', error?.message);
+      return;
     }
 
-    const metadata = authUser.user.user_metadata || {};
+    const metadata = user.user_metadata || {};
     const role = metadata.role || 'patient';
     const langFromMeta = metadata.lang || 'pl';
 
-    // 🩺 Lekarz lub dietetyk → insert do tabeli `users`
+    localStorage.setItem('currentUserID', user.id);
+    console.log('✅ currentUserID zapisany po rejestracji:', user.id);
+
     if (role === 'doctor' || role === 'dietitian') {
       const { data: exists } = await supabase
         .from('users')
         .select('id')
-        .eq('user_id', authUser.user.id)
+        .eq('user_id', user.id)
         .maybeSingle();
 
       if (!exists) {
         const insertResult = await supabase.from('users').insert([{
-          user_id: authUser.user.id,
-          name: metadata.name || authUser.user.email?.split('@')[0] || 'Nieznany',
-          email: authUser.user.email,
+          user_id: user.id,
+          name: metadata.name || user.email?.split('@')[0] || 'Nieznany',
+          email: user.email,
           phone: metadata.phone || '',
           role,
           lang: langFromMeta,
@@ -82,11 +87,10 @@ useEffect(() => {
       }
     }
 
-    // 👨‍⚕️ Każdy użytkownik (w tym pacjent) → insert do tabeli `patients`
     const { error: patientError } = await supabase.from('patients').upsert({
-      user_id: authUser.user.id,
+      user_id: user.id,
       name: metadata.name || 'Nieznany',
-      email: authUser.user.email,
+      email: user.email,
       phone: metadata.phone || '',
       lang: langFromMeta,
       sex: 'unknown',
@@ -107,7 +111,6 @@ useEffect(() => {
 
   runInsert();
 }, [router.query.confirmed, langReady, router.isReady]);
-
 
   const [selectedRoleLabel, setSelectedRoleLabel] = useState('');
   const [lang, setLang] = useState<LangKey>('pl');
