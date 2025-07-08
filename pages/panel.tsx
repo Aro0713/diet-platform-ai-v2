@@ -452,20 +452,20 @@ const handleCreatePatient = async () => {
   const { name, email, phone, password } = newPatientForm;
 
   try {
-    // 🔐 Rejestracja pacjenta z e-mailowym potwierdzeniem (backend)
     const res = await fetch('/api/create-patient', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password, name, phone, lang })
     });
 
+    // 🛡️ Awaryjny fallback — jeśli nie ma JSON
     let json: any = null;
-
     try {
-      json = await res.json();
+      const text = await res.text();
+      json = text ? JSON.parse(text) : {};
     } catch (err) {
-      console.error('❌ Odpowiedź z backendu nie była poprawnym JSON-em:', err);
-      alert('❌ Błąd serwera: niepoprawna odpowiedź. Spróbuj ponownie.');
+      console.error('❌ Błąd parsowania JSON:', err);
+      alert('❌ Błąd serwera: odpowiedź nie była poprawnym JSON-em');
       setCreateStatus('error');
       return;
     }
@@ -475,16 +475,17 @@ const handleCreatePatient = async () => {
       alert('📩 Konto utworzone. Pacjent otrzyma e-mail aktywacyjny.');
       setCreateStatus('success');
     } else {
-      console.error('❌ Błąd zakładania konta pacjenta:', json?.error || 'Brak szczegółów');
-      alert('❌ Błąd tworzenia konta: ' + (json?.error || 'Brak szczegółów'));
+      console.error('❌ Błąd zakładania konta pacjenta:', json?.error || 'Brak odpowiedzi');
+      alert('❌ Błąd tworzenia konta: ' + (json?.error || 'Brak odpowiedzi'));
       setCreateStatus('error');
     }
   } catch (err) {
-    console.error('❌ Wyjątek przy tworzeniu pacjenta:', err);
-    alert('❌ Błąd sieci lub serwera');
+    console.error('❌ Wyjątek sieciowy przy tworzeniu pacjenta:', err);
+    alert('❌ Błąd sieci lub połączenia z serwerem');
     setCreateStatus('error');
   }
 };
+
 
 return (
   <main className="relative min-h-screen
