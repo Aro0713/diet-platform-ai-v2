@@ -1,6 +1,16 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 
+// 🔍 LOG środowiska – nie usuwaj
+console.log('🔐 INIT create-patient.ts', {
+  SUPABASE_URL: !!process.env.SUPABASE_URL,
+  SERVICE_ROLE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY
+});
+
+if (!process.env.SUPABASE_SERVICE_ROLE_KEY || !process.env.SUPABASE_URL) {
+  throw new Error('❌ Brak SUPABASE_SERVICE_ROLE_KEY lub SUPABASE_URL w .env lub Vercel');
+}
+
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
