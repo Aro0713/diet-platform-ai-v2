@@ -403,13 +403,6 @@ const handleSearchPatient = async () => {
   setPatientLoadStatus('loading');
   const email = patientEmailInput.trim().toLowerCase();
 
-  if (!email.includes('@')) {
-    alert('📛 Wprowadź poprawny adres e-mail pacjenta.');
-    setPatientLoadStatus('notFound');
-    return;
-  }
-
-  // 🔐 Pobierz aktualnego użytkownika (lekarza/dietetyka)
   const {
     data: { user },
     error
@@ -423,7 +416,6 @@ const handleSearchPatient = async () => {
 
   const doctorId = user.id;
 
-  // 📨 Zgłoszenie dostępu
   const { error: insertError } = await supabase
     .from('patient_access_requests')
     .insert([{
@@ -438,7 +430,6 @@ const handleSearchPatient = async () => {
     return;
   }
 
-  // 🔁 Pobierz dane pacjenta (jeśli istnieje)
   const { data: patient } = await supabase
     .from('patients')
     .select('user_id')
@@ -450,12 +441,10 @@ const handleSearchPatient = async () => {
     await loadPatientData(patient.user_id);
     setPatientLoadStatus('success');
   } else {
-    alert(tUI('accessRequestSent', lang)); // jeśli pacjent jeszcze nie istnieje
+    alert(tUI('accessRequestSent', lang)); // zgłoszenie wysłane, pacjent jeszcze nie istnieje
     setPatientLoadStatus('idle');
   }
 };
-
-
 
 const handleCreatePatient = async () => {
   setCreateStatus('creating');
