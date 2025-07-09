@@ -3580,7 +3580,34 @@ errorInvalidJson: {
   ar: '❌ استجابة الخادم ليست JSON صالحة.',
   hi: '❌ सर्वर का उत्तर मान्य JSON नहीं था।',
   he: '❌ תגובת השרת לא הייתה JSON תקף.'
+},
+dietApprovedSuccess: {
+  pl: '✅ Dieta została zatwierdzona i zapisana w Supabase',
+  en: '✅ The diet has been approved and saved to Supabase',
+  de: '✅ Der Diätplan wurde bestätigt und in Supabase gespeichert',
+  fr: '✅ Le plan alimentaire a été approuvé et enregistré dans Supabase',
+  es: '✅ La dieta ha sido aprobada y guardada en Supabase',
+  ua: '✅ Дієта підтверджена та збережена в Supabase',
+  ru: '✅ Диета подтверждена и сохранена в Supabase',
+  zh: '✅ 饮食计划已确认并保存到 Supabase',
+  ar: '✅ تم تأكيد الحمية الغذائية وحفظها في Supabase',
+  hi: '✅ आहार योजना को स्वीकृत कर Supabase में सहेजा गया',
+  he: '✅ התפריט אושר ונשמר ב-Supabase'
+},
+dietApprovedError: {
+  pl: '❌ Błąd zapisu zatwierdzenia diety',
+  en: '❌ Failed to save diet approval',
+  de: '❌ Fehler beim Speichern der Diätbestätigung',
+  fr: '❌ Échec de l’enregistrement de l’approbation du plan alimentaire',
+  es: '❌ Error al guardar la aprobación de la dieta',
+  ua: '❌ Помилка збереження підтвердження дієти',
+  ru: '❌ Ошибка при сохранении подтверждения диеты',
+  zh: '❌ 保存饮食确认失败',
+  ar: '❌ فشل في حفظ تأكيد الحمية الغذائية',
+  hi: '❌ आहार योजना की स्वीकृति सहेजने में त्रुटि',
+  he: '❌ שגיאה בשמירת אישור התפריט'
 }
+
 
 };
 

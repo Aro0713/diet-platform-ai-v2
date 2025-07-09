@@ -80,7 +80,7 @@ export function usePatientSubmitData(form: PatientData) {
         diet_plan: JSON.stringify(dietPlan),
         status: 'draft'
       }, {
-        onConflict: 'user_id'  // ✅ string, nie tablica
+        onConflict: 'user_id'
       });
 
     if (error) {
@@ -91,9 +91,30 @@ export function usePatientSubmitData(form: PatientData) {
     return true;
   };
 
+  const confirmDietPlan = async () => {
+    const userId = form?.user_id;
+    if (!userId) return false;
+
+    const { error } = await supabase
+      .from('patient_diets')
+      .update({
+        status: 'confirmed',
+        confirmed_at: new Date().toISOString()
+      })
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('❌ Błąd zatwierdzania diety:', error.message);
+      return false;
+    }
+
+    return true;
+  };
+
   return {
     saveMedicalData,
     saveInterviewData,
-    saveDietPlan
+    saveDietPlan,
+    confirmDietPlan
   };
 }

@@ -80,8 +80,10 @@ function Panel() {
 const {
   saveMedicalData,
   saveInterviewData,
-  saveDietPlan
+  saveDietPlan,
+  confirmDietPlan 
 } = usePatientSubmitData(form);
+
 
 
   useEffect(() => {
@@ -437,6 +439,15 @@ const handleSearchPatient = async () => {
     setPatientLoadStatus('idle');
   }
 };
+const handleApproveDiet = async () => {
+  const ok = await confirmDietPlan();
+  if (ok) {
+    setDietApproved(true);
+    alert(tUI('dietApprovedSuccess', lang));
+  } else {
+    alert(tUI('dietApprovedError', lang));
+  }
+};
 
 return (
   <main className="relative min-h-screen
@@ -720,14 +731,14 @@ return (
   </button>
 
   {/* 🟣 Zatwierdź dietę */}
-  <button
-    type="button"
-    className="w-full bg-purple-700 text-white px-4 py-3 rounded-md font-medium hover:bg-purple-800 disabled:opacity-50"
-    onClick={() => setDietApproved(true)}
-    disabled={isGenerating || !confirmedDiet}
-  >
-    {isGenerating ? '⏳ Czekaj...' : `✅ ${tUI('approvedDiet', lang)}`}
-  </button>
+<button
+  type="button"
+  className="w-full bg-purple-700 text-white px-4 py-3 rounded-md font-medium hover:bg-purple-800 disabled:opacity-50"
+  onClick={handleApproveDiet} // ✅ nowa funkcja
+  disabled={isGenerating || !confirmedDiet}
+>
+  {isGenerating ? '⏳ Czekaj...' : `✅ ${tUI('approvedDiet', lang)}`}
+</button>
 
   {/* ✅ Pobierz PDF */}
   <button
