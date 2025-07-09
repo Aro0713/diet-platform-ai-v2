@@ -341,9 +341,14 @@ const handleGenerateNarrative = async () => {
 
       {/* Główna zawartość */}
       <div className="z-10 flex flex-col w-full max-w-[1000px] mx-auto gap-6 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 mt-20 dark:text-white transition-colors animate-flip-in origin-center">
-        {selectedSection === 'data' && <PatientSelfForm lang={lang} />}
+        {selectedSection === 'data' && (
+            <PatientSelfForm
+              lang={lang}
+              userId={typeof window !== 'undefined' ? localStorage.getItem('currentUserID') || undefined : undefined}
+            />
+          )}
 
-        {selectedSection === 'medical' && (
+       {selectedSection === 'medical' && (
           <>
             <MedicalForm
               onChange={(data) => {
