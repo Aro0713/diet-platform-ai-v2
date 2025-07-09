@@ -15,16 +15,16 @@ export default function RegisterPage() {
 
   const [detectedCountry, setDetectedCountry] = useState<'pl'>('pl');
 
-  useEffect(() => {
-    fetch('https://ip-api.com/json/')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.countryCode) {
-          setDetectedCountry(data.countryCode.toLowerCase());
-        }
-      })
-      .catch(() => setDetectedCountry('pl'));
-  }, []);
+useEffect(() => {
+  fetch('https://ip-api.com/json/')
+    .then((res) => res.json())
+    .then((data) => {
+      if (data?.countryCode) {
+        setDetectedCountry(data.countryCode.toLowerCase());
+      }
+    })
+    .catch(() => setDetectedCountry('pl'));
+}, []);
 
 const [confirmation, setConfirmation] = useState(false);
 const [langReady, setLangReady] = useState(false);
@@ -84,34 +84,36 @@ useEffect(() => {
       }
     }
 
-    // 🔄 Insert pacjenta
-    const { error: patientError } = await supabase.from('patients').upsert({
-  user_id: user.id,
-  name: metadata.name || 'Nieznany',
-  email: user.email,
-  phone: metadata.phone || '',
-  lang: langFromMeta,
-  sex: 'unknown',
-  age: null,
-  height: null,
-  weight: null,
-  region: 'default',
-  allergies: '',
-  conditions: [],
-  health_status: '',
-  medical_data: {}
-}, { onConflict: 'user_id' });
+    // 🔄 Dodaj pacjenta tylko jeśli nie istnieje
+    if (role === 'patient') {
+      const { data: existingPatient } = await supabase
+        .from('patients')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
+      if (!existingPatient) {
+        const { error: patientError } = await supabase.from('patients').insert({
+          user_id: user.id,
+          name: metadata.name || 'Nieznany',
+          email: user.email,
+          phone: metadata.phone || '',
+          lang: langFromMeta
+        });
 
-    if (patientError) {
-      console.error('❌ Błąd dodawania pacjenta do patients:', patientError.message);
-    } else {
-      console.log('✅ Wpis pacjenta dodany');
+        if (patientError) {
+          console.error('❌ Błąd dodawania pacjenta do patients:', patientError.message);
+        } else {
+          console.log('✅ Pacjent dodany do tabeli patients');
+        }
+      } else {
+        console.log('ℹ️ Pacjent już istnieje — pomijam insert');
+      }
     }
-  };
+  }; // <- ⬅️ zamknięcie runInsert
 
   runInsert();
-}, [langReady, router.isReady]);
+}, [langReady, router.isReady]); // <- ⬅️ zamknięcie useEffect
 
   const [selectedRoleLabel, setSelectedRoleLabel] = useState('');
   const [lang, setLang] = useState<LangKey>('pl');
