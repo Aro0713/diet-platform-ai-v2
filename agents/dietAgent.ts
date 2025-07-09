@@ -152,11 +152,15 @@ ${JSON.stringify(medical, null, 2)}
 - Use culturally appropriate meal names in the target language (${lang}), e.g. in Polish: Śniadanie, Obiad, Kolacja
 - Time (e.g., 07:30)
 - Dish name (menu)
-- Ingredients list (product, weight in grams, unit) – include ALL ingredients including:
-  - Spices (e.g. salt, pepper, curry)
-  - Herbs (e.g. basil, parsley, dill)
-  - Oils (e.g. olive oil, sunflower oil)
-  - Sauces or condiments if used
+- Ingredients list (product, weight in grams, unit) – include **ALL components necessary for preparation and flavor**, including:
+
+  - Spices and seasonings: use a **wide variety**, not just salt and pepper. Include spices that match the **dish type**, **cuisine**, and **cooking method** (e.g. garlic, paprika, turmeric, cumin, coriander, chili, ginger, cinnamon, etc.)
+  
+  - Herbs: both fresh and dried, appropriate to the cuisine (e.g. dill, thyme, oregano, basil, rosemary, cilantro, parsley)
+  
+  - Oils and fats: olive oil, butter, ghee, coconut oil, etc.
+  
+  - Sauces and condiments: if used (e.g. soy sauce, tomato paste, mustard, tahini, vinegar, lemon juice)
 
 - Detailed cooking method (preparation)
 - Nutritional values calculated from ALL ingredients:
