@@ -43,7 +43,24 @@ export function usePatientData(): UsePatientDataResult {
 
     if (data) {
       console.log('✅ Dane pacjenta:', data);
-      setForm(data);
+      setForm({
+  user_id: data.user_id,
+  name: data.name,
+  email: data.email,
+  phone: data.phone,
+  sex: data.sex,
+  age: data.age,
+  height: data.height,
+  weight: data.weight,
+  region: data.region,
+  medical: Array.isArray(data.medical) ? data.medical : [],
+  conditionGroups: Array.isArray(data.conditionGroups) ? data.conditionGroups : [],
+  conditions: Array.isArray(data.conditions) ? data.conditions : [],
+  allergies: data.allergies || '',
+  goal: data.goal || '',
+  cuisine: data.cuisine || '',
+  model: data.model || ''
+});
 
       setMedicalData({
         summary: data.health_status || '',
