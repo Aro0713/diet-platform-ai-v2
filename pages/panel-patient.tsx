@@ -310,6 +310,7 @@ const handleGenerateNarrative = async () => {
     setNarrativeText('⚠️ Błąd generowania opisu wywiadu przez AI');
   }
 };
+console.log("📦 form w panel-patient:", form);
 
   return (
     <main className="relative min-h-screen bg-[#0f271e]/70 bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 backdrop-blur-[12px] shadow-[inset_0_0_60px_rgba(255,255,255,0.08)] flex flex-col justify-start items-center pt-10 px-6 text-white transition-all duration-300">

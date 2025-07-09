@@ -23,19 +23,22 @@ const PatientSelfForm: React.FC<Props> = ({ lang, value, onChange }) => {
   });
 
   useEffect(() => {
-    if (value) {
-      setPatient({
-        name: value.name || '',
-        email: value.email || '',
-        phone: value.phone || '',
-        sex: value.sex || '',
-        age: value.age?.toString() || '',
-        height: value.height?.toString() || '',
-        weight: value.weight?.toString() || '',
-        region: value.region || '',
-      });
-    }
-  }, [value]);
+  if (value) {
+    console.log("📥 PatientSelfForm otrzymał value:", value); 
+
+    setPatient({
+      name: value.name || '',
+      email: value.email || '',
+      phone: value.phone || '',
+      sex: value.sex || '',
+      age: value.age?.toString() || '',
+      height: value.height?.toString() || '',
+      weight: value.weight?.toString() || '',
+      region: value.region || '',
+    });
+  }
+}, [value]);
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
