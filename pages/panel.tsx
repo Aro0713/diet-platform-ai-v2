@@ -452,35 +452,58 @@ const handleCreatePatient = async () => {
   const { name, email, phone, password } = newPatientForm;
 
   try {
-    const res = await fetch('/api/create-patient', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, name, phone, lang })
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name,
+          phone,
+          role: 'patient',
+          lang
+        }
+      }
     });
 
-    const text = await res.text();
-    let json;
-
-    try {
-      json = text ? JSON.parse(text) : null;
-    } catch (e) {
-      console.error('❌ Odpowiedź z backendu nie była poprawnym JSON-em:', e);
-      alert(tUI('errorInvalidJson', lang));
+    if (error || !data?.user?.id) {
+      console.error('❌ Błąd podczas rejestracji pacjenta:', error?.message);
+      alert(tUI('patientCreateError', lang) + ': ' + (error?.message || tUI('noResponse', lang)));
       setCreateStatus('error');
       return;
     }
 
-    if (res.ok && json?.user_id) {
-      await loadPatientData(json.user_id);
-      alert(tUI('patientCreatedEmailSent', lang));
-      setCreateStatus('success');
-    } else {
-      console.error('❌ Błąd zakładania konta pacjenta:', json?.error || 'Brak odpowiedzi');
-      alert(tUI('patientCreateError', lang) + ': ' + (json?.error || tUI('noResponse', lang)));
+    const user_id = data.user.id;
+
+    const { error: insertError } = await supabase.from('patients').insert({
+      user_id,
+      email,
+      name,
+      phone,
+      lang,
+      role: 'patient',
+      sex: 'unknown',
+      age: null,
+      height: null,
+      weight: null,
+      region: 'default',
+      allergies: '',
+      conditions: [],
+      health_status: '',
+      medical_data: {}
+    });
+
+    if (insertError) {
+      console.error('❌ Błąd insertu do patients:', insertError.message);
+      alert(tUI('patientCreateError', lang) + ': ' + insertError.message);
       setCreateStatus('error');
+      return;
     }
+
+    await loadPatientData(user_id);
+    alert(tUI('patientCreatedEmailSent', lang));
+    setCreateStatus('success');
   } catch (err) {
-    console.error('❌ Wyjątek sieciowy przy tworzeniu pacjenta:', err);
+    console.error('❌ Wyjątek sieciowy:', err);
     alert(tUI('networkError', lang));
     setCreateStatus('error');
   }
