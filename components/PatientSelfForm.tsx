@@ -39,45 +39,43 @@ const PatientSelfForm: React.FC<Props> = ({ lang, value, onChange }) => {
   }
 }, [value]);
 
+const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const { name, value } = e.target;
+  setPatient(prev => ({ ...prev, [name]: value }));
+};
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    const updated = { ...patient, [name]: value };
-    setPatient(updated);
-    if (onChange) onChange(updated);
-  };
+const handleSave = async () => {
+  const userId = typeof window !== 'undefined' ? localStorage.getItem('currentUserID') : null;
+  if (!userId || !patient.email) {
+    setMessage(tUI('saveError', lang));
+    return;
+  }
 
-  const handleSave = async () => {
-    const userId = typeof window !== 'undefined' ? localStorage.getItem('currentUserID') : null;
-    if (!userId || !patient.email) {
-      setMessage(tUI('saveError', lang));
-      return;
-    }
+  setSaving(true);
+  setMessage('');
 
-    setSaving(true);
-    setMessage('');
+  const { error } = await supabase
+    .from('patients')
+    .upsert([
+      {
+        user_id: userId,
+        ...patient,
+        age: patient.age ? parseInt(patient.age) : null,
+        height: patient.height ? parseInt(patient.height) : null,
+        weight: patient.weight ? parseInt(patient.weight) : null,
+      },
+    ], { onConflict: 'user_id' });
 
-    const { error } = await supabase
-      .from('patients')
-      .upsert([
-        {
-          user_id: userId,
-          ...patient,
-          age: patient.age ? parseInt(patient.age) : null,
-          height: patient.height ? parseInt(patient.height) : null,
-          weight: patient.weight ? parseInt(patient.weight) : null,
-        },
-      ], { onConflict: 'user_id' });
+  if (error) {
+    console.error('❌ Błąd zapisu danych pacjenta:', error.message);
+    setMessage(tUI('saveError', lang));
+  } else {
+    setMessage(tUI('saveSuccess', lang));
+    if (onChange) onChange(patient); // ✅ wywołanie tylko po sukcesie zapisu
+  }
 
-    if (error) {
-      console.error('❌ Błąd zapisu danych pacjenta:', error.message);
-      setMessage(tUI('saveError', lang));
-    } else {
-      setMessage(tUI('saveSuccess', lang));
-    }
-
-    setSaving(false);
-  };
+  setSaving(false);
+};
 
   return (
     <div className="space-y-4 max-w-xl mx-auto">
