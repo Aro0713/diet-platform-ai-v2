@@ -342,10 +342,19 @@ const handleGenerateNarrative = async () => {
       {/* Główna zawartość */}
       <div className="z-10 flex flex-col w-full max-w-[1000px] mx-auto gap-6 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 mt-20 dark:text-white transition-colors animate-flip-in origin-center">
         {selectedSection === 'data' && (
-            <PatientSelfForm
-              lang={lang}
-              userId={typeof window !== 'undefined' ? localStorage.getItem('currentUserID') || undefined : undefined}
-            />
+           <PatientSelfForm
+            lang={lang}
+            value={form}
+            onChange={async (updated) => {
+              const userId = localStorage.getItem('currentUserID');
+              if (!userId) return;
+              const { error } = await supabase
+                .from('patients')
+                .update(updated)
+                .eq('user_id', userId);
+              if (!error) alert('✅ Dane pacjenta zapisane');
+            }}
+          />
           )}
 
        {selectedSection === 'medical' && (
