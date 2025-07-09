@@ -26,7 +26,7 @@ export function usePatientData(): UsePatientDataResult {
   const [initialInterviewData, setInitialInterviewData] = useState<any>(undefined);
   const [editableDiet, setEditableDiet] = useState<any>({});
 
-  const fetchPatientData = async () => {
+ const fetchPatientData = async () => {
   const userId = form?.user_id || localStorage.getItem('currentUserID');
   if (!userId) return;
 
@@ -42,14 +42,8 @@ export function usePatientData(): UsePatientDataResult {
   }
 
   if (data) {
-    const parsedMedical = Array.isArray(data.medical) ? data.medical : [];
-
-    setForm((prev) => ({
-      ...prev,
-      conditionGroups: Array.isArray(data.conditionGroups) ? data.conditionGroups : [],
-      conditions: Array.isArray(data.conditions) ? data.conditions : [],
-      medical: parsedMedical
-    }));
+    // 🔧 KLUCZOWE: ustawiamy pełne dane pacjenta
+    setForm(data);
 
     setMedicalData({
       summary: data.health_status || '',
@@ -106,6 +100,7 @@ export function usePatientData(): UsePatientDataResult {
     }
   }
 };
+
 
   const saveMedicalData = async ({
     selectedGroups,
