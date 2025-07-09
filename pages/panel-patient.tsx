@@ -90,13 +90,13 @@ useEffect(() => {
       }
 
       const { error } = await supabase
-        .from('patient_diets')
-        .insert({
-          user_id: userId,
-          diet_plan: editableDiet,
-          status: 'confirmed',
-          confirmed_at: new Date().toISOString()
-        });
+      .from('patient_diets')
+      .upsert({
+        user_id: userId,
+        diet_plan: editableDiet,
+        status: 'confirmed',
+        confirmed_at: new Date().toISOString()
+      }, { onConflict: 'user_id' });
 
       if (error) {
         console.error(`${tUI('supabaseSaveErrorPrefix', lang)} ${error.message}`);
@@ -145,14 +145,14 @@ const saveDietToSupabaseOnly = async () => {
   }
 
   try {
-    const { error } = await supabase
+  const { error } = await supabase
   .from("patient_diets")
-  .insert({
+  .upsert({
     user_id: userId,
     diet_plan: editableDiet,
     status: "confirmed",
     confirmed_at: new Date().toISOString()
-  });
+  }, { onConflict: 'user_id' });
 
     if (error) {
       console.error("❌ Błąd zapisu diety:", error.message);
@@ -174,13 +174,13 @@ const saveDraftToSupabase = async () => {
       return;
     }
 
-    const { error } = await supabase
-      .from('patient_diets')
-      .insert({
-        user_id: userId,
-        diet_plan: editableDiet,
-        status: 'draft'
-      });
+   const { error } = await supabase
+  .from('patient_diets')
+  .upsert({
+    user_id: userId,
+    diet_plan: editableDiet,
+    status: 'draft'
+  }, { onConflict: 'user_id' });
 
     if (error) {
   console.error(`${tUI('draftSaveErrorLog', lang)}:`, error.message);
