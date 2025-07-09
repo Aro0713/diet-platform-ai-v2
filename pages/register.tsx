@@ -39,11 +39,8 @@ useEffect(() => {
 
 useEffect(() => {
   const runInsert = async () => {
-    if (!router.isReady || !langReady || router.query.confirmed !== 'true') return;
+    if (!router.isReady || !langReady) return;
 
-    setConfirmation(true);
-
-    // 🔄 Odśwież sesję i pobierz użytkownika
     await supabase.auth.refreshSession();
     const {
       data: { user },
@@ -51,7 +48,7 @@ useEffect(() => {
     } = await supabase.auth.getUser();
 
     if (error || !user?.id) {
-      console.error('❌ Brak aktywnej sesji po aktywacji konta:', error?.message);
+      console.error('❌ Brak aktywnej sesji:', error?.message);
       return;
     }
 
@@ -60,7 +57,7 @@ useEffect(() => {
     const langFromMeta = metadata.lang || 'pl';
 
     localStorage.setItem('currentUserID', user.id);
-    console.log('✅ currentUserID zapisany po rejestracji:', user.id);
+    console.log('✅ user.id zapisany:', user.id);
 
     if (role === 'doctor' || role === 'dietitian') {
       const { data: exists } = await supabase
@@ -87,6 +84,7 @@ useEffect(() => {
       }
     }
 
+    // 🔄 Insert pacjenta
     const { error: patientError } = await supabase.from('patients').upsert({
       user_id: user.id,
       name: metadata.name || 'Nieznany',
@@ -106,11 +104,13 @@ useEffect(() => {
 
     if (patientError) {
       console.error('❌ Błąd dodawania pacjenta do patients:', patientError.message);
+    } else {
+      console.log('✅ Wpis pacjenta dodany');
     }
   };
 
   runInsert();
-}, [router.query.confirmed, langReady, router.isReady]);
+}, [langReady, router.isReady]);
 
   const [selectedRoleLabel, setSelectedRoleLabel] = useState('');
   const [lang, setLang] = useState<LangKey>('pl');
