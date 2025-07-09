@@ -15,7 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
     console.error('❌ ENV problem: SUPABASE_URL or SERVICE_ROLE_KEY is missing');
-    return res.status(500).json({ error: 'Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY' });
+    return res.status(500).json({ error: 'Missing SUPABASE_URL or SERVICE_ROLE_KEY' });
   }
 
   const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
@@ -24,35 +24,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (!email || !password || !name) {
     console.warn('⛔ Missing required fields');
-    return res.status(400).json({ error: 'Missing required fields' });
+    return res.status(400).json({ error: 'Missing required fields: email, password, name' });
   }
 
   try {
-    console.log('🔐 Tworzenie konta pacjenta w Supabase...');
-    const { data, error } = await supabaseAdmin.auth.admin.createUser({
+    console.log('🔐 Tworzenie konta pacjenta w Supabase (auth.users)...');
+    const { data: userData, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
       email_confirm: false,
+      phone,
       user_metadata: {
         name,
-        phone,
         role: 'patient',
         lang
       }
     });
 
-    if (error || !data?.user?.id) {
-      console.error('❌ Błąd createUser:', error?.message);
-      return res.status(500).json({ error: error?.message || 'Create user error' });
+    if (createError || !userData?.user?.id) {
+      console.error('❌ Błąd createUser:', createError?.message);
+      return res.status(500).json({ error: createError?.message || 'Create user error' });
     }
 
-    console.log('📄 Dodawanie pacjenta do tabeli `patients`...');
-    const insert = await supabaseAdmin.from('patients').insert({
-      user_id: data.user.id,
+    const user_id = userData.user.id;
+
+    console.log('📄 Dodawanie rekordu do tabeli `patients`...');
+    const { error: insertError } = await supabaseAdmin.from('patients').insert({
+      user_id,
       email,
       name,
       phone,
       lang,
+      role: 'patient',
       sex: 'unknown',
       age: null,
       height: null,
@@ -64,13 +67,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       medical_data: {}
     });
 
-    if (insert.error) {
-      console.error('❌ Błąd insertu do patients:', insert.error.message);
-      return res.status(500).json({ error: insert.error.message });
+    if (insertError) {
+      console.error('❌ Błąd insertu do patients:', insertError.message);
+      return res.status(500).json({ error: insertError.message });
     }
 
-    console.log('✅ Pacjent utworzony:', data.user.id);
-    return res.status(200).json({ user_id: data.user.id });
+    console.log('✅ Pacjent utworzony i zapisany. Trigger wyśle e-mail.');
+    return res.status(200).json({ user_id });
   } catch (err) {
     console.error('❌ Błąd serwera (exception):', err);
     return res.status(500).json({ error: (err as Error).message || 'Server error' });
