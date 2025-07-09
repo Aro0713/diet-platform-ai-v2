@@ -713,8 +713,8 @@ return (
         />
       </PanelCard>
     
+      <div className="flex flex-wrap justify-center items-center gap-4 mt-6">
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
   {/* 🔵 Generuj dietę */}
   <button
     type="button"
