@@ -86,21 +86,22 @@ useEffect(() => {
 
     // 🔄 Insert pacjenta
     const { error: patientError } = await supabase.from('patients').upsert({
-      user_id: user.id,
-      name: metadata.name || 'Nieznany',
-      email: user.email,
-      phone: metadata.phone || '',
-      lang: langFromMeta,
-      sex: 'unknown',
-      age: null,
-      height: null,
-      weight: null,
-      region: 'default',
-      allergies: '',
-      conditions: [],
-      health_status: '',
-      medical_data: {}
-    });
+  user_id: user.id,
+  name: metadata.name || 'Nieznany',
+  email: user.email,
+  phone: metadata.phone || '',
+  lang: langFromMeta,
+  sex: 'unknown',
+  age: null,
+  height: null,
+  weight: null,
+  region: 'default',
+  allergies: '',
+  conditions: [],
+  health_status: '',
+  medical_data: {}
+}, { onConflict: 'user_id' });
+
 
     if (patientError) {
       console.error('❌ Błąd dodawania pacjenta do patients:', patientError.message);
