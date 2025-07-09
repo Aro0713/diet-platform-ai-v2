@@ -5,6 +5,11 @@ import { createClient } from '@supabase/supabase-js';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   console.log('📥 [API] POST /api/create-patient INIT');
 
+  // 🔍 DEBUG: Sprawdź zmienne środowiskowe
+  console.log('🛠️ DEBUG ENV SUPABASE_URL:', process.env.SUPABASE_URL ? '[OK]' : '[MISSING]');
+  console.log('🛠️ DEBUG ENV SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? '[OK]' : '[MISSING]');
+  console.log('🛠️ DEBUG ENV VERCEL_ENV:', process.env.VERCEL_ENV || '[undefined]');
+
   if (req.method !== 'POST') {
     console.warn('⛔ Method not allowed:', req.method);
     return res.status(405).json({ error: 'Method Not Allowed' });
@@ -15,7 +20,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
     console.error('❌ ENV problem: SUPABASE_URL or SERVICE_ROLE_KEY is missing');
-    return res.status(500).json({ error: 'Missing SUPABASE_URL or SERVICE_ROLE_KEY' });
+    return res.status(500).json({ error: 'Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY' });
   }
 
   const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
