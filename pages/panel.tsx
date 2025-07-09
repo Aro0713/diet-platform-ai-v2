@@ -28,7 +28,7 @@ import { tryParseJSON } from '@/utils/tryParseJSON';
 import { transformDietPlanToEditableFormat } from '@/utils/transformDietPlan';
 import { generateDietPdf } from '@/utils/generateDietPdf';
 import { validateDiet } from '@/utils/validateDiet';
-import { sendToPatient } from '@/utils/sendToPatient';
+
 
 // 🌍 Tłumaczenia
 import { tUI } from '@/utils/i18n';
@@ -782,64 +782,6 @@ return (
     {isGenerating ? '⏳ Generowanie...' : `📄 ${tUI('pdf', lang)}`}
   </button>
 
-  {/* 📤 Wyślij pacjentowi */}
-  <button
-    type="button"
-    className="w-full bg-blue-500 text-white px-4 py-3 rounded-md font-medium hover:bg-blue-600 disabled:opacity-50"
-    disabled={isGenerating || !confirmedDiet || !dietApproved || !form.email}
-    onClick={async () => {
-      try {
-        setIsGenerating(true);
-        const pdfMake = (await import('pdfmake/build/pdfmake')).default;
-        const pdfFonts = (await import('pdfmake/build/vfs_fonts')).default;
-        pdfMake.vfs = pdfFonts.vfs;
-
-        const { generateDietPdf } = await import('@/utils/generateDietPdf');
-       const docDefinition = await generateDietPdf(
-        form,
-        bmi,
-        confirmedDiet!,
-        dietApproved,
-        notes,
-        lang,
-        interviewData,
-        {
-          bmi: interviewData.bmi,
-          ppm: interviewData.ppm,
-          cpm: interviewData.cpm,
-          pal: interviewData.pal,
-          kcalMaintain: interviewData.kcalMaintain,
-          kcalReduce: interviewData.kcalReduce,
-          kcalGain: interviewData.kcalGain,
-          nmcBroca: interviewData.nmcBroca,
-          nmcLorentz: interviewData.nmcLorentz
-        },
-        'returnDoc', // ✅ zamiast 'email'
-        narrativeText
-      );
-
-        const formattedDate = new Date().toISOString().slice(0, 10);
-        const safeName = form.name?.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "") || "pacjent";
-        const filename = `dieta_${safeName}_${formattedDate}.pdf`;
-
-        pdfMake.createPdf(docDefinition).getBlob(async (blob: Blob) => {
-          const success = await sendToPatient(form.email, blob, lang, filename);
-          if (success) {
-            alert('📤 Dieta została wysłana pacjentowi!');
-          } else {
-            alert('❌ Wysyłka nie powiodła się. Sprawdź adres e-mail lub połączenie.');
-          }
-        });
-      } catch (err) {
-        console.error(err);
-        alert('❌ Błąd podczas wysyłania diety.');
-      } finally {
-        setIsGenerating(false);
-      }
-    }}
-  >
-    {isGenerating ? '⏳ Wysyłanie...' : `📤 ${tUI('sendToPatient', lang)}`}
-  </button>
 </div>
 
 {isGenerating && (
