@@ -191,11 +191,6 @@ export default function CalculationBlock({ form, interview, lang, onResult }: Pr
             ? interview.q8
             : <span className="text-red-500">{tUI('noData', lang)}</span>}
         </div>
-
-        <div>
-          <strong>{tUI('mealCount', lang)}:</strong>{' '}
-          {mealCount !== undefined && mealCount !== '' ? mealCount : <span className="text-red-500">{tUI('noData', lang)}</span>}
-        </div>
       </div>
     </div>
 
