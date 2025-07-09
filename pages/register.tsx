@@ -12,19 +12,57 @@ const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_KEY || '';
 
 export default function RegisterPage() {
   const router = useRouter();
+   const [detectedCountry, setDetectedCountry] = useState<'pl'>('pl');
+   const runInsert = async () => {
+    const { data } = await supabase.auth.getSession();
+    const user = data.session?.user;
 
-  const [detectedCountry, setDetectedCountry] = useState<'pl'>('pl');
+    if (!user?.id) return;
 
-useEffect(() => {
-  fetch('https://ip-api.com/json/')
-    .then((res) => res.json())
-    .then((data) => {
-      if (data?.countryCode) {
-        setDetectedCountry(data.countryCode.toLowerCase());
+    const metadata = user.user_metadata || {};
+    const role = metadata.role || 'patient';
+    const lang = metadata.lang || 'pl';
+
+    if (role === 'patient') {
+      const { data: exists } = await supabase
+        .from('patients')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (!exists) {
+        await supabase.from('patients').insert({
+          user_id: user.id,
+          email: user.email,
+          name: metadata.name || 'Nieznany',
+          phone: metadata.phone || '',
+          lang
+        });
       }
-    })
-    .catch(() => setDetectedCountry('pl'));
-}, []);
+    }
+
+    if (role === 'doctor' || role === 'dietitian') {
+      const { data: exists } = await supabase
+        .from('users')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (!exists) {
+        await supabase.from('users').insert({
+          user_id: user.id,
+          email: user.email,
+          name: metadata.name || 'Nieznany',
+          phone: metadata.phone || '',
+          role,
+          lang,
+          jurisdiction: metadata.jurisdiction || '',
+          license_number: metadata.license_number || ''
+        });
+      }
+    }
+  };
+
 
 const [confirmation, setConfirmation] = useState(false);
 const [langReady, setLangReady] = useState(false);
@@ -37,87 +75,8 @@ useEffect(() => {
   });
 }, []);
 
-useEffect(() => {
-  const runInsert = async () => {
-    if (!router.isReady || !langReady) return;
-
-    await supabase.auth.refreshSession();
-    const {
-      data: { user },
-      error
-    } = await supabase.auth.getUser();
-
-    if (error || !user?.id) {
-      console.error('❌ Brak aktywnej sesji:', error?.message);
-      return;
-    }
-
-    const metadata = user.user_metadata || {};
-    const role = metadata.role || 'patient';
-    const langFromMeta = metadata.lang || 'pl';
-
-    localStorage.setItem('currentUserID', user.id);
-    console.log('✅ user.id zapisany:', user.id);
-
-    if (role === 'doctor' || role === 'dietitian') {
-      const { data: exists } = await supabase
-        .from('users')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (!exists) {
-        const insertResult = await supabase.from('users').insert([{
-          user_id: user.id,
-          name: metadata.name || user.email?.split('@')[0] || 'Nieznany',
-          email: user.email,
-          phone: metadata.phone || '',
-          role,
-          lang: langFromMeta,
-          jurisdiction: metadata.jurisdiction || '',
-          license_number: metadata.license_number || ''
-        }]);
-
-        if (insertResult.error) {
-          console.error('❌ Insert error (users):', insertResult.error);
-        }
-      }
-    }
-
-    // 🔄 Dodaj pacjenta tylko jeśli nie istnieje
-    if (role === 'patient') {
-      const { data: existingPatient } = await supabase
-        .from('patients')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (!existingPatient) {
-        const { error: patientError } = await supabase.from('patients').insert({
-          user_id: user.id,
-          name: metadata.name || 'Nieznany',
-          email: user.email,
-          phone: metadata.phone || '',
-          lang: langFromMeta
-        });
-
-        if (patientError) {
-          console.error('❌ Błąd dodawania pacjenta do patients:', patientError.message);
-        } else {
-          console.log('✅ Pacjent dodany do tabeli patients');
-        }
-      } else {
-        console.log('ℹ️ Pacjent już istnieje — pomijam insert');
-      }
-    }
-  }; // <- ⬅️ zamknięcie runInsert
-
-  runInsert();
-}, [langReady, router.isReady]); // <- ⬅️ zamknięcie useEffect
-
   const [selectedRoleLabel, setSelectedRoleLabel] = useState('');
   const [lang, setLang] = useState<LangKey>('pl');
-
 
   // 🌗 tryb ciemny (pamiętany w localStorage)
   const [darkMode, setDarkMode] = useState(() => {
@@ -171,11 +130,12 @@ const [disclaimer, setDisclaimer] = useState('');
     setLangReady(true);
   }, []);
 
-    useEffect(() => {
-    if (router.query.confirmed === 'true') {
-      setConfirmation(true);
-    }
-  }, [router.query]);
+   useEffect(() => {
+  if (router.query.confirmed === 'true') {
+    setConfirmation(true);
+    runInsert(); 
+  }
+}, [router.query]);
 
   // ✅ FUNKCJA TŁUMACZEŃ Z WALIDACJĄ
   const t = (key: keyof typeof translationsRegister): string => {
@@ -272,18 +232,32 @@ const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
   const userId = data.user.id;
   
 
-  // ✅ najpierw próbujemy z tabeli users
-  const { data: userData, error: userError } = await supabase
-    .from('users')
-    .select('role')
-    .eq('user_id', userId)
-    .maybeSingle();
+const { data: userData, error: userError } = await supabase
+  .from('users')
+  .select('role')
+  .eq('user_id', userId)
+  .maybeSingle();
 
-  if (userData?.role === 'doctor' || userData?.role === 'dietitian') {
-    localStorage.setItem('currentUserRole', userData.role);
-    router.push('/panel');
-    return;
-  }
+if (!userData) {
+  console.warn('📭 Brak wpisu w users – uruchamiam runInsert');
+  await runInsert(); // 🧠 wymuszamy wpis do users/patients
+}
+
+// 🔄 ponowna próba pobrania roli po insert
+const { data: newUserData } = await supabase
+  .from('users')
+  .select('role')
+  .eq('user_id', userId)
+  .maybeSingle();
+
+const role = newUserData?.role;
+
+if (role === 'doctor' || role === 'dietitian') {
+  localStorage.setItem('currentUserRole', role);
+  router.push('/panel');
+  return;
+}
+
 
   // ✅ jeśli nie znaleziono – sprawdzamy tabelę patients
   const { data: patientData, error: patientError } = await supabase
@@ -375,7 +349,7 @@ const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
     email: form.email,
     password: form.password,
     options: {
-      emailRedirectTo: 'https://dcp.care/register?confirmed=true',
+      emailRedirectTo: 'https://www.dcp.care/register?confirmed=true',
       data: {
         name: form.name,
         phone: form.phone,
@@ -649,7 +623,6 @@ return (
       <div className="w-full">
       <label htmlFor="phone" className="sr-only">{t('phone')}</label>
       <PhoneInput
-        defaultCountry={detectedCountry}
         value={form.phone}
         onChange={(phone) => setForm({ ...form, phone })}
         inputClassName="w-full h-[44px] text-sm bg-white dark:bg-gray-800 text-black dark:text-white border border-gray-300 dark:border-gray-600 rounded px-3 py-2"
