@@ -26,96 +26,107 @@ export function usePatientData(): UsePatientDataResult {
   const [initialInterviewData, setInitialInterviewData] = useState<any>(undefined);
   const [editableDiet, setEditableDiet] = useState<any>({});
 
-  const fetchPatientData = async () => {
-    const userId = localStorage.getItem('currentUserID');
-    if (!userId) return;
+ const fetchPatientData = async () => {
+  console.log("🚀 fetchPatientData start");
 
-    const { data, error } = await supabase
-      .from('patients')
-      .select('*, interview_data, medical_data, health_status')
+  const userId = localStorage.getItem('currentUserID');
+  console.log("🧠 userId z localStorage:", userId);
+  if (!userId) return;
+
+  const { data, error } = await supabase
+    .from('patients')
+    .select('*')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error) {
+    console.error('❌ Błąd z Supabase:', error.message);
+    return;
+  }
+
+  if (!data) {
+    console.warn('⚠️ Supabase zwrócił null — brak wpisu w patients?');
+    return;
+  }
+
+  console.log('✅ Supabase dane:', JSON.stringify(data, null, 2));
+
+  setForm({
+    user_id: data.user_id,
+    name: data.name,
+    email: data.email,
+    phone: data.phone,
+    sex: data.sex,
+    age: data.age,
+    height: data.height,
+    weight: data.weight,
+    region: data.region,
+    medical: Array.isArray(data.medical) ? data.medical : [],
+    conditionGroups: Array.isArray(data.conditionGroups) ? data.conditionGroups : [],
+    conditions: Array.isArray(data.conditions) ? data.conditions : [],
+    allergies: data.allergies || '',
+    goal: data.goal || '',
+    cuisine: data.cuisine || '',
+    model: data.model || ''
+  });
+
+  setTimeout(() => {
+    console.log("📢 AFTER setForm:", form);
+  }, 500);
+
+  setMedicalData({
+    summary: data.health_status || '',
+    json: data.medical_data || null
+  });
+
+  setInterviewData(data.interview_data || {});
+
+  const freshInitial = buildInitialDataFromSupabase(data);
+  console.log('🔥 initialMedicalData z Supabase:', freshInitial);
+  setInitialMedicalData(JSON.parse(JSON.stringify(freshInitial)));
+  setInitialInterviewData(JSON.parse(JSON.stringify(data.interview_data || {})));
+
+  const { data: draft } = await supabase
+    .from('patient_diets')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('status', 'draft')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (draft?.diet_plan) {
+    try {
+      const parsed = typeof draft.diet_plan === 'string'
+        ? JSON.parse(draft.diet_plan)
+        : draft.diet_plan;
+      setEditableDiet(parsed);
+    } catch (err) {
+      console.error('❌ Błąd parsowania draft diet_plan:', err);
+    }
+  } else {
+    const { data: confirmed } = await supabase
+      .from('patient_diets')
+      .select('diet_plan')
       .eq('user_id', userId)
+      .eq('status', 'confirmed')
+      .order('confirmed_at', { ascending: false })
+      .limit(1)
       .maybeSingle();
 
-    if (error) {
-      console.error('❌ Błąd pobierania danych pacjenta:', error.message);
-      return;
-    }
-
-    if (data) {
-      console.log('✅ Dane pacjenta:', data);
-      setForm({
-        user_id: data.user_id,
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        sex: data.sex,
-        age: data.age,
-        height: data.height,
-        weight: data.weight,
-        region: data.region,
-        medical: Array.isArray(data.medical) ? data.medical : [],
-        conditionGroups: Array.isArray(data.conditionGroups) ? data.conditionGroups : [],
-        conditions: Array.isArray(data.conditions) ? data.conditions : [],
-        allergies: data.allergies || '',
-        goal: data.goal || '',
-        cuisine: data.cuisine || '',
-        model: data.model || ''
-      });
-
-      setMedicalData({
-        summary: data.health_status || '',
-        json: data.medical_data || null
-      });
-
-      setInterviewData(data.interview_data || {});
-
-      const freshInitial = buildInitialDataFromSupabase(data);
-      console.log('🔥 initialMedicalData z Supabase:', freshInitial);
-      setInitialMedicalData(JSON.parse(JSON.stringify(freshInitial)));
-      setInitialInterviewData(JSON.parse(JSON.stringify(data.interview_data || {})));
-
-      // 🔁 Dieta: draft lub confirmed
-      const { data: draft } = await supabase
-        .from('patient_diets')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('status', 'draft')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (draft?.diet_plan) {
-        try {
-          const parsed = typeof draft.diet_plan === 'string'
-            ? JSON.parse(draft.diet_plan)
-            : draft.diet_plan;
-          setEditableDiet(parsed);
-        } catch (err) {
-          console.error('❌ Błąd parsowania draft diet_plan:', err);
-        }
-      } else {
-        const { data: confirmed } = await supabase
-          .from('patient_diets')
-          .select('diet_plan')
-          .eq('user_id', userId)
-          .eq('status', 'confirmed')
-          .order('confirmed_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (confirmed?.diet_plan) {
-          try {
-            const parsed = typeof confirmed.diet_plan === 'string'
-              ? JSON.parse(confirmed.diet_plan)
-              : confirmed.diet_plan;
-            setEditableDiet(parsed);
-          } catch (err) {
-            console.error('❌ Błąd parsowania confirmed diet_plan:', err);
-          }
-        }
+    if (confirmed?.diet_plan) {
+      try {
+        const parsed = typeof confirmed.diet_plan === 'string'
+          ? JSON.parse(confirmed.diet_plan)
+          : confirmed.diet_plan;
+        setEditableDiet(parsed);
+      } catch (err) {
+        console.error('❌ Błąd parsowania confirmed diet_plan:', err);
       }
     }
-  };
+  }
+};
+
 
   const saveMedicalData = async ({
     selectedGroups,
