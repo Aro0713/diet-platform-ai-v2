@@ -72,20 +72,19 @@ export default function CalculationBlock({ form, interview, lang, onResult }: Pr
     : null;
 
  useEffect(() => {
-  const raw = interview.q1?.toLowerCase?.() || '';
+  const raw = (interview.q2 || interview.q1 || '').toLowerCase();
 
   const inferred =
     raw.includes("brak") || raw.includes("nie podejmuję") || raw.includes("0") || raw.includes("1") ? 1.3 :
     raw.includes("siedząc") || raw.includes("niska") || raw.includes("2") ? 1.4 :
     raw.includes("umiarkowan") || raw.includes("3") || raw.includes("4") ? 1.6 :
-    raw.includes("aktywn") || raw.includes("5") || raw.includes("6") ? 1.75 :
+    raw.includes("aktywn") || raw.includes("rower") || raw.includes("5") || raw.includes("6") ? 1.75 :
     raw.includes("bardzo") || raw.includes("7") || raw.includes("8") ? 2.0 :
     1.3;
 
   setPal(inferred);
   setAutoPAL(inferred);
-}, [interview.q1]);
-
+}, [interview.q1, interview.q2]);
 
  useEffect(() => {
   let hint = "";
@@ -174,10 +173,18 @@ export default function CalculationBlock({ form, interview, lang, onResult }: Pr
       <div className="space-y-1 text-xs">
         <div>
           <strong>{tUI('physicalActivity', lang)}:</strong>{' '}
-          {interview.q2
-            ? interview.q2
+          {interview.q1 === 'Tak'
+            ? interview.q2 || tUI('yes', lang)
             : interview.q1 || <span className="text-red-500">{tUI('noData', lang)}</span>}
         </div>
+
+        <div>
+          <strong>{tUI('sleepQuality', lang)}:</strong>{' '}
+          {interview.q7
+            ? interview.q7
+            : <span className="text-blue-400">{tUI('noData', lang)}</span>}
+        </div>
+
         <div>
           <strong>{tUI('stressLevel', lang)}:</strong>{' '}
           {interview.q8
