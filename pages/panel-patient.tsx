@@ -346,15 +346,6 @@ console.log("📦 form w panel-patient:", form);
            <PatientSelfForm
             lang={lang}
             value={form}
-            onChange={async (updated) => {
-              const userId = localStorage.getItem('currentUserID');
-              if (!userId) return;
-              const { error } = await supabase
-                .from('patients')
-                .update(updated)
-                .eq('user_id', userId);
-              if (!error) alert('✅ Dane pacjenta zapisane');
-            }}
           />
           )}
 
