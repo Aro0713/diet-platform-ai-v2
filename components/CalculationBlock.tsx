@@ -54,7 +54,7 @@ export default function CalculationBlock({ form, interview, lang, onResult }: Pr
   const [interpretation, setInterpretation] = useState("");
 
   const { weight, height, age, sex } = form;
-  const mealCount = interview.mealsPerDay;
+  const mealCount = String(interview?.mealsPerDay ?? '').trim();
 
   const bmi = isValid(weight) && isValid(height) ? weight / Math.pow(height / 100, 2) : null;
   const ppm = isValid(weight) && isValid(height) && isValid(age) && sex
