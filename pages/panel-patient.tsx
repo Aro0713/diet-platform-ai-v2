@@ -617,15 +617,6 @@ console.log("📦 form w panel-patient:", form);
     )}
   </div>
 )}
-{/* 🔽 Neonowa strzałka do skanera */}
-{editableDiet && Object.keys(editableDiet).length > 0 && (
-  <div className="mt-10 flex justify-end">
-    <NeonNextArrow
-      onClick={() => setSelectedSection("scanner")}
-      label={tUI("nextSection_scanner", lang)}
-    />
-  </div>
-)}
 
 {/* 📖 Wyświetlenie przepisów */}
 {selectedSection === 'diet' && recipes && Object.keys(recipes).length > 0 && (
