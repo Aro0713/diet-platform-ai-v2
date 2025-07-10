@@ -197,21 +197,31 @@ ${jsonFormatPreview}
 Do not return top-level "Monday", "Tuesday" etc. — use localized day names in dietPlan.
 `;
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        { role: "system", content: "You are a clinical dietitian AI." },
-        { role: "user", content: prompt }
-      ],
-      temperature: 0.7,
-      stream: false
-    });
+try {
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [
+      { role: "system", content: "You are a clinical dietitian AI." },
+      { role: "user", content: prompt }
+    ],
+    temperature: 0.7,
+    stream: false
+  });
 
+  const content = completion.choices?.[0]?.message?.content;
+  if (!content) throw new Error("Brak odpowiedzi od modelu");
+
+  return {
+    type: "text",
+    content
+  };
+  } catch (error: any) {
     return {
       type: "text",
-      content: completion.choices[0].message.content ?? "Brak odpowiedzi."
+      content: `❌ Błąd generowania diety: ${error.message || "Nieznany błąd"}`
     };
   }
+}  
 });
 
 export const dietAgent = new Agent({
@@ -219,3 +229,4 @@ export const dietAgent = new Agent({
   instructions: "You are a helpful clinical nutritionist generating structured 7-day diets in JSON.",
   tools: [generateDietTool]
 });
+

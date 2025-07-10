@@ -20,6 +20,7 @@ import DietGoalForm from '@/components/DietGoalForm';
 import SelectModelForm from '@/components/SelectModelForm';
 import SelectCuisineForm from '@/components/SelectCuisineForm';
 import { generateDietPdf } from '@/utils/generateDietPdf';
+import NeonNextArrow from "@/components/NeonNextArrow";
 
 export default function DoctorPanelPage(): React.JSX.Element {
   const router = useRouter();
@@ -233,10 +234,7 @@ const handleGenerateDiet = async () => {
       kidney: 'The goal is to support kidney function and manage fluid/sodium balance.'
     };
 
-    if (!interviewData.mealsPerDay) {
-      interviewData.mealsPerDay = 4;
-    }
-
+    // 🧠 Pacjent nie ustawia liczby posiłków – agent to zrobi na podstawie wywiadu i wyników
 
     const recommendation = interviewData.recommendation?.trim();
     const goalExplanation = goalMap[interviewData.goal] || '';
@@ -360,68 +358,101 @@ console.log("📦 form w panel-patient:", form);
       {/* Główna zawartość */}
       <div className="z-10 flex flex-col w-full max-w-[1000px] mx-auto gap-6 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 mt-20 dark:text-white transition-colors animate-flip-in origin-center">
         {selectedSection === 'data' && (
-           <PatientSelfForm
-            lang={lang}
-            value={form}
-          />
-          )}
+          <>
+            <PatientSelfForm
+              lang={lang}
+              value={form}
+            />
+            <div className="flex justify-end mt-6">
+              <NeonNextArrow onClick={() => setSelectedSection("medical")} label="➡️ Dalej: analiza medyczna" />
+            </div>
+          </>
+            )}
 
        {selectedSection === 'medical' && (
-          <>
-            <MedicalForm
-              onChange={(data) => {
-                saveMedicalData(data).then(() => setIsConfirmed(true));
-              }}
-              onUpdateMedical={(summary) => {
-                setMedicalData((prev: any) => ({ ...prev, summary }));
-              }}
-              initialData={initialMedicalData}
-              existingMedical={medicalData}
-              lang={lang}
-            />
+      <>
+        <MedicalForm
+          onChange={(data) => {
+            saveMedicalData(data).then(() => setIsConfirmed(true));
+          }}
+          onUpdateMedical={(summary) => {
+            setMedicalData((prev: any) => ({ ...prev, summary }));
+          }}
+          initialData={initialMedicalData}
+          existingMedical={medicalData}
+          lang={lang}
+        />
 
-            {isConfirmed && !interviewData?.goal && (
-              <div className="mt-6 p-4 bg-emerald-100/80 dark:bg-emerald-900/40 text-base rounded-md text-gray-900 dark:text-white shadow max-w-2xl mx-auto">
-                {tUI('medicalConfirmationMessage', lang)}
-              </div>
-            )}
-          </>
+        {isConfirmed && interviewData?.goal && (
+          <div className="mt-6 p-4 bg-emerald-100/80 dark:bg-emerald-900/40 text-base rounded-md text-gray-900 dark:text-white shadow max-w-2xl mx-auto">
+            {tUI('medicalConfirmationMessage', lang)}
+          </div>
         )}
 
-        {selectedSection === 'interview' && (
-          <>
-            <InterviewWizard
+          {/* 🔽 Neonowa strzałka Dalej */}
+          <div className="mt-6 flex justify-end">
+            <NeonNextArrow
+              onClick={() => setSelectedSection("interview")}
+              label="➡️ Dalej: wywiad z pacjentem"
+            />
+          </div>
+        </>
+      )}
+
+
+       {selectedSection === 'interview' && (
+  <>
+          <InterviewWizard
             form={form}
-           onFinish={async (data) => {
-            await saveInterviewData(data);
-            await handleGenerateNarrative();
+            onFinish={async (data) => {
+              await saveInterviewData(data);
+              await handleGenerateNarrative();
             }}
             lang={lang}
             initialData={initialInterviewData}
+          />
+
+          {interviewData?.goal && (
+            <div className="mt-6 p-4 bg-sky-100/80 dark:bg-sky-900/40 text-base rounded-md text-gray-900 dark:text-white shadow max-w-2xl mx-auto">
+              {tUI('interviewConfirmationMessage', lang)}
+            </div>
+          )}
+
+          {/* 🔽 Neonowa strzałka Dalej */}
+          <div className="mt-6 flex justify-end">
+            <NeonNextArrow
+              onClick={() => setSelectedSection("calculator")}
+              label="➡️ Dalej: pacjent w liczbach"
+            />
+          </div>
+        </>
+      )}
+
+        {selectedSection === 'calculator' && (
+          <>
+            <CalculationBlock
+              form={form}
+              interview={extractMappedInterview(interviewData)}
+              lang={lang}
+              onResult={(result) => {
+                setInterviewData((prev: any) => ({
+                  ...prev,
+                  ...result,
+                  model: result.suggestedModel
+                }));
+              }}
             />
 
-            {interviewData?.goal && (
-              <div className="mt-6 p-4 bg-sky-100/80 dark:bg-sky-900/40 text-base rounded-md text-gray-900 dark:text-white shadow max-w-2xl mx-auto">
-                {tUI('interviewConfirmationMessage', lang)}
-              </div>
-            )}
+            {/* 🔽 Neonowa strzałka Dalej */}
+            <div className="mt-6 flex justify-end">
+              <NeonNextArrow
+                onClick={() => setSelectedSection("diet")}
+                label="➡️ Dalej: plan diety"
+              />
+            </div>
           </>
         )}
 
-        {selectedSection === 'calculator' && (
-          <CalculationBlock
-            form={form}
-            interview={extractMappedInterview(interviewData)}
-            lang={lang}
-            onResult={(result) => {
-              setInterviewData((prev: any) => ({
-                ...prev,
-                ...result,
-                model: result.suggestedModel
-              }));
-            }}
-          />
-        )}
 
         {selectedSection === 'diet' && (
   <div className="space-y-6">
@@ -567,7 +598,6 @@ console.log("📦 form w panel-patient:", form);
       {tUI('sendDietToDoctor', lang)}
     </span>
   </button>
-
 </div>
 
 </div>
@@ -585,6 +615,16 @@ console.log("📦 form w panel-patient:", form);
     )}
   </div>
 )}
+{/* 🔽 Neonowa strzałka do skanera */}
+{editableDiet && Object.keys(editableDiet).length > 0 && (
+  <div className="mt-10 flex justify-end">
+    <NeonNextArrow
+      onClick={() => setSelectedSection("scanner")}
+      label="➡️ Przejdź do skanera produktów"
+    />
+  </div>
+)}
+
 {/* 📖 Wyświetlenie przepisów */}
 {selectedSection === 'diet' && recipes && Object.keys(recipes).length > 0 && (
   <div className="mt-6 space-y-6">
