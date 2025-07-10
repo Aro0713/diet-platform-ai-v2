@@ -130,10 +130,49 @@ const [disclaimer, setDisclaimer] = useState('');
     setLangReady(true);
   }, []);
 
-   useEffect(() => {
+useEffect(() => {
   if (router.query.confirmed === 'true') {
     setConfirmation(true);
-    runInsert(); 
+
+    supabase.auth.getSession().then(async ({ data }) => {
+      const user = data?.session?.user;
+      if (!user) return;
+
+      const metadata = user.user_metadata || {};
+      const role = metadata.role || 'patient';
+      const lang = metadata.lang || 'pl';
+
+      const updates: any = {
+        role,
+        lang,
+        name: metadata.name || 'Nieznany',
+        phone: metadata.phone || '',
+      };
+
+      if (role === 'doctor') {
+        updates.jurisdiction = metadata.jurisdiction || '';
+        updates.license_number = metadata.license_number || '';
+      }
+
+      if (role === 'dietitian') {
+        updates.license_number = metadata.license_number || '';
+      }
+
+      const { error } = await supabase.auth.updateUser({
+        data: updates,
+      });
+
+      if (error) {
+        console.error('❌ Błąd aktualizacji metadanych użytkownika:', error.message);
+      } else {
+        console.log('✅ Metadane użytkownika uzupełnione.');
+
+        // 🔁 Opóźnienie przed runInsert — 250ms
+        setTimeout(() => {
+          runInsert();
+        }, 250);
+      }
+    });
   }
 }, [router.query]);
 
