@@ -209,8 +209,7 @@ ${tUI('region', lang)}: ${patient.region ? await getTranslation(patient.region, 
 🥩 ${tUI('protein', lang)}: ${meal.macros?.protein ?? 0} g
 🧈 ${tUI('fat', lang)}: ${meal.macros?.fat ?? 0} g
 🍞 ${tUI('carbs', lang)}: ${meal.macros?.carbs ?? 0} g
-🌿 ${tUI('fiber', lang)}: ${meal.macros?.fiber ?? 0} g
-🧪 ${tUI('potassium', lang)}: ${meal.macros?.potassium ?? 0} mg`,
+🌿 ${tUI('fiber', lang)}: ${meal.macros?.fiber ?? 0} g`,
                   fontSize: 9
                 },
                 image ? (
@@ -364,22 +363,53 @@ if (recipes && Object.keys(recipes).length > 0) {
   }
 
 function summarizeNutritionByDay(diet: Meal[]) {
-  const byDay: Record<string, { kcal: number; protein: number; fat: number; carbs: number; fiber: number; potassium: number }> = {};
+ const byDay: Record<string, {
+  kcal: number;
+  protein: number;
+  fat: number;
+  carbs: number;
+  fiber: number;
+}> = {};
+
   diet.forEach(meal => {
     const day = (meal as any).day || 'Inne';
     if (!byDay[day]) {
-      byDay[day] = { kcal: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, potassium: 0 };
+      byDay[day] = { kcal: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, };
     }
     byDay[day].kcal += meal.calories || 0;
     byDay[day].protein += meal.macros?.protein || 0;
     byDay[day].fat += meal.macros?.fat || 0;
     byDay[day].carbs += meal.macros?.carbs || 0;
     byDay[day].fiber += meal.macros?.fiber || 0;
-    byDay[day].potassium += meal.macros?.potassium || 0;
   });
   return byDay;
 }
 const dailySummary = summarizeNutritionByDay(diet);
+content.push({ text: tUI('dailyNutritionSummaryTitle', lang), style: 'subheader', margin: [0, 10, 0, 6] });
+
+content.push({
+  table: {
+    widths: ['*', 'auto', 'auto', 'auto', 'auto'],
+    body: [
+      [
+        tUI('day', lang),
+        'kcal',
+        tUI('protein', lang),
+        tUI('fat', lang),
+        tUI('carbs', lang)
+      ],
+      ...Object.entries(dailySummary).map(([day, values]) => [
+        day,
+        Math.round(values.kcal),
+        `${Math.round(values.protein)} g`,
+        `${Math.round(values.fat)} g`,
+        `${Math.round(values.carbs)} g`
+      ])
+    ]
+  },
+  layout: 'lightHorizontalLines',
+  margin: [0, 0, 0, 10]
+});
 
 const weekly = Object.values(dailySummary).reduce(
   (a, b) => ({
@@ -388,66 +418,36 @@ const weekly = Object.values(dailySummary).reduce(
     fat: a.fat + b.fat,
     carbs: a.carbs + b.carbs,
     fiber: a.fiber + b.fiber,
-    potassium: a.potassium + b.potassium
+  
   }),
-  { kcal: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, potassium: 0 }
+  { kcal: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, }
 );
 
 content.push({ text: tUI('weeklyNutritionSummaryTitle', lang), style: 'subheader', margin: [0, 10, 0, 6] });
 
 content.push({
-  table: {
-    widths: ['*', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'],
-    body: [
-      [
-        tUI('week', lang),
-        'kcal',
-        tUI('protein', lang),
-        tUI('fat', lang),
-        tUI('carbs', lang),
-        tUI('fiber', lang),
-        tUI('potassium', lang)
-      ],
-      [
-        tUI('total', lang),
-        Math.round(weekly.kcal),
-        `${Math.round(weekly.protein)} g`,
-        `${Math.round(weekly.fat)} g`,
-        `${Math.round(weekly.carbs)} g`,
-        `${Math.round(weekly.fiber)} g`,
-        `${Math.round(weekly.potassium)} mg`
-      ]
+table: {
+  widths: ['*', 'auto', 'auto', 'auto', 'auto'],
+  body: [
+    [
+      tUI('week', lang),
+      'kcal',
+      tUI('protein', lang),
+      tUI('fat', lang),
+      tUI('carbs', lang)
+    ],
+    [
+      tUI('total', lang),
+      Math.round(weekly.kcal),
+      `${Math.round(weekly.protein)} g`,
+      `${Math.round(weekly.fat)} g`,
+      `${Math.round(weekly.carbs)} g`
     ]
-  },
+  ]
+},
   layout: 'lightHorizontalLines',
   margin: [0, 0, 0, 10]
 });
-
-  content.push({ text: tUI('weeklyNutritionSummaryTitle', lang), style: 'subheader', margin: [0, 10, 0, 6] });
-
-  content.push({
-    table: {
-      widths: ['*', 'auto', 'auto', 'auto', 'auto'],
-      body: [
-        [
-          tUI('week', lang),
-          'kcal',
-          tUI('protein', lang),
-          tUI('fat', lang),
-          tUI('carbs', lang)
-        ],
-        [
-          tUI('total', lang),
-          Math.round(weekly.kcal),
-          `${Math.round(weekly.protein)} g`,
-          `${Math.round(weekly.fat)} g`,
-          `${Math.round(weekly.carbs)} g`
-        ]
-      ]
-    },
-    layout: 'lightHorizontalLines',
-    margin: [0, 0, 0, 10]
-  });
 
   const qrBase64 = await QRCode.toDataURL('https://www.dcp.care');
   const formattedDate = new Date().toISOString().slice(0, 10);
