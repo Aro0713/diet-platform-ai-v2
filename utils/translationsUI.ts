@@ -3701,7 +3701,98 @@ nextSection_scanner: {
   ar: "➡️ الانتقال إلى ماسح المنتجات",
   hi: "➡️ उत्पाद स्कैनर पर जाएं",
   he: "➡️ עבור לסורק מוצרים"
-}
+},
+productScannerTitle: {
+  pl: "Skanuj produkt",
+  en: "Scan product",
+  de: "Produkt scannen",
+  fr: "Scanner un produit",
+  es: "Escanear producto",
+  ua: "Сканувати продукт",
+  ru: "Сканировать продукт",
+  zh: "扫描产品",
+  ar: "مسح المنتج",
+  hi: "उत्पाद स्कैन करें",
+  he: "סרוק מוצר"
+},
+enterBarcode: {
+  pl: "Wpisz kod kreskowy",
+  en: "Enter barcode",
+  de: "Barcode eingeben",
+  fr: "Entrer le code-barres",
+  es: "Introducir código de barras",
+  ua: "Введіть штрихкод",
+  ru: "Введите штрихкод",
+  zh: "输入条形码",
+  ar: "أدخل الرمز الشريطي",
+  hi: "बारकोड दर्ज करें",
+  he: "הזן ברקוד"
+},
+analyzeWithAI: {
+  pl: "Analizuj AI",
+  en: "Analyze with AI",
+  de: "Mit KI analysieren",
+  fr: "Analyser avec l’IA",
+  es: "Analizar con IA",
+  ua: "Аналізувати за допомогою ШІ",
+  ru: "Анализировать с помощью ИИ",
+  zh: "用AI分析",
+  ar: "تحليل باستخدام الذكاء الاصطناعي",
+  hi: "एआई के साथ विश्लेषण करें",
+  he: "נתח עם בינה מלאכותית"
+},
 
+uploadLabelPhoto: {
+  pl: "Wrzuć zdjęcie etykiety",
+  en: "Upload label photo",
+  de: "Etikettenfoto hochladen",
+  fr: "Télécharger une photo de l’étiquette",
+  es: "Subir foto de la etiqueta",
+  ua: "Завантажити фото етикетки",
+  ru: "Загрузить фото этикетки",
+  zh: "上传标签照片",
+  ar: "تحميل صورة الملصق",
+  hi: "लेबल फोटो अपलोड करें",
+  he: "העלה תמונת תווית"
+},
+analyzePhoto: {
+  pl: "Analizuj zdjęcie",
+  en: "Analyze photo",
+  de: "Foto analysieren",
+  fr: "Analyser la photo",
+  es: "Analizar foto",
+  ua: "Аналізувати фото",
+  ru: "Анализировать фото",
+  zh: "分析照片",
+  ar: "تحليل الصورة",
+  hi: "फोटो का विश्लेषण करें",
+  he: "נתח תמונה"
+},
+writeProductText: {
+  pl: "Napisz nazwę lub opis produktu",
+  en: "Write product name or description",
+  de: "Produktname oder Beschreibung eingeben",
+  fr: "Écrire le nom ou la description du produit",
+  es: "Escribe el nombre o descripción del producto",
+  ua: "Введіть назву або опис продукту",
+  ru: "Введите название или описание продукта",
+  zh: "输入产品名称或描述",
+  ar: "اكتب اسم المنتج أو وصفه",
+  hi: "उत्पाद का नाम या विवरण लिखें",
+  he: "כתוב שם או תיאור מוצר"
+},
+analyzeTextDescription: {
+  pl: "Analizuj opis",
+  en: "Analyze description",
+  de: "Beschreibung analysieren",
+  fr: "Analyser la description",
+  es: "Analizar descripción",
+  ua: "Аналізувати опис",
+  ru: "Анализировать описание",
+  zh: "分析描述",
+  ar: "تحليل الوصف",
+  hi: "विवरण का विश्लेषण करें",
+  he: "נתח תיאור"
+},
 };
 

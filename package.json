@@ -16,6 +16,7 @@
     "ai": "^4.3.16",
     "canvas": "^3.1.0",
     "ethers": "^6.13.5",
+    "formidable": "^3.5.4",
     "framer-motion": "^12.10.0",
     "lucide-react": "^0.511.0",
     "next": "^15.3.2",
@@ -35,6 +36,7 @@
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@tailwindcss/postcss": "^4.1.7",
+    "@types/formidable": "^3.4.5",
     "@types/jest": "^29.5.14",
     "@types/node": "^18.19.101",
     "@types/pdfmake": "^0.2.11",

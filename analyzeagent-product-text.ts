@@ -1,3 +1,4 @@
+// pages/api/analyzeagent-product-text.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import OpenAI from 'openai';
 
@@ -6,48 +7,29 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).end();
 
-  const { barcode, lang, patient } = req.body;
-  if (!barcode) return res.status(400).json({ error: 'Missing barcode' });
+  const { text, lang, patient } = req.body;
+  if (!text) return res.status(400).json({ error: 'Missing product description' });
 
   try {
-    // 📦 Fetch product info
-    const off = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`);
-    const data = await off.json();
-
-    if (!data?.product?.product_name) {
-      return res.status(404).json({ error: 'Product not found in Open Food Facts' });
-    }
-
-    const ingredients = data.product.ingredients_text ?? '';
-    const productName = data.product.product_name;
-    const nutrition = data.product.nutriments ?? {};
-
     const prompt = `
-You are a clinical nutrition AI. Analyze the following product for dietary compatibility.
+You are a clinical nutrition AI. Analyze the following product described in text for dietary compatibility.
 
 Patient data:
 - Conditions: ${patient.conditions?.join(', ') || 'none'}
 - Allergies: ${patient.allergies || 'none'}
 - Diet model: ${patient.dietModel || 'not specified'}
 
-Product:
-- Name: ${productName}
-- Ingredients: ${ingredients}
-- Nutritional info: ${JSON.stringify(nutrition)}
+Product (text):
+"${text}"
 
 Give a short compatibility verdict (max 3 sentences) and whether the product is acceptable for the user.
-
-Then, suggest 1–3 alternative products: name, shop (fake), price, and why they may be better.
-
+Then suggest 1–3 alternative products: name, shop (fake), price, and why they may be better.
 Return strictly JSON like:
 {
   "productName": "...",
-  "ingredients": "...",
   "verdict": "...",
-  "pricing": [...],
   "alternatives": [...]
-}
-`;
+}`;
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
@@ -59,20 +41,18 @@ Return strictly JSON like:
     });
 
     const raw = completion.choices?.[0]?.message?.content || '';
-
     let parsed;
     try {
       const jsonStart = raw.indexOf('{');
-      const jsonString = raw.slice(jsonStart).trim();
-      parsed = JSON.parse(jsonString);
+      parsed = JSON.parse(raw.slice(jsonStart).trim());
     } catch (e) {
-      console.error('❌ AI response parsing error:', raw);
+      console.error('❌ Parsing error in analyzeagent-product-text:', raw);
       return res.status(500).json({ error: 'Failed to parse AI response' });
     }
 
     res.status(200).json(parsed);
   } catch (err: any) {
-    console.error('❌ analyzeagent-product error:', err.message);
+    console.error('❌ Error in analyzeagent-product-text:', err.message);
     res.status(500).json({ error: 'Internal error' });
   }
 }

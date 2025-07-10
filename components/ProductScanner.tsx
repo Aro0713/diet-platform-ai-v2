@@ -1,105 +1,138 @@
+// components/ProductScanner.tsx
 import React, { useState } from 'react';
-import { Meal } from '@/types';
-import { LangKey } from '@/utils/i18n';
-import { tUI } from '@/utils/i18n';
+import { tUI, type LangKey } from '@/utils/i18n';
 
-interface Props {
-  patient: {
-    conditions: string[];
-    allergies: string;
-    dietModel: string;
-  };
+interface ProductScannerProps {
   lang: LangKey;
+  patient: any; // Typ danych pacjenta – warunki, alergie itd.
 }
 
-export default function ProductScanner({ patient, lang }: Props) {
+export default function ProductScanner({ lang, patient }: ProductScannerProps) {
   const [barcode, setBarcode] = useState('');
-  const [analysis, setAnalysis] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [productText, setProductText] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleScan = async () => {
+  const handleAnalyzeBarcode = async () => {
     if (!barcode) return;
-    setIsLoading(true);
+    setLoading(true);
     try {
-      const res = await fetch('/api/analyze-product', {
+      const res = await fetch('/api/analyzeagent-product', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ barcode, patient, lang })
+        body: JSON.stringify({ barcode, lang, patient })
       });
       const json = await res.json();
-      setAnalysis(json);
+      setResult(json);
     } catch (err) {
-      console.error('Error analyzing product:', err);
+      console.error('❌ Error analyzing barcode:', err);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
+    }
+  };
+
+  const handleAnalyzeText = async () => {
+    if (!productText) return;
+    setLoading(true);
+    try {
+      const res = await fetch('/api/analyzeagent-product-text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: productText, lang, patient })
+      });
+      const json = await res.json();
+      setResult(json);
+    } catch (err) {
+      console.error('❌ Error analyzing text:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAnalyzeImage = async () => {
+    if (!imageFile) return;
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', imageFile);
+      formData.append('lang', lang);
+      formData.append('patient', JSON.stringify(patient));
+
+      const res = await fetch('/api/analyzeagent-product-photo', {
+        method: 'POST',
+        body: formData
+      });
+      const json = await res.json();
+      setResult(json);
+    } catch (err) {
+      console.error('❌ Error analyzing image:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-teal-700 dark:text-teal-300">
-        {tUI('productScannerTitle', lang)}
-      </h2>
+    <div className="bg-slate-900 rounded-xl p-6 shadow-lg text-white max-w-3xl mx-auto mt-6">
+      <h2 className="text-xl font-bold mb-4">📦 {tUI('productScannerTitle', lang)}</h2>
 
-      <div className="flex items-center gap-4">
+      {/* Kod kreskowy */}
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-1">🔢 {tUI('enterBarcode', lang)}</label>
         <input
           type="text"
-          className="border rounded p-2 w-full max-w-md"
-          placeholder={tUI('enterBarcode', lang)}
+          placeholder="5901234123457"
+          className="w-full p-2 rounded-md text-black placeholder-gray-400"
           value={barcode}
           onChange={(e) => setBarcode(e.target.value)}
         />
         <button
-          onClick={handleScan}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded"
-          disabled={isLoading || !barcode}
+          onClick={handleAnalyzeBarcode}
+          className="mt-2 px-4 py-2 bg-blue-600 rounded-md hover:bg-blue-700 font-medium"
         >
-          {isLoading ? tUI('analyzing', lang) : tUI('analyzeWithAI', lang)}
+          🤖 {tUI('analyzeWithAI', lang)}
         </button>
       </div>
 
-      {analysis && (
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow space-y-4">
-          <h3 className="text-xl font-semibold">{analysis.productName}</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            {tUI('productSource', lang)}: {analysis.source}
-          </p>
-          <div>
-            <strong>{tUI('ingredients', lang)}:</strong>
-            <p>{analysis.ingredients}</p>
-          </div>
-          <div>
-            <strong>{tUI('aiVerdict', lang)}:</strong>
-            <p>{analysis.verdict}</p>
-          </div>
+      {/* Zdjęcie etykiety */}
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-1">📸 {tUI('uploadLabelPhoto', lang)}</label>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+        />
+        <button
+          onClick={handleAnalyzeImage}
+          className="mt-2 px-4 py-2 bg-purple-600 rounded-md hover:bg-purple-700 font-medium"
+        >
+          🧠 {tUI('analyzePhoto', lang)}
+        </button>
+      </div>
 
-          {analysis.alternatives && analysis.alternatives.length > 0 && (
-            <div className="mt-4">
-              <h4 className="font-bold">{tUI('alternativeProducts', lang)}</h4>
-              <ul className="list-disc list-inside">
-                {analysis.alternatives.map((alt: any, i: number) => (
-                  <li key={i}>
-                    <span className="font-medium">{alt.name}</span> – {alt.price} ({alt.shop})
-                    <br />{alt.comment}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+      {/* Opis słowny */}
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-1">📝 {tUI('writeProductText', lang)}</label>
+        <input
+          type="text"
+          placeholder="np. jogurt naturalny 2% bez laktozy"
+          className="w-full p-2 rounded-md text-black placeholder-gray-400"
+          value={productText}
+          onChange={(e) => setProductText(e.target.value)}
+        />
+        <button
+          onClick={handleAnalyzeText}
+          className="mt-2 px-4 py-2 bg-green-600 rounded-md hover:bg-green-700 font-medium"
+        >
+          🧪 {tUI('analyzeTextDescription', lang)}
+        </button>
+      </div>
 
-          {analysis.pricing && (
-            <div className="mt-4">
-              <h4 className="font-bold">{tUI('priceComparison', lang)}</h4>
-              <ul className="list-disc list-inside">
-                {analysis.pricing.map((entry: any, i: number) => (
-                  <li key={i}>
-                    <strong>{entry.store}</strong>: {entry.price} – {entry.note}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
+      {loading && <p className="text-yellow-400">⏳ Trwa analiza...</p>}
+      {result && (
+        <pre className="bg-black text-white p-4 mt-4 rounded-md overflow-x-auto">
+          {JSON.stringify(result, null, 2)}
+        </pre>
       )}
     </div>
   );
