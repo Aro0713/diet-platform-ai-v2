@@ -4,13 +4,18 @@ import OpenAI from 'openai';
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') return res.status(405).end();
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
   const { barcode, lang, patient } = req.body;
-  if (!barcode) return res.status(400).json({ error: 'Missing barcode' });
+
+  if (!barcode) {
+    return res.status(400).json({ error: 'Missing barcode' });
+  }
 
   try {
-    // 📦 Fetch product info
+    // 📦 Fetch product info from Open Food Facts
     const off = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`);
     const data = await off.json();
 
@@ -22,6 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const productName = data.product.product_name;
     const nutrition = data.product.nutriments ?? {};
 
+    // 🧠 AI prompt
     const prompt = `
 You are a clinical nutrition AI. Analyze the following product for dietary compatibility.
 
@@ -63,6 +69,7 @@ Return strictly JSON like:
     let parsed;
     try {
       const jsonStart = raw.indexOf('{');
+      if (jsonStart === -1) throw new Error('No JSON found in AI response');
       const jsonString = raw.slice(jsonStart).trim();
       parsed = JSON.parse(jsonString);
     } catch (e) {
@@ -70,9 +77,9 @@ Return strictly JSON like:
       return res.status(500).json({ error: 'Failed to parse AI response' });
     }
 
-    res.status(200).json(parsed);
+    return res.status(200).json(parsed);
   } catch (err: any) {
     console.error('❌ analyzeagent-product error:', err.message);
-    res.status(500).json({ error: 'Internal error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 }

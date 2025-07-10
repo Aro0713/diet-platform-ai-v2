@@ -5,10 +5,15 @@ import OpenAI from 'openai';
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') return res.status(405).end();
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
   const { text, lang, patient } = req.body;
-  if (!text) return res.status(400).json({ error: 'Missing product description' });
+
+  if (!text) {
+    return res.status(400).json({ error: 'Missing product description' });
+  }
 
   try {
     const prompt = `
@@ -41,18 +46,20 @@ Return strictly JSON like:
     });
 
     const raw = completion.choices?.[0]?.message?.content || '';
+
     let parsed;
     try {
       const jsonStart = raw.indexOf('{');
+      if (jsonStart === -1) throw new Error('No JSON found in AI response');
       parsed = JSON.parse(raw.slice(jsonStart).trim());
     } catch (e) {
       console.error('❌ Parsing error in analyzeagent-product-text:', raw);
       return res.status(500).json({ error: 'Failed to parse AI response' });
     }
 
-    res.status(200).json(parsed);
+    return res.status(200).json(parsed);
   } catch (err: any) {
     console.error('❌ Error in analyzeagent-product-text:', err.message);
-    res.status(500).json({ error: 'Internal error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 }

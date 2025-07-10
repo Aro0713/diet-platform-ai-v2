@@ -13,7 +13,9 @@ export const config = {
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') return res.status(405).end();
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
   const form = formidable({ multiples: false });
 
@@ -26,9 +28,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const lang = fields.lang?.toString() || 'pl';
     const patient = JSON.parse(fields.patient?.toString() || '{}');
 
-    // ✅ Obsługa pliku jako File (niezależnie od tablicy lub pojedynczego)
     const rawFile = files.image;
-    if (!rawFile) return res.status(400).json({ error: 'Image not provided' });
+    if (!rawFile) {
+      return res.status(400).json({ error: 'Image not provided' });
+    }
+
     const file = Array.isArray(rawFile) ? rawFile[0] : rawFile;
 
     try {
@@ -84,18 +88,20 @@ Return strictly JSON like:
 
       const raw = completion.choices?.[0]?.message?.content || '';
       let parsed;
+
       try {
         const jsonStart = raw.indexOf('{');
+        if (jsonStart === -1) throw new Error('No JSON found in AI response');
         parsed = JSON.parse(raw.slice(jsonStart).trim());
       } catch (e) {
         console.error('❌ Parsing error in analyzeagent-product-photo:', raw);
         return res.status(500).json({ error: 'Failed to parse AI response' });
       }
 
-      res.status(200).json(parsed);
+      return res.status(200).json(parsed);
     } catch (error: any) {
       console.error('❌ Photo AI error:', error.message);
-      res.status(500).json({ error: 'Image analysis failed' });
+      return res.status(500).json({ error: 'Image analysis failed' });
     }
   });
 }
