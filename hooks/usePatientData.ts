@@ -29,18 +29,24 @@ export function usePatientData(): UsePatientDataResult {
  const fetchPatientData = async () => {
   console.log("🚀 fetchPatientData start");
 
-  const userId = localStorage.getItem('currentUserID');
-  console.log("🧠 userId z localStorage:", userId);
-  if (!userId) return;
+  // 🔁 Pobierz user_id bezpośrednio z sesji Supabase
+  const { data: { user }, error } = await supabase.auth.getUser();
+  const userId = user?.id;
+  console.log("🧠 userId z supabase.auth:", userId);
 
-  const { data, error } = await supabase
+  if (!userId) {
+    console.warn("❌ Brak userId – nie można pobrać danych pacjenta");
+    return;
+  }
+
+  const { data, error: patientError } = await supabase
     .from('patients')
     .select('*')
     .eq('user_id', userId)
     .maybeSingle();
 
-  if (error) {
-    console.error('❌ Błąd z Supabase:', error.message);
+  if (patientError) {
+    console.error('❌ Błąd z Supabase:', patientError.message);
     return;
   }
 
@@ -126,7 +132,6 @@ export function usePatientData(): UsePatientDataResult {
     }
   }
 };
-
 
   const saveMedicalData = async ({
     selectedGroups,

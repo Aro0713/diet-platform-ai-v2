@@ -56,6 +56,8 @@ export default function DoctorPanelPage(): React.JSX.Element {
     setEditableDiet
   } = usePatientData();
 
+  console.log("📦 form w panel-patient:", form);
+
   // ✅ Pobranie danych pacjenta po załadowaniu komponentu
 useEffect(() => {
   fetchPatientData(); // ✅ ta wersja jest zgodna z Twoim hookiem
