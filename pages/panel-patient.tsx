@@ -35,10 +35,22 @@ export default function DoctorPanelPage(): React.JSX.Element {
   const [isGeneratingRecipes, setIsGeneratingRecipes] = useState(false)
 
   // 🧠 Ustawienie języka z localStorage
-  useEffect(() => {
-    const storedLang = localStorage.getItem('platformLang');
-    if (storedLang) setLang(storedLang as LangKey);
-  }, []);
+useEffect(() => {
+  const storedLang = localStorage.getItem('platformLang');
+  if (storedLang) setLang(storedLang as LangKey);
+}, []);
+
+// 💾 Ustawienie userId w localStorage do zapisu danych
+useEffect(() => {
+  supabase.auth.getUser().then(({ data }) => {
+    if (data?.user?.id) {
+      localStorage.setItem('currentUserID', data.user.id);
+      console.log("✅ Zapisano userId do localStorage:", data.user.id);
+    } else {
+      console.warn("❌ Brak user.id – użytkownik nie jest zalogowany?");
+    }
+  });
+}, []);
 
   // 📦 Hook z danymi pacjenta
   const {

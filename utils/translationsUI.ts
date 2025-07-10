@@ -3606,8 +3606,33 @@ dietApprovedError: {
   ar: '❌ فشل في حفظ تأكيد الحمية الغذائية',
   hi: '❌ आहार योजना की स्वीकृति सहेजने में त्रुटि',
   he: '❌ שגיאה בשמירת אישור התפריט'
-}
-
+},
+confirmSendDietToDoctor: {
+  pl: "Czy na pewno chcesz wysłać dietę do lekarza?",
+  en: "Are you sure you want to send the diet to your doctor?",
+  de: "Möchtest du den Ernährungsplan wirklich an den Arzt senden?",
+  fr: "Souhaitez-vous vraiment envoyer le régime au médecin ?",
+  es: "¿Estás seguro de que quieres enviar la dieta al médico?",
+  ua: "Ви впевнені, що хочете надіслати дієту лікарю?",
+  ru: "Вы уверены, что хотите отправить диету врачу?",
+  zh: "你确定要将饮食计划发送给医生吗？",
+  hi: "क्या आप वाकई डॉक्टर को डाइट भेजना चाहते हैं?",
+  ar: "هل أنت متأكد أنك تريد إرسال النظام الغذائي إلى الطبيب؟",
+  he: "האם אתה בטוח שברצונך לשלוח את התפריט לרופא?"
+},
+noUserIdError: {
+  pl: "Brak identyfikatora użytkownika. Spróbuj ponownie po zalogowaniu.",
+  en: "User ID is missing. Please try again after logging in.",
+  de: "Benutzer-ID fehlt. Bitte nach dem Einloggen erneut versuchen.",
+  fr: "Identifiant utilisateur manquant. Veuillez réessayer après connexion.",
+  es: "Falta el ID de usuario. Inténtalo de nuevo después de iniciar sesión.",
+  ua: "Відсутній ідентифікатор користувача. Спробуйте знову після входу.",
+  ru: "Отсутствует идентификатор пользователя. Повторите попытку после входа.",
+  zh: "缺少用户ID。请登录后重试。",
+  hi: "यूज़र आईडी उपलब्ध नहीं है। कृपया लॉगिन करने के बाद पुनः प्रयास करें।",
+  ar: "معرّف المستخدم مفقود. الرجاء إعادة المحاولة بعد تسجيل الدخول.",
+  he: "חסר מזהה משתמש. אנא נסה שוב לאחר ההתחברות."
+},
 
 };
 
