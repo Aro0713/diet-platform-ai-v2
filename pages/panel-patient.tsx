@@ -21,6 +21,7 @@ import SelectModelForm from '@/components/SelectModelForm';
 import SelectCuisineForm from '@/components/SelectCuisineForm';
 import { generateDietPdf } from '@/utils/generateDietPdf';
 import NeonNextArrow from "@/components/NeonNextArrow";
+import ProductScanner from '@/components/ProductScanner';
 
 export default function DoctorPanelPage(): React.JSX.Element {
   const router = useRouter();
@@ -327,6 +328,13 @@ const handleGenerateNarrative = async () => {
 };
 console.log("📦 form w panel-patient:", form);
 
+const goToSectionWithScroll = (id: string) => {
+  setSelectedSection(id);
+  setTimeout(() => {
+    document.getElementById(`section-${id}`)?.scrollIntoView({ behavior: 'smooth' });
+  }, 50);
+};
+
   return (
     <main className="relative min-h-screen bg-[#0f271e]/70 bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 backdrop-blur-[12px] shadow-[inset_0_0_60px_rgba(255,255,255,0.08)] flex flex-col justify-start items-center pt-10 px-6 text-white transition-all duration-300">
       <Head>
@@ -350,10 +358,7 @@ console.log("📦 form w panel-patient:", form);
       </div>
 
       {/* Ikony */}
-      <PatientIconGrid
-        lang={lang}
-        onSelect={(id) => setSelectedSection(id)}
-      />
+      <PatientIconGrid lang={lang} selected={selectedSection} onSelect={(id) => setSelectedSection(id)} />
 
       {/* Główna zawartość */}
       <div className="z-10 flex flex-col w-full max-w-[1000px] mx-auto gap-6 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 mt-20 dark:text-white transition-colors animate-flip-in origin-center">
@@ -365,7 +370,7 @@ console.log("📦 form w panel-patient:", form);
             />
             <div className="flex justify-end mt-6">
           <NeonNextArrow
-            onClick={() => setSelectedSection("medical")}
+            onClick={() => goToSectionWithScroll("medical")}
             label={tUI("nextSection_medical", lang)}
           />
         </div>
@@ -395,7 +400,7 @@ console.log("📦 form w panel-patient:", form);
           {/* 🔽 Neonowa strzałka Dalej */}
          <div className="mt-6 flex justify-end">
           <NeonNextArrow
-            onClick={() => setSelectedSection("interview")}
+           onClick={() => goToSectionWithScroll("interview")}
             label={tUI("nextSection_interview", lang)}
           />
         </div>
@@ -423,7 +428,7 @@ console.log("📦 form w panel-patient:", form);
           {/* 🔽 Neonowa strzałka Dalej */}
           <div className="mt-6 flex justify-end">
           <NeonNextArrow
-            onClick={() => setSelectedSection("calculator")}
+            onClick={() => goToSectionWithScroll("interview")}
             label={tUI("nextSection_calculator", lang)}
           />
         </div>
@@ -448,7 +453,7 @@ console.log("📦 form w panel-patient:", form);
             {/* 🔽 Neonowa strzałka Dalej */}
             <div className="mt-6 flex justify-end">
             <NeonNextArrow
-              onClick={() => setSelectedSection("diet")}
+              onClick={() => goToSectionWithScroll("diet")}
               label={tUI("nextSection_diet", lang)}
             />
           </div>
@@ -651,6 +656,16 @@ console.log("📦 form w panel-patient:", form);
       </div>
     ))}
   </div>
+)}
+{selectedSection === 'scanner' && (
+ <ProductScanner
+  patient={{
+    conditions: form.conditions || [],
+    allergies: form.allergies || '',
+    dietModel: form.model || ''
+  }}
+  lang={lang}
+/>
 )}
 
         {!selectedSection && (

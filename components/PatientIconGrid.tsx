@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { tUI, type LangKey } from '@/utils/i18n';
 import {
   NotebookPen,
@@ -12,11 +12,10 @@ import {
 interface PatientIconGridProps {
   lang: LangKey;
   onSelect: (section: string) => void;
+  selected: string | null;
 }
 
-export const PatientIconGrid: React.FC<PatientIconGridProps> = ({ lang, onSelect }) => {
-  const [activeId, setActiveId] = useState<string | null>(null);
-
+export const PatientIconGrid: React.FC<PatientIconGridProps> = ({ lang, onSelect, selected }) => {
   const icons = [
     {
       id: 'data',
@@ -54,7 +53,7 @@ export const PatientIconGrid: React.FC<PatientIconGridProps> = ({ lang, onSelect
       ring: 'ring-blue-300'
     },
     {
-      id: 'scan',
+      id: 'scanner',
       label: tUI('scanProduct', lang),
       icon: ScanLine,
       color: 'text-purple-500',
@@ -65,13 +64,13 @@ export const PatientIconGrid: React.FC<PatientIconGridProps> = ({ lang, onSelect
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 mt-12 px-4">
       {icons.map(({ id, label, icon: Icon, color, ring }) => {
-        const isActive = activeId === id;
+        const isActive = selected === id;
         return (
           <button
             key={id}
             onClick={() => {
-              setActiveId(id);
               onSelect(id);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
             className={`flex flex-col items-center justify-center p-4 rounded-2xl
               transition-all duration-300 shadow-md hover:scale-105 bg-white/20 dark:bg-white/10

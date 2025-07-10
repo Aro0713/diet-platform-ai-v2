@@ -1,89 +1,105 @@
 import React, { useState } from 'react';
+import { Meal } from '@/types';
+import { LangKey } from '@/utils/i18n';
+import { tUI } from '@/utils/i18n';
 
 interface Props {
   patient: {
-    age: number;
-    sex: string;
-    weight: number;
-    height: number;
-    allergies?: string;
-    conditions?: string[];
+    conditions: string[];
+    allergies: string;
+    dietModel: string;
   };
+  lang: LangKey;
 }
 
-const productDatabase: Record<string, { name: string; ingredients: string[] }> = {
-  '5901234567890': {
-    name: 'Serek Danio truskawkowy',
-    ingredients: ['cukier', 'mleko', 'aromat', 'białka mleka']
-  },
-  '5900000000001': {
-    name: 'Pieczywo chrupkie żytnie',
-    ingredients: ['żyto', 'błonnik', 'sól']
-  },
-  '5900000000002': {
-    name: 'Baton proteinowy czekoladowy',
-    ingredients: ['białko mleka', 'czekolada', 'cukier', 'syrop glukozowy']
-  },
-  '5900000000003': {
-    name: 'Jogurt naturalny 2%',
-    ingredients: ['mleko', 'kultury bakterii']
-  }
-};
+export default function ProductScanner({ patient, lang }: Props) {
+  const [barcode, setBarcode] = useState('');
+  const [analysis, setAnalysis] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-export default function ProductScanner({ patient }: Props) {
-  const [ean, setEan] = useState('');
-  const [result, setResult] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  const evaluateProduct = async (eanCode: string) => {
-    const product = productDatabase[eanCode];
-    if (!product) {
-      setResult('🔍 Produkt nie został znaleziony w bazie.');
-      return;
-    }
-
-    setLoading(true);
-    setResult(null);
-
+  const handleScan = async () => {
+    if (!barcode) return;
+    setIsLoading(true);
     try {
-      const res = await fetch('/api/evaluate-product', {
+      const res = await fetch('/api/analyze-product', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ patient, product })
+        body: JSON.stringify({ barcode, patient, lang })
       });
-
-      const data = await res.json();
-      setResult(data.result || '⚠️ Nie udało się uzyskać odpowiedzi.');
+      const json = await res.json();
+      setAnalysis(json);
     } catch (err) {
-      console.error(err);
-      setResult('❌ Wystąpił błąd podczas analizy produktu.');
+      console.error('Error analyzing product:', err);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="bg-white p-6 rounded shadow mt-8">
-      <h2 className="text-lg font-bold mb-4">🛒 Skaner produktów (kod EAN)</h2>
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-teal-700 dark:text-teal-300">
+        {tUI('productScannerTitle', lang)}
+      </h2>
 
-      <input
-        type="text"
-        placeholder="Wpisz lub zeskanuj kod EAN"
-        value={ean}
-        onChange={(e) => setEan(e.target.value)}
-        className="w-full border px-2 py-1 mb-4"
-      />
+      <div className="flex items-center gap-4">
+        <input
+          type="text"
+          className="border rounded p-2 w-full max-w-md"
+          placeholder={tUI('enterBarcode', lang)}
+          value={barcode}
+          onChange={(e) => setBarcode(e.target.value)}
+        />
+        <button
+          onClick={handleScan}
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded"
+          disabled={isLoading || !barcode}
+        >
+          {isLoading ? tUI('analyzing', lang) : tUI('analyzeWithAI', lang)}
+        </button>
+      </div>
 
-      <button
-        className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
-        onClick={() => evaluateProduct(ean)}
-        disabled={loading || !ean}
-      >
-        {loading ? 'Analizuję...' : 'Sprawdź produkt'}
-      </button>
+      {analysis && (
+        <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow space-y-4">
+          <h3 className="text-xl font-semibold">{analysis.productName}</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            {tUI('productSource', lang)}: {analysis.source}
+          </p>
+          <div>
+            <strong>{tUI('ingredients', lang)}:</strong>
+            <p>{analysis.ingredients}</p>
+          </div>
+          <div>
+            <strong>{tUI('aiVerdict', lang)}:</strong>
+            <p>{analysis.verdict}</p>
+          </div>
 
-      {result && (
-        <p className="mt-4 text-md font-semibold">{result}</p>
+          {analysis.alternatives && analysis.alternatives.length > 0 && (
+            <div className="mt-4">
+              <h4 className="font-bold">{tUI('alternativeProducts', lang)}</h4>
+              <ul className="list-disc list-inside">
+                {analysis.alternatives.map((alt: any, i: number) => (
+                  <li key={i}>
+                    <span className="font-medium">{alt.name}</span> – {alt.price} ({alt.shop})
+                    <br />{alt.comment}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {analysis.pricing && (
+            <div className="mt-4">
+              <h4 className="font-bold">{tUI('priceComparison', lang)}</h4>
+              <ul className="list-disc list-inside">
+                {analysis.pricing.map((entry: any, i: number) => (
+                  <li key={i}>
+                    <strong>{entry.store}</strong>: {entry.price} – {entry.note}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@fontsource/dancing-script": "^5.2.5",
-    "@openai/agents": "^0.0.9",
+    "@openai/agents": "^0.0.10",
     "@react-pdf/renderer": "^4.3.0",
     "@supabase/supabase-js": "^2.49.4",
     "ai": "^4.3.16",
@@ -29,7 +29,8 @@
     "react-international-phone": "^4.5.0",
     "react-select": "^5.10.1",
     "tailwindcss-neumorphism": "^0.1.0",
-    "zod": "^3.25.67"
+    "zod": "^3.25.76",
+    "zod-to-json-schema": "^3.24.6"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
