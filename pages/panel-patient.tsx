@@ -34,41 +34,44 @@ export default function DoctorPanelPage(): React.JSX.Element {
   const [recipes, setRecipes] = useState<any>(null);
   const [isGeneratingRecipes, setIsGeneratingRecipes] = useState(false)
 
+  // 🧠 Ustawienie języka z localStorage
   useEffect(() => {
     const storedLang = localStorage.getItem('platformLang');
     if (storedLang) setLang(storedLang as LangKey);
   }, []);
 
+  // 📦 Hook z danymi pacjenta
   const {
-  form,
-  interviewData,
-  setInterviewData,
-  medicalData,
-  setMedicalData,
-  fetchPatientData,
-  saveMedicalData,
-  saveInterviewData,
-  initialMedicalData,
-  initialInterviewData,
-  editableDiet,
-  setEditableDiet
-} = usePatientData();
+    form,
+    interviewData,
+    setInterviewData,
+    medicalData,
+    setMedicalData,
+    fetchPatientData,
+    saveMedicalData,
+    saveInterviewData,
+    initialMedicalData,
+    initialInterviewData,
+    editableDiet,
+    setEditableDiet
+  } = usePatientData();
 
+  // ✅ Pobranie danych pacjenta po załadowaniu komponentu
 useEffect(() => {
-  const userId = localStorage.getItem('currentUserID');
-  if (userId) {
-    fetchPatientData();
-  } else {
-    console.warn('⛔ Brak user_id – panel pacjenta pomija fetch');
-  }
+  fetchPatientData(); // ✅ ta wersja jest zgodna z Twoim hookiem
 }, []);
-;
 
+
+  // 🔁 Pobranie danych przy powrocie do sekcji 'medical'
   useEffect(() => {
     if (selectedSection === 'medical') {
-      fetchPatientData();
+      const userId = localStorage.getItem('currentUserID');
+      if (userId) {
+        fetchPatientData(); 
+      }
     }
   }, [selectedSection]);
+
 
   const saveDietToSupabaseAndPdf = async () => {
     try {
