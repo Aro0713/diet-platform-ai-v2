@@ -364,8 +364,11 @@ console.log("📦 form w panel-patient:", form);
               value={form}
             />
             <div className="flex justify-end mt-6">
-              <NeonNextArrow onClick={() => setSelectedSection("medical")} label="➡️ Dalej: analiza medyczna" />
-            </div>
+          <NeonNextArrow
+            onClick={() => setSelectedSection("medical")}
+            label={tUI("nextSection_medical", lang)}
+          />
+        </div>
           </>
             )}
 
@@ -390,15 +393,14 @@ console.log("📦 form w panel-patient:", form);
         )}
 
           {/* 🔽 Neonowa strzałka Dalej */}
-          <div className="mt-6 flex justify-end">
-            <NeonNextArrow
-              onClick={() => setSelectedSection("interview")}
-              label="➡️ Dalej: wywiad z pacjentem"
-            />
-          </div>
+         <div className="mt-6 flex justify-end">
+          <NeonNextArrow
+            onClick={() => setSelectedSection("interview")}
+            label={tUI("nextSection_interview", lang)}
+          />
+        </div>
         </>
       )}
-
 
        {selectedSection === 'interview' && (
   <>
@@ -420,11 +422,11 @@ console.log("📦 form w panel-patient:", form);
 
           {/* 🔽 Neonowa strzałka Dalej */}
           <div className="mt-6 flex justify-end">
-            <NeonNextArrow
-              onClick={() => setSelectedSection("calculator")}
-              label="➡️ Dalej: pacjent w liczbach"
-            />
-          </div>
+          <NeonNextArrow
+            onClick={() => setSelectedSection("calculator")}
+            label={tUI("nextSection_calculator", lang)}
+          />
+        </div>
         </>
       )}
 
@@ -445,11 +447,11 @@ console.log("📦 form w panel-patient:", form);
 
             {/* 🔽 Neonowa strzałka Dalej */}
             <div className="mt-6 flex justify-end">
-              <NeonNextArrow
-                onClick={() => setSelectedSection("diet")}
-                label="➡️ Dalej: plan diety"
-              />
-            </div>
+            <NeonNextArrow
+              onClick={() => setSelectedSection("diet")}
+              label={tUI("nextSection_diet", lang)}
+            />
+          </div>
           </>
         )}
 
@@ -620,7 +622,7 @@ console.log("📦 form w panel-patient:", form);
   <div className="mt-10 flex justify-end">
     <NeonNextArrow
       onClick={() => setSelectedSection("scanner")}
-      label="➡️ Przejdź do skanera produktów"
+      label={tUI("nextSection_scanner", lang)}
     />
   </div>
 )}

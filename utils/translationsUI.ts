@@ -3633,6 +3633,75 @@ noUserIdError: {
   ar: "معرّف المستخدم مفقود. الرجاء إعادة المحاولة بعد تسجيل الدخول.",
   he: "חסר מזהה משתמש. אנא נסה שוב לאחר ההתחברות."
 },
+nextSection_medical: {
+  pl: "➡️ Dalej: analiza medyczna",
+  en: "➡️ Next: medical analysis",
+  de: "➡️ Weiter: medizinische Analyse",
+  fr: "➡️ Suivant : analyse médicale",
+  es: "➡️ Siguiente: análisis médico",
+  ua: "➡️ Далі: медичний аналіз",
+  ru: "➡️ Далее: медицинский анализ",
+  zh: "➡️ 下一步：医学分析",
+  ar: "➡️ التالي: التحليل الطبي",
+  hi: "➡️ आगे: चिकित्सा विश्लेषण",
+  he: "➡️ המשך: ניתוח רפואי"
+},
+
+nextSection_interview: {
+  pl: "➡️ Dalej: wywiad z pacjentem",
+  en: "➡️ Next: patient interview",
+  de: "➡️ Weiter: Patienteninterview",
+  fr: "➡️ Suivant : entretien avec le patient",
+  es: "➡️ Siguiente: entrevista con el paciente",
+  ua: "➡️ Далі: опитування пацієнта",
+  ru: "➡️ Далее: опрос пациента",
+  zh: "➡️ 下一步：患者访谈",
+  ar: "➡️ التالي: مقابلة المريض",
+  hi: "➡️ आगे: रोगी साक्षात्कार",
+  he: "➡️ המשך: ראיון עם מטופל"
+},
+
+nextSection_calculator: {
+  pl: "➡️ Dalej: pacjent w liczbach",
+  en: "➡️ Next: patient in numbers",
+  de: "➡️ Weiter: Patient in Zahlen",
+  fr: "➡️ Suivant : patient en chiffres",
+  es: "➡️ Siguiente: paciente en cifras",
+  ua: "➡️ Далі: пацієнт у цифрах",
+  ru: "➡️ Далее: пациент в цифрах",
+  zh: "➡️ 下一步：数据中的患者",
+  ar: "➡️ التالي: المريض بالأرقام",
+  hi: "➡️ आगे: आंकड़ों में रोगी",
+  he: "➡️ המשך: מטופל במספרים"
+},
+
+nextSection_diet: {
+  pl: "➡️ Dalej: plan diety",
+  en: "➡️ Next: diet plan",
+  de: "➡️ Weiter: Diätplan",
+  fr: "➡️ Suivant : plan diététique",
+  es: "➡️ Siguiente: plan de dieta",
+  ua: "➡️ Далі: план дієти",
+  ru: "➡️ Далее: план диеты",
+  zh: "➡️ 下一步：饮食计划",
+  ar: "➡️ التالي: خطة النظام الغذائي",
+  hi: "➡️ आगे: डाइट प्लान",
+  he: "➡️ המשך: תוכנית תזונה"
+},
+
+nextSection_scanner: {
+  pl: "➡️ Przejdź do skanera produktów",
+  en: "➡️ Go to product scanner",
+  de: "➡️ Zum Produktscanner",
+  fr: "➡️ Accéder au scanner de produits",
+  es: "➡️ Ir al escáner de productos",
+  ua: "➡️ Перейти до сканера продуктів",
+  ru: "➡️ Перейти к сканеру продуктов",
+  zh: "➡️ 前往产品扫描器",
+  ar: "➡️ الانتقال إلى ماسح المنتجات",
+  hi: "➡️ उत्पाद स्कैनर पर जाएं",
+  he: "➡️ עבור לסורק מוצרים"
+}
 
 };
 
