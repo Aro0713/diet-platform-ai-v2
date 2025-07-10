@@ -5,12 +5,12 @@ pl: {
   title: 'Preferencje i nietolerancje pokarmowe',
 
   q1: {
-    label: 'Jakie produkty Pani/Pan lubi najbardziej?',
+    label: 'Jakie produkty sex lubi najbardziej?',
     type: 'text'
   },
 
   q2: {
-    label: 'Jakich produktów Pani/Pan nie toleruje lub nie lubi?',
+    label: 'Jakich produktów sex nie toleruje lub nie lubi?',
     type: 'text'
   },
 

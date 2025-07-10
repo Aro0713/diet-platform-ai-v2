@@ -1,55 +1,68 @@
 import { LangKey } from '@/utils/i18n';
 
 export const section8: Record<LangKey, any> = {
-  pl: {
-    title: 'Kobiety – pytania dodatkowe',
+pl: {
+  title: 'Kobiety – pytania dodatkowe',
 
-    q1: {
-      label: 'Czy sex cykle miesiączkowe są regularne?',
-      type: 'radio',
-      options: ['Tak', 'Nie']
-    },
-
-    q2: {
-      label: 'Czy sex ma dolegliwości hormonalne (np. PCOS, endometrioza)?',
-      type: 'radio',
-      options: ['Tak', 'Nie']
-    },
-
-    q2_list: {
-      label: 'Jakie to zaburzenia hormonalne? (możesz zaznaczyć więcej niż jedną)',
-      type: 'select',
-      options: [
-        'PCOS',
-        'Endometrioza',
-        'Zespół napięcia przedmiesiączkowego (PMS)',
-        'Nieregularna owulacja',
-        'Niedoczynność tarczycy',
-        'Nadczynność tarczycy',
-        'Zespół hiperandrogenizmu',
-        'Inne'
-      ],
-      dependsOn: { question: 'q2', value: 'Tak' }
-    },
-
-    q2_list_other: {
-      label: 'Inne – proszę dopisać',
-      type: 'text',
-      dependsOn: { question: 'q2_list', value: 'Inne' }
-    },
-
-    q3: {
-      label: 'Czy sex jest obecnie w ciąży lub karmi piersią?',
-      type: 'radio',
-      options: ['Tak, jestem w ciąży', 'Tak, karmię piersią', 'Nie']
-    },
-
-    q4: {
-      label: 'Czy sex stosuje antykoncepcję hormonalną?',
-      type: 'radio',
-      options: ['Tak', 'Nie']
-    }
+  q1: {
+    label: 'Czy sex cykle miesiączkowe są regularne?',
+    type: 'radio',
+    options: ['Tak', 'Nie']
   },
+
+  q2: {
+    label: 'Czy sex ma dolegliwości hormonalne (np. PCOS, endometrioza)?',
+    type: 'radio',
+    options: ['Tak', 'Nie']
+  },
+
+  q2_list: {
+    label: 'Jakie to zaburzenia hormonalne? (możesz zaznaczyć więcej niż jedną)',
+    type: 'select',
+    options: [
+      'PCOS',
+      'Endometrioza',
+      'Zespół napięcia przedmiesiączkowego (PMS)',
+      'Nieregularna owulacja',
+      'Niedoczynność tarczycy',
+      'Nadczynność tarczycy',
+      'Zespół hiperandrogenizmu',
+      'Inne'
+    ],
+    dependsOn: { question: 'q2', value: 'Tak' }
+  },
+
+  q2_list_other: {
+    label: 'Inne – proszę dopisać',
+    type: 'text',
+    dependsOn: { question: 'q2_list', value: 'Inne' }
+  },
+
+  q3: {
+    label: 'Czy sex jest obecnie w ciąży lub karmi piersią?',
+    type: 'radio',
+    options: ['Tak, jestem w ciąży', 'Tak, karmię piersią', 'Nie']
+  },
+
+  q4: {
+    label: 'Czy sex stosuje antykoncepcję hormonalną?',
+    type: 'radio',
+    options: ['Tak', 'Nie']
+  },
+
+  q5: {
+    label: 'Czy jest sex w okresie perimenopauzy lub menopauzy?',
+    type: 'radio',
+    options: ['Tak', 'Nie']
+  },
+
+  q5_htz: {
+    label: 'Czy stosuje HTZ (hormonalną terapię zastępczą)?',
+    type: 'radio',
+    options: ['Stosuję HTZ', 'Nie stosuję HTZ'],
+    dependsOn: { question: 'q5', value: 'Tak' }
+  }
+},
 en: {
   title: 'Women – additional questions',
 
@@ -97,7 +110,19 @@ en: {
     label: 'Does sex use hormonal contraception?',
     type: 'radio',
     options: ['Yes', 'No']
-  }
+  },
+  q5: {
+  label: 'Is sex in the perimenopause or menopause phase?',
+  type: 'radio',
+  options: ['Yes', 'No']
+},
+q5_htz: {
+  label: 'Do you use HRT (hormone replacement therapy)?',
+  type: 'radio',
+  options: ['I use HRT', 'I do not use HRT'],
+  dependsOn: { question: 'q5', value: 'Yes' }
+}
+
 },
 de: {
   title: 'Frauen – zusätzliche Fragen',
@@ -146,7 +171,19 @@ de: {
     label: 'Nutzt sex hormonelle Verhütung?',
     type: 'radio',
     options: ['Ja', 'Nein']
-  }
+  },
+  q5: {
+  label: 'Befindet sich sex in der Perimenopause oder Menopause?',
+  type: 'radio',
+  options: ['Ja', 'Nein']
+},
+q5_htz: {
+  label: 'Nutzt sex eine HRT (Hormonersatztherapie)?',
+  type: 'radio',
+  options: ['Ich nutze HRT', 'Ich nutze keine HRT'],
+  dependsOn: { question: 'q5', value: 'Ja' }
+}
+
 },
 fr: {
   title: 'Femmes – questions supplémentaires',
@@ -195,7 +232,19 @@ fr: {
     label: 'Sex utilise-t-elle une contraception hormonale ?',
     type: 'radio',
     options: ['Oui', 'Non']
-  }
+  },
+  q5: {
+  label: 'Est-ce que sex est en période de périménopause ou de ménopause ?',
+  type: 'radio',
+  options: ['Oui', 'Non']
+},
+q5_htz: {
+  label: 'Utilisez-vous un traitement hormonal substitutif (THS) ?',
+  type: 'radio',
+  options: ['J’utilise un THS', 'Je n’utilise pas de THS'],
+  dependsOn: { question: 'q5', value: 'Oui' }
+}
+
 },
 es: {
   title: 'Mujeres – preguntas adicionales',
@@ -244,7 +293,19 @@ es: {
     label: '¿Sex usa anticonceptivos hormonales?',
     type: 'radio',
     options: ['Sí', 'No']
-  }
+  },
+  q5: {
+  label: '¿Está sex en fase de perimenopausia o menopausia?',
+  type: 'radio',
+  options: ['Sí', 'No']
+},
+q5_htz: {
+  label: '¿Usa terapia hormonal sustitutiva (THS)?',
+  type: 'radio',
+  options: ['Uso THS', 'No uso THS'],
+  dependsOn: { question: 'q5', value: 'Sí' }
+}
+
 },
 ua: {
   title: 'Жінки – додаткові запитання',
@@ -293,7 +354,19 @@ ua: {
     label: 'Чи використовує sex гормональну контрацепцію?',
     type: 'radio',
     options: ['Так', 'Ні']
-  }
+  },
+  q5: {
+  label: 'Чи перебуває sex у перименопаузі або менопаузі?',
+  type: 'radio',
+  options: ['Так', 'Ні']
+},
+q5_htz: {
+  label: 'Чи застосовуєте гормональну замісну терапію (ГЗТ)?',
+  type: 'radio',
+  options: ['Застосовую ГЗТ', 'Не застосовую ГЗТ'],
+  dependsOn: { question: 'q5', value: 'Так' }
+}
+
 },
 ru: {
   title: 'Женщины – дополнительные вопросы',
@@ -342,7 +415,19 @@ ru: {
     label: 'Использует ли sex гормональную контрацепцию?',
     type: 'radio',
     options: ['Да', 'Нет']
-  }
+  },
+  q5: {
+  label: 'Находится ли sex в периоде перименопаузы или менопаузы?',
+  type: 'radio',
+  options: ['Да', 'Нет']
+},
+q5_htz: {
+  label: 'Используете ли вы гормонозаместительную терапию (ГЗТ)?',
+  type: 'radio',
+  options: ['Использую ГЗТ', 'Не использую ГЗТ'],
+  dependsOn: { question: 'q5', value: 'Да' }
+}
+
 },
 zh: {
   title: '女性 – 附加问题',
@@ -391,7 +476,19 @@ zh: {
     label: 'sex 是否使用激素避孕方法？',
     type: 'radio',
     options: ['是', '否']
-  }
+  },
+  q5: {
+  label: 'sex 是否处于围绝经期或绝经期？',
+  type: 'radio',
+  options: ['是', '否']
+},
+q5_htz: {
+  label: '是否使用激素替代疗法 (HRT)？',
+  type: 'radio',
+  options: ['使用 HRT', '不使用 HRT'],
+  dependsOn: { question: 'q5', value: '是' }
+}
+
 },
 hi: {
   title: 'महिलाएं – अतिरिक्त प्रश्न',
@@ -440,7 +537,19 @@ hi: {
     label: 'क्या sex हार्मोनल गर्भनिरोधक का उपयोग करती है?',
     type: 'radio',
     options: ['हाँ', 'नहीं']
-  }
+  },
+  q5: {
+  label: 'क्या sex परिमेनोपॉज या मेनोपॉज की अवस्था में है?',
+  type: 'radio',
+  options: ['हाँ', 'नहीं']
+},
+q5_htz: {
+  label: 'क्या आप हार्मोन रिप्लेसमेंट थेरपी (HRT) का उपयोग करती हैं?',
+  type: 'radio',
+  options: ['मैं HRT का उपयोग करती हूँ', 'मैं HRT का उपयोग नहीं करती'],
+  dependsOn: { question: 'q5', value: 'हाँ' }
+}
+
 },
 ar: {
   title: 'النساء – أسئلة إضافية',
@@ -489,7 +598,19 @@ ar: {
     label: 'هل تستخدم sex وسائل منع حمل هرمونية؟',
     type: 'radio',
     options: ['نعم', 'لا']
-  }
+  },
+  q5: {
+  label: 'هل sex في مرحلة ما قبل انقطاع الطمث أو بعده؟',
+  type: 'radio',
+  options: ['نعم', 'لا']
+},
+q5_htz: {
+  label: 'هل تستخدمين العلاج الهرموني البديل (HRT)؟',
+  type: 'radio',
+  options: ['أستخدم HRT', 'لا أستخدم HRT'],
+  dependsOn: { question: 'q5', value: 'نعم' }
+}
+
 },
 he: {
   title: 'נשים – שאלות נוספות',
@@ -538,7 +659,19 @@ he: {
     label: 'האם sex משתמשת באמצעי מניעה הורמונליים?',
     type: 'radio',
     options: ['כן', 'לא']
-  }
+  },
+  q5: {
+  label: 'האם sex נמצאת בתקופת טרום גיל המעבר או בגיל המעבר?',
+  type: 'radio',
+  options: ['כן', 'לא']
+},
+q5_htz: {
+  label: 'האם את משתמשת בטיפול הורמונלי חלופי (HRT)?',
+  type: 'radio',
+  options: ['אני משתמשת ב-HRT', 'אינני משתמשת ב-HRT'],
+  dependsOn: { question: 'q5', value: 'כן' }
+}
+
 }
 };
 

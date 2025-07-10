@@ -40,12 +40,17 @@ export const section7: Record<LangKey, any> = {
       options: ['Tak', 'Nie', 'Nie wiem']
     },
 
-    q6: {
-      label: 'Ile razy dziennie/tygodniowo sex się wypróżnia?',
+      q6: {
+      label: 'Ile razy dziennie sex się wypróżnia?',
       type: 'select',
-      options: ['1', '2', '3', '4 i więcej']
+      options: [
+        '0 – mam problem z zaparciami',
+        '1',
+        '2',
+        '3',
+        '4 i więcej'
+      ]
     },
-
     q7: {
       label: 'Czy u sex zdiagnozowano choroby jelit (IBS, SIBO, celiakia)?',
       type: 'radio',
@@ -54,7 +59,7 @@ export const section7: Record<LangKey, any> = {
 
     q7_list: {
       label: 'Jakie choroby? (możesz zaznaczyć więcej niż jedną)',
-      type: 'select',
+      type: 'multiselect',
       options: ['IBS', 'SIBO', 'Celiakia', 'Inne'],
       dependsOn: { question: 'q7', value: 'Tak' }
     }
@@ -98,24 +103,25 @@ en: {
     options: ['Yes', 'No', 'I don’t know']
   },
 
-  q6: {
-    label: 'How many times per day/week does sex have bowel movements?',
-    type: 'select',
-    options: ['1', '2', '3', '4 or more']
-  },
+q6: {
+  label: 'How many times per day does sex have a bowel movement?',
+  options: [
+    '0 – I have constipation issues',
+    '1',
+    '2',
+    '3',
+    '4 or more'
+  ]
+},
+q7: {
+  label: 'Has sex been diagnosed with any intestinal diseases (IBS, SIBO, celiac disease)?',
+  options: ['Yes', 'No']
+},
+q7_list: {
+  label: 'Which conditions? (you can select more than one)',
+  options: ['IBS', 'SIBO', 'Celiac disease', 'Other']
+}
 
-  q7: {
-    label: 'Has sex been diagnosed with any intestinal diseases (IBS, SIBO, celiac)?',
-    type: 'radio',
-    options: ['Yes', 'No']
-  },
-
-  q7_list: {
-    label: 'Which diseases? (you can select more than one)',
-    type: 'select',
-    options: ['IBS', 'SIBO', 'Celiac disease', 'Other'],
-    dependsOn: { question: 'q7', value: 'Yes' }
-  }
 },
 de: {
   title: 'Verdauungs- und Darmprobleme',
@@ -157,23 +163,24 @@ de: {
   },
 
   q6: {
-    label: 'Wie oft pro Tag/Woche hat sex Stuhlgang?',
-    type: 'select',
-    options: ['1', '2', '3', '4 oder mehr']
-  },
+  label: 'Wie oft hat sex pro Tag Stuhlgang?',
+  options: [
+    '0 – Ich habe Probleme mit Verstopfung',
+    '1',
+    '2',
+    '3',
+    '4 oder mehr'
+  ]
+},
+q7: {
+  label: 'Wurde bei sex eine Darmerkrankung diagnostiziert (IBS, SIBO, Zöliakie)?',
+  options: ['Ja', 'Nein']
+},
+q7_list: {
+  label: 'Welche Erkrankungen? (mehrere möglich)',
+  options: ['IBS', 'SIBO', 'Zöliakie', 'Andere']
+}
 
-  q7: {
-    label: 'Wurde bei sex eine Darmerkrankung diagnostiziert (IBS, SIBO, Zöliakie)?',
-    type: 'radio',
-    options: ['Ja', 'Nein']
-  },
-
-  q7_list: {
-    label: 'Welche Erkrankungen? (Mehrfachauswahl möglich)',
-    type: 'select',
-    options: ['IBS', 'SIBO', 'Zöliakie', 'Andere'],
-    dependsOn: { question: 'q7', value: 'Ja' }
-  }
 },
 fr: {
   title: 'Problèmes digestifs et intestinaux',
@@ -215,23 +222,23 @@ fr: {
   },
 
   q6: {
-    label: 'Combien de fois par jour/semaine sex a-t-il des selles ?',
-    type: 'select',
-    options: ['1', '2', '3', '4 ou plus']
-  },
-
-  q7: {
-    label: 'Sex a-t-il été diagnostiqué avec une maladie intestinale (SII, SIBO, maladie cœliaque) ?',
-    type: 'radio',
-    options: ['Oui', 'Non']
-  },
-
-  q7_list: {
-    label: 'Lesquelles ? (vous pouvez en cocher plusieurs)',
-    type: 'select',
-    options: ['SII', 'SIBO', 'Maladie cœliaque', 'Autre'],
-    dependsOn: { question: 'q7', value: 'Oui' }
-  }
+  label: 'Combien de fois par jour sex a-t-il des selles ?',
+  options: [
+    '0 – J’ai des problèmes de constipation',
+    '1',
+    '2',
+    '3',
+    '4 ou plus'
+  ]
+},
+q7: {
+  label: 'Est-ce que sex a été diagnostiqué avec des maladies intestinales (SII, SIBO, maladie cœliaque) ?',
+  options: ['Oui', 'Non']
+},
+q7_list: {
+  label: 'Quelles maladies ? (vous pouvez en sélectionner plusieurs)',
+  options: ['SII', 'SIBO', 'Maladie cœliaque', 'Autre']
+}
 },
 es: {
   title: 'Problemas digestivos e intestinales',
@@ -273,23 +280,24 @@ es: {
   },
 
   q6: {
-    label: '¿Cuántas veces al día/semana tiene evacuaciones intestinales sex?',
-    type: 'select',
-    options: ['1', '2', '3', '4 o más']
-  },
+  label: '¿Cuántas veces al día sex defeca?',
+  options: [
+    '0 – Tengo problemas de estreñimiento',
+    '1',
+    '2',
+    '3',
+    '4 o más'
+  ]
+},
+q7: {
+  label: '¿A sex le han diagnosticado enfermedades intestinales (SII, SIBO, celiaquía)?',
+  options: ['Sí', 'No']
+},
+q7_list: {
+  label: '¿Qué enfermedades? (puedes seleccionar más de una)',
+  options: ['SII', 'SIBO', 'Celiaquía', 'Otra']
+}
 
-  q7: {
-    label: '¿Le han diagnosticado a sex enfermedades intestinales (SII, SIBO, celiaquía)?',
-    type: 'radio',
-    options: ['Sí', 'No']
-  },
-
-  q7_list: {
-    label: '¿Cuáles? (puede seleccionar más de una)',
-    type: 'select',
-    options: ['SII', 'SIBO', 'Celiaquía', 'Otro'],
-    dependsOn: { question: 'q7', value: 'Sí' }
-  }
 },
 ua: {
   title: 'Проблеми з травленням та кишечником',
@@ -331,23 +339,24 @@ ua: {
   },
 
   q6: {
-    label: 'Скільки разів на день/тиждень sex випорожнюється?',
-    type: 'select',
-    options: ['1', '2', '3', '4 і більше']
-  },
+  label: 'Скільки разів на день sex має випорожнення?',
+  options: [
+    '0 – маю проблеми з запорами',
+    '1',
+    '2',
+    '3',
+    '4 і більше'
+  ]
+},
+q7: {
+  label: 'Чи було у sex діагностовано захворювання кишківника (СРК, SIBO, целіакія)?',
+  options: ['Так', 'Ні']
+},
+q7_list: {
+  label: 'Які захворювання? (можна обрати кілька)',
+  options: ['СРК', 'SIBO', 'Целіакія', 'Інше']
+}
 
-  q7: {
-    label: 'Чи діагностували у sex захворювання кишечника (IBS, SIBO, целіакія)?',
-    type: 'radio',
-    options: ['Так', 'Ні']
-  },
-
-  q7_list: {
-    label: 'Які саме? (можна вибрати декілька варіантів)',
-    type: 'select',
-    options: ['IBS', 'SIBO', 'Целіакія', 'Інше'],
-    dependsOn: { question: 'q7', value: 'Так' }
-  }
 },
 ru: {
   title: 'Пищеварительные и кишечные проблемы',
@@ -389,23 +398,24 @@ ru: {
   },
 
   q6: {
-    label: 'Сколько раз в день/неделю у sex бывает стул?',
-    type: 'select',
-    options: ['1', '2', '3', '4 и более']
-  },
+  label: 'Сколько раз в день sex испражняется?',
+  options: [
+    '0 – есть проблемы с запорами',
+    '1',
+    '2',
+    '3',
+    '4 и более'
+  ]
+},
+q7: {
+  label: 'Были ли у sex диагностированы кишечные заболевания (СРК, SIBO, целиакия)?',
+  options: ['Да', 'Нет']
+},
+q7_list: {
+  label: 'Какие заболевания? (можно выбрать несколько)',
+  options: ['СРК', 'SIBO', 'Целиакия', 'Другое']
+}
 
-  q7: {
-    label: 'Диагностировали ли у sex кишечные заболевания (СРК, SIBO, целиакия)?',
-    type: 'radio',
-    options: ['Да', 'Нет']
-  },
-
-  q7_list: {
-    label: 'Какие именно? (можно выбрать несколько вариантов)',
-    type: 'select',
-    options: ['СРК', 'SIBO', 'Целиакия', 'Другое'],
-    dependsOn: { question: 'q7', value: 'Да' }
-  }
 },
 zh: {
   title: '消化与肠道问题',
@@ -447,23 +457,24 @@ zh: {
   },
 
   q6: {
-    label: 'sex 每天/每周排便多少次？',
-    type: 'select',
-    options: ['1', '2', '3', '4 次或更多']
-  },
+  label: 'sex 每天排便多少次？',
+  options: [
+    '0 – 有便秘问题',
+    '1',
+    '2',
+    '3',
+    '4 次或更多'
+  ]
+},
+q7: {
+  label: 'sex 是否被诊断出肠道疾病（IBS、SIBO、乳糜泻）？',
+  options: ['是', '否']
+},
+q7_list: {
+  label: '哪些疾病？（可多选）',
+  options: ['IBS', 'SIBO', '乳糜泻', '其他']
+}
 
-  q7: {
-    label: 'sex 是否被诊断患有肠道疾病（IBS、SIBO、乳糜泻）？',
-    type: 'radio',
-    options: ['是', '否']
-  },
-
-  q7_list: {
-    label: '有哪些？（可多选）',
-    type: 'select',
-    options: ['IBS', 'SIBO', '乳糜泻', '其他'],
-    dependsOn: { question: 'q7', value: '是' }
-  }
 },
 hi: {
   title: 'पाचन और आंत संबंधी समस्याएं',
@@ -505,23 +516,24 @@ hi: {
   },
 
   q6: {
-    label: 'sex दिन/सप्ताह में कितनी बार मल त्याग करता है?',
-    type: 'select',
-    options: ['1', '2', '3', '4 या अधिक']
-  },
+  label: 'sex दिन में कितनी बार मल त्याग करता/करती है?',
+  options: [
+    '0 – कब्ज की समस्या है',
+    '1',
+    '2',
+    '3',
+    '4 या अधिक'
+  ]
+},
+q7: {
+  label: 'क्या sex को आंतों की बीमारियाँ (IBS, SIBO, सीलिएक रोग) डायग्नोज़ हुई हैं?',
+  options: ['हाँ', 'नहीं']
+},
+q7_list: {
+  label: 'कौन-कौन सी बीमारियाँ? (एक से अधिक चुन सकते हैं)',
+  options: ['IBS', 'SIBO', 'सीलिएक', 'अन्य']
+}
 
-  q7: {
-    label: 'क्या sex को आंतों की कोई बीमारी (IBS, SIBO, सीलिएक) का निदान हुआ है?',
-    type: 'radio',
-    options: ['हाँ', 'नहीं']
-  },
-
-  q7_list: {
-    label: 'कौन-कौन सी? (एक से अधिक चुन सकते हैं)',
-    type: 'select',
-    options: ['IBS', 'SIBO', 'सीलिएक', 'अन्य'],
-    dependsOn: { question: 'q7', value: 'हाँ' }
-  }
 },
 ar: {
   title: 'مشاكل الجهاز الهضمي والأمعاء',
@@ -562,24 +574,25 @@ ar: {
     options: ['نعم', 'لا', 'لا أعلم']
   },
 
-  q6: {
-    label: 'كم مرة في اليوم/الأسبوع يتغوط sex؟',
-    type: 'select',
-    options: ['1', '2', '3', '4 أو أكثر']
-  },
+ q6: {
+  label: 'كم مرة يتغوط sex في اليوم؟',
+  options: [
+    '0 – أعاني من الإمساك',
+    '1',
+    '2',
+    '3',
+    '4 أو أكثر'
+  ]
+},
+q7: {
+  label: 'هل تم تشخيص sex بأمراض الأمعاء (IBS، SIBO، الداء البطني)؟',
+  options: ['نعم', 'لا']
+},
+q7_list: {
+  label: 'ما هي الأمراض؟ (يمكن اختيار أكثر من واحد)',
+  options: ['IBS', 'SIBO', 'الداء البطني', 'أخرى']
+}
 
-  q7: {
-    label: 'هل تم تشخيص sex بأمراض الأمعاء (IBS، SIBO، الداء الزلاقي)؟',
-    type: 'radio',
-    options: ['نعم', 'لا']
-  },
-
-  q7_list: {
-    label: 'ما هي الأمراض؟ (يمكن اختيار أكثر من خيار)',
-    type: 'select',
-    options: ['IBS', 'SIBO', 'الداء الزلاقي', 'أخرى'],
-    dependsOn: { question: 'q7', value: 'نعم' }
-  }
 },
 he: {
   title: 'בעיות עיכול ומעיים',
@@ -621,23 +634,24 @@ he: {
   },
 
   q6: {
-    label: 'כמה פעמים sex מתפנה ביום/שבוע?',
-    type: 'select',
-    options: ['1', '2', '3', '4 או יותר']
-  },
+  label: 'כמה פעמים ביום sex מתפנה?',
+  options: [
+    '0 – יש לי בעיה של עצירות',
+    '1',
+    '2',
+    '3',
+    '4 או יותר'
+  ]
+},
+q7: {
+  label: 'האם sex אובחן/ה עם מחלות מעיים (IBS, SIBO, צליאק)?',
+  options: ['כן', 'לא']
+},
+q7_list: {
+  label: 'אילו מחלות? (ניתן לבחור יותר מאחת)',
+  options: ['IBS', 'SIBO', 'צליאק', 'אחר']
+}
 
-  q7: {
-    label: 'האם אובחנו אצל sex מחלות מעיים (IBS, SIBO, צליאק)?',
-    type: 'radio',
-    options: ['כן', 'לא']
-  },
-
-  q7_list: {
-    label: 'אילו מחלות? (ניתן לבחור יותר מאחת)',
-    type: 'select',
-    options: ['IBS', 'SIBO', 'צליאק', 'אחר'],
-    dependsOn: { question: 'q7', value: 'כן' }
-  }
 }
 
 };

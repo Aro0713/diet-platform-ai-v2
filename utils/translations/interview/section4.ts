@@ -5,13 +5,13 @@ export const section4: Record<LangKey, any> = {
     title: 'Nawyki żywieniowe',
 
     q1: {
-      label: 'Czy Pani/Pan spożywa regularne posiłki w ciągu dnia?',
+      label: 'Czy sex spożywa regularne posiłki w ciągu dnia?',
       type: 'radio',
       options: ['Tak', 'Nie', 'Nie wiem']
     },
 
     q2: {
-      label: 'O jakich porach dnia najczęściej Pani/Pan je?',
+      label: 'O jakich porach dnia najczęściej sex je?',
       type: 'text',
       dependsOn: { question: 'q1', value: 'Tak' }
     },
@@ -23,67 +23,67 @@ export const section4: Record<LangKey, any> = {
     },
 
     q4: {
-      label: 'Czy Pani/Pan regularnie spożywa śniadania?',
+      label: 'Czy sex regularnie spożywa śniadania?',
       type: 'radio',
       options: ['Tak', 'Nie', 'Rzadko']
     },
 
     q5: {
-      label: 'Czy Pani/Pan często sięga po słodycze lub fast-foody?',
+      label: 'Czy sex często sięga po słodycze lub fast-foody?',
       type: 'radio',
       options: ['Tak', 'Nie', 'Czasami']
     },
 
     q6: {
-      label: 'Czy Pani/Pan wypija co najmniej 1,5–2 litry wody dziennie? (nie licząc kawy, herbaty, soków)',
+      label: 'Czy sex wypija co najmniej 1,5–2 litry wody dziennie? (nie licząc kawy, herbaty, soków)',
       type: 'radio',
       options: ['Tak', 'Nie', 'Nie wiem']
     },
 
     q7: {
-      label: 'Czy Pani/Pan regularnie spożywa nabiał?',
+      label: 'Czy sex regularnie spożywa nabiał?',
       type: 'radio',
       options: ['Tak', 'Nie', 'Rzadko']
     },
 
     q8: {
-      label: 'Czy Pani/Pan regularnie spożywa mięso?',
+      label: 'Czy sex regularnie spożywa mięso?',
       type: 'radio',
       options: ['Tak', 'Nie', 'Rzadko']
     },
 
     q9: {
-      label: 'Czy Pani/Pan regularnie spożywa ryby?',
+      label: 'Czy sex regularnie spożywa ryby?',
       type: 'radio',
       options: ['Tak', 'Nie', 'Rzadko']
     },
 
     q10a: {
-      label: 'Czy Pani/Pan regularnie spożywa warzywa?',
+      label: 'Czy sex regularnie spożywa warzywa?',
       type: 'radio',
       options: ['Tak', 'Nie', 'Rzadko']
     },
 
     q10b: {
-      label: 'Czy Pani/Pan regularnie spożywa owoce?',
+      label: 'Czy sex regularnie spożywa owoce?',
       type: 'radio',
       options: ['Tak', 'Nie', 'Rzadko']
     },
 
     q11: {
-      label: 'Czy Pani/Pan spożywa zdrowe tłuszcze (np. oliwa z oliwek, orzechy, awokado)?',
+      label: 'Czy sex spożywa zdrowe tłuszcze (np. oliwa z oliwek, orzechy, awokado)?',
       type: 'radio',
       options: ['Tak', 'Nie', 'Rzadko']
     },
 
     q12: {
-      label: 'Czy Pani/Pan często spożywa żywność przetworzoną?',
+      label: 'Czy sex często spożywa żywność przetworzoną?',
       type: 'radio',
       options: ['Tak', 'Nie', 'Czasami']
     },
 
     q13: {
-      label: 'W jakim stopniu przygotowuje Pani/Pan posiłki samodzielnie?',
+      label: 'W jakim stopniu przygotowuje sex posiłki samodzielnie?',
       type: 'select',
       options: [
         'Zawsze gotuję w domu',
