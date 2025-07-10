@@ -196,7 +196,7 @@ export default function PatientPanel() {
         </button>
       </div>
 
-      {patient.premium && <ProductScanner patient={patient} />}
+      {patient.premium && <ProductScanner patient={patient} lang={'pl'} />}
     </div>
   );
 }
