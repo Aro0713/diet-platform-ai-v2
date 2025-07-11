@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
 import { generateDietPdf } from '../utils/generateDietPdf';
-import ProductScanner from '../components/ProductScanner';
 
 export default function PatientPanel() {
   const router = useRouter();
@@ -196,7 +195,6 @@ export default function PatientPanel() {
         </button>
       </div>
 
-      {patient.premium && <ProductScanner patient={patient} lang={'pl'} />}
     </div>
   );
 }
