@@ -80,12 +80,25 @@ Return strictly valid JSON:
   console.log('🧠 GPT prompt:', prompt);
 
   try {
+    const messages: any[] = [
+      { role: 'system', content: 'You are a helpful clinical nutrition AI.' }
+    ];
+
+    if (image) {
+      messages.push({
+        role: 'user',
+        content: [
+          { type: 'text', text: prompt },
+          { type: 'image_url', image_url: { url: image } }
+        ]
+      });
+    } else {
+      messages.push({ role: 'user', content: prompt });
+    }
+
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
-      messages: [
-        { role: 'system', content: 'You are a helpful clinical nutrition AI.' },
-        { role: 'user', content: prompt }
-      ],
+      messages,
       temperature: 0.5
     });
 
@@ -98,8 +111,13 @@ Return strictly valid JSON:
     }
 
     try {
-      const jsonStart = content.indexOf('{');
-      const parsed = JSON.parse(content.slice(jsonStart));
+      const cleaned = content
+        .replace(/^```json\n?/, '')
+        .replace(/^```/, '')
+        .replace(/\n?```$/, '')
+        .trim();
+
+      const parsed = JSON.parse(cleaned);
       return parsed;
     } catch (e) {
       console.error('❌ GPT JSON parse error:', e, content);
