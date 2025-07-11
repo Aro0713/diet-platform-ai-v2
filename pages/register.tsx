@@ -32,12 +32,14 @@ export default function RegisterPage() {
 
       if (!exists) {
         await supabase.from('patients').insert({
-          user_id: user.id,
-          email: user.email,
-          name: metadata.name || 'Nieznany',
-          phone: metadata.phone || '',
-          lang
-        });
+        user_id: user.id,
+        email: user.email,
+        name: metadata.name || 'Nieznany',
+        phone: metadata.phone || '',
+        lang,
+        region,
+        location
+      });
       }
     }
 
@@ -113,22 +115,36 @@ const [disclaimer, setDisclaimer] = useState('');
   const [licenseNumber, setLicenseNumber] = useState('');
   const [recoveryID, setRecoveryID] = useState('');
   const [consentGiven, setConsentGiven] = useState(false);
+  const [region, setRegion] = useState('');
+  const [location, setLocation] = useState('');
 
 
   // 🌍 JĘZYK PLATFORMY
-  useEffect(() => {
-    const savedLang = (localStorage.getItem('platformLang') || 'pl')
-      .toLowerCase()
-      .trim() as LangKey;
+ useEffect(() => {
+  fetch('https://ipapi.co/json/')
+    .then((res) => res.json())
+    .then((data) => {
+      const detectedLang = data?.languages?.split(',')[0]?.toLowerCase() || 'pl';
+      const regionName = data?.country_name || 'Poland';
+      const cityLocation = `${data?.city || ''}, ${data?.region || ''}`;
 
-    if (Object.keys(languageLabels).includes(savedLang)) {
-      setLang(savedLang);
-    } else {
+      if (Object.keys(languageLabels).includes(detectedLang)) {
+        setLang(detectedLang as LangKey);
+        localStorage.setItem('platformLang', detectedLang);
+      }
+
+      setRegion(regionName);
+      setLocation(cityLocation);
+      setLangReady(true);
+    })
+    .catch(() => {
       setLang('pl');
-    }
+      setRegion('Poland');
+      setLocation('');
+      setLangReady(true);
+    });
+}, []);
 
-    setLangReady(true);
-  }, []);
 
 useEffect(() => {
   if (router.query.confirmed === 'true') {

@@ -13,10 +13,13 @@ const AnalyzeProductSchema = z.object({
   patient: z.object({
     conditions: z.array(z.string()).optional(),
     allergies: z.string().optional(),
-    dietModel: z.string().optional()
+    dietModel: z.string().optional(),
+    region: z.string().optional(),
+    location: z.string().optional()
   }).passthrough(),
   lang: z.string()
 });
+
 
 export const analyzeProductTool = tool({
   name: 'analyze_product_for_patient',
@@ -42,11 +45,13 @@ Patient:
 - Conditions: ${patient.conditions?.join(', ') || 'none'}
 - Allergies: ${patient.allergies || 'none'}
 - Diet model: ${patient.dietModel || 'unspecified'}
+- Region: ${patient.region || 'Poland'}
+- Location: ${patient.location || 'unknown'}
 
 Based on the patient's dietary needs and restrictions:
 1. Is this product suitable?
-2. Provide a short AI comment explaining why or why not.
-3. Suggest up to 3 alternative products (mock): name, shop, price, reason.
+2. Provide a short, friendly comment explaining why or why not (in ${lang}).
+3. Suggest up to 3 realistic alternative products available in ${patient.region}, using local chains like Biedronka, Lidl, Żabka, Auchan. Avoid US-based stores.
 
 Return strictly JSON like:
 {
@@ -55,8 +60,7 @@ Return strictly JSON like:
   "verdict": "...",
   "pricing": [...],
   "alternatives": [...]
-}
-`;
+}`;
 
     try {
       const completion = await openai.chat.completions.create({

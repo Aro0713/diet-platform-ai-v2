@@ -3,6 +3,20 @@ import OpenAI from 'openai';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+const languageLabel: Record<string, string> = {
+  pl: 'Polish',
+  en: 'English',
+  de: 'German',
+  fr: 'French',
+  es: 'Spanish',
+  ua: 'Ukrainian',
+  ru: 'Russian',
+  zh: 'Chinese',
+  ar: 'Arabic',
+  hi: 'Hindi',
+  he: 'Hebrew'
+};
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -14,8 +28,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Missing barcode' });
   }
 
+  const userLanguage = languageLabel[lang] || 'English';
+
   try {
-    // 📦 Fetch product info from Open Food Facts
     const off = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`);
     const data = await off.json();
 
@@ -27,9 +42,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const productName = data.product.product_name;
     const nutrition = data.product.nutriments ?? {};
 
-    // 🧠 AI prompt
     const prompt = `
-You are a clinical nutrition AI. Analyze the following product for dietary compatibility.
+You are a clinical nutrition assistant. Analyze the following food product for dietary compatibility.
+
+Please respond in ${userLanguage}.
 
 Patient data:
 - Conditions: ${patient.conditions?.join(', ') || 'none'}
@@ -41,7 +57,9 @@ Product:
 - Ingredients: ${ingredients}
 - Nutritional info: ${JSON.stringify(nutrition)}
 
-Give a short compatibility verdict (max 3 sentences) and whether the product is acceptable for the user.
+Write a friendly, human-readable description (~3 sentences) that explains whether the product is suitable for the user's health and diet.
+Use natural language, not technical terms.
+Avoid phrases like “it is recommended” – instead explain how it fits in everyday choices.
 
 Then, suggest 1–3 alternative products: name, shop (fake), price, and why they may be better.
 
@@ -68,13 +86,12 @@ Respond ONLY with valid JSON object (no explanation, no markdown), like:
     let parsed;
 
     try {
-      const jsonStart = raw.indexOf('{');
-      const jsonEnd = raw.lastIndexOf('}');
-      if (jsonStart === -1 || jsonEnd === -1 || jsonEnd <= jsonStart) {
-        throw new Error('No valid JSON found in AI response');
+      const jsonMatches = raw.match(/\{[\s\S]*?\}/g);
+      if (!jsonMatches || jsonMatches.length === 0) {
+        throw new Error('No valid JSON object found in AI response');
       }
 
-      const jsonString = raw.slice(jsonStart, jsonEnd + 1).trim();
+      const jsonString = jsonMatches[0];
       parsed = JSON.parse(jsonString);
     } catch (e) {
       console.error('❌ AI response parsing error:', raw);

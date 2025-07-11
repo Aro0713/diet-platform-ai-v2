@@ -1,4 +1,3 @@
-// pages/api/analyzeagent-product-photo.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import formidable, { File } from 'formidable';
 import { readFile } from 'fs/promises';
@@ -11,6 +10,20 @@ export const config = {
 };
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+const languageLabel: Record<string, string> = {
+  pl: 'Polish',
+  en: 'English',
+  de: 'German',
+  fr: 'French',
+  es: 'Spanish',
+  ua: 'Ukrainian',
+  ru: 'Russian',
+  zh: 'Chinese',
+  ar: 'Arabic',
+  hi: 'Hindi',
+  he: 'Hebrew'
+};
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -27,6 +40,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const lang = fields.lang?.toString() || 'pl';
     const patient = JSON.parse(fields.patient?.toString() || '{}');
+    const userLanguage = languageLabel[lang] || 'English';
 
     const rawFile = files.image;
     if (!rawFile) {
@@ -47,24 +61,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           },
           {
             role: 'user',
-            content: `A patient uploads a photo of a food label. 
+            content: `A patient uploads a photo of a food label.
+
+Please respond in ${userLanguage}.
 
 Analyze its compatibility with:
 - Conditions: ${patient.conditions?.join(', ') || 'none'}
 - Allergies: ${patient.allergies || 'none'}
 - Diet model: ${patient.dietModel || 'not specified'}
 
-Describe:
-- What the product likely is (guess name if not visible)
-- Its risk/benefit
-- Verdict: allowed / not allowed / neutral
-- Suggest 1–2 alternatives
+Write a friendly, human-readable description (~3 sentences) that explains whether the product is suitable for the user's health and diet.
+Use natural language, not technical terms.
+Avoid phrases like “it is recommended” – instead explain how it fits in everyday choices.
 
-Return strictly JSON like:
+Then, suggest 1–2 alternative products: name, shop (fake), price, and why they may be better.
+
+Respond ONLY with valid JSON object (no explanation, no markdown), like:
 {
   "productName": "...",
   "verdict": "...",
-  "alternatives": [ ... ]
+  "alternatives": [...]
 }`
           },
           {
@@ -90,9 +106,13 @@ Return strictly JSON like:
       let parsed;
 
       try {
-        const jsonStart = raw.indexOf('{');
-        if (jsonStart === -1) throw new Error('No JSON found in AI response');
-        parsed = JSON.parse(raw.slice(jsonStart).trim());
+        const jsonMatches = raw.match(/\{[\s\S]*?\}/g);
+        if (!jsonMatches || jsonMatches.length === 0) {
+          throw new Error('No valid JSON object found in AI response');
+        }
+
+        const jsonString = jsonMatches[0];
+        parsed = JSON.parse(jsonString);
       } catch (e) {
         console.error('❌ Parsing error in analyzeagent-product-photo:', raw);
         return res.status(500).json({ error: 'Failed to parse AI response' });
