@@ -41,6 +41,8 @@ export async function analyzeProductInput(input: any) {
 
   const prompt = `
 You are a clinical dietitian AI.
+Please answer the following question **in ${lang}**.
+Your answer must be 100% in ${lang}, no English.
 
 Evaluate the following product for the patient below.
 
@@ -59,7 +61,7 @@ Patient:
 - Region: ${patient.region || 'Poland'}
 - Location: ${patient.location || 'unknown'}
 
-Return strictly valid JSON:
+Return strictly valid JSON in ${lang} (no English):
 {
   "productName": "...",
   "dietaryAnalysis": "...",
@@ -76,6 +78,7 @@ Return strictly valid JSON:
     "whyBetter": "..."
   }
 }`;
+
 
   console.log('🧠 GPT prompt:', prompt);
 
