@@ -9,10 +9,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const input = req.body;
 
-    const result = await productAgent.run({
-      name: 'analyze_product_for_patient',
-      arguments: input
-    });
+    // ✅ wywołanie bez .run() — użycie execute() z pierwszego narzędzia
+    const result = await (productAgent.tools[0] as any).execute(input);
 
     res.status(200).json(result);
   } catch (err: any) {
