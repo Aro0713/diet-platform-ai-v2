@@ -32,45 +32,61 @@ export default function ProductScanner({ lang, patient }: ProductScannerProps) {
     }
   };
 
-  const handleAnalyzeText = async () => {
-    if (!productText) return;
-    setLoading(true);
-    try {
-      const res = await fetch('/api/analyzeagent-product-text', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: productText, lang, patient })
-      });
-      const json = await res.json();
-      setResult(json);
-    } catch (err) {
-      console.error('❌ Error analyzing text:', err);
-    } finally {
-      setLoading(false);
+const handleAnalyzeText = async () => {
+  if (!productText) return;
+  setLoading(true);
+  try {
+    const res = await fetch('/api/analyzeagent-product-text', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: productText, lang, patient })
+    });
+
+    const isJson = res.headers.get('content-type')?.includes('application/json');
+    if (!res.ok) {
+      const errorMsg = isJson ? (await res.json()).error : await res.text();
+      throw new Error(errorMsg || 'Unexpected error');
     }
-  };
+
+    const json = await res.json();
+    setResult(json);
+  } catch (err: any) {
+    console.error('❌ Error analyzing text:', err.message);
+    setResult({ error: err.message });
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleAnalyzeImage = async () => {
-    if (!imageFile) return;
-    setLoading(true);
-    try {
-      const formData = new FormData();
-      formData.append('image', imageFile);
-      formData.append('lang', lang);
-      formData.append('patient', JSON.stringify(patient));
+  if (!imageFile) return;
+  setLoading(true);
+  try {
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    formData.append('lang', lang);
+    formData.append('patient', JSON.stringify(patient));
 
-      const res = await fetch('/api/analyzeagent-product-photo', {
-        method: 'POST',
-        body: formData
-      });
-      const json = await res.json();
-      setResult(json);
-    } catch (err) {
-      console.error('❌ Error analyzing image:', err);
-    } finally {
-      setLoading(false);
+    const res = await fetch('/api/analyzeagent-product-photo', {
+      method: 'POST',
+      body: formData
+    });
+
+    const isJson = res.headers.get('content-type')?.includes('application/json');
+    if (!res.ok) {
+      const errorMsg = isJson ? (await res.json()).error : await res.text();
+      throw new Error(errorMsg || 'Unexpected error');
     }
-  };
+
+    const json = await res.json();
+    setResult(json);
+  } catch (err: any) {
+    console.error('❌ Error analyzing image:', err.message);
+    setResult({ error: err.message });
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="bg-slate-900 rounded-xl p-6 shadow-lg text-white max-w-3xl mx-auto mt-6">
@@ -127,6 +143,14 @@ export default function ProductScanner({ lang, patient }: ProductScannerProps) {
           🧪 {tUI('analyzeTextDescription', lang)}
         </button>
       </div>
+  
+       {result && (
+       <pre className="bg-black text-white p-4 mt-4 rounded-md overflow-x-auto whitespace-pre-wrap">
+       {typeof result === 'string'
+      ? result
+      : JSON.stringify(result, null, 2)}
+     </pre>
+      )}
 
       {loading && <p className="text-yellow-400">⏳ Trwa analiza...</p>}
       {result && (

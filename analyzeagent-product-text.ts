@@ -29,12 +29,14 @@ Product (text):
 
 Give a short compatibility verdict (max 3 sentences) and whether the product is acceptable for the user.
 Then suggest 1–3 alternative products: name, shop (fake), price, and why they may be better.
-Return strictly JSON like:
+
+Respond ONLY with valid JSON object (no explanation, no markdown), like:
 {
   "productName": "...",
   "verdict": "...",
   "alternatives": [...]
-}`;
+}
+`;
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
@@ -46,12 +48,17 @@ Return strictly JSON like:
     });
 
     const raw = completion.choices?.[0]?.message?.content || '';
-
     let parsed;
+
     try {
       const jsonStart = raw.indexOf('{');
-      if (jsonStart === -1) throw new Error('No JSON found in AI response');
-      parsed = JSON.parse(raw.slice(jsonStart).trim());
+      const jsonEnd = raw.lastIndexOf('}');
+      if (jsonStart === -1 || jsonEnd === -1 || jsonEnd <= jsonStart) {
+        throw new Error('No valid JSON found in AI response');
+      }
+
+      const jsonString = raw.slice(jsonStart, jsonEnd + 1).trim();
+      parsed = JSON.parse(jsonString);
     } catch (e) {
       console.error('❌ Parsing error in analyzeagent-product-text:', raw);
       return res.status(500).json({ error: 'Failed to parse AI response' });
