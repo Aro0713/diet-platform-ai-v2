@@ -29,15 +29,20 @@ export default function Home() {
   }, [darkMode, mounted]);
 
   // Wykrywanie języka
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
+useEffect(() => {
+  if (typeof window !== 'undefined') {
+    const existing = localStorage.getItem('platformLang');
+    if (existing && Object.keys(languageLabels).includes(existing)) {
+      setLang(existing as LangKey);
+    } else {
       const supportedLangs: LangKey[] = ['pl', 'en', 'ua', 'es', 'fr', 'de', 'ru', 'zh', 'hi', 'ar', 'he'];
       const browserLang = navigator.language.slice(0, 2) as LangKey;
       const detected = supportedLangs.includes(browserLang) ? browserLang : 'en';
       setLang(detected);
       localStorage.setItem('platformLang', detected);
     }
-  }, []);
+  }
+}, []);
 
   if (!mounted) return null;
 

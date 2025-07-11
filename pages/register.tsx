@@ -124,27 +124,34 @@ const [disclaimer, setDisclaimer] = useState('');
   fetch('https://ipapi.co/json/')
     .then((res) => res.json())
     .then((data) => {
-      const detectedLang = data?.languages?.split(',')[0]?.toLowerCase() || 'pl';
-      const regionName = data?.country_name || 'Poland';
+      const detectedLangRaw = data?.languages?.split(',')[0]?.toLowerCase();
+      const regionName = data?.country_name || null;
       const cityLocation = `${data?.city || ''}, ${data?.region || ''}`;
 
-      if (Object.keys(languageLabels).includes(detectedLang)) {
-        setLang(detectedLang as LangKey);
-        localStorage.setItem('platformLang', detectedLang);
+      // 🌐 Ustaw język platformy, jeśli wykryto i obsługiwany
+      if (detectedLangRaw && Object.keys(languageLabels).includes(detectedLangRaw)) {
+        setLang(detectedLangRaw as LangKey);
+        localStorage.setItem('platformLang', detectedLangRaw);
+        console.log('🌍 Wykryty język:', detectedLangRaw);
       }
 
-      setRegion(regionName);
+      // 🌍 Lokalizacja do zapisu w Supabase (jeśli dostępna)
+      if (regionName) {
+        setRegion(regionName);
+      }
       setLocation(cityLocation);
       setLangReady(true);
+
+      console.log('🌍 Lokalizacja:', regionName, cityLocation);
     })
-    .catch(() => {
+    .catch((err) => {
+      console.warn('🌍 Nie udało się pobrać lokalizacji:', err);
       setLang('pl');
       setRegion('Poland');
       setLocation('');
       setLangReady(true);
     });
 }, []);
-
 
 useEffect(() => {
   if (router.query.confirmed === 'true') {
