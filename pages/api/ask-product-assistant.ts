@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import formidable from 'formidable';
 import { readFile } from 'fs/promises';
 import { productAgent } from '@/agents/productAgent';
+import { analyzeProductInput } from '@/agents/productAgent';
 
 export const config = {
   api: {
@@ -75,7 +76,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       console.log('📤 Input do agenta:', input);
 
-      const result = await (productAgent.tools[0] as any).execute(input);
+     const result = await analyzeProductInput(input);
 
       if (!result || typeof result !== 'object' || Object.keys(result).length === 0) {
         console.error('❌ Agent zwrócił pustą lub niepoprawną odpowiedź:', result);
