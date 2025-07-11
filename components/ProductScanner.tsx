@@ -1,10 +1,9 @@
-// components/ProductScanner.tsx
 import React, { useState } from 'react';
 import { tUI, type LangKey } from '@/utils/i18n';
 
 interface ProductScannerProps {
   lang: LangKey;
-  patient: any; // Typ danych pacjenta – warunki, alergie itd.
+  patient: any;
 }
 
 export default function ProductScanner({ lang, patient }: ProductScannerProps) {
@@ -26,67 +25,73 @@ export default function ProductScanner({ lang, patient }: ProductScannerProps) {
       const json = await res.json();
       setResult(json);
     } catch (err) {
-      console.error('❌ Error analyzing barcode:', err);
+      const error = err as Error;
+      console.error('❌ Error analyzing barcode:', error.message);
+      setResult({ error: error.message || 'Unexpected error' });
     } finally {
       setLoading(false);
     }
   };
 
-const handleAnalyzeText = async () => {
-  if (!productText) return;
-  setLoading(true);
-  try {
-    const res = await fetch('/api/analyzeagent-product-text', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: productText, lang, patient })
-    });
+  const handleAnalyzeText = async () => {
+    if (!productText) return;
+    setLoading(true);
+    try {
+      const res = await fetch('/api/analyzeagent-product-text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: productText, lang, patient })
+      });
 
-    const isJson = res.headers.get('content-type')?.includes('application/json');
-    if (!res.ok) {
-      const errorMsg = isJson ? (await res.json()).error : await res.text();
-      throw new Error(errorMsg || 'Unexpected error');
+      const isJson = res.headers.get('content-type')?.includes('application/json');
+      if (!res.ok) {
+        const errorMsg = isJson ? (await res.json()).error : await res.text();
+        console.error('📦 Backend error response (text):', errorMsg);
+        throw new Error(errorMsg || 'Unexpected error');
+      }
+
+      const json = await res.json();
+      setResult(json);
+    } catch (err) {
+      const error = err as Error;
+      console.error('❌ Error analyzing text:', error.message);
+      setResult({ error: error.message || 'Unexpected error' });
+    } finally {
+      setLoading(false);
     }
-
-    const json = await res.json();
-    setResult(json);
-  } catch (err: any) {
-    console.error('❌ Error analyzing text:', err.message);
-    setResult({ error: err.message });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const handleAnalyzeImage = async () => {
-  if (!imageFile) return;
-  setLoading(true);
-  try {
-    const formData = new FormData();
-    formData.append('image', imageFile);
-    formData.append('lang', lang);
-    formData.append('patient', JSON.stringify(patient));
+    if (!imageFile) return;
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', imageFile);
+      formData.append('lang', lang);
+      formData.append('patient', JSON.stringify(patient));
 
-    const res = await fetch('/api/analyzeagent-product-photo', {
-      method: 'POST',
-      body: formData
-    });
+      const res = await fetch('/api/analyzeagent-product-photo', {
+        method: 'POST',
+        body: formData
+      });
 
-    const isJson = res.headers.get('content-type')?.includes('application/json');
-    if (!res.ok) {
-      const errorMsg = isJson ? (await res.json()).error : await res.text();
-      throw new Error(errorMsg || 'Unexpected error');
+      const isJson = res.headers.get('content-type')?.includes('application/json');
+      if (!res.ok) {
+        const errorMsg = isJson ? (await res.json()).error : await res.text();
+        console.error('📦 Backend error response (image):', errorMsg);
+        throw new Error(errorMsg || 'Unexpected error');
+      }
+
+      const json = await res.json();
+      setResult(json);
+    } catch (err) {
+      const error = err as Error;
+      console.error('❌ Error analyzing image:', error.message);
+      setResult({ error: error.message || 'Unexpected error' });
+    } finally {
+      setLoading(false);
     }
-
-    const json = await res.json();
-    setResult(json);
-  } catch (err: any) {
-    console.error('❌ Error analyzing image:', err.message);
-    setResult({ error: err.message });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <div className="bg-slate-900 rounded-xl p-6 shadow-lg text-white max-w-3xl mx-auto mt-6">
@@ -116,7 +121,10 @@ const handleAnalyzeText = async () => {
         <input
           type="file"
           accept="image/*"
-          onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+          onChange={(e) => {
+            const selectedFile = e.target.files?.[0];
+            setImageFile(selectedFile instanceof File ? selectedFile : null);
+          }}
         />
         <button
           onClick={handleAnalyzeImage}
@@ -143,19 +151,12 @@ const handleAnalyzeText = async () => {
           🧪 {tUI('analyzeTextDescription', lang)}
         </button>
       </div>
-  
-       {result && (
-       <pre className="bg-black text-white p-4 mt-4 rounded-md overflow-x-auto whitespace-pre-wrap">
-       {typeof result === 'string'
-      ? result
-      : JSON.stringify(result, null, 2)}
-     </pre>
-      )}
 
-      {loading && <p className="text-yellow-400">⏳ Trwa analiza...</p>}
+      {loading && <p className="text-yellow-400">⏳ {tUI('analysisInProgress', lang)}</p>}
+
       {result && (
-        <pre className="bg-black text-white p-4 mt-4 rounded-md overflow-x-auto">
-          {JSON.stringify(result, null, 2)}
+        <pre className="bg-black text-white p-4 mt-4 rounded-md overflow-x-auto whitespace-pre-wrap">
+          {typeof result === 'string' ? result : JSON.stringify(result, null, 2)}
         </pre>
       )}
     </div>
