@@ -48,6 +48,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       console.log('📨 Zapytanie użytkownika:', question);
+      console.log('🌐 Język:', lang);
+      console.log('👤 Pacjent:', patient);
 
       let imageBase64 = '';
       const rawFile = files.image;
@@ -60,7 +62,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       }
 
-      const result = await (productAgent.tools[0] as any).execute({
+      const input = {
         barcode: 'N/A',
         productName: '[From user question]',
         ingredients: '[Unknown]',
@@ -69,15 +71,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         lang,
         question,
         image: imageBase64
-      });
+      };
 
-      if (!result || typeof result !== 'object') {
-        console.error('❌ Agent returned invalid result:', result);
-        return res.status(500).json({ error: 'Agent returned invalid response' });
+      console.log('📤 Input do agenta:', input);
+
+      const result = await (productAgent.tools[0] as any).execute(input);
+
+      if (!result || typeof result !== 'object' || Object.keys(result).length === 0) {
+        console.error('❌ Agent zwrócił pustą lub niepoprawną odpowiedź:', result);
+        return res.status(500).json({ error: 'Agent returned empty or invalid response' });
       }
 
-      console.log('✅ Assistant agent result:', result);
-      return res.status(200).json(result); // 🔒 MUSI być return!
+      console.log('✅ Odpowiedź agenta:', result);
+      return res.status(200).json(result);
     } catch (error: any) {
       console.error('❌ Assistant agent error:', error.response?.data || error.message || error);
       return res.status(500).json({ error: error.response?.data || error.message || 'Assistant failed' });
