@@ -88,7 +88,3 @@ export const productAgent = new Agent({
   instructions: 'Analyzes food products using barcode, ingredients, nutrition and patient data to determine compatibility.',
   tools: [analyzeProductTool]
 });
-
-
-
-

@@ -3794,5 +3794,19 @@ analyzeTextDescription: {
   hi: "विवरण का विश्लेषण करें",
   he: "נתח תיאור"
 },
+analysisInProgress: {
+  pl: "Trwa analiza...",
+  en: "Analysis in progress...",
+  de: "Analyse läuft...",
+  fr: "Analyse en cours...",
+  es: "Análisis en curso...",
+  ua: "Триває аналіз...",
+  ru: "Анализ выполняется...",
+  zh: "分析进行中...",
+  ar: "جارٍ التحليل...",
+  hi: "विश्लेषण जारी है...",
+  he: "הניתוח מתבצע..."
+},
+
 };
 

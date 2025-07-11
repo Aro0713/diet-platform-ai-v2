@@ -32,7 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const form = formidable({
     multiples: false,
-    maxFileSize: 10 * 1024 * 1024, // 10MB
+    maxFileSize: 10 * 1024 * 1024,
     keepExtensions: true,
     allowEmptyFiles: false
   });
@@ -60,16 +60,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     try {
       const buffer = await readFile(file.filepath);
-
       const base64 = buffer.toString('base64');
       const imageDataUrl = `data:${file.mimetype};base64,${base64}`;
 
       const completion = await openai.chat.completions.create({
         model: 'gpt-4o',
+        temperature: 0.3,
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful nutrition AI that understands product labels.'
+            content: 'You are an expert dietitian AI analyzing food product labels based on medical context.'
           },
           {
             role: 'user',
@@ -77,22 +77,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
 Please respond in ${userLanguage}.
 
-Analyze its compatibility with:
+Patient context:
 - Conditions: ${patient.conditions?.join(', ') || 'none'}
 - Allergies: ${patient.allergies || 'none'}
 - Diet model: ${patient.dietModel || 'not specified'}
 
-Write a friendly, human-readable description (~3 sentences) that explains whether the product is suitable for the user's health and diet.
-Use natural language, not technical terms.
-Avoid phrases like “it is recommended” – instead explain how it fits in everyday choices.
+Please analyze this product and return:
+- productName (if visible on label),
+- dietaryAnalysis: a short human-friendly summary (~3 sentences) that clearly explains whether the patient should consume this product, and why (or why not),
+- allowPurchase: true/false — can the patient safely buy it?
+- reasons: key arguments why it’s suitable/unsuitable (brief, bullet points),
+- cheapestShop: where it's available (fake name), approximate price,
+- betterAlternative: 1 product (name, shop, price, why it's a better dietary choice).
 
-Then, suggest 1–2 alternative products: name, shop (fake), price, and why they may be better.
-
-Respond ONLY with valid JSON object (no explanation, no markdown), like:
+⚠️ Respond ONLY with valid JSON (no markdown, no intro, no explanation), like:
 {
   "productName": "...",
-  "verdict": "...",
-  "alternatives": [...]
+  "dietaryAnalysis": "...",
+  "allowPurchase": true,
+  "reasons": ["...", "..."],
+  "cheapestShop": {
+    "name": "...",
+    "price": "..."
+  },
+  "betterAlternative": {
+    "name": "...",
+    "shop": "...",
+    "price": "...",
+    "whyBetter": "..."
+  }
 }`
           },
           {
@@ -100,7 +113,7 @@ Respond ONLY with valid JSON object (no explanation, no markdown), like:
             content: [
               {
                 type: 'text',
-                text: 'Zdjęcie etykiety produktu:'
+                text: 'Food label image:'
               },
               {
                 type: 'image_url',
@@ -108,8 +121,7 @@ Respond ONLY with valid JSON object (no explanation, no markdown), like:
               }
             ]
           }
-        ],
-        temperature: 0.3
+        ]
       });
 
       const raw = completion.choices?.[0]?.message?.content || '';
@@ -134,7 +146,9 @@ Respond ONLY with valid JSON object (no explanation, no markdown), like:
       return res.status(200).json(parsed);
     } catch (error: any) {
       console.error('❌ Photo AI error:', error.response?.data || error.message || error);
-      return res.status(500).json({ error: 'Image analysis failed' });
+      return res.status(500).json({
+        error: error.response?.data || error.message || 'Unknown error'
+      });
     }
   });
 }

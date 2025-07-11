@@ -9,11 +9,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const input = req.body;
 
-   const result = await (productAgent.tools[0] as any).execute(input);
+    const result = await productAgent.run({
+      name: 'analyze_product_for_patient',
+      arguments: input
+    });
 
     res.status(200).json(result);
   } catch (err: any) {
-    console.error('❌ API error:', err.message);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error('❌ API error:', err.response?.data || err.message || err);
+    res.status(500).json({ error: err.response?.data || err.message || 'Internal Server Error' });
   }
 }
