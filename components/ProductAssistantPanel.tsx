@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { tUI, type LangKey } from '@/utils/i18n';
 import ProductAnswerCard from '@/components/ProductAnswerCard';
 import { useBasket } from '@/hooks/useBasket';
+import ShoppingListCard from '@/components/ShoppingListCard';
 
 interface ProductAssistantPanelProps {
   lang: LangKey;
@@ -101,21 +102,25 @@ export default function ProductAssistantPanel({ lang, patient }: ProductAssistan
         <p className="text-red-400 mt-4">{error}</p>
       )}
 
-      {response && (
+        {response?.mode === 'product' && (
         <ProductAnswerCard
-          response={response}
-          lang={lang}
-          onAddToBasket={() => {
+            response={response}
+            lang={lang}
+            onAddToBasket={() => {
             addProduct({
-              productName: response.productName,
-              shop: response.cheapestShop?.name || 'Nieznany sklep',
-              price: response.cheapestShop?.price || '—',
-              emoji: '🧺',
-              whyBetter: response.betterAlternative?.whyBetter || ''
+                productName: response.productName,
+                shop: response.cheapestShop?.name || 'Nieznany sklep',
+                price: response.cheapestShop?.price || '—',
+                emoji: '🧺',
+                whyBetter: response.betterAlternative?.whyBetter || ''
             });
-          }}
+            }}
         />
-      )}
+        )}
+
+        {response?.mode === 'shopping' && (
+        <ShoppingListCard response={response} />
+            )}
     </div>
   );
 }
