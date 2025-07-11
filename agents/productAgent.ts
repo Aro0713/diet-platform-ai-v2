@@ -10,15 +10,15 @@ const AnalyzeProductSchema = z.object({
   ingredients: z.string(),
   nutrition: z.record(z.any()),
   patient: z.object({
-    conditions: z.array(z.string()).optional(),
-    allergies: z.string().optional(),
-    dietModel: z.string().optional(),
-    region: z.string().optional(),
-    location: z.string().optional()
+    conditions: z.array(z.string()).optional().nullable(),
+    allergies: z.string().optional().nullable(),
+    dietModel: z.string().optional().nullable(),
+    region: z.string().optional().nullable(),
+    location: z.string().optional().nullable()
   }).passthrough(),
   lang: z.string(),
-  question: z.string().optional(),
-  image: z.string().optional()
+  question: z.string().optional().nullable(),
+  image: z.string().optional().nullable()
 });
 
 export const analyzeProductTool = tool({
