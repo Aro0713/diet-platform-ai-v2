@@ -684,18 +684,18 @@ return (
 
       <div className="w-full">
       <label htmlFor="phone" className="sr-only">{t('phone')}</label>
-      <PhoneInput
-        value={form.phone}
-        onChange={(phone) => setForm({ ...form, phone })}
-        inputClassName="w-full h-[44px] text-sm bg-white dark:bg-gray-800 text-black dark:text-white border border-gray-300 dark:border-gray-600 rounded px-3 py-2"
-        inputProps={{
-          name: 'phone',
-          required: true,
-          id: 'phone',
-          'aria-label': t('phone'),
-          placeholder: t('phone'),
-        }}
-      />
+     <PhoneInput
+      value={form.phone}
+      onChange={(phone) => setForm({ ...form, phone })}
+      inputClassName="w-full h-[44px] text-sm bg-white dark:bg-gray-800 text-black dark:text-white border border-gray-300 dark:border-gray-600 rounded px-3 py-2"
+      inputProps={{
+        name: 'phone',
+        required: true,
+        id: 'phone',
+        'aria-label': t('phone'),
+        placeholder: t('phone'),
+      }}
+    />
       </div>
       
       <div>
