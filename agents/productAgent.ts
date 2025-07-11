@@ -18,10 +18,10 @@ const AnalyzeProductSchema = z.object({
   }).passthrough(),
   lang: z.string(),
   question: z.string().optional().nullable(),
-  image: z.string().optional().nullable()
+  image: z.string().optional().nullable(),
+  dietPlan: z.any().optional() // 👈 dodajemy dietę jako opcjonalne wejście
 });
 
-// ✅ główna funkcja eksportowana do API
 export async function analyzeProductInput(input: any) {
   const result = AnalyzeProductSchema.safeParse(input);
   if (!result.success) {
@@ -36,15 +36,50 @@ export async function analyzeProductInput(input: any) {
     patient,
     lang,
     question,
-    image
+    image,
+    dietPlan
   } = result.data;
 
-  const prompt = `
-You are a clinical dietitian AI.
-Please answer the following question **in ${lang}**.
-Your answer must be 100% in ${lang}, no English.
+  // 🔍 Czy to pytanie o zakupy?
+  const isShoppingQuery =
+    question?.toLowerCase().includes('zakup') ||
+    question?.toLowerCase().includes('koszt') ||
+    question?.toLowerCase().includes('lista') ||
+    question?.toLowerCase().includes('dzień');
 
-Evaluate the following product for the patient below.
+  const prompt = `
+You are a clinical dietitian assistant AI.
+Please respond fully in language: ${lang}. Never use English.
+
+${
+  isShoppingQuery
+    ? `The user is asking about shopping based on their diet plan. 
+Generate a shopping list for one selected day (e.g. "Saturday") from the given dietPlan. 
+Group ingredients, estimate total cost in local stores (based on approximate market prices), and provide an online alternative if possible.
+
+Use this format in your JSON reply (no markdown):
+
+{
+  "mode": "shopping",
+  "day": "Saturday",
+  "shoppingList": [
+    {
+      "product": "...",
+      "quantity": "...",
+      "unit": "...",
+      "localPrice": "...",
+      "onlinePrice": "...",
+      "shopSuggestion": "..."
+    }
+  ],
+  "totalEstimatedCost": {
+    "local": "...",
+    "online": "..."
+  },
+  "summary": "..."
+}
+`
+    : `Evaluate the following product for the patient below.
 
 Product:
 - Name: ${productName}
@@ -61,8 +96,9 @@ Patient:
 - Region: ${patient.region || 'Poland'}
 - Location: ${patient.location || 'unknown'}
 
-Return strictly valid JSON in ${lang} (no English):
+Return strictly valid JSON in ${lang} (no markdown):
 {
+  "mode": "product",
   "productName": "...",
   "dietaryAnalysis": "...",
   "allowPurchase": true,
@@ -77,8 +113,8 @@ Return strictly valid JSON in ${lang} (no English):
     "price": "...",
     "whyBetter": "..."
   }
-}`;
-
+}`
+  }`;
 
   console.log('🧠 GPT prompt:', prompt);
 
@@ -87,7 +123,7 @@ Return strictly valid JSON in ${lang} (no English):
       { role: 'system', content: 'You are a helpful clinical nutrition AI.' }
     ];
 
-    if (image) {
+    if (image && !isShoppingQuery) {
       messages.push({
         role: 'user',
         content: [
@@ -102,7 +138,7 @@ Return strictly valid JSON in ${lang} (no English):
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages,
-      temperature: 0.5
+      temperature: 0.4
     });
 
     const content = completion.choices[0]?.message?.content;
@@ -128,14 +164,14 @@ Return strictly valid JSON in ${lang} (no English):
     }
   } catch (err) {
     console.error('❌ GPT completion error:', err);
-    return { error: 'Failed to analyze product' };
+    return { error: 'Failed to analyze product or shopping query' };
   }
 }
 
-// 🔧 nadal opcjonalnie dostępny agent (np. do .run() lub tool definition)
+// 🔧 Agent eksportowany (opcjonalnie .run() lub tool)
 export const productAgent = new Agent({
   name: 'Product Analysis Agent',
   instructions:
-    'Analyzes food products using barcode, ingredients, nutrition and patient data to determine compatibility.',
+    'Analyzes products and answers patient questions about foods, shopping, ingredients and personalized lists.',
   tools: []
 });
