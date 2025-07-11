@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { type LangKey, tUI } from '@/utils/i18n'; // ✅ dodaj jeśli nie ma
+
 interface ProductAnswerCardProps {
   response: {
     productName: string;
@@ -15,7 +17,9 @@ interface ProductAnswerCardProps {
     };
   };
   onAddToBasket?: () => void;
+  lang: LangKey; // ✅ DODAJ TO
 }
+
 
 export default function ProductAnswerCard({ response, onAddToBasket }: ProductAnswerCardProps) {
   const {

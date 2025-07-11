@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { tUI, type LangKey } from '@/utils/i18n';
 import ProductAnswerCard from '@/components/ProductAnswerCard';
+import { useBasket } from '@/hooks/useBasket';
 
 interface ProductAssistantPanelProps {
   lang: LangKey;
@@ -13,6 +14,7 @@ export default function ProductAssistantPanel({ lang, patient }: ProductAssistan
   const [response, setResponse] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { addProduct } = useBasket(); // ✅ integracja z koszykiem
 
   const handleAskAssistant = async () => {
     if (!question.trim()) {
@@ -38,7 +40,14 @@ export default function ProductAssistantPanel({ lang, patient }: ProductAssistan
         body: formData
       });
 
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch (jsonErr) {
+        console.error('❌ JSON parsing error:', jsonErr);
+        setError('Serwer zwrócił pustą lub niepoprawną odpowiedź.');
+        return;
+      }
 
       if (!res.ok) {
         setError(data.error || 'Coś poszło nie tak');
@@ -56,9 +65,9 @@ export default function ProductAssistantPanel({ lang, patient }: ProductAssistan
     <div className="bg-slate-900 text-white p-6 rounded-xl shadow-md mt-6 max-w-3xl mx-auto">
       <h2 className="text-2xl font-bold mb-4">🧠 {tUI('productScannerTitle', lang)}</h2>
 
-     <p className="text-sm text-gray-300 mb-4">
-  {tUI('productAssistantIntro', lang)}
-    </p>
+      <p className="text-sm text-gray-300 mb-4">
+        {tUI('productAssistantIntro', lang)}
+      </p>
 
       {/* Pole tekstowe */}
       <input
@@ -85,22 +94,28 @@ export default function ProductAssistantPanel({ lang, patient }: ProductAssistan
         className="px-4 py-2 bg-green-600 rounded-md hover:bg-green-700 font-medium"
         disabled={loading}
       >
-        {loading ? '⏳ Myślę...' : '🔍 Zapytaj dietetycznego asystenta'}
+        {loading ? '⏳ Myślę...' : `🔍 ${tUI('askDietAssistant', lang)}`}
       </button>
 
       {error && (
         <p className="text-red-400 mt-4">{error}</p>
       )}
 
-        {response && (
+      {response && (
         <ProductAnswerCard
-            response={response}
-            onAddToBasket={() => {
-            // 💡 dodamy useBasket() później
-            alert(`Dodano "${response.productName}" do koszyka 🧺`);
-            }}
+          response={response}
+          lang={lang}
+          onAddToBasket={() => {
+            addProduct({
+              productName: response.productName,
+              shop: response.cheapestShop?.name || 'Nieznany sklep',
+              price: response.cheapestShop?.price || '—',
+              emoji: '🧺',
+              whyBetter: response.betterAlternative?.whyBetter || ''
+            });
+          }}
         />
-        )}
+      )}
     </div>
   );
 }
