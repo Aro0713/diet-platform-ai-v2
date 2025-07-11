@@ -46,7 +46,8 @@ export default function LoginPage() {
     }
 
     setError(null)
-    router.push('/patient')
+    router.push('/panel-patient')
+
   }
   useEffect(() => {
     const roleFromUrl = router.query.role

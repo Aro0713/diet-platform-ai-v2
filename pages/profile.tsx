@@ -109,7 +109,7 @@ export default function ProfilePage() {
         </button>
         {saved && <p className="text-green-600 font-semibold mt-2">✅ Zmiany zostały zapisane</p>}
         <button
-          onClick={() => router.push('/patient')}
+          onClick={() => router.push('/panel-patient')}
           className="mt-4 text-blue-600 underline text-sm"
         >
           ← Powrót do panelu pacjenta

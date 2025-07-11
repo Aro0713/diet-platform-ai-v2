@@ -21,7 +21,8 @@ export default function LoginPatientForm() {
 
     // symulacja zapisu
     console.log('Dane pacjenta:', form)
-    router.push('/patient')
+    router.push('/panel-patient')
+
   }
 
   return (
