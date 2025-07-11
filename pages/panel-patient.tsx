@@ -361,10 +361,7 @@ const goToSectionWithScroll = (id: string) => {
       {/* Ikony */}
       <PatientIconGrid lang={lang} selected={selectedSection} onSelect={(id) => setSelectedSection(id)} />
      
-      {/* Asystent produktu */}
-      <ProductAssistantPanel lang={lang} patient={form} />
-
-      {/* Główna zawartość */}
+            {/* Główna zawartość */}
       <div className="z-10 flex flex-col w-full max-w-[1000px] mx-auto gap-6 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 mt-20 dark:text-white transition-colors animate-flip-in origin-center">
         {selectedSection === 'data' && (
           <>
@@ -545,7 +542,7 @@ const goToSectionWithScroll = (id: string) => {
         },
         'download',
         narrativeText,
-        recipes // 🟢 DODAJ TO
+        recipes 
         );
       } catch (e) {
         alert(tUI('errorGeneratingPdf', lang));
@@ -660,6 +657,11 @@ const goToSectionWithScroll = (id: string) => {
       </div>
     ))}
   </div>
+)}
+
+{/* Asystent produktu */}
+{selectedSection === 'scanner' && (
+  <ProductAssistantPanel lang={lang} patient={form} />
 )}
 
         {!selectedSection && (
