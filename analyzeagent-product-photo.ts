@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import formidable, { File } from 'formidable';
+import formidable from 'formidable';
 import { readFile } from 'fs/promises';
 import OpenAI from 'openai';
 
@@ -30,7 +30,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const form = formidable({ multiples: false });
+  const form = formidable({
+    multiples: false,
+    maxFileSize: 10 * 1024 * 1024, // 10MB
+    keepExtensions: true,
+    allowEmptyFiles: false
+  });
 
   form.parse(req, async (err, fields, files) => {
     if (err) {
@@ -49,8 +54,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const file = Array.isArray(rawFile) ? rawFile[0] : rawFile;
 
+    if (!file.filepath || !file.mimetype?.startsWith('image/')) {
+      return res.status(400).json({ error: 'Invalid image file' });
+    }
+
     try {
       const buffer = await readFile(file.filepath);
+
+      const base64 = buffer.toString('base64');
+      const imageDataUrl = `data:${file.mimetype};base64,${base64}`;
 
       const completion = await openai.chat.completions.create({
         model: 'gpt-4o',
@@ -92,9 +104,7 @@ Respond ONLY with valid JSON object (no explanation, no markdown), like:
               },
               {
                 type: 'image_url',
-                image_url: {
-                  url: `data:${file.mimetype};base64,${buffer.toString('base64')}`
-                }
+                image_url: { url: imageDataUrl }
               }
             ]
           }
@@ -103,24 +113,27 @@ Respond ONLY with valid JSON object (no explanation, no markdown), like:
       });
 
       const raw = completion.choices?.[0]?.message?.content || '';
-      let parsed;
+      console.log('🧠 GPT RAW response:', raw);
 
+      if (!raw) {
+        return res.status(500).json({ error: 'Empty response from OpenAI' });
+      }
+
+      let parsed;
       try {
         const jsonMatches = raw.match(/\{[\s\S]*?\}/g);
         if (!jsonMatches || jsonMatches.length === 0) {
           throw new Error('No valid JSON object found in AI response');
         }
-
-        const jsonString = jsonMatches[0];
-        parsed = JSON.parse(jsonString);
+        parsed = JSON.parse(jsonMatches[0]);
       } catch (e) {
-        console.error('❌ Parsing error in analyzeagent-product-photo:', raw);
+        console.error('❌ Parsing error in analyze-photo:', raw);
         return res.status(500).json({ error: 'Failed to parse AI response' });
       }
 
       return res.status(200).json(parsed);
     } catch (error: any) {
-      console.error('❌ Photo AI error:', error.message);
+      console.error('❌ Photo AI error:', error.response?.data || error.message || error);
       return res.status(500).json({ error: 'Image analysis failed' });
     }
   });
