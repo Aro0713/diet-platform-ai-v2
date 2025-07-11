@@ -43,16 +43,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const userLanguage = languageLabel[lang] || 'English';
 
       if (!question.trim()) {
+        console.warn('⚠️ Brak pytania w zapytaniu');
         return res.status(400).json({ error: 'Missing question' });
       }
+
+      console.log('📨 Zapytanie użytkownika:', question);
 
       let imageBase64 = '';
       const rawFile = files.image;
       if (rawFile) {
         const file = Array.isArray(rawFile) ? rawFile[0] : rawFile;
-        if (file.filepath && file.mimetype?.startsWith('image/')) {
+        if (file?.filepath && file?.mimetype?.startsWith('image/')) {
           const buffer = await readFile(file.filepath);
           imageBase64 = `data:${file.mimetype};base64,${buffer.toString('base64')}`;
+          console.log('🖼️ Zdjęcie dołączone do zapytania.');
         }
       }
 
@@ -73,10 +77,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       console.log('✅ Assistant agent result:', result);
-      res.status(200).json(result);
+      return res.status(200).json(result); // 🔒 MUSI być return!
     } catch (error: any) {
       console.error('❌ Assistant agent error:', error.response?.data || error.message || error);
-      res.status(500).json({ error: error.response?.data || error.message || 'Assistant failed' });
+      return res.status(500).json({ error: error.response?.data || error.message || 'Assistant failed' });
     }
   });
 }

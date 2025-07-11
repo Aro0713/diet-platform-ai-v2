@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { tUI, type LangKey } from '@/utils/i18n';
+import ProductAnswerCard from '@/components/ProductAnswerCard';
 
 interface ProductAssistantPanelProps {
   lang: LangKey;
@@ -91,11 +92,15 @@ export default function ProductAssistantPanel({ lang, patient }: ProductAssistan
         <p className="text-red-400 mt-4">{error}</p>
       )}
 
-      {response && (
-        <pre className="mt-4 bg-black text-white p-4 rounded-md whitespace-pre-wrap">
-          {JSON.stringify(response, null, 2)}
-        </pre>
-      )}
+        {response && (
+        <ProductAnswerCard
+            response={response}
+            onAddToBasket={() => {
+            // 💡 dodamy useBasket() później
+            alert(`Dodano "${response.productName}" do koszyka 🧺`);
+            }}
+        />
+        )}
     </div>
   );
 }

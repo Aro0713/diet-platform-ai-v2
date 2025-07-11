@@ -22,6 +22,7 @@ import SelectCuisineForm from '@/components/SelectCuisineForm';
 import { generateDietPdf } from '@/utils/generateDietPdf';
 import NeonNextArrow from "@/components/NeonNextArrow";
 import ProductAssistantPanel from '@/components/ProductAssistantPanel';
+import BasketTable from '@/components/BasketTable';
 
 
 export default function DoctorPanelPage(): React.JSX.Element {
@@ -659,10 +660,14 @@ const goToSectionWithScroll = (id: string) => {
   </div>
 )}
 
-{/* Asystent produktu */}
-{selectedSection === 'scanner' && (
-  <ProductAssistantPanel lang={lang} patient={form} />
-)}
+      {/* Asystent produktu + koszyk */}
+      {selectedSection === 'scanner' && (
+        <>
+          <ProductAssistantPanel lang={lang} patient={form} />
+          <BasketTable lang={lang} />
+
+        </>
+      )}
 
         {!selectedSection && (
           <p className="text-center text-gray-300 text-sm max-w-xl mx-auto">
