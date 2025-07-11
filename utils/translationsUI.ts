@@ -3807,6 +3807,19 @@ analysisInProgress: {
   hi: "विश्लेषण जारी है...",
   he: "הניתוח מתבצע..."
 },
+productAssistantIntro: {
+  pl: "Tu jest Twój koszyk produktów potrzebnych do przygotowania spersonalizowanej specjalnie dla Ciebie diety. Napisz mi poniżej jak mogę Ci pomóc? Opisz krótko (powiedz gdzie kupię najtaniej, albo wrzuć mi zdjęcie produktu, który chcesz kupić a nie wiesz czy możesz? Mogę też przygotować listę zakupów na jeden dzień.)",
+  en: "Here is your product basket for preparing a diet personalized just for you. Let me know how I can help you. Describe briefly (ask where to buy cheapest, or upload a photo of a product you're unsure about, or ask for a one-day shopping list).",
+  de: "Hier ist dein Produktkorb für eine auf dich zugeschnittene Diät. Schreib mir unten, wie ich dir helfen kann. Erkläre kurz (wo du etwas am günstigsten kaufen kannst, lade ein Foto hoch, wenn du dir bei einem Produkt unsicher bist, oder ich stelle dir eine Einkaufsliste für einen Tag zusammen).",
+  fr: "Voici ton panier de produits pour préparer un régime personnalisé rien que pour toi. Indique-moi ci-dessous comment je peux t’aider. Décris brièvement (où acheter le moins cher, envoie une photo d’un produit si tu hésites, ou demande une liste de courses pour un jour).",
+  es: "Aquí está tu cesta de productos para preparar una dieta personalizada para ti. Escríbeme abajo cómo puedo ayudarte. Describe brevemente (dónde comprar más barato, sube una foto de un producto si no estás seguro, o pídeme una lista de compras para un día).",
+  ua: "Ось твій кошик продуктів для підготовки персоналізованої дієти. Напиши нижче, як я можу тобі допомогти. Опиши коротко (де купити дешевше, надішли фото продукту, або попроси список покупок на один день).",
+  ru: "Вот твоя корзина продуктов для подготовки персональной диеты. Напиши ниже, как я могу помочь. Опиши коротко (где купить дешевле, загрузи фото продукта, или попроси список покупок на день).",
+  zh: "这是为你量身定制饮食计划的产品篮。告诉我我能如何帮你。简单描述（例如哪里买最便宜，上传产品图片，或者让我准备一天的购物清单）。",
+  ar: "هذه سلة منتجاتك لتحضير نظام غذائي مخصص لك. أخبرني أدناه كيف يمكنني مساعدتك. اشرح باختصار (أين تشتري الأرخص، أو أرفق صورة لمنتج، أو اطلب قائمة تسوق ليوم واحد).",
+  hi: "यह आपके लिए विशेष रूप से तैयार की गई डाइट के लिए उत्पादों की टोकरी है। नीचे लिखें मैं कैसे मदद कर सकता हूँ? संक्षेप में बताएं (कहां सस्ता मिलेगा, कोई उत्पाद फोटो भेजें या एक दिन की खरीदारी सूची मांगें)।",
+  he: "זוהי סל המוצרים שלך להכנת תפריט מותאם אישית. כתוב לי למטה איך אפשר לעזור לך. הסבר בקצרה (איפה לקנות בזול, לצרף תמונה של מוצר, או לבקש רשימת קניות ליום אחד)."
+}
 
 };
 

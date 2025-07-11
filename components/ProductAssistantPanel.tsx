@@ -55,11 +55,9 @@ export default function ProductAssistantPanel({ lang, patient }: ProductAssistan
     <div className="bg-slate-900 text-white p-6 rounded-xl shadow-md mt-6 max-w-3xl mx-auto">
       <h2 className="text-2xl font-bold mb-4">🧠 {tUI('productScannerTitle', lang)}</h2>
 
-      <p className="text-sm text-gray-300 mb-4">
-        Tu jest Twój koszyk produktów potrzebnych do przygotowania spersonalizowanej specjalnie dla Ciebie diety.
-        Napisz mi poniżej jak mogę Ci pomóc? Opisz krótko (powiedz gdzie kupię najtaniej, albo wrzuć mi zdjęcie produktu,
-        który chcesz kupić a nie wiesz czy możesz? Mogę też przygotować listę zakupów na jeden dzień.)
-      </p>
+     <p className="text-sm text-gray-300 mb-4">
+  {tUI('productAssistantIntro', lang)}
+    </p>
 
       {/* Pole tekstowe */}
       <input

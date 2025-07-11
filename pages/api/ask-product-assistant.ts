@@ -36,26 +36,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(500).json({ error: 'Form parsing error' });
     }
 
-    const question = fields.question?.toString() || '';
-    const lang = fields.lang?.toString() || 'pl';
-    const patient = JSON.parse(fields.patient?.toString() || '{}');
-    const userLanguage = languageLabel[lang] || 'English';
-
-    if (!question.trim()) {
-      return res.status(400).json({ error: 'Missing question' });
-    }
-
-    let imageBase64 = '';
-    const rawFile = files.image;
-    if (rawFile) {
-      const file = Array.isArray(rawFile) ? rawFile[0] : rawFile;
-      if (file.filepath && file.mimetype?.startsWith('image/')) {
-        const buffer = await readFile(file.filepath);
-        imageBase64 = `data:${file.mimetype};base64,${buffer.toString('base64')}`;
-      }
-    }
-
     try {
+      const question = fields.question?.toString() || '';
+      const lang = fields.lang?.toString() || 'pl';
+      const patient = JSON.parse(fields.patient?.toString() || '{}');
+      const userLanguage = languageLabel[lang] || 'English';
+
+      if (!question.trim()) {
+        return res.status(400).json({ error: 'Missing question' });
+      }
+
+      let imageBase64 = '';
+      const rawFile = files.image;
+      if (rawFile) {
+        const file = Array.isArray(rawFile) ? rawFile[0] : rawFile;
+        if (file.filepath && file.mimetype?.startsWith('image/')) {
+          const buffer = await readFile(file.filepath);
+          imageBase64 = `data:${file.mimetype};base64,${buffer.toString('base64')}`;
+        }
+      }
+
       const result = await (productAgent.tools[0] as any).execute({
         barcode: 'N/A',
         productName: '[From user question]',
@@ -67,6 +67,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         image: imageBase64
       });
 
+      if (!result || typeof result !== 'object') {
+        console.error('❌ Agent returned invalid result:', result);
+        return res.status(500).json({ error: 'Agent returned invalid response' });
+      }
+
+      console.log('✅ Assistant agent result:', result);
       res.status(200).json(result);
     } catch (error: any) {
       console.error('❌ Assistant agent error:', error.response?.data || error.message || error);
