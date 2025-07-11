@@ -21,7 +21,8 @@ import SelectModelForm from '@/components/SelectModelForm';
 import SelectCuisineForm from '@/components/SelectCuisineForm';
 import { generateDietPdf } from '@/utils/generateDietPdf';
 import NeonNextArrow from "@/components/NeonNextArrow";
-import ProductScanner from '@/components/ProductScanner';
+import ProductAssistantPanel from '@/components/ProductAssistantPanel';
+
 
 export default function DoctorPanelPage(): React.JSX.Element {
   const router = useRouter();
@@ -359,6 +360,9 @@ const goToSectionWithScroll = (id: string) => {
 
       {/* Ikony */}
       <PatientIconGrid lang={lang} selected={selectedSection} onSelect={(id) => setSelectedSection(id)} />
+     
+      {/* Asystent produktu */}
+      <ProductAssistantPanel lang={lang} patient={form} />
 
       {/* Główna zawartość */}
       <div className="z-10 flex flex-col w-full max-w-[1000px] mx-auto gap-6 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 mt-20 dark:text-white transition-colors animate-flip-in origin-center">
@@ -656,16 +660,6 @@ const goToSectionWithScroll = (id: string) => {
       </div>
     ))}
   </div>
-)}
-{selectedSection === 'scanner' && (
- <ProductScanner
-  patient={{
-    conditions: form.conditions || [],
-    allergies: form.allergies || '',
-    dietModel: form.model || ''
-  }}
-  lang={lang}
-/>
 )}
 
         {!selectedSection && (
