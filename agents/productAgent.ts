@@ -2,7 +2,6 @@ import { Agent, tool } from '@openai/agents';
 import OpenAI from 'openai';
 import { z } from 'zod';
 
-
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const AnalyzeProductSchema = z.object({
@@ -17,9 +16,10 @@ const AnalyzeProductSchema = z.object({
     region: z.string().optional(),
     location: z.string().optional()
   }).passthrough(),
-  lang: z.string()
+  lang: z.string(),
+  question: z.string().optional(),
+  image: z.string().optional()
 });
-
 
 export const analyzeProductTool = tool({
   name: 'analyze_product_for_patient',
@@ -30,16 +30,21 @@ export const analyzeProductTool = tool({
     if (!result.success) {
       throw new Error('Invalid input for product analysis agent');
     }
-    const { barcode, productName, ingredients, nutrition, patient, lang } = result.data;
+
+    const { barcode, productName, ingredients, nutrition, patient, lang, question, image } = result.data;
 
     const prompt = `
 You are a clinical dietitian AI.
 
-Evaluate the following product:
+Evaluate the following product for the patient below.
+
+Product:
 - Name: ${productName}
 - Barcode: ${barcode}
 - Ingredients: ${ingredients}
 - Nutrition: ${JSON.stringify(nutrition)}
+- Question: ${question || '[no question provided]'}
+- Image: ${image ? '[attached]' : '[none]'}
 
 Patient:
 - Conditions: ${patient.conditions?.join(', ') || 'none'}
@@ -48,19 +53,25 @@ Patient:
 - Region: ${patient.region || 'Poland'}
 - Location: ${patient.location || 'unknown'}
 
-Based on the patient's dietary needs and restrictions:
-1. Is this product suitable?
-2. Provide a short, friendly comment explaining why or why not (in ${lang}).
-3. Suggest up to 3 realistic alternative products available in ${patient.region}, using local chains like Biedronka, Lidl, Żabka, Auchan. Avoid US-based stores.
-
-Return strictly JSON like:
+Return strictly valid JSON:
 {
   "productName": "...",
-  "ingredients": "...",
-  "verdict": "...",
-  "pricing": [...],
-  "alternatives": [...]
+  "dietaryAnalysis": "...",
+  "allowPurchase": true,
+  "reasons": ["..."],
+  "cheapestShop": {
+    "name": "...",
+    "price": "..."
+  },
+  "betterAlternative": {
+    "name": "...",
+    "shop": "...",
+    "price": "...",
+    "whyBetter": "..."
+  }
 }`;
+
+    console.log('🧠 GPT prompt:', prompt);
 
     try {
       const completion = await openai.chat.completions.create({
@@ -69,15 +80,27 @@ Return strictly JSON like:
           { role: 'system', content: 'You are a helpful clinical nutrition AI.' },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.5,
-        stream: false
+        temperature: 0.5
       });
 
-      const content = completion.choices[0].message?.content || '{}';
-      const jsonStart = content.indexOf('{');
-      return JSON.parse(content.slice(jsonStart));
+      const content = completion.choices[0]?.message?.content;
+      console.log('📩 GPT agent output (raw):', content);
+
+      if (!content || !content.includes('{')) {
+        console.error('❌ GPT returned empty or non-JSON content');
+        return { error: 'Empty or invalid GPT response' };
+      }
+
+      try {
+        const jsonStart = content.indexOf('{');
+        const parsed = JSON.parse(content.slice(jsonStart));
+        return parsed;
+      } catch (e) {
+        console.error('❌ GPT JSON parse error:', e, content);
+        return { error: 'Failed to parse AI response' };
+      }
     } catch (err) {
-      console.error('❌ GPT parsing error:', err);
+      console.error('❌ GPT completion error:', err);
       return { error: 'Failed to analyze product' };
     }
   }
