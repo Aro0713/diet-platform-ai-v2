@@ -3989,7 +3989,21 @@ askQuestionPlaceholder: {
   hi: 'प्रोडक्ट्स, डाइट या DCP के बारे में पूछें...',
   ar: 'اطرح سؤالًا عن المنتجات أو النظام الغذائي أو DCP...',
   he: 'שאל שאלה על מוצרים, תזונה או DCP...'
+},
+listenToLook: {
+  pl: 'Odtwórz odpowiedź Looka',
+  en: 'Play Look’s answer',
+  de: 'Looks Antwort anhören',
+  fr: 'Écouter la réponse de Look',
+  es: 'Reproducir la respuesta de Look',
+  ua: 'Відтворити відповідь Лука',
+  ru: 'Прослушать ответ Лука',
+  zh: '播放 Look 的回答',
+  hi: 'Look का उत्तर सुनें',
+  ar: 'استمع لإجابة Look',
+  he: 'השמע את תשובת Look'
 }
+
 
 
 

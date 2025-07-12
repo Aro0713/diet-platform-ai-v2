@@ -62,7 +62,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
       return res.status(200).json(result);
     }
+    const isShoppingQuestion =
+  question.toLowerCase().includes('lista zakup') ||
+  question.toLowerCase().includes('zakup') ||
+  question.toLowerCase().includes('gdzie kupić');
 
+if (isShoppingQuestion && (!dietPlan || Object.keys(dietPlan).length === 0)) {
+  return res.status(200).json({
+    mode: 'response',
+    answer: 'Nie mogę przygotować listy zakupów, ponieważ Twój plan diety jest pusty lub nie zawiera posiłków. Wygeneruj dietę, aby kontynuować.',
+    summary: 'Brak danych do stworzenia listy.',
+    suggestion: 'Wróć do sekcji „Dieta” i kliknij „Generuj dietę”.',
+    sources: ['diet'],
+    audio: null
+  });
+}
     const firstName = patient?.name?.split?.(' ')[0] || 'Pacjencie';
 
     const prompt = `
@@ -116,6 +130,7 @@ Always address the patient by name: "${firstName}" — naturally, at the start o
 🧠 Instead, always use built-in tools like basket data, shopping lists, diet info, and interview context.
 💡 When in doubt, guide the user using what DCP already offers.
 ❗You are NOT a general chatbot. You must NOT answer questions outside the context of DCP, health, diet, patient data, or purchases.
+If an image is attached — try to identify the food or product based on the visual. Guess ingredients if possible. If uncertain, say so but still explain what might be in the photo.
 
 If a question is outside scope (e.g. about celebrities, news, weather, history, science, etc), respond politely and say:
 "I'm your assistant inside the Diet Care Platform, so I focus on your health, diet, and goals."
@@ -148,9 +163,16 @@ Answer as a warm, professional assistant.
 
     const content = completion.choices[0]?.message?.content;
 
-    if (!content || !content.includes('{')) {
-      return res.status(400).json({ error: 'Empty or invalid GPT response' });
-    }
+   if (!content || !content.includes('{')) {
+  return res.status(200).json({
+    mode: 'response',
+    answer: content || 'Nie udało się uzyskać odpowiedzi.',
+    summary: 'Odpowiedź była niekompletna.',
+    suggestion: 'Spróbuj ponownie lub zadaj pytanie inaczej.',
+    sources: ['openai-fallback'],
+    audio: null
+  });
+}
 
     try {
       const cleaned = content
