@@ -4,6 +4,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import OpenAI from 'openai';
 import formidable from 'formidable';
 import { readFile } from 'fs/promises';
+import { analyzeProductInput } from '@/agents/productAgent';
 
 export const config = {
   api: {
@@ -11,9 +12,7 @@ export const config = {
   }
 };
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -25,26 +24,47 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const question = fields.question?.[0] || '';
     const lang = fields.lang?.[0] || 'pl';
 
-    // 📦 pełny kontekst pacjenta
     const patient = JSON.parse(fields.patient?.[0] || '{}');
     const formData = JSON.parse(fields.form?.[0] || '{}');
     const interviewData = JSON.parse(fields.interviewData?.[0] || '{}');
     const medical = JSON.parse(fields.medical?.[0] || '{}');
     const dietPlan = JSON.parse(fields.dietPlan?.[0] || '{}');
     const basket = JSON.parse(fields.basket?.[0] || '[]');
-  
+    const chatHistory = JSON.parse(fields.chatHistory?.[0] || '[]');
 
-    // 📷 zdjęcie (opcjonalnie)
-    const imageFile = files.image?.[0];
-    let base64Image: string | null = null;
-
-    if (imageFile) {
-      const buffer = await readFile(imageFile.filepath);
-      base64Image = `data:${imageFile.mimetype};base64,${buffer.toString('base64')}`;
+    let base64Image = '';
+    const rawFile = files.image;
+    if (rawFile) {
+      const file = Array.isArray(rawFile) ? rawFile[0] : rawFile;
+      if (file?.filepath && file?.mimetype?.startsWith('image/')) {
+        const buffer = await readFile(file.filepath);
+        base64Image = `data:${file.mimetype};base64,${buffer.toString('base64')}`;
+        console.log('🖼️ Zdjęcie dołączone do zapytania.');
+      }
     }
+
+    const isProductQuestion =
+      base64Image ||
+      question.toLowerCase().includes('czy mog') ||
+      question.toLowerCase().includes('produkt') ||
+      question.toLowerCase().includes('skład');
+
+    if (isProductQuestion) {
+      const result = await analyzeProductInput({
+        barcode: 'N/A',
+        productName: '[From user question]',
+        ingredients: '[Unknown]',
+        nutrition: {},
+        patient,
+        lang,
+        question,
+        image: base64Image
+      });
+      return res.status(200).json(result);
+    }
+
     const firstName = patient?.name?.split?.(' ')[0] || 'Pacjencie';
 
-    // 🧠 PROMPT: Look wie wszystko
     const prompt = `
 You are Look — a friendly personal assistant in the Diet Care Platform (DCP).
 You see everything the patient has entered: health, diet, medical history, interview, goals, basket, preferences, and images.
@@ -57,7 +77,6 @@ You are part of the Diet Care Platform (DCP) and must only use DCP features.
 
 If the user asks about product prices — use basket data or cheapestShop if available.
 If they ask about DCP — explain it as their own diet and shopping assistant.
-
 
 Patient data:
 - name: ${patient?.name}
@@ -83,15 +102,14 @@ Respond in natural, human language in JSON format:
   "summary": "krótkie podsumowanie",
   "suggestion": "opcjonalna propozycja co dalej",
   "sources": ["DCP", "interview", "diet", "medical"]
-}
-`;
+}`;
 
     const messages: any[] = [
-  {
-    role: 'system',
-    content: `
+      {
+        role: 'system',
+        content: `
 You are Look — a friendly, loyal, and knowledgeable assistant inside the Diet Care Platform (DCP).
-Your job is to help the patient based on ALL data available in DCP: patient profile, health, diet, medical data, goals, basket, interview, preferences, and platform features.
+Your job is to help the patient based on ALL data available in DCP.
 Always address the patient by name: "${firstName}" — naturally, at the start or mid-sentence. Be polite, but friendly.
 
 🛡️ You must NEVER recommend or mention external apps, price comparison tools, or third-party services.
@@ -105,22 +123,22 @@ If the user asks a question outside of DCP (e.g. "what is the weather", "tell me
 
 Always respond in language: ${lang}.
 Answer as a warm, professional assistant.
-`
-  }
-];
+        `
+      },
+      ...chatHistory
+    ];
 
-
-    if (base64Image) {
-      messages.push({
-        role: 'user',
-        content: [
-          { type: 'text', text: prompt },
-          { type: 'image_url', image_url: { url: base64Image } }
-        ]
-      });
-    } else {
-      messages.push({ role: 'user', content: prompt });
-    }
+    messages.push(
+      base64Image
+        ? {
+            role: 'user',
+            content: [
+              { type: 'text', text: prompt },
+              { type: 'image_url', image_url: { url: base64Image } }
+            ]
+          }
+        : { role: 'user', content: prompt }
+    );
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
@@ -142,9 +160,22 @@ Answer as a warm, professional assistant.
         .trim();
 
       const parsed = JSON.parse(cleaned);
-      return res.status(200).json(parsed);
+
+      const ttsRes = await openai.audio.speech.create({
+        model: 'tts-1-hd',
+        voice: 'nova',
+        input: parsed.answer || 'Brak odpowiedzi.'
+      });
+
+      const audioBuffer = Buffer.from(await ttsRes.arrayBuffer());
+      const audioBase64 = audioBuffer.toString('base64');
+
+      return res.status(200).json({
+        ...parsed,
+        audio: `data:audio/mpeg;base64,${audioBase64}`
+      });
     } catch (err) {
-      return res.status(400).json({ error: 'Failed to parse GPT JSON', raw: content });
+      return res.status(400).json({ error: 'Failed to parse GPT JSON or generate audio', raw: content });
     }
   } catch (err) {
     console.error('❌ Look agent error:', err);

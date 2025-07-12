@@ -1,10 +1,12 @@
+// components/ProductAssistantPanel.tsx
+
 import React, { useState } from 'react';
 import { tUI, type LangKey } from '@/utils/i18n';
-import ProductAnswerCard from '@/components/ProductAnswerCard';
 import { useBasket } from '@/hooks/useBasket';
 import ShoppingListCard from '@/components/ShoppingListCard';
+import ProductAnswerCard from '@/components/ProductAnswerCard';
 
-interface ProductAssistantPanelProps {
+interface Props {
   lang: LangKey;
   patient: any;
   form: any;
@@ -20,19 +22,23 @@ export default function ProductAssistantPanel({
   interviewData,
   medical,
   dietPlan
-}: ProductAssistantPanelProps) {
+}: Props) {
   const [question, setQuestion] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [response, setResponse] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [chatHistory, setChatHistory] = useState<any[]>([]);
   const { addProduct, basket } = useBasket();
 
-  const handleAskAssistant = async () => {
-    if (!question.trim()) {
-      setError(tUI('emptyQuestionError', lang));
-      return;
-    }
+  const speak = (text: string) => {
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = lang === 'pl' ? 'pl-PL' : 'en-US';
+    speechSynthesis.speak(utter);
+  };
+
+  const handleAsk = async () => {
+    if (!question.trim()) return;
 
     const formData = new FormData();
     formData.append('question', question);
@@ -43,9 +49,8 @@ export default function ProductAssistantPanel({
     formData.append('medical', JSON.stringify(medical));
     formData.append('dietPlan', JSON.stringify(dietPlan));
     formData.append('basket', JSON.stringify(basket));
-    if (imageFile) {
-      formData.append('image', imageFile);
-    }
+    formData.append('chatHistory', JSON.stringify(chatHistory));
+    if (imageFile) formData.append('image', imageFile);
 
     setLoading(true);
     setError(null);
@@ -58,14 +63,31 @@ export default function ProductAssistantPanel({
       });
 
       const data = await res.json();
+      if (!res.ok) return setError(data.error || 'Błąd odpowiedzi');
 
-      if (!res.ok) {
-        setError(data.error || 'Coś poszło nie tak');
-      } else {
-        setResponse(data);
+      setResponse(data);
+      setChatHistory((prev) => [
+        ...prev,
+        { role: 'user', content: question },
+        { role: 'assistant', content: data.answer || JSON.stringify(data) }
+      ]);
+
+      if (data.mode === 'product') {
+        addProduct({
+          productName: data.productName,
+          shop: data.cheapestShop?.name,
+          price: data.cheapestShop?.price,
+          emoji: '🛒',
+          whyBetter: data.betterAlternative?.whyBetter || ''
+        });
+      }
+
+      if (data.audio) {
+        const audio = new Audio(data.audio);
+        audio.play();
       }
     } catch (err: any) {
-      setError(err.message || 'Błąd połączenia z AI');
+      setError(err.message || 'Błąd połączenia');
     } finally {
       setLoading(false);
     }
@@ -76,7 +98,6 @@ export default function ProductAssistantPanel({
       <h2 className="text-2xl font-bold mb-4">
         👋 {tUI('lookWelcomeHeader', lang, { name: patient?.name?.split(' ')[0] || '' })}
       </h2>
-
       <p
         className="text-sm text-gray-300 mb-4 leading-relaxed"
         dangerouslySetInnerHTML={{
@@ -86,7 +107,6 @@ export default function ProductAssistantPanel({
         }}
       />
 
-      {/* Pole tekstowe */}
       <input
         type="text"
         value={question}
@@ -95,7 +115,6 @@ export default function ProductAssistantPanel({
         className="w-full p-2 rounded-md text-black placeholder-gray-400 mb-3"
       />
 
-      {/* Pole zdjęcia */}
       <input
         type="file"
         accept="image/*"
@@ -107,18 +126,15 @@ export default function ProductAssistantPanel({
       />
 
       <button
-        onClick={handleAskAssistant}
+        onClick={handleAsk}
         className="px-4 py-2 bg-green-600 rounded-md hover:bg-green-700 font-medium"
         disabled={loading}
       >
-        {loading ? '🧠 Look pisze odpowiedź...' : `💬 ${tUI('startConversationWithLook', lang)}`}
+        {loading ? '🧠 Look myśli...' : `💬 ${tUI('startConversationWithLook', lang)}`}
       </button>
 
-      {error && (
-        <p className="text-red-400 mt-4">{error}</p>
-      )}
+      {error && <p className="text-red-400 mt-4">{error}</p>}
 
-      {/* Tryb: klasyczny produkt */}
       {response?.mode === 'product' && (
         <ProductAnswerCard
           response={response}
@@ -135,18 +151,22 @@ export default function ProductAssistantPanel({
         />
       )}
 
-      {/* Tryb: lista zakupów */}
-      {response?.mode === 'shopping' && (
-        <ShoppingListCard response={response} />
-      )}
+      {response?.mode === 'shopping' && <ShoppingListCard response={response} />}
 
-      {/* Tryb: odpowiedź ogólna Looka */}
       {response?.mode === 'response' && (
         <div className="bg-white text-black p-4 mt-4 rounded shadow">
           <p className="text-lg font-semibold mb-2">💬 Look:</p>
           <p className="text-base leading-relaxed whitespace-pre-wrap">{response.answer}</p>
           {response.suggestion && (
             <p className="mt-2 text-sm italic text-gray-600">💡 {response.suggestion}</p>
+          )}
+          {response.audio && (
+            <button
+              onClick={() => new Audio(response.audio).play()}
+              className="mt-3 px-3 py-1 bg-emerald-600 text-white rounded hover:bg-emerald-700"
+            >
+              🔊 {tUI('listenToLook', lang)}
+            </button>
           )}
         </div>
       )}
