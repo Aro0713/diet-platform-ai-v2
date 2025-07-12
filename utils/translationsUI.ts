@@ -4002,10 +4002,84 @@ listenToLook: {
   hi: 'Look का उत्तर सुनें',
   ar: 'استمع لإجابة Look',
   he: 'השמע את תשובת Look'
-}
-
-
-
-
+},
+allowedToBuy: {
+  pl: '✅ Możesz kupić ten produkt',
+  en: '✅ You can buy this product',
+  de: '✅ Du kannst dieses Produkt kaufen',
+  fr: '✅ Tu peux acheter ce produit',
+  es: '✅ Puedes comprar este producto',
+  ua: '✅ Можна купувати цей продукт',
+  ru: '✅ Можно купить этот продукт',
+  zh: '✅ 可以购买此产品',
+  hi: '✅ आप यह उत्पाद खरीद सकते हैं',
+  ar: '✅ يمكنك شراء هذا المنتج',
+  he: '✅ ניתן לרכוש את המוצר הזה'
+},
+notRecommendedToBuy: {
+  pl: '⛔️ Nie zalecamy kupna tego produktu',
+  en: '⛔️ This product is not recommended',
+  de: '⛔️ Der Kauf dieses Produkts wird nicht empfohlen',
+  fr: '⛔️ Ce produit n’est pas recommandé',
+  es: '⛔️ No se recomienda comprar este producto',
+  ua: '⛔️ Не рекомендується купувати цей продукт',
+  ru: '⛔️ Не рекомендуется покупать этот продукт',
+  zh: '⛔️ 不建议购买该产品',
+  hi: '⛔️ इस उत्पाद की सिफारिश नहीं की जाती',
+  ar: '⛔️ لا يُنصح بشراء هذا المنتج',
+  he: '⛔️ לא מומלץ לרכוש את המוצר הזה'
+},
+cheapestAt: {
+  pl: 'Najtaniej kupisz w',
+  en: 'Cheapest at',
+  de: 'Am günstigsten bei',
+  fr: 'Moins cher chez',
+  es: 'Más barato en',
+  ua: 'Найдешевше у',
+  ru: 'Самое дешёвое в',
+  zh: '最便宜在',
+  hi: 'सबसे सस्ता है',
+  ar: 'أرخص سعر في',
+  he: 'המחיר הזול ביותר ב'
+},
+for: {
+  pl: 'za',
+  en: 'for',
+  de: 'für',
+  fr: 'pour',
+  es: 'por',
+  ua: 'за',
+  ru: 'за',
+  zh: '售价',
+  hi: 'के लिए',
+  ar: 'بسعر',
+  he: 'במחיר'
+},
+betterAlternative: {
+  pl: 'Lepszy zamiennik:',
+  en: 'Better alternative:',
+  de: 'Bessere Alternative:',
+  fr: 'Meilleure alternative :',
+  es: 'Mejor alternativa:',
+  ua: 'Краща альтернатива:',
+  ru: 'Лучшая альтернатива:',
+  zh: '更好的替代品：',
+  hi: 'बेहतर विकल्प:',
+  ar: 'بديل أفضل:',
+  he: 'חלופה טובה יותר:'
+},
+from: {
+  pl: 'z',
+  en: 'from',
+  de: 'von',
+  fr: 'de',
+  es: 'de',
+  ua: 'з',
+  ru: 'из',
+  zh: '来自',
+  hi: 'से',
+  ar: 'من',
+  he: 'מ'
+},
 };
 

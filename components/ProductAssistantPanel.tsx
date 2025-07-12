@@ -14,6 +14,48 @@ interface Props {
   medical: any;
   dietPlan: any;
 }
+type LookResponse =
+  | {
+      mode: 'response';
+      answer: string;
+      summary?: string;
+      suggestion?: string;
+      sources?: string[];
+      audio?: string;
+    }
+  | {
+      mode: 'product';
+      productName: string;
+      dietaryAnalysis: string;
+      allowPurchase: boolean;
+      reasons: string[];
+      cheapestShop?: { name: string; price: string };
+      betterAlternative?: {
+        name: string;
+        shop: string;
+        price: string;
+        whyBetter: string;
+      };
+      audio?: string;
+    }
+  | {
+      mode: 'shopping';
+      day: string;
+      shoppingList: {
+        product: string;
+        quantity: string;
+        unit: string;
+        localPrice: string;
+        onlinePrice: string;
+        shopSuggestion: string;
+      }[];
+      totalEstimatedCost: {
+        local: string;
+        online: string;
+      };
+      summary: string;
+      audio?: string;
+    };
 
 export default function ProductAssistantPanel({
   lang,
@@ -25,7 +67,7 @@ export default function ProductAssistantPanel({
 }: Props) {
   const [question, setQuestion] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [response, setResponse] = useState<any>(null);
+  const [response, setResponse] = useState<LookResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [chatHistory, setChatHistory] = useState<any[]>([]);
@@ -82,16 +124,19 @@ export default function ProductAssistantPanel({
         });
       }
 
-      if (data.audio) {
-        const audio = new Audio(data.audio);
-        audio.play();
-      }
-    } catch (err: any) {
-      setError(err.message || 'Błąd połączenia');
-    } finally {
-      setLoading(false);
-    }
-  };
+        if (data.audio) {
+        setResponse({
+            ...data,
+            audio: data.audio
+        });
+        }
+
+        } catch (err: any) {
+        setError(err.message || 'Błąd połączenia');
+        } finally {
+        setLoading(false);
+        }
+    };
 
   return (
     <div className="bg-slate-900 text-white p-6 rounded-xl shadow-md mt-6 max-w-3xl mx-auto">

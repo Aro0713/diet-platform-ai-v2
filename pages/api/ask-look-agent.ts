@@ -185,7 +185,7 @@ Answer as a warm, professional assistant.
 
       const ttsRes = await openai.audio.speech.create({
         model: 'tts-1-hd',
-        voice: 'nova',
+        voice: 'onyx',
         input: parsed.answer || 'Brak odpowiedzi.'
       });
 

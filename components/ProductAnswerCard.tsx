@@ -1,6 +1,5 @@
 import React from 'react';
-
-import { type LangKey, tUI } from '@/utils/i18n'; // ✅ dodaj jeśli nie ma
+import { type LangKey, tUI } from '@/utils/i18n';
 
 interface ProductAnswerCardProps {
   response: {
@@ -8,8 +7,8 @@ interface ProductAnswerCardProps {
     dietaryAnalysis: string;
     allowPurchase: boolean;
     reasons: string[];
-    cheapestShop: { name: string; price: string };
-    betterAlternative: {
+    cheapestShop?: { name: string; price: string };
+    betterAlternative?: {
       name: string;
       shop: string;
       price: string;
@@ -17,11 +16,14 @@ interface ProductAnswerCardProps {
     };
   };
   onAddToBasket?: () => void;
-  lang: LangKey; // ✅ DODAJ TO
+  lang: LangKey;
 }
 
-
-export default function ProductAnswerCard({ response, onAddToBasket }: ProductAnswerCardProps) {
+export default function ProductAnswerCard({
+  response,
+  onAddToBasket,
+  lang
+}: ProductAnswerCardProps) {
   const {
     productName,
     dietaryAnalysis,
@@ -38,7 +40,9 @@ export default function ProductAnswerCard({ response, onAddToBasket }: ProductAn
       <p className="text-sm text-gray-700">{dietaryAnalysis}</p>
 
       <div className={`text-sm font-semibold ${allowPurchase ? 'text-green-600' : 'text-red-600'}`}>
-        {allowPurchase ? '✅ Możesz kupić ten produkt' : '⛔️ Nie zalecamy kupna tego produktu'}
+        {allowPurchase
+          ? tUI('allowedToBuy', lang)
+          : tUI('notRecommendedToBuy', lang)}
       </div>
 
       {reasons?.length > 0 && (
@@ -49,24 +53,28 @@ export default function ProductAnswerCard({ response, onAddToBasket }: ProductAn
         </ul>
       )}
 
-      <div className="text-sm text-gray-700">
-        🛒 Najtaniej kupisz w <strong>{cheapestShop.name}</strong> za <strong>{cheapestShop.price}</strong>.
-      </div>
+      {cheapestShop?.name && cheapestShop?.price && (
+        <div className="text-sm text-gray-700">
+          🛒 {tUI('cheapestAt', lang)} <strong>{cheapestShop.name}</strong> {tUI('for', lang)} <strong>{cheapestShop.price}</strong>.
+        </div>
+      )}
 
-      <div className="bg-slate-100 rounded-md p-3 text-sm text-gray-700">
-        <p className="font-medium">💡 Lepszy zamiennik:</p>
-        <p>
-          <strong>{betterAlternative.name}</strong> z <strong>{betterAlternative.shop}</strong> za <strong>{betterAlternative.price}</strong>
-        </p>
-        <p className="italic text-gray-500">{betterAlternative.whyBetter}</p>
-      </div>
+      {betterAlternative && (
+        <div className="bg-slate-100 rounded-md p-3 text-sm text-gray-700">
+          <p className="font-medium">💡 {tUI('betterAlternative', lang)}</p>
+          <p>
+            <strong>{betterAlternative.name}</strong> {tUI('from', lang)} <strong>{betterAlternative.shop}</strong> {tUI('for', lang)} <strong>{betterAlternative.price}</strong>
+          </p>
+          <p className="italic text-gray-500">{betterAlternative.whyBetter}</p>
+        </div>
+      )}
 
       {onAddToBasket && (
         <button
           onClick={onAddToBasket}
           className="mt-4 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 font-medium"
         >
-          ➕ Dodaj do koszyka
+          ➕ {tUI('addToBasket', lang)}
         </button>
       )}
     </div>
