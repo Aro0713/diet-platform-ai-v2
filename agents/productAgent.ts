@@ -49,15 +49,20 @@ export async function analyzeProductInput(input: any) {
   // 🧠 shortcut — jeśli jest zapytanie o zakupy i jest dietPlan: od razu generuj
   if (isShoppingQuery && dietPlan && typeof dietPlan === 'object') {
     const shoppingList = extractShoppingListFromDiet(dietPlan, 'Saturday');
+    const shopsUsed = [...new Set(shoppingList.map(i => i.shopSuggestion))];
+    const shopsText = shopsUsed.length > 0
+      ? `Najczęściej polecane sklepy: ${shopsUsed.join(', ')}.`
+      : 'Nie udało się jednoznacznie wskazać sklepów.';
 
     return {
-  mode: 'shopping',
-  day: 'Saturday',
-  answer: 'Przygotowałem listę zakupów na sobotę – znajdziesz ją poniżej.',
-  shoppingList,
-  totalEstimatedCost: calculateTotalCost(shoppingList),
-  summary: `Przygotowałem listę zakupów na sobotę na podstawie Twojej diety.`
-};
+      mode: 'shopping',
+      day: 'Saturday',
+      answer: `Przygotowałem listę zakupów na sobotę – znajdziesz ją poniżej.\n\n${shopsText}`,
+      shoppingList,
+      totalEstimatedCost: calculateTotalCost(shoppingList),
+      summary: `Przygotowałem listę zakupów na sobotę na podstawie Twojej diety.`
+    };
+
 
   }
 
