@@ -74,12 +74,6 @@ export default function ProductAssistantPanel({
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const { addProduct, basket } = useBasket();
 
-  const speak = (text: string) => {
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = lang === 'pl' ? 'pl-PL' : 'en-US';
-    speechSynthesis.speak(utter);
-  };
-
   const handleAsk = async () => {
     if (!question.trim()) return;
 
@@ -151,7 +145,6 @@ export default function ProductAssistantPanel({
         }}
       />
 
-      {/* ✅ Avatar powitalny jeśli brak odpowiedzi */}
       {!response && !loading && (
         <div className="flex items-center gap-3 mb-4">
           <img src="/Look.png" alt="Look avatar" className="w-12 h-12 rounded-full shadow-md ring-2 ring-emerald-500" />
@@ -159,7 +152,6 @@ export default function ProductAssistantPanel({
         </div>
       )}
 
-      {/* ✅ Historia czatu */}
       {chatHistory.length > 0 && (
         <div className="mt-6 space-y-4">
           {chatHistory.map((msg, index) => (
@@ -178,12 +170,23 @@ export default function ProductAssistantPanel({
                 </div>
               )}
               <p className="whitespace-pre-wrap">{msg.content}</p>
+
+              {/* 🔊 Dodaj odtwarzacz audio tylko do ostatniej odpowiedzi */}
+              {msg.role === 'assistant' &&
+                response?.audio &&
+                index === chatHistory.length - 1 && (
+                  <button
+                    onClick={() => new Audio(response.audio!).play()}
+                    className="mt-2 px-3 py-1 bg-emerald-600 text-white rounded hover:bg-emerald-700"
+                  >
+                    🔊 {tUI('listenToLook', lang)}
+                  </button>
+                )}
             </div>
           ))}
         </div>
       )}
 
-      {/* ✅ Pola formularza */}
       <input
         type="text"
         value={question}
@@ -212,7 +215,6 @@ export default function ProductAssistantPanel({
 
       {error && <p className="text-red-400 mt-4">{error}</p>}
 
-      {/* ✅ Odpowiedzi */}
       {response?.mode === 'product' && (
         <ProductAnswerCard
           response={response}
@@ -230,27 +232,6 @@ export default function ProductAssistantPanel({
       )}
 
       {response?.mode === 'shopping' && <ShoppingListCard response={response} />}
-
-      {response?.mode === 'response' && (
-        <div className="bg-white text-black p-4 mt-4 rounded shadow">
-          <div className="flex items-center gap-3 mb-2">
-            <img src="/Look.png" alt="Look avatar" className="w-10 h-10 rounded-full shadow-md ring-2 ring-emerald-500" />
-            <p className="text-lg font-semibold">💬 Look:</p>
-          </div>
-          <p className="text-base leading-relaxed whitespace-pre-wrap">{response.answer}</p>
-          {response.suggestion && (
-            <p className="mt-2 text-sm italic text-gray-600">💡 {response.suggestion}</p>
-          )}
-          {response.audio && (
-            <button
-              onClick={() => new Audio(response.audio).play()}
-              className="mt-3 px-3 py-1 bg-emerald-600 text-white rounded hover:bg-emerald-700"
-            >
-              🔊 {tUI('listenToLook', lang)}
-            </button>
-          )}
-        </div>
-      )}
     </div>
   );
 }
