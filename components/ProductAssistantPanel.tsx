@@ -110,9 +110,18 @@ export default function ProductAssistantPanel({
       setChatHistory((prev) => [
         ...prev,
         { role: 'user', content: question },
-        { role: 'assistant', content: data.answer || JSON.stringify(data) }
-      ]);
-      setQuestion('');
+        {
+            role: 'assistant',
+            content:
+            data.mode === 'response'
+                ? data.answer
+                : data.mode === 'product'
+                ? '🧪 Przeanalizowałem produkt – zobacz kartę poniżej.'
+                : '🛒 Przygotowałem listę zakupów – znajdziesz ją poniżej.'
+        }
+        ]);
+        ;
+     setQuestion('');
 
       if (data.mode === 'product') {
         addProduct({
