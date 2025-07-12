@@ -80,63 +80,61 @@ export default function ProductAssistantPanel({
   };
 
   const handleAsk = async () => {
-    if (!question.trim()) return;
+  if (!question.trim()) return;
 
-    const formData = new FormData();
-    formData.append('question', question);
-    formData.append('lang', lang);
-    formData.append('patient', JSON.stringify(patient));
-    formData.append('form', JSON.stringify(form));
-    formData.append('interviewData', JSON.stringify(interviewData));
-    formData.append('medical', JSON.stringify(medical));
-    formData.append('dietPlan', JSON.stringify(dietPlan));
-    formData.append('basket', JSON.stringify(basket));
-    formData.append('chatHistory', JSON.stringify(chatHistory));
-    if (imageFile) formData.append('image', imageFile);
+  const formData = new FormData();
+  formData.append('question', question);
+  formData.append('lang', lang);
+  formData.append('patient', JSON.stringify(patient));
+  formData.append('form', JSON.stringify(form));
+  formData.append('interviewData', JSON.stringify(interviewData));
+  formData.append('medical', JSON.stringify(medical));
+  formData.append('dietPlan', JSON.stringify(dietPlan));
+  formData.append('basket', JSON.stringify(basket));
+  formData.append('chatHistory', JSON.stringify(chatHistory));
+  if (imageFile) formData.append('image', imageFile);
 
-    setLoading(true);
-    setError(null);
-    setResponse(null);
+  setLoading(true);
+  setError(null);
+  setResponse(null);
 
-    try {
-      const res = await fetch('/api/ask-look-agent', {
-        method: 'POST',
-        body: formData
+  try {
+    const res = await fetch('/api/ask-look-agent', {
+      method: 'POST',
+      body: formData
+    });
+
+    const data = await res.json();
+    if (!res.ok) return setError(data.error || 'Błąd odpowiedzi');
+
+    setResponse({
+      ...data,
+      ...(data.audio ? { audio: data.audio } : {})
+    });
+
+    setChatHistory((prev) => [
+      ...prev,
+      { role: 'user', content: question },
+      { role: 'assistant', content: data.answer || JSON.stringify(data) }
+    ]);
+
+    if (data.mode === 'product') {
+      addProduct({
+        productName: data.productName,
+        shop: data.cheapestShop?.name,
+        price: data.cheapestShop?.price,
+        emoji: '🛒',
+        whyBetter: data.betterAlternative?.whyBetter || ''
       });
+    }
 
-      const data = await res.json();
-      if (!res.ok) return setError(data.error || 'Błąd odpowiedzi');
+  } catch (err: any) {
+    setError(err.message || 'Błąd połączenia');
+  } finally {
+    setLoading(false);
+  }
+};
 
-      setResponse(data);
-      setChatHistory((prev) => [
-        ...prev,
-        { role: 'user', content: question },
-        { role: 'assistant', content: data.answer || JSON.stringify(data) }
-      ]);
-
-      if (data.mode === 'product') {
-        addProduct({
-          productName: data.productName,
-          shop: data.cheapestShop?.name,
-          price: data.cheapestShop?.price,
-          emoji: '🛒',
-          whyBetter: data.betterAlternative?.whyBetter || ''
-        });
-      }
-
-        if (data.audio) {
-        setResponse({
-            ...data,
-            audio: data.audio
-        });
-        }
-
-        } catch (err: any) {
-        setError(err.message || 'Błąd połączenia');
-        } finally {
-        setLoading(false);
-        }
-    };
 
   return (
     <div className="bg-slate-900 text-white p-6 rounded-xl shadow-md mt-6 max-w-3xl mx-auto">
@@ -200,7 +198,10 @@ export default function ProductAssistantPanel({
 
       {response?.mode === 'response' && (
         <div className="bg-white text-black p-4 mt-4 rounded shadow">
-          <p className="text-lg font-semibold mb-2">💬 Look:</p>
+          <div className="flex items-center gap-3 mb-2">
+            <img src="/Look.png" alt="Look avatar" className="w-10 h-10 rounded-full shadow-md ring-2 ring-emerald-500" />
+            <p className="text-lg font-semibold">💬 Look:</p>
+            </div>
           <p className="text-base leading-relaxed whitespace-pre-wrap">{response.answer}</p>
           {response.suggestion && (
             <p className="mt-2 text-sm italic text-gray-600">💡 {response.suggestion}</p>
