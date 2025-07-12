@@ -30,10 +30,7 @@ Classify the user question into:
 Only return the word: shopping, product, or other.
 Always classify in language: ${lang}`
       },
-      {
-        role: 'user',
-        content: question
-      }
+      { role: 'user', content: question }
     ]
   });
 
@@ -72,8 +69,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    // 🧠 nowe: klasyfikacja typu pytania
     const questionType = await detectQuestionType(question, lang);
+    const firstName = patient?.name?.split?.(' ')[0] || 'Pacjencie';
 
     if (questionType === 'product' || base64Image) {
       const result = await analyzeProductInput({
@@ -103,7 +100,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         audio: null
       });
     }
-    const firstName = patient?.name?.split?.(' ')[0] || 'Pacjencie';
 
     const prompt = `
 You are Look — a friendly personal assistant in the Diet Care Platform (DCP).
@@ -153,7 +149,26 @@ Your job is to help the patient based on ALL data available in DCP.
 Always address the patient by name: "${firstName}" — naturally, at the start or mid-sentence. Be polite, but friendly.
 
 🛡️ You must NEVER recommend or mention external apps, price comparison tools, or third-party services.
-🧠 Instead, always use built-in tools like basket data, shopping lists, diet info, and interview context.
+🧠 Instead, always use built-in tools like:
+- shopping lists based on diet plan
+- estimated product prices
+- shop suggestions based on patient region and location
+
+🧠 You are aware of the patient's country, city and region (from patient.region and patient.location). Use this to determine which stores are realistically available nearby.
+Based on that, you suggest typical stores available in their area:
+- 🇵🇱 Poland: Lidl, Biedronka, Auchan, Żabka, Carrefour, Rossmann
+- 🇩🇪 Germany: Lidl, Aldi, Edeka, Rewe
+- 🇫🇷 France: Carrefour, Monoprix, Intermarché
+- 🇺🇸 USA: Walmart, Whole Foods, Trader Joe’s, Kroger
+- 🇮🇳 India: Big Bazaar, Reliance Fresh, D-Mart
+(and others based on context)
+
+You must NEVER say “I don’t know” or “DCP does not include shop data”.
+You DO know which shops are relevant and what is typically sold where.
+Use internal heuristics, patient region and product name to answer.
+
+You DO know which shops are recommended for each ingredient. Never say otherwise.
+
 💡 When in doubt, guide the user using what DCP already offers.
 ❗You are NOT a general chatbot. You must NOT answer questions outside the context of DCP, health, diet, patient data, or purchases.
 If an image is attached — try to identify the food or product based on the visual. Guess ingredients if possible. If uncertain, say so but still explain what might be in the photo.
@@ -161,6 +176,13 @@ If an image is attached — try to identify the food or product based on the vis
 If a question is outside scope (e.g. about celebrities, news, weather, history, science, etc), respond politely and say:
 "I'm your assistant inside the Diet Care Platform, so I focus on your health, diet, and goals."
 If the user asks a question outside of DCP (e.g. "what is the weather", "tell me a joke", "who is Elon Musk"), do NOT answer it. Instead, redirect the user back to diet, health, goals, or DCP functionality.
+
+If asked "where to buy", "how much does it cost", or "which shop is best", always:
+- recommend specific stores
+- provide estimated prices in local currency
+- explain your reasoning if useful (e.g. availability, price, region)
+
+Never answer vaguely. Never say DCP cannot help with stores.
 
 Always respond in language: ${lang}.
 Answer as a warm, professional assistant.
@@ -189,16 +211,16 @@ Answer as a warm, professional assistant.
 
     const content = completion.choices[0]?.message?.content;
 
-   if (!content || !content.includes('{')) {
-  return res.status(200).json({
-    mode: 'response',
-    answer: content || 'Nie udało się uzyskać odpowiedzi.',
-    summary: 'Odpowiedź była niekompletna.',
-    suggestion: 'Spróbuj ponownie lub zadaj pytanie inaczej.',
-    sources: ['openai-fallback'],
-    audio: null
-  });
-}
+    if (!content || !content.includes('{')) {
+      return res.status(200).json({
+        mode: 'response',
+        answer: content || 'Nie udało się uzyskać odpowiedzi.',
+        summary: 'Odpowiedź była niekompletna.',
+        suggestion: 'Spróbuj ponownie lub zadaj pytanie inaczej.',
+        sources: ['openai-fallback'],
+        audio: null
+      });
+    }
 
     try {
       const cleaned = content
