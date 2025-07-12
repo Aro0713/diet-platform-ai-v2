@@ -22,6 +22,30 @@ const AnalyzeProductSchema = z.object({
   dietPlan: z.any().optional()
 });
 
+// 📆 obsługa "jutro", "poniedziałek", itd.
+function getNextDayName(): string {
+  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+  return days[tomorrow.getDay() === 0 ? 6 : tomorrow.getDay() - 1];
+}
+
+function detectDayFromQuestion(q: string): string | null {
+  const map: Record<string, string> = {
+    'poniedziałek': 'Monday',
+    'wtorek': 'Tuesday',
+    'środę': 'Wednesday',
+    'czwartek': 'Thursday',
+    'piątek': 'Friday',
+    'sobotę': 'Saturday',
+    'niedzielę': 'Sunday',
+    'jutro': getNextDayName()
+  };
+  const found = Object.entries(map).find(([key]) => q.toLowerCase().includes(key));
+  return found?.[1] || null;
+}
+
 export async function analyzeProductInput(input: any) {
   const result = AnalyzeProductSchema.safeParse(input);
   if (!result.success) {
@@ -46,28 +70,7 @@ export async function analyzeProductInput(input: any) {
     question?.toLowerCase().includes('lista') ||
     question?.toLowerCase().includes('dzień');
 
-// 🧠 shortcut — jeśli jest zapytanie o zakupy i jest dietPlan: od razu generuj
-if (isShoppingQuery && dietPlan && typeof dietPlan === 'object') {
-  return generateShoppingResponse(dietPlan, patient, 'Saturday');
-}
-
-
-function generateShoppingResponse(dietPlan: any, patient: any, day = 'Saturday') {
-  const shoppingList = extractShoppingListFromDiet(dietPlan, day, patient);
-  const shopsUsed = [...new Set(shoppingList.map(i => i.shopSuggestion))];
-  const shopsText = shopsUsed.length > 0
-    ? `Najczęściej polecane sklepy: ${shopsUsed.join(', ')}.`
-    : 'Nie udało się jednoznacznie wskazać sklepów.';
-
-  return {
-    mode: 'shopping',
-    day,
-    answer: `Przygotowałem listę zakupów na ${day.toLowerCase()} – znajdziesz ją poniżej.\n\n${shopsText}`,
-    shoppingList,
-    totalEstimatedCost: calculateTotalCost(shoppingList),
-    summary: `Lista zakupów na ${day.toLowerCase()} została przygotowana na podstawie Twojej diety.`
-  };
-}
+  const inferredDay = detectDayFromQuestion(question || '') || 'Saturday';
 
   const prompt = `
 You are a clinical dietitian assistant AI.
@@ -76,14 +79,14 @@ Please respond fully in language: ${lang}. Never use English.
 ${
     isShoppingQuery
       ? `The user is asking about shopping based on their diet plan. 
-Generate a shopping list for one selected day (e.g. "Saturday") from the given dietPlan. 
+Generate a shopping list for one selected day: "${inferredDay}" from the given dietPlan.
 Group ingredients, estimate total cost in local stores (based on approximate market prices), and provide an online alternative if possible.
 
 Use this format in your JSON reply (no markdown):
 
 {
   "mode": "shopping",
-  "day": "Saturday",
+  "day": "${inferredDay}",
   "shoppingList": [
     {
       "product": "...",
@@ -186,7 +189,7 @@ Return strictly valid JSON in ${lang} (no markdown):
         .replace(/\n?```$/, '')
         .trim();
 
-     const parsed = JSON.parse(cleaned);
+      const parsed = JSON.parse(cleaned);
       return {
         answer: parsed.dietaryAnalysis || 'Oto analiza produktu.',
         ...parsed
@@ -250,8 +253,8 @@ function suggestShop(name: string, region = '', location = '') {
 }
 
 function calculateTotalCost(list: any[]) {
-const local = list.reduce((sum, item) => sum + parseFloat(item.localPrice || '0'), 0);
-const online = list.reduce((sum, item) => sum + parseFloat(item.onlinePrice || '0'), 0);
+  const local = list.reduce((sum, item) => sum + parseFloat(item.localPrice || '0'), 0);
+  const online = list.reduce((sum, item) => sum + parseFloat(item.onlinePrice || '0'), 0);
 
   return {
     local: `${local.toFixed(2)} zł`,

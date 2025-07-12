@@ -69,7 +69,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   question.toLowerCase().includes('zakup') ||
   question.toLowerCase().includes('gdzie kupić');
 
-if (isShoppingQuestion && !dietPlan || Object.values(dietPlan).every((d) => !Array.isArray(d) || d.length === 0)) {
+if (
+  isShoppingQuestion &&
+  (!dietPlan || Object.values(dietPlan).every((d) => !Array.isArray(d) || d.length === 0))
+) {
+
   return res.status(200).json({
     mode: 'response',
     answer: 'Nie mogę przygotować listy zakupów, ponieważ Twój plan diety jest pusty lub nie zawiera posiłków. Wygeneruj dietę, aby kontynuować.',
