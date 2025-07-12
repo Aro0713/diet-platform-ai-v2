@@ -32,6 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const medical = JSON.parse(fields.medical?.[0] || '{}');
     const dietPlan = JSON.parse(fields.dietPlan?.[0] || '{}');
     const basket = JSON.parse(fields.basket?.[0] || '[]');
+  
 
     // 📷 zdjęcie (opcjonalnie)
     const imageFile = files.image?.[0];
@@ -41,6 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const buffer = await readFile(imageFile.filepath);
       base64Image = `data:${imageFile.mimetype};base64,${buffer.toString('base64')}`;
     }
+    const firstName = patient?.name?.split?.(' ')[0] || 'Pacjencie';
 
     // 🧠 PROMPT: Look wie wszystko
     const prompt = `
@@ -72,6 +74,7 @@ Diet plan: ${JSON.stringify(dietPlan)}
 Basket: ${JSON.stringify(basket)}
 
 Image: ${base64Image ? '[attached]' : '[none]'}
+The patient's name is "${firstName}". Use their name in your answer where appropriate.
 
 Respond in natural, human language in JSON format:
 {
@@ -89,6 +92,7 @@ Respond in natural, human language in JSON format:
     content: `
 You are Look — a friendly, loyal, and knowledgeable assistant inside the Diet Care Platform (DCP).
 Your job is to help the patient based on ALL data available in DCP: patient profile, health, diet, medical data, goals, basket, interview, preferences, and platform features.
+Always address the patient by name: "${firstName}" — naturally, at the start or mid-sentence. Be polite, but friendly.
 
 🛡️ You must NEVER recommend or mention external apps, price comparison tools, or third-party services.
 🧠 Instead, always use built-in tools like basket data, shopping lists, diet info, and interview context.
