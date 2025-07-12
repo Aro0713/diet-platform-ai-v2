@@ -28,7 +28,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const formData = JSON.parse(fields.form?.[0] || '{}');
     const interviewData = JSON.parse(fields.interviewData?.[0] || '{}');
     const medical = JSON.parse(fields.medical?.[0] || '{}');
-    const dietPlan = JSON.parse(fields.dietPlan?.[0] || '{}');
+    const rawDiet = JSON.parse(fields.dietPlan?.[0] || '{}');
+    const dietPlan = rawDiet?.weekPlan || rawDiet;
     const basket = JSON.parse(fields.basket?.[0] || '[]');
     const chatHistory = JSON.parse(fields.chatHistory?.[0] || '[]');
 
@@ -58,7 +59,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         patient,
         lang,
         question,
-        image: base64Image
+        image: base64Image,
+        dietPlan
       });
       return res.status(200).json(result);
     }

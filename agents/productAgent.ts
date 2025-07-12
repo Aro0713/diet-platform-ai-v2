@@ -46,6 +46,19 @@ export async function analyzeProductInput(input: any) {
     question?.toLowerCase().includes('lista') ||
     question?.toLowerCase().includes('dzień');
 
+  // 🧠 shortcut — jeśli jest zapytanie o zakupy i jest dietPlan: od razu generuj
+  if (isShoppingQuery && dietPlan && typeof dietPlan === 'object') {
+    const shoppingList = extractShoppingListFromDiet(dietPlan, 'Saturday');
+
+    return {
+      mode: 'shopping',
+      day: 'Saturday',
+      shoppingList,
+      totalEstimatedCost: calculateTotalCost(shoppingList),
+      summary: `Przygotowałem listę zakupów na sobotę na podstawie Twojej diety.`
+    };
+  }
+
   const prompt = `
 You are a clinical dietitian assistant AI.
 Please respond fully in language: ${lang}. Never use English.
@@ -173,6 +186,51 @@ Return strictly valid JSON in ${lang} (no markdown):
     console.error('❌ GPT completion error:', err);
     return { error: 'Failed to analyze product or shopping query' };
   }
+}
+
+// 📦 Helpers
+
+function extractShoppingListFromDiet(dietPlan: any, day: string) {
+  const meals = dietPlan[day] || [];
+  const list: any[] = [];
+
+  meals.forEach((meal: any) => {
+    meal.ingredients?.forEach((ingredient: any) => {
+      list.push({
+        product: ingredient.name,
+        quantity: ingredient.quantity,
+        unit: ingredient.unit,
+        localPrice: estimatePrice(ingredient.name),
+        onlinePrice: estimateOnlinePrice(ingredient.name),
+        shopSuggestion: suggestShop(ingredient.name)
+      });
+    });
+  });
+
+  return list;
+}
+
+function estimatePrice(name: string) {
+  return name.toLowerCase().includes('bio') ? '7.00 zł' : '3.50 zł';
+}
+
+function estimateOnlinePrice(name: string) {
+  return name.toLowerCase().includes('bio') ? '6.80 zł' : '3.30 zł';
+}
+
+function suggestShop(name: string) {
+  if (name.toLowerCase().includes('tofu')) return 'Lidl';
+  if (name.toLowerCase().includes('olej')) return 'Auchan';
+  return 'Biedronka';
+}
+
+function calculateTotalCost(list: any[]) {
+  const local = list.length * 3.5;
+  const online = list.length * 3.3;
+  return {
+    local: `${local.toFixed(2)} zł`,
+    online: `${online.toFixed(2)} zł`
+  };
 }
 
 export const productAgent = new Agent({
