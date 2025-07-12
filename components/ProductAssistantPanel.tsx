@@ -14,6 +14,7 @@ interface Props {
   medical: any;
   dietPlan: any;
 }
+
 type LookResponse =
   | {
       mode: 'response';
@@ -80,67 +81,67 @@ export default function ProductAssistantPanel({
   };
 
   const handleAsk = async () => {
-  if (!question.trim()) return;
+    if (!question.trim()) return;
 
-  const formData = new FormData();
-  formData.append('question', question);
-  formData.append('lang', lang);
-  formData.append('patient', JSON.stringify(patient));
-  formData.append('form', JSON.stringify(form));
-  formData.append('interviewData', JSON.stringify(interviewData));
-  formData.append('medical', JSON.stringify(medical));
-  formData.append('dietPlan', JSON.stringify(dietPlan));
-  formData.append('basket', JSON.stringify(basket));
-  formData.append('chatHistory', JSON.stringify(chatHistory));
-  if (imageFile) formData.append('image', imageFile);
+    const formData = new FormData();
+    formData.append('question', question);
+    formData.append('lang', lang);
+    formData.append('patient', JSON.stringify(patient));
+    formData.append('form', JSON.stringify(form));
+    formData.append('interviewData', JSON.stringify(interviewData));
+    formData.append('medical', JSON.stringify(medical));
+    formData.append('dietPlan', JSON.stringify(dietPlan));
+    formData.append('basket', JSON.stringify(basket));
+    formData.append('chatHistory', JSON.stringify(chatHistory));
+    if (imageFile) formData.append('image', imageFile);
 
-  setLoading(true);
-  setError(null);
-  setResponse(null);
+    setLoading(true);
+    setError(null);
+    setResponse(null);
 
-  try {
-    const res = await fetch('/api/ask-look-agent', {
-      method: 'POST',
-      body: formData
-    });
-
-    const data = await res.json();
-    if (!res.ok) return setError(data.error || 'Błąd odpowiedzi');
-
-    setResponse({
-      ...data,
-      ...(data.audio ? { audio: data.audio } : {})
-    });
-
-    setChatHistory((prev) => [
-      ...prev,
-      { role: 'user', content: question },
-      { role: 'assistant', content: data.answer || JSON.stringify(data) }
-    ]);
-
-    if (data.mode === 'product') {
-      addProduct({
-        productName: data.productName,
-        shop: data.cheapestShop?.name,
-        price: data.cheapestShop?.price,
-        emoji: '🛒',
-        whyBetter: data.betterAlternative?.whyBetter || ''
+    try {
+      const res = await fetch('/api/ask-look-agent', {
+        method: 'POST',
+        body: formData
       });
+
+      const data = await res.json();
+      if (!res.ok) return setError(data.error || 'Błąd odpowiedzi');
+
+      setResponse({
+        ...data,
+        ...(data.audio ? { audio: data.audio } : {})
+      });
+
+      setChatHistory((prev) => [
+        ...prev,
+        { role: 'user', content: question },
+        { role: 'assistant', content: data.answer || JSON.stringify(data) }
+      ]);
+      setQuestion('');
+
+      if (data.mode === 'product') {
+        addProduct({
+          productName: data.productName,
+          shop: data.cheapestShop?.name,
+          price: data.cheapestShop?.price,
+          emoji: '🛒',
+          whyBetter: data.betterAlternative?.whyBetter || ''
+        });
+      }
+    } catch (err: any) {
+      setError(err.message || 'Błąd połączenia');
+    } finally {
+      setLoading(false);
     }
-
-  } catch (err: any) {
-    setError(err.message || 'Błąd połączenia');
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   return (
     <div className="bg-slate-900 text-white p-6 rounded-xl shadow-md mt-6 max-w-3xl mx-auto">
       <h2 className="text-2xl font-bold mb-4">
         👋 {tUI('lookWelcomeHeader', lang, { name: patient?.name?.split(' ')[0] || '' })}
       </h2>
+
       <p
         className="text-sm text-gray-300 mb-4 leading-relaxed"
         dangerouslySetInnerHTML={{
@@ -150,12 +151,45 @@ export default function ProductAssistantPanel({
         }}
       />
 
+      {/* ✅ Avatar powitalny jeśli brak odpowiedzi */}
+      {!response && !loading && (
+        <div className="flex items-center gap-3 mb-4">
+          <img src="/Look.png" alt="Look avatar" className="w-12 h-12 rounded-full shadow-md ring-2 ring-emerald-500" />
+          <p className="text-lg font-semibold">{tUI('lookReadyToHelp', lang)}</p>
+        </div>
+      )}
+
+      {/* ✅ Historia czatu */}
+      {chatHistory.length > 0 && (
+        <div className="mt-6 space-y-4">
+          {chatHistory.map((msg, index) => (
+            <div
+              key={index}
+              className={`p-3 rounded-lg ${
+                msg.role === 'user'
+                  ? 'bg-blue-100 text-black ml-auto text-right'
+                  : 'bg-emerald-100 text-black mr-auto'
+              }`}
+            >
+              {msg.role === 'assistant' && (
+                <div className="flex items-center gap-2 mb-1">
+                  <img src="/Look.png" className="w-6 h-6 rounded-full" />
+                  <span className="font-bold">Look:</span>
+                </div>
+              )}
+              <p className="whitespace-pre-wrap">{msg.content}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ✅ Pola formularza */}
       <input
         type="text"
         value={question}
         onChange={(e) => setQuestion(e.target.value)}
         placeholder={tUI('askQuestionPlaceholder', lang)}
-        className="w-full p-2 rounded-md text-black placeholder-gray-400 mb-3"
+        className="w-full p-2 rounded-md text-black placeholder-gray-400 mt-4 mb-3"
       />
 
       <input
@@ -178,6 +212,7 @@ export default function ProductAssistantPanel({
 
       {error && <p className="text-red-400 mt-4">{error}</p>}
 
+      {/* ✅ Odpowiedzi */}
       {response?.mode === 'product' && (
         <ProductAnswerCard
           response={response}
@@ -201,7 +236,7 @@ export default function ProductAssistantPanel({
           <div className="flex items-center gap-3 mb-2">
             <img src="/Look.png" alt="Look avatar" className="w-10 h-10 rounded-full shadow-md ring-2 ring-emerald-500" />
             <p className="text-lg font-semibold">💬 Look:</p>
-            </div>
+          </div>
           <p className="text-base leading-relaxed whitespace-pre-wrap">{response.answer}</p>
           {response.suggestion && (
             <p className="mt-2 text-sm italic text-gray-600">💡 {response.suggestion}</p>

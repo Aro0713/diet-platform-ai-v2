@@ -19,7 +19,7 @@ const AnalyzeProductSchema = z.object({
   lang: z.string(),
   question: z.string().optional().nullable(),
   image: z.string().optional().nullable(),
-  dietPlan: z.any().optional() // 👈 dodajemy dietę jako opcjonalne wejście
+  dietPlan: z.any().optional()
 });
 
 export async function analyzeProductInput(input: any) {
@@ -40,7 +40,6 @@ export async function analyzeProductInput(input: any) {
     dietPlan
   } = result.data;
 
-  // 🔍 Czy to pytanie o zakupy?
   const isShoppingQuery =
     question?.toLowerCase().includes('zakup') ||
     question?.toLowerCase().includes('koszt') ||
@@ -52,8 +51,8 @@ You are a clinical dietitian assistant AI.
 Please respond fully in language: ${lang}. Never use English.
 
 ${
-  isShoppingQuery
-    ? `The user is asking about shopping based on their diet plan. 
+    isShoppingQuery
+      ? `The user is asking about shopping based on their diet plan. 
 Generate a shopping list for one selected day (e.g. "Saturday") from the given dietPlan. 
 Group ingredients, estimate total cost in local stores (based on approximate market prices), and provide an online alternative if possible.
 
@@ -77,9 +76,8 @@ Use this format in your JSON reply (no markdown):
     "online": "..."
   },
   "summary": "..."
-}
-`
-    : `Evaluate the following product for the patient below.
+}`
+      : `Evaluate the following product for the patient below.
 
 Product:
 - Name: ${productName}
@@ -95,6 +93,9 @@ Patient:
 - Diet model: ${patient.dietModel || 'unspecified'}
 - Region: ${patient.region || 'Poland'}
 - Location: ${patient.location || 'unknown'}
+
+If an image is attached — do your best to visually identify the product, even without label.
+Describe what you see and guess the product type if needed. Don't refuse to assist.
 
 Return strictly valid JSON in ${lang} (no markdown):
 {
@@ -145,8 +146,14 @@ Return strictly valid JSON in ${lang} (no markdown):
     console.log('📩 GPT agent output (raw):', content);
 
     if (!content || !content.includes('{')) {
-      console.error('❌ GPT returned empty or non-JSON content');
-      return { error: 'Empty or invalid GPT response' };
+      return {
+        mode: 'response',
+        answer: 'Nie udało się rozpoznać produktu lub przygotować listy. Czy możesz przesłać więcej informacji lub zadać pytanie inaczej?',
+        summary: 'Brak danych lub struktury JSON.',
+        suggestion: 'Spróbuj przesłać nazwę lub inny opis.',
+        sources: ['fallback'],
+        audio: null
+      };
     }
 
     try {
@@ -168,7 +175,6 @@ Return strictly valid JSON in ${lang} (no markdown):
   }
 }
 
-// 🔧 Agent eksportowany (opcjonalnie .run() lub tool)
 export const productAgent = new Agent({
   name: 'Product Analysis Agent',
   instructions:
