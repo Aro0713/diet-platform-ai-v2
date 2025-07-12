@@ -14,6 +14,7 @@ interface ProductAnswerCardProps {
       price: string;
       whyBetter: string;
     };
+    audio?: string;
   };
   onAddToBasket?: () => void;
   lang: LangKey;
@@ -30,8 +31,17 @@ export default function ProductAnswerCard({
     allowPurchase,
     reasons,
     cheapestShop,
-    betterAlternative
+    betterAlternative,
+    audio
   } = response;
+
+  const playAudio = () => {
+    if (!audio) return;
+    const sound = new Audio(audio);
+    sound.play().catch((err) => {
+      console.warn('🔇 Nie udało się odtworzyć audio:', err);
+    });
+  };
 
   return (
     <div className="mt-6 p-4 bg-white text-black rounded-xl shadow space-y-4">
@@ -75,6 +85,15 @@ export default function ProductAnswerCard({
           className="mt-4 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 font-medium"
         >
           ➕ {tUI('addToBasket', lang)}
+        </button>
+      )}
+
+      {audio && (
+        <button
+          onClick={playAudio}
+          className="mt-2 px-3 py-1 bg-emerald-500 text-white rounded hover:bg-emerald-600 text-sm"
+        >
+          🔊 {tUI('listenToLook', lang)}
         </button>
       )}
     </div>
