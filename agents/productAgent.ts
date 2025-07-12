@@ -46,25 +46,28 @@ export async function analyzeProductInput(input: any) {
     question?.toLowerCase().includes('lista') ||
     question?.toLowerCase().includes('dzień');
 
-  // 🧠 shortcut — jeśli jest zapytanie o zakupy i jest dietPlan: od razu generuj
-  if (isShoppingQuery && dietPlan && typeof dietPlan === 'object') {
-    const shoppingList = extractShoppingListFromDiet(dietPlan, 'Saturday', patient);
-    const shopsUsed = [...new Set(shoppingList.map(i => i.shopSuggestion))];
-    const shopsText = shopsUsed.length > 0
-      ? `Najczęściej polecane sklepy: ${shopsUsed.join(', ')}.`
-      : 'Nie udało się jednoznacznie wskazać sklepów.';
-
-    return {
-      mode: 'shopping',
-      day: 'Saturday',
-      answer: `Przygotowałem listę zakupów na sobotę – znajdziesz ją poniżej.\n\n${shopsText}`,
-      shoppingList,
-      totalEstimatedCost: calculateTotalCost(shoppingList),
-      summary: `Przygotowałem listę zakupów na sobotę na podstawie Twojej diety.`
-    };
+// 🧠 shortcut — jeśli jest zapytanie o zakupy i jest dietPlan: od razu generuj
+if (isShoppingQuery && dietPlan && typeof dietPlan === 'object') {
+  return generateShoppingResponse(dietPlan, patient, 'Saturday');
+}
 
 
-  }
+function generateShoppingResponse(dietPlan: any, patient: any, day = 'Saturday') {
+  const shoppingList = extractShoppingListFromDiet(dietPlan, day, patient);
+  const shopsUsed = [...new Set(shoppingList.map(i => i.shopSuggestion))];
+  const shopsText = shopsUsed.length > 0
+    ? `Najczęściej polecane sklepy: ${shopsUsed.join(', ')}.`
+    : 'Nie udało się jednoznacznie wskazać sklepów.';
+
+  return {
+    mode: 'shopping',
+    day,
+    answer: `Przygotowałem listę zakupów na ${day.toLowerCase()} – znajdziesz ją poniżej.\n\n${shopsText}`,
+    shoppingList,
+    totalEstimatedCost: calculateTotalCost(shoppingList),
+    summary: `Lista zakupów na ${day.toLowerCase()} została przygotowana na podstawie Twojej diety.`
+  };
+}
 
   const prompt = `
 You are a clinical dietitian assistant AI.
