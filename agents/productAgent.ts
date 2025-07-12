@@ -51,12 +51,14 @@ export async function analyzeProductInput(input: any) {
     const shoppingList = extractShoppingListFromDiet(dietPlan, 'Saturday');
 
     return {
-      mode: 'shopping',
-      day: 'Saturday',
-      shoppingList,
-      totalEstimatedCost: calculateTotalCost(shoppingList),
-      summary: `Przygotowałem listę zakupów na sobotę na podstawie Twojej diety.`
-    };
+  mode: 'shopping',
+  day: 'Saturday',
+  answer: 'Przygotowałem listę zakupów na sobotę – znajdziesz ją poniżej.',
+  shoppingList,
+  totalEstimatedCost: calculateTotalCost(shoppingList),
+  summary: `Przygotowałem listę zakupów na sobotę na podstawie Twojej diety.`
+};
+
   }
 
   const prompt = `
@@ -176,8 +178,12 @@ Return strictly valid JSON in ${lang} (no markdown):
         .replace(/\n?```$/, '')
         .trim();
 
-      const parsed = JSON.parse(cleaned);
-      return parsed;
+     const parsed = JSON.parse(cleaned);
+      return {
+        answer: parsed.dietaryAnalysis || 'Oto analiza produktu.',
+        ...parsed
+      };
+
     } catch (e) {
       console.error('❌ GPT JSON parse error:', e, content);
       return { error: 'Failed to parse AI response' };
@@ -225,8 +231,9 @@ function suggestShop(name: string) {
 }
 
 function calculateTotalCost(list: any[]) {
-  const local = list.length * 3.5;
-  const online = list.length * 3.3;
+const local = list.reduce((sum, item) => sum + parseFloat(item.localPrice || '0'), 0);
+const online = list.reduce((sum, item) => sum + parseFloat(item.onlinePrice || '0'), 0);
+
   return {
     local: `${local.toFixed(2)} zł`,
     online: `${online.toFixed(2)} zł`
