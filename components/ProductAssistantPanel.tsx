@@ -232,7 +232,10 @@ export default function ProductAssistantPanel({
         />
       )}
 
-      {response?.mode === 'shopping' && <ShoppingListCard response={response} />}
+     {response?.mode === 'shopping' && (
+  <ShoppingListCard response={response} lang={lang} />
+)}
+
     </div>
   );
 }

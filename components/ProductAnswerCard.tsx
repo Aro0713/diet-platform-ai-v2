@@ -44,19 +44,24 @@ export default function ProductAnswerCard({
   };
 
   return (
-    <div className="mt-6 p-4 bg-white text-black rounded-xl shadow space-y-4">
-      <h3 className="text-xl font-bold">🧾 {productName}</h3>
+    <div className="bg-emerald-100 text-black p-4 rounded-lg shadow-md max-w-xl mr-auto mt-4">
+      <div className="flex items-center gap-2 mb-2">
+        <img src="/Look.png" className="w-6 h-6 rounded-full" />
+        <span className="font-bold text-emerald-800">Look:</span>
+      </div>
 
-      <p className="text-sm text-gray-700">{dietaryAnalysis}</p>
+      <h3 className="text-md font-semibold mb-2">🧾 {productName}</h3>
 
-      <div className={`text-sm font-semibold ${allowPurchase ? 'text-green-600' : 'text-red-600'}`}>
+      <p className="text-sm mb-2 whitespace-pre-wrap">{dietaryAnalysis}</p>
+
+      <div className={`text-sm font-semibold mb-2 ${allowPurchase ? 'text-green-600' : 'text-red-600'}`}>
         {allowPurchase
           ? tUI('allowedToBuy', lang)
           : tUI('notRecommendedToBuy', lang)}
       </div>
 
       {reasons?.length > 0 && (
-        <ul className="list-disc list-inside text-sm text-gray-800">
+        <ul className="list-disc list-inside text-sm text-gray-800 mb-2">
           {reasons.map((reason, i) => (
             <li key={i}>{reason}</li>
           ))}
@@ -64,13 +69,13 @@ export default function ProductAnswerCard({
       )}
 
       {cheapestShop?.name && cheapestShop?.price && (
-        <div className="text-sm text-gray-700">
+        <div className="text-sm text-gray-700 mb-2">
           🛒 {tUI('cheapestAt', lang)} <strong>{cheapestShop.name}</strong> {tUI('for', lang)} <strong>{cheapestShop.price}</strong>.
         </div>
       )}
 
       {betterAlternative && (
-        <div className="bg-slate-100 rounded-md p-3 text-sm text-gray-700">
+        <div className="bg-slate-100 rounded-md p-3 text-sm text-gray-700 mb-2">
           <p className="font-medium">💡 {tUI('betterAlternative', lang)}</p>
           <p>
             <strong>{betterAlternative.name}</strong> {tUI('from', lang)} <strong>{betterAlternative.shop}</strong> {tUI('for', lang)} <strong>{betterAlternative.price}</strong>
@@ -79,21 +84,21 @@ export default function ProductAnswerCard({
         </div>
       )}
 
-      {onAddToBasket && (
-        <button
-          onClick={onAddToBasket}
-          className="mt-4 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 font-medium"
-        >
-          ➕ {tUI('addToBasket', lang)}
-        </button>
-      )}
-
       {audio && (
         <button
           onClick={playAudio}
-          className="mt-2 px-3 py-1 bg-emerald-500 text-white rounded hover:bg-emerald-600 text-sm"
+          className="mt-2 px-3 py-1 bg-emerald-600 text-white rounded hover:bg-emerald-700 text-sm"
         >
           🔊 {tUI('listenToLook', lang)}
+        </button>
+      )}
+
+      {onAddToBasket && (
+        <button
+          onClick={onAddToBasket}
+          className="mt-3 px-4 py-2 bg-emerald-700 text-white rounded-md hover:bg-emerald-800 font-medium"
+        >
+          ➕ {tUI('addToBasket', lang)}
         </button>
       )}
     </div>
