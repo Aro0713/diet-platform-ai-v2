@@ -663,8 +663,15 @@ const goToSectionWithScroll = (id: string) => {
       {/* Asystent produktu + koszyk */}
       {selectedSection === 'scanner' && (
         <>
-          <ProductAssistantPanel lang={lang} patient={form} />
-          <BasketTable lang={lang} />
+          <ProductAssistantPanel
+        lang={lang}
+        patient={form}
+        form={form}
+        interviewData={interviewData}
+        medical={medicalData}
+        dietPlan={editableDiet}
+      />
+        <BasketTable lang={lang} />
 
         </>
       )}

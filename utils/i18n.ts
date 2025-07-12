@@ -43,7 +43,8 @@ export function getInterviewTranslation<T extends string | string[]>(
 // 🔒 UI tłumaczenia systemowe
 export function tUI(
   key: keyof typeof translationsUI,
-  lang: LangKey
+  lang: LangKey,
+  vars?: Record<string, string>
 ): string {
   const entry = translationsUI[key];
   if (!entry) {
@@ -51,8 +52,17 @@ export function tUI(
     return key;
   }
 
-  return entry[lang] || entry['pl'] || key;
+  let template = entry[lang] || entry['pl'] || key;
+
+  if (vars) {
+    for (const [varKey, varValue] of Object.entries(vars)) {
+      template = template.replace(new RegExp(`{${varKey}}`, 'g'), varValue);
+    }
+  }
+
+  return template;
 }
+
 
 // 🧠 Uniwersalne sprawdzenie braków w wielu źródłach
 type SourceGroup = {

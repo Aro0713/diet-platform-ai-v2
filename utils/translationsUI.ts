@@ -3807,19 +3807,6 @@ analysisInProgress: {
   hi: "विश्लेषण जारी है...",
   he: "הניתוח מתבצע..."
 },
-productAssistantIntro: {
-  pl: "Tu jest Twój koszyk produktów potrzebnych do przygotowania spersonalizowanej specjalnie dla Ciebie diety. Napisz mi poniżej jak mogę Ci pomóc? Opisz krótko (powiedz gdzie kupię najtaniej, albo wrzuć mi zdjęcie produktu, który chcesz kupić a nie wiesz czy możesz? Mogę też przygotować listę zakupów na jeden dzień.)",
-  en: "Here is your product basket for preparing a diet personalized just for you. Let me know how I can help you. Describe briefly (ask where to buy cheapest, or upload a photo of a product you're unsure about, or ask for a one-day shopping list).",
-  de: "Hier ist dein Produktkorb für eine auf dich zugeschnittene Diät. Schreib mir unten, wie ich dir helfen kann. Erkläre kurz (wo du etwas am günstigsten kaufen kannst, lade ein Foto hoch, wenn du dir bei einem Produkt unsicher bist, oder ich stelle dir eine Einkaufsliste für einen Tag zusammen).",
-  fr: "Voici ton panier de produits pour préparer un régime personnalisé rien que pour toi. Indique-moi ci-dessous comment je peux t’aider. Décris brièvement (où acheter le moins cher, envoie une photo d’un produit si tu hésites, ou demande une liste de courses pour un jour).",
-  es: "Aquí está tu cesta de productos para preparar una dieta personalizada para ti. Escríbeme abajo cómo puedo ayudarte. Describe brevemente (dónde comprar más barato, sube una foto de un producto si no estás seguro, o pídeme una lista de compras para un día).",
-  ua: "Ось твій кошик продуктів для підготовки персоналізованої дієти. Напиши нижче, як я можу тобі допомогти. Опиши коротко (де купити дешевше, надішли фото продукту, або попроси список покупок на один день).",
-  ru: "Вот твоя корзина продуктов для подготовки персональной диеты. Напиши ниже, как я могу помочь. Опиши коротко (где купить дешевле, загрузи фото продукта, или попроси список покупок на день).",
-  zh: "这是为你量身定制饮食计划的产品篮。告诉我我能如何帮你。简单描述（例如哪里买最便宜，上传产品图片，或者让我准备一天的购物清单）。",
-  ar: "هذه سلة منتجاتك لتحضير نظام غذائي مخصص لك. أخبرني أدناه كيف يمكنني مساعدتك. اشرح باختصار (أين تشتري الأرخص، أو أرفق صورة لمنتج، أو اطلب قائمة تسوق ليوم واحد).",
-  hi: "यह आपके लिए विशेष रूप से तैयार की गई डाइट के लिए उत्पादों की टोकरी है। नीचे लिखें मैं कैसे मदद कर सकता हूँ? संक्षेप में बताएं (कहां सस्ता मिलेगा, कोई उत्पाद फोटो भेजें या एक दिन की खरीदारी सूची मांगें)।",
-  he: "זוהי סל המוצרים שלך להכנת תפריט מותאם אישית. כתוב לי למטה איך אפשר לעזור לך. הסבר בקצרה (איפה לקנות בזול, לצרף תמונה של מוצר, או לבקש רשימת קניות ליום אחד)."
-},
 askDietAssistant: {
   pl: "Zapytaj dietetycznego asystenta",
   en: "Ask the diet assistant",
@@ -3906,7 +3893,104 @@ price: {
 },
 remove: {
   pl: "Usuń", en: "Remove", de: "Entfernen", fr: "Supprimer", es: "Eliminar", ua: "Видалити", ru: "Удалить", zh: "删除", ar: "حذف", hi: "हटाएँ", he: "הסר"
+},
+lookWelcomeHeader: {
+  pl: 'Cześć {name}, mam na imię Look. Jestem Twoim osobistym asystentem.',
+  en: 'Hi {name}, my name is Look. I’m your personal assistant.',
+  de: 'Hallo {name}, ich heiße Look. Ich bin dein persönlicher Assistent.',
+  fr: 'Bonjour {name}, je m’appelle Look. Je suis ton assistant personnel.',
+  es: 'Hola {name}, me llamo Look. Soy tu asistente personal.',
+  ua: 'Привіт, {name}, мене звати Look. Я твій особистий асистент.',
+  ru: 'Привет, {name}, меня зовут Look. Я твой личный помощник.',
+  zh: '你好，{name}，我是 Look。你的私人助手。',
+  hi: 'नमस्ते {name}, मेरा नाम Look है। मैं आपका व्यक्तिगत सहायक हूँ।',
+  ar: 'مرحباً {name}، اسمي Look. أنا مساعدك الشخصي.',
+  he: 'שלום {name}, שמי Look. אני העוזר האישי שלך.',
+},
+lookWelcomeIntro: {
+  pl: `Jeśli masz pytania dotyczące <strong>Diet Care Platform</strong> (ja mówię po prostu <strong>DCP</strong>) — śmiało pisz.<br />
+Chcesz sprawdzić czy możesz kupić jakiś produkt? Wklej jego zdjęcie lub nazwę.<br />
+Potrzebujesz <strong>listy zakupów</strong> na jutro? Chcesz zapytać o <strong>wyniki badań</strong>?<br />
+Generalnie — pisz do mnie o każdej porze, jestem tu dla Ciebie, <strong>{name}</strong>.`,
+
+  en: `If you have any questions about <strong>Diet Care Platform</strong> (I just say <strong>DCP</strong>) — feel free to ask.<br />
+Want to check if you can buy a product? Paste a photo or name.<br />
+Need a <strong>shopping list</strong> for tomorrow? Want to ask about <strong>lab results</strong>?<br />
+Just write to me anytime — I’m here for you, <strong>{name}</strong>.`,
+
+  de: `Wenn du Fragen zur <strong>Diet Care Platform</strong> hast (ich nenne sie einfach <strong>DCP</strong>) — frag ruhig.<br />
+Möchtest du wissen, ob du ein Produkt kaufen kannst? Lade ein Foto oder gib den Namen ein.<br />
+Brauchst du eine <strong>Einkaufsliste</strong> für morgen? Oder willst du nach <strong>Laborwerten</strong> fragen?<br />
+Schreib mir jederzeit — ich bin für dich da, <strong>{name}</strong>.`,
+
+  fr: `Si tu as des questions sur <strong>Diet Care Platform</strong> (je dis juste <strong>DCP</strong>) — n’hésite pas à demander.<br />
+Tu veux savoir si tu peux acheter un produit ? Envoie une photo ou un nom.<br />
+Tu veux une <strong>liste de courses</strong> pour demain ? Ou poser une question sur tes <strong>résultats médicaux</strong>?<br />
+Écris-moi à tout moment — je suis là pour toi, <strong>{name}</strong>.`,
+
+  es: `Si tienes preguntas sobre <strong>Diet Care Platform</strong> (yo le digo <strong>DCP</strong>) — no dudes en escribirme.<br />
+¿Quieres saber si puedes comprar un producto? Envíame una foto o el nombre.<br />
+¿Necesitas una <strong>lista de compras</strong> para mañana? ¿Tienes dudas sobre <strong>tus análisis</strong>?<br />
+Escríbeme cuando quieras — estoy aquí para ayudarte, <strong>{name}</strong>.`,
+
+  ua: `Якщо у тебе є питання про <strong>Diet Care Platform</strong> (я кажу просто <strong>DCP</strong>) — не соромся, пиши.<br />
+Хочеш дізнатися, чи можна купити продукт? Надішли фото або назву.<br />
+Потрібен <strong>список покупок</strong> на завтра? Хочеш запитати про <strong>аналізи</strong>?<br />
+Пиши у будь-який час — я тут для тебе, <strong>{name}</strong>.`,
+
+  ru: `Если у тебя есть вопросы про <strong>Diet Care Platform</strong> (я говорю просто <strong>DCP</strong>) — просто напиши.<br />
+Хочешь узнать, можно ли купить продукт? Пришли фото или название.<br />
+Нужен <strong>список покупок</strong> на завтра? Хочешь узнать про <strong>анализы</strong>?<br />
+Пиши в любое время — я здесь ради тебя, <strong>{name}</strong>.`,
+
+  zh: `如果你对 <strong>Diet Care Platform</strong> 有任何问题（我简称 <strong>DCP</strong>）— 请随时告诉我。<br />
+想知道能不能买某个产品？上传图片或输入名称。<br />
+需要明天的 <strong>购物清单</strong>？想问 <strong>检查结果</strong>？<br />
+随时告诉我 — 我一直在这儿，<strong>{name}</strong>。`,
+
+  hi: `<strong>Diet Care Platform</strong> (जिसे मैं <strong>DCP</strong> कहता हूँ) के बारे में आपके कोई प्रश्न हैं? तो बेझिझक पूछें।<br />
+क्या आप जानना चाहते हैं कि कोई उत्पाद खरीदना ठीक है? तो तस्वीर या नाम भेजें।<br />
+क्या आपको कल के लिए <strong>खरीदारी सूची</strong> चाहिए? या <strong>परीक्षण परिणामों</strong> के बारे में पूछना है?<br />
+कभी भी लिखें — मैं यहाँ हूँ आपके लिए, <strong>{name}</strong>।`,
+
+  ar: `إذا كانت لديك أسئلة حول <strong>Diet Care Platform</strong> (أنا أقول ببساطة <strong>DCP</strong>) — فقط اسأل.<br />
+هل ترغب في معرفة ما إذا كان بإمكانك شراء منتج؟ أرسل صورة أو الاسم.<br />
+تحتاج إلى <strong>قائمة تسوق</strong> ليوم غد؟ تريد أن تسأل عن <strong>نتائج التحاليل</strong>?<br />
+اكتب لي في أي وقت — أنا هنا من أجلك، <strong>{name}</strong>.`,
+
+  he: `אם יש לך שאלות על <strong>Diet Care Platform</strong> (אני פשוט קורא לזה <strong>DCP</strong>) — תכתוב לי.<br />
+רוצה לדעת אם אפשר לקנות מוצר מסוים? תשלח תמונה או שם.<br />
+צריך <strong>רשימת קניות</strong> למחר? רוצה לשאול על <strong>תוצאות בדיקות</strong>?<br />
+תכתוב לי מתי שתרצה — אני כאן בשבילך, <strong>{name}</strong>.`,
+},
+startConversationWithLook: {
+  pl: 'Zacznij rozmowę z Lookiem',
+  en: 'Start conversation with Look',
+  de: 'Starte ein Gespräch mit Look',
+  fr: 'Commencer une discussion avec Look',
+  es: 'Comenzar conversación con Look',
+  ua: 'Почати розмову з Look',
+  ru: 'Начать разговор с Look',
+  zh: '与 Look 开始对话',
+  hi: 'Look से बातचीत शुरू करें',
+  ar: 'ابدأ المحادثة مع Look',
+  he: 'התחל שיחה עם Look'
+},
+
+askQuestionPlaceholder: {
+  pl: 'Zadaj pytanie dotyczące produktów, diety lub DCP...',
+  en: 'Ask a question about products, diet or DCP...',
+  de: 'Stelle eine Frage zu Produkten, Ernährung oder DCP...',
+  fr: 'Posez une question sur les produits, le régime ou DCP...',
+  es: 'Haz una pregunta sobre productos, dieta o DCP...',
+  ua: 'Задай питання про продукти, дієту або DCP...',
+  ru: 'Задай вопрос о продуктах, диете или DCP...',
+  zh: '询问有关产品、饮食或 DCP 的问题...',
+  hi: 'प्रोडक्ट्स, डाइट या DCP के बारे में पूछें...',
+  ar: 'اطرح سؤالًا عن المنتجات أو النظام الغذائي أو DCP...',
+  he: 'שאל שאלה על מוצרים, תזונה או DCP...'
 }
+
 
 
 };
