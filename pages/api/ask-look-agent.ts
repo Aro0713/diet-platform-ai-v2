@@ -14,6 +14,34 @@ export const config = {
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+async function detectQuestionType(question: string, lang: string): Promise<'shopping' | 'product' | 'other'> {
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4o',
+    temperature: 0,
+    messages: [
+      {
+        role: 'system',
+        content: `You are an intent classifier inside Diet Care Platform (DCP).
+Classify the user question into:
+- "shopping": if it's about buying, stores, availability, cost, prices
+- "product": if it's about a food, nutrition, ingredients, barcode, packaging
+- "other": anything else
+
+Only return the word: shopping, product, or other.
+Always classify in language: ${lang}`
+      },
+      {
+        role: 'user',
+        content: question
+      }
+    ]
+  });
+
+  const intent = response.choices[0]?.message?.content?.trim().toLowerCase();
+  if (intent === 'shopping' || intent === 'product') return intent;
+  return 'other';
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -44,13 +72,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    const isProductQuestion =
-      base64Image ||
-      question.toLowerCase().includes('czy mog') ||
-      question.toLowerCase().includes('produkt') ||
-      question.toLowerCase().includes('skład');
+    // 🧠 nowe: klasyfikacja typu pytania
+    const questionType = await detectQuestionType(question, lang);
 
-    if (isProductQuestion) {
+    if (questionType === 'product' || base64Image) {
       const result = await analyzeProductInput({
         barcode: 'N/A',
         productName: '[From user question]',
@@ -64,25 +89,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
       return res.status(200).json(result);
     }
-    const isShoppingQuestion =
-  question.toLowerCase().includes('lista zakup') ||
-  question.toLowerCase().includes('zakup') ||
-  question.toLowerCase().includes('gdzie kupić');
 
-if (
-  isShoppingQuestion &&
-  (!dietPlan || Object.values(dietPlan).every((d) => !Array.isArray(d) || d.length === 0))
-) {
-
-  return res.status(200).json({
-    mode: 'response',
-    answer: 'Nie mogę przygotować listy zakupów, ponieważ Twój plan diety jest pusty lub nie zawiera posiłków. Wygeneruj dietę, aby kontynuować.',
-    summary: 'Brak danych do stworzenia listy.',
-    suggestion: 'Wróć do sekcji „Dieta” i kliknij „Generuj dietę”.',
-    sources: ['diet'],
-    audio: null
-  });
-}
+    if (
+      questionType === 'shopping' &&
+      (!dietPlan || Object.values(dietPlan).every((d) => !Array.isArray(d) || d.length === 0))
+    ) {
+      return res.status(200).json({
+        mode: 'response',
+        answer: 'Nie mogę przygotować listy zakupów, ponieważ Twój plan diety jest pusty lub nie zawiera posiłków. Wygeneruj dietę, aby kontynuować.',
+        summary: 'Brak danych do stworzenia listy.',
+        suggestion: 'Wróć do sekcji „Dieta” i kliknij „Generuj dietę”.',
+        sources: ['diet'],
+        audio: null
+      });
+    }
     const firstName = patient?.name?.split?.(' ')[0] || 'Pacjencie';
 
     const prompt = `
