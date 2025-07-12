@@ -4081,5 +4081,19 @@ from: {
   ar: 'من',
   he: 'מ'
 },
+lookReadyToHelp: {
+  pl: "Czekam na Twoje pytanie",
+  en: "Look is ready to help you",
+  de: "Look ist bereit, dir zu helfen",
+  fr: "Look est prêt à vous aider",
+  es: "Look está listo para ayudarte",
+  ua: "Look готовий допомогти вам",
+  ru: "Look готов помочь вам",
+  zh: "Look 准备好为你提供帮助",
+  hi: "Look आपकी मदद के लिए तैयार है",
+  ar: "لوك مستعد لمساعدتك",
+  he: "Look מוכן לעזור לך"
+}
+
 };
 
