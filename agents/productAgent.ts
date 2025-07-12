@@ -48,7 +48,7 @@ export async function analyzeProductInput(input: any) {
 
   // 🧠 shortcut — jeśli jest zapytanie o zakupy i jest dietPlan: od razu generuj
   if (isShoppingQuery && dietPlan && typeof dietPlan === 'object') {
-    const shoppingList = extractShoppingListFromDiet(dietPlan, 'Saturday');
+    const shoppingList = extractShoppingListFromDiet(dietPlan, 'Saturday', patient);
     const shopsUsed = [...new Set(shoppingList.map(i => i.shopSuggestion))];
     const shopsText = shopsUsed.length > 0
       ? `Najczęściej polecane sklepy: ${shopsUsed.join(', ')}.`
@@ -201,7 +201,7 @@ Return strictly valid JSON in ${lang} (no markdown):
 
 // 📦 Helpers
 
-function extractShoppingListFromDiet(dietPlan: any, day: string) {
+function extractShoppingListFromDiet(dietPlan: any, day: string, patient: any) {
   const meals = dietPlan[day] || [];
   const list: any[] = [];
 
@@ -213,7 +213,7 @@ function extractShoppingListFromDiet(dietPlan: any, day: string) {
         unit: ingredient.unit,
         localPrice: estimatePrice(ingredient.name),
         onlinePrice: estimateOnlinePrice(ingredient.name),
-        shopSuggestion: suggestShop(ingredient.name)
+        shopSuggestion: suggestShop(ingredient.name, patient.region, patient.location)
       });
     });
   });
@@ -229,9 +229,20 @@ function estimateOnlinePrice(name: string) {
   return name.toLowerCase().includes('bio') ? '6.80 zł' : '3.30 zł';
 }
 
-function suggestShop(name: string) {
-  if (name.toLowerCase().includes('tofu')) return 'Lidl';
-  if (name.toLowerCase().includes('olej')) return 'Auchan';
+function suggestShop(name: string, region = '', location = '') {
+  const key = `${region.toLowerCase()}-${location.toLowerCase()}`;
+
+  if (name.toLowerCase().includes('tofu')) {
+    if (key.includes('warszawa')) return 'Lidl Warszawa – ul. Puławska';
+    if (key.includes('kraków')) return 'Lidl Kraków – ul. Zakopiańska';
+    return 'Lidl';
+  }
+
+  if (name.toLowerCase().includes('olej')) {
+    if (key.includes('warszawa')) return 'Auchan Warszawa – Jubilerska';
+    return 'Auchan';
+  }
+
   return 'Biedronka';
 }
 
