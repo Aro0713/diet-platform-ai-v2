@@ -23,6 +23,25 @@ export default function LandingLookIntro() {
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    if (!clicked) return;
+    const speak = async () => {
+      try {
+        const res = await fetch('/api/speak', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: tUI('lookClickMessage', lang), lang })
+        });
+        const blob = await res.blob();
+        const audio = new Audio(URL.createObjectURL(blob));
+        audio.play();
+      } catch (err) {
+        console.error('🔊 Błąd audio:', err);
+      }
+    };
+    speak();
+  }, [clicked, lang]);
+
   const message = tUI('lookIntroMessage', lang);
   const clickMessage = tUI('lookClickMessage', lang);
 
@@ -35,10 +54,14 @@ export default function LandingLookIntro() {
       style={{ top: randomTop }}
       onClick={() => setClicked(true)}
     >
-      {/* Look avatar */}
-      <div className="w-24 h-24 rounded-full bg-white shadow-md border-4 border-green-600 overflow-hidden">
+      {/* Look avatar with shake animation */}
+      <motion.div
+        animate={clicked ? { rotate: [0, -10, 10, -6, 6, -2, 2, 0] } : {}}
+        transition={{ duration: 0.6 }}
+        className="w-24 h-24 rounded-full bg-white shadow-md border-4 border-green-600 overflow-hidden"
+      >
         <Image src="/Look.png" alt="Look" width={96} height={96} />
-      </div>
+      </motion.div>
 
       {/* Komiksowy dymek */}
       <div className="relative max-w-md text-sm px-5 py-4 rounded-2xl shadow-xl comic-bubble bg-white text-gray-900 dark:bg-gray-800 dark:text-white">
@@ -57,4 +80,3 @@ export default function LandingLookIntro() {
     </motion.div>
   );
 }
-
