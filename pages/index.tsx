@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { tUI, LangKey, languageLabels } from '@/utils/i18n';
+import LandingLookIntro from '@/components/LandingLookIntro';
 
 export default function Home() {
   const [lang, setLang] = useState<LangKey>('pl');
@@ -159,6 +160,8 @@ useEffect(() => {
       >
         {tUI('signature', lang)}
       </motion.p>
+       {/* 👇 LOOK pojawia się po podpisie Edyty */}
+      <LandingLookIntro />
     </main>
   );
 }

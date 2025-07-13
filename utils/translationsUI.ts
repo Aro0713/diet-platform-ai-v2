@@ -4093,6 +4093,19 @@ lookReadyToHelp: {
   hi: "Look आपकी मदद के लिए तैयार है",
   ar: "لوك مستعد لمساعدتك",
   he: "Look מוכן לעזור לך"
+},
+lookIntroMessage: {
+  pl: "Cześć! Jestem Look, pomagam zespołowi Edyty przygotowywać spersonalizowaną dietę dla Ciebie. Spotkamy się na końcu, jak już moi asystenci wspólnie z zespołem dietetyków poukładają spersonalizowaną dietę.\n\nCzekam w panelu pacjenta jako Twój osobisty asystent AI.",
+  en: "Hi! I'm Look. I help Edyta's team prepare a personalized diet for you. We'll meet at the end — once my assistants and the dietitian team put together your plan.\n\nI'm waiting in the patient panel as your personal AI assistant.",
+  es: "¡Hola! Soy Look. Ayudo al equipo de Edyta a preparar una dieta personalizada para ti. Nos veremos al final, cuando mis asistentes y el equipo de dietistas terminen el plan.\n\nTe espero en el panel del paciente como tu asistente personal de IA.",
+  fr: "Salut ! Je suis Look. J'aide l'équipe d'Edyta à préparer un régime personnalisé pour toi. On se retrouve à la fin, une fois le plan finalisé avec mes assistants et les diététiciens.\n\nJe t'attends dans le panneau patient en tant qu’assistant IA personnel.",
+  de: "Hallo! Ich bin Look. Ich helfe Edytas Team, einen personalisierten Diätplan für dich zu erstellen. Wir sehen uns am Ende, wenn mein Team und die Ernährungsberater deinen Plan fertig haben.\n\nIch warte im Patientenpanel als dein persönlicher KI-Assistent.",
+  ua: "Привіт! Я — Look. Допомагаю команді Едіти підготувати для тебе персоналізовану дієту. Побачимось наприкінці, коли все буде готово.\n\nЯ чекаю тебе в панелі пацієнта як твій особистий AI-помічник.",
+  ru: "Привет! Я — Look. Помогаю команде Эдиты подготовить персональную диету для тебя. Увидимся позже, когда всё будет готово.\n\nЯ жду тебя в панели пациента как твой AI-ассистент.",
+  zh: "你好！我是 Look，我正在协助 Edyta 团队为你制定个性化饮食方案。等一切准备就绪后我们会再见面。\n\n我在患者面板中等你，作为你的个人 AI 助手。",
+  hi: "नमस्ते! मैं हूँ Look. मैं Edyta की टीम को आपके लिए एक व्यक्तिगत डाइट तैयार करने में मदद करता हूँ। हम अंत में मिलेंगे, जब योजना तैयार हो जाएगी।\n\nमैं मरीज पैनल में आपका AI सहायक बनकर इंतजार कर रहा हूँ।",
+  ar: "مرحبًا! أنا لوك. أساعد فريق إيديتا في إعداد نظام غذائي مخصص لك. سنلتقي لاحقًا عند اكتمال الخطة.\n\nأنا بانتظارك في لوحة المريض كمساعدك الذكي.",
+  he: "היי! אני Look, עוזר לצוות של אידיטה לבנות תפריט מותאם אישית עבורך. ניפגש בסוף כשהכל מוכן.\n\nאני ממתין לך בפאנל המטופל כעוזר ה-AI האישי שלך."
 }
 
 };
