@@ -4119,7 +4119,105 @@ lookClickMessage: {
   hi: "अच्छा लगा कि तुम बात करना चाहते हो, लेकिन पहले लॉग इन करो। हम अंत में मिलेंगे।",
   ar: "جميل أنك ترغب في التحدث، ولكن أولاً سجّل الدخول. سنلتقي لاحقًا.",
   he: "כיף שאתה רוצה לדבר! אבל קודם תיכנס לחשבון. ניפגש בסוף."
+},
+resetSuccess: {
+  pl: "✅ Twoje hasło zostało zmienione. Możesz się teraz zalogować.",
+  en: "✅ Your password has been changed. You can now log in.",
+  es: "✅ Tu contraseña ha sido cambiada. Ahora puedes iniciar sesión.",
+  fr: "✅ Votre mot de passe a été modifié. Vous pouvez maintenant vous connecter.",
+  de: "✅ Dein Passwort wurde geändert. Du kannst dich jetzt einloggen.",
+  ua: "✅ Ваш пароль змінено. Тепер ви можете увійти.",
+  ru: "✅ Ваш пароль изменён. Теперь вы можете войти.",
+  zh: "✅ 您的密码已更改。您现在可以登录了。",
+  hi: "✅ आपका पासवर्ड बदल दिया गया है। अब आप लॉग इन कर सकते हैं।",
+  ar: "✅ تم تغيير كلمة المرور الخاصة بك. يمكنك الآن تسجيل الدخول.",
+  he: "✅ הסיסמה שלך שונתה. תוכל כעת להתחבר."
+},
+setNewPassword: {
+  pl: "Ustaw nowe hasło",
+  en: "Set new password",
+  es: "Establecer nueva contraseña",
+  fr: "Définir un nouveau mot de passe",
+  de: "Neues Passwort festlegen",
+  ua: "Встановити новий пароль",
+  ru: "Установить новый пароль",
+  zh: "设置新密码",
+  hi: "नया पासवर्ड सेट करें",
+  ar: "تعيين كلمة مرور جديدة",
+  he: "הגדר סיסמה חדשה"
+},
+
+newPassword: {
+  pl: "Nowe hasło",
+  en: "New password",
+  es: "Nueva contraseña",
+  fr: "Nouveau mot de passe",
+  de: "Neues Passwort",
+  ua: "Новий пароль",
+  ru: "Новый пароль",
+  zh: "新密码",
+  hi: "नया पासवर्ड",
+  ar: "كلمة المرور الجديدة",
+  he: "סיסמה חדשה"
+},
+
+confirmPassword: {
+  pl: "Powtórz hasło",
+  en: "Confirm password",
+  es: "Confirmar contraseña",
+  fr: "Confirmer le mot de passe",
+  de: "Passwort bestätigen",
+  ua: "Підтвердіть пароль",
+  ru: "Подтвердите пароль",
+  zh: "确认密码",
+  hi: "पासवर्ड की पुष्टि करें",
+  ar: "تأكيد كلمة المرور",
+  he: "אשר סיסמה"
+},
+
+saveNewPassword: {
+  pl: "Zapisz nowe hasło",
+  en: "Save new password",
+  es: "Guardar nueva contraseña",
+  fr: "Enregistrer le nouveau mot de passe",
+  de: "Neues Passwort speichern",
+  ua: "Зберегти новий пароль",
+  ru: "Сохранить новый пароль",
+  zh: "保存新密码",
+  hi: "नया पासवर्ड सेव करें",
+  ar: "حفظ كلمة المرور الجديدة",
+  he: "שמור סיסמה חדשה"
+},
+
+resetError: {
+  pl: "Błąd przy zmianie hasła",
+  en: "Error during password reset",
+  es: "Error al restablecer la contraseña",
+  fr: "Erreur lors du changement de mot de passe",
+  de: "Fehler beim Zurücksetzen des Passworts",
+  ua: "Помилка під час зміни пароля",
+  ru: "Ошибка при сбросе пароля",
+  zh: "重设密码时出错",
+  hi: "पासवर्ड रीसेट में त्रुटि",
+  ar: "حدث خطأ أثناء إعادة تعيين كلمة المرور",
+  he: "שגיאה באיפוס הסיסמה"
+},
+
+passwordsMustMatch: {
+  pl: "Hasła muszą być identyczne",
+  en: "Passwords must match",
+  es: "Las contraseñas deben coincidir",
+  fr: "Les mots de passe doivent correspondre",
+  de: "Passwörter müssen übereinstimmen",
+  ua: "Паролі повинні збігатися",
+  ru: "Пароли должны совпадать",
+  zh: "密码必须匹配",
+  hi: "पासवर्ड मेल खाने चाहिए",
+  ar: "يجب أن تتطابق كلمتا المرور",
+  he: "הסיסמאות חייבות להתאים"
 }
+
+
 
 
 };

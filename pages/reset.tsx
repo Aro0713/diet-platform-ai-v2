@@ -1,8 +1,7 @@
 ﻿import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '@/lib/supabaseClient';
-import { getTranslation, type LangKey } from '@/utils/i18n';
-import { translationsRegister } from '@/components/utils/translations/register';
+import { tUI, type LangKey } from '@/utils/i18n';
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -12,58 +11,61 @@ export default function ResetPasswordPage() {
   const [message, setMessage] = useState('');
   const [lang, setLang] = useState<LangKey>('pl');
 
-useEffect(() => {
-  const url = new URL(window.location.href);
-  const type = url.searchParams.get('type');
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const type = url.searchParams.get('type');
 
-  // Tylko jeśli NIE jest to reset hasła — sprawdź sesję
-  if (type !== 'recovery') {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) router.push('/');
-    });
-  }
+    if (type !== 'recovery') {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) router.push('/');
+      });
+    }
 
-  const storedLang = localStorage.getItem('platformLang') as LangKey;
-  if (storedLang) setLang(storedLang);
-}, []);
-
-
-  const t = (key: keyof typeof translationsRegister) => getTranslation(translationsRegister, key, lang);
+    const storedLang = localStorage.getItem('platformLang') as LangKey;
+    if (storedLang) setLang(storedLang);
+  }, []);
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password !== confirmPassword) return setMessage(t('passwordsMustMatch'));
+    if (password !== confirmPassword) {
+      setMessage(tUI('passwordsMustMatch', lang));
+      return;
+    }
 
     setLoading(true);
     const { error } = await supabase.auth.updateUser({ password });
     setLoading(false);
 
     if (error) {
-      setMessage(t('resetError') + ': ' + error.message);
+      setMessage(tUI('resetError', lang) + ': ' + error.message);
     } else {
-      setMessage(t('resetSuccess'));
-      setTimeout(() => router.push('/register'), 3000);
+      setMessage(tUI('resetSuccess', lang));
+      setTimeout(() => router.push('/register?mode=login'), 3000);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <form onSubmit={handleReset} className="bg-white shadow-md rounded px-8 pt-6 pb-8 w-full max-w-md">
-        <h1 className="text-xl font-semibold mb-6 text-center">{t('setNewPassword')}</h1>
+    <main className="min-h-screen flex items-center justify-center px-4 bg-[#0f271e]/70 bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 backdrop-blur-[12px] shadow-[inset_0_0_60px_rgba(255,255,255,0.08)]">
+      <form
+        onSubmit={handleReset}
+        className="bg-white dark:bg-gray-900 shadow-xl rounded-lg p-6 text-gray-900 dark:text-white w-full max-w-md"
+      >
+        <h1 className="text-2xl font-bold mb-6 text-center">{tUI('setNewPassword', lang)}</h1>
 
         <input
           type="password"
           required
-          className="w-full px-3 py-2 border rounded mb-4"
-          placeholder={t('newPassword')}
+          className="w-full px-4 py-2 border rounded mb-4 bg-gray-50 dark:bg-gray-800"
+          placeholder={tUI('newPassword', lang)}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
+
         <input
           type="password"
           required
-          className="w-full px-3 py-2 border rounded mb-4"
-          placeholder={t('confirmPassword')}
+          className="w-full px-4 py-2 border rounded mb-4 bg-gray-50 dark:bg-gray-800"
+          placeholder={tUI('confirmPassword', lang)}
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
         />
@@ -71,13 +73,15 @@ useEffect(() => {
         <button
           type="submit"
           disabled={loading}
-          className={`w-full py-2 rounded text-white ${loading ? 'bg-gray-400' : 'bg-blue-700 hover:bg-blue-800'}`}
+          className={`w-full py-2 rounded text-white text-lg font-semibold transition ${
+            loading ? 'bg-gray-400' : 'bg-blue-700 hover:bg-blue-800'
+          }`}
         >
-          {t('saveNewPassword')}
+          {tUI('saveNewPassword', lang)}
         </button>
 
-        {message && <p className="mt-4 text-center text-sm text-gray-600">{message}</p>}
+        {message && <p className="mt-4 text-center text-sm text-gray-700 dark:text-gray-300">{message}</p>}
       </form>
-    </div>
+    </main>
   );
 }
