@@ -13,7 +13,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const speech = await openai.audio.speech.create({
       model: 'tts-1',
-      voice: 'nova',
+      voice: 'echo', // 🧔 męski głos Looka
       input: text
     });
 
@@ -26,3 +26,4 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(500).json({ error: 'Speech synthesis failed' });
   }
 }
+
