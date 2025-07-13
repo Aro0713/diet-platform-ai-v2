@@ -4106,7 +4106,21 @@ lookIntroMessage: {
   hi: "नमस्ते! मैं हूँ Look. मैं Edyta की टीम को आपके लिए एक व्यक्तिगत डाइट तैयार करने में मदद करता हूँ। हम अंत में मिलेंगे, जब योजना तैयार हो जाएगी।\n\nमैं मरीज पैनल में आपका AI सहायक बनकर इंतजार कर रहा हूँ।",
   ar: "مرحبًا! أنا لوك. أساعد فريق إيديتا في إعداد نظام غذائي مخصص لك. سنلتقي لاحقًا عند اكتمال الخطة.\n\nأنا بانتظارك في لوحة المريض كمساعدك الذكي.",
   he: "היי! אני Look, עוזר לצוות של אידיטה לבנות תפריט מותאם אישית עבורך. ניפגש בסוף כשהכל מוכן.\n\nאני ממתין לך בפאנל המטופל כעוזר ה-AI האישי שלך."
+},
+lookClickMessage: {
+  pl: "Fajnie, że chcesz pogadać, ale najpierw się zaloguj, spotkamy się na końcu.",
+  en: "Nice that you want to chat, but first log in — we'll meet at the end.",
+  es: "Qué bien que quieras hablar, pero primero inicia sesión. Nos vemos al final.",
+  fr: "Super que tu veuilles discuter ! Mais connecte-toi d'abord. On se retrouve à la fin.",
+  de: "Schön, dass du reden möchtest – aber logge dich zuerst ein. Wir sehen uns am Ende.",
+  ua: "Класно, що хочеш поспілкуватися, але спершу увійди в систему. Побачимось наприкінці.",
+  ru: "Здорово, что хочешь пообщаться! Но сначала войди в систему. Увидимся позже.",
+  zh: "很高兴你想聊天，但请先登录，我们最后再见面。",
+  hi: "अच्छा लगा कि तुम बात करना चाहते हो, लेकिन पहले लॉग इन करो। हम अंत में मिलेंगे।",
+  ar: "جميل أنك ترغب في التحدث، ولكن أولاً سجّل الدخول. سنلتقي لاحقًا.",
+  he: "כיף שאתה רוצה לדבר! אבל קודם תיכנס לחשבון. ניפגש בסוף."
 }
+
 
 };
 
