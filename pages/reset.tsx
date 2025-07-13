@@ -12,13 +12,21 @@ export default function ResetPasswordPage() {
   const [message, setMessage] = useState('');
   const [lang, setLang] = useState<LangKey>('pl');
 
-  useEffect(() => {
+useEffect(() => {
+  const url = new URL(window.location.href);
+  const type = url.searchParams.get('type');
+
+  // Tylko jeśli NIE jest to reset hasła — sprawdź sesję
+  if (type !== 'recovery') {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) router.push('/');
     });
-    const storedLang = localStorage.getItem('platformLang') as LangKey;
-    if (storedLang) setLang(storedLang);
-  }, []);
+  }
+
+  const storedLang = localStorage.getItem('platformLang') as LangKey;
+  if (storedLang) setLang(storedLang);
+}, []);
+
 
   const t = (key: keyof typeof translationsRegister) => getTranslation(translationsRegister, key, lang);
 
