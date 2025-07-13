@@ -45,6 +45,16 @@ useEffect(() => {
   }
 }, []);
 
+// Przechwycenie access_token i przekierowanie do resetu hasła
+useEffect(() => {
+  if (typeof window !== 'undefined') {
+    const hash = window.location.hash;
+    if (hash.includes('access_token') && !window.location.pathname.includes('/reset')) {
+      window.location.href = '/reset' + hash;
+    }
+  }
+}, []);
+
   if (!mounted) return null;
 
   return (
