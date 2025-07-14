@@ -25,8 +25,8 @@ export default function ShoppingListCard({
       </div>
 
       <h3 className="text-md font-semibold mb-2">
-        🛒 {tUI('shoppingListFor', lang)} {response.day}
-      </h3>
+        🛒 {tUI('shoppingListFor', lang)} {weekDaysMap[response.day]?.[lang] || response.day}
+        </h3>
 
       {/* 🆕 Obsługa shoppingGroups */}
       {response.shoppingGroups?.length > 0 ? (
