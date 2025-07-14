@@ -92,6 +92,30 @@ export function usePatientData(): UsePatientDataResult {
   setInitialMedicalData(JSON.parse(JSON.stringify(freshInitial)));
   setInitialInterviewData(JSON.parse(JSON.stringify(data.interview_data || {})));
 
+  // 🔍 Najpierw próbuj pobrać potwierdzoną dietę
+  const { data: confirmed } = await supabase
+    .from('patient_diets')
+    .select('diet_plan')
+    .eq('user_id', userId)
+    .eq('status', 'confirmed')
+    .order('confirmed_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (confirmed?.diet_plan) {
+    try {
+      const parsed = typeof confirmed.diet_plan === 'string'
+        ? JSON.parse(confirmed.diet_plan)
+        : confirmed.diet_plan;
+      setEditableDiet(parsed);
+      console.log('✅ Ustawiono dietę: confirmed');
+      return; // 🛑 nie pobieraj draftu, skoro confirmed istnieje
+    } catch (err) {
+      console.error('❌ Błąd parsowania confirmed diet_plan:', err);
+    }
+  }
+
+  // 🟡 Jeśli brak confirmed — pobierz draft
   const { data: draft } = await supabase
     .from('patient_diets')
     .select('*')
@@ -107,32 +131,12 @@ export function usePatientData(): UsePatientDataResult {
         ? JSON.parse(draft.diet_plan)
         : draft.diet_plan;
       setEditableDiet(parsed);
+      console.log('ℹ️ Ustawiono dietę: draft (bo brak confirmed)');
     } catch (err) {
       console.error('❌ Błąd parsowania draft diet_plan:', err);
     }
-  } else {
-    const { data: confirmed } = await supabase
-      .from('patient_diets')
-      .select('diet_plan')
-      .eq('user_id', userId)
-      .eq('status', 'confirmed')
-      .order('confirmed_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (confirmed?.diet_plan) {
-      try {
-        const parsed = typeof confirmed.diet_plan === 'string'
-          ? JSON.parse(confirmed.diet_plan)
-          : confirmed.diet_plan;
-        setEditableDiet(parsed);
-      } catch (err) {
-        console.error('❌ Błąd parsowania confirmed diet_plan:', err);
-      }
-    }
   }
 };
-
   const saveMedicalData = async ({
     selectedGroups,
     selectedConditions,
