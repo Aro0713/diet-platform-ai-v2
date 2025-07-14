@@ -451,7 +451,7 @@ const goToSectionWithScroll = (id: string) => {
           {/* 🔽 Neonowa strzałka Dalej */}
           <div className="mt-6 flex justify-end">
           <NeonNextArrow
-            onClick={() => goToSectionWithScroll("interview")}
+            onClick={() => goToSectionWithScroll("calculator")}
             label={tUI("nextSection_calculator", lang)}
           />
         </div>
