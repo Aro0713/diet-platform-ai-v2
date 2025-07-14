@@ -5,6 +5,7 @@ import { tUI, type LangKey } from '@/utils/i18n';
 import { useBasket } from '@/hooks/useBasket';
 import ShoppingListCard from '@/components/ShoppingListCard';
 import ProductAnswerCard from '@/components/ProductAnswerCard';
+import { Send } from 'lucide-react';
 
 interface Props {
   lang: LangKey;
@@ -188,31 +189,40 @@ export default function ProductAssistantPanel({
         </div>
       )}
 
-      <input
-        type="text"
-        value={question}
-        onChange={(e) => setQuestion(e.target.value)}
-        placeholder={tUI('askQuestionPlaceholder', lang)}
-        className="w-full p-2 rounded-md text-black placeholder-gray-400 mt-4 mb-3"
-      />
+   <div className="flex items-center gap-2 mt-4">
+  <input
+    type="text"
+    value={question}
+    onChange={(e) => setQuestion(e.target.value)}
+    onKeyDown={(e) => {
+      if (e.key === 'Enter' && !loading) {
+        e.preventDefault();
+        handleAsk();
+      }
+    }}
+    placeholder={tUI('askQuestionPlaceholder', lang)}
+    className="flex-grow p-2 rounded-md text-black placeholder-gray-400"
+  />
 
-      <input
-        type="file"
-        accept="image/*"
-        onChange={(e) => {
-          const selected = e.target.files?.[0];
-          setImageFile(selected instanceof File ? selected : null);
-        }}
-        className="mb-3"
-      />
+  <button
+    onClick={handleAsk}
+    className="w-10 h-10 rounded-full bg-green-600 hover:bg-green-700 flex items-center justify-center text-white shadow disabled:opacity-50"
+    disabled={loading}
+    title={tUI('startConversationWithLook', lang)}
+  >
+    <Send size={18} />
+  </button>
+</div>
 
-      <button
-        onClick={handleAsk}
-        className="px-4 py-2 bg-green-600 rounded-md hover:bg-green-700 font-medium"
-        disabled={loading}
-      >
-        {loading ? '🧠 Look myśli...' : `💬 ${tUI('startConversationWithLook', lang)}`}
-      </button>
+<input
+  type="file"
+  accept="image/*"
+  onChange={(e) => {
+    const selected = e.target.files?.[0];
+    setImageFile(selected instanceof File ? selected : null);
+  }}
+  className="mt-2"
+/>
 
       {error && <p className="text-red-400 mt-4">{error}</p>}
 
