@@ -227,9 +227,22 @@ useEffect(() => {
   const rawMode = router.query.mode || entryMode || 'patient';
   const mode = Array.isArray(rawMode) ? rawMode[0] : rawMode;
 
-  if (!userType && (mode === 'doctor' || mode === 'dietitian' || mode === 'patient')) {
-    setUserType(mode as 'doctor' | 'dietitian' | 'patient');
+  if (!userType) {
+  if (mode === 'doctor' || mode === 'dietitian' || mode === 'patient') {
+    setUserType(mode);
+  } else if (mode === 'login') {
+    // 👉 Próbujemy wykryć rolę po sesji (jeśli użytkownik jest zalogowany)
+    supabase.auth.getSession().then(({ data }) => {
+      const role = data?.session?.user?.user_metadata?.role;
+      if (role === 'doctor' || role === 'dietitian' || role === 'patient') {
+        setUserType(role);
+      } else {
+        setUserType('patient'); // fallback
+      }
+    });
   }
+}
+
 }, [router.isReady, router.query.mode, userType]);
 
 useEffect(() => {
