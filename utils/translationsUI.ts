@@ -4215,10 +4215,20 @@ passwordsMustMatch: {
   hi: "पासवर्ड मेल खाने चाहिए",
   ar: "يجب أن تتطابق كلمتا المرور",
   he: "הסיסמאות חייבות להתאים"
+},
+askLook: {
+  pl: "Zapytaj Looka",
+  en: "Ask Look",
+  es: "Pregúntale a Look",
+  fr: "Demande à Look",
+  de: "Frag Look",
+  ua: "Запитай у Look",
+  ru: "Спроси Look",
+  zh: "问问 Look",
+  hi: "Look से पूछें",
+  ar: "اسأل Look",
+  he: "שאל את Look"
 }
-
-
-
 
 };
 

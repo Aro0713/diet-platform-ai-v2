@@ -5,7 +5,6 @@ import {
   Stethoscope,
   FileText,
   Calculator,
-  ScanLine,
   ChefHat
 } from 'lucide-react';
 
@@ -53,10 +52,16 @@ export const PatientIconGrid: React.FC<PatientIconGridProps> = ({ lang, onSelect
       ring: 'ring-blue-300'
     },
     {
-      id: 'scanner',
-      label: tUI('scanProduct', lang),
-      icon: ScanLine,
-      color: 'text-purple-500',
+      id: 'look',
+      label: tUI('askLook', lang),
+      icon: () => (
+        <img
+          src="/look-avatar.png" // 🖼️ <- podmień ścieżkę jeśli inna
+          alt="Look"
+          className="w-10 h-10 rounded-full border-2 border-white shadow"
+        />
+      ),
+      color: '',
       ring: 'ring-purple-300'
     }
   ];
@@ -69,8 +74,12 @@ export const PatientIconGrid: React.FC<PatientIconGridProps> = ({ lang, onSelect
           <button
             key={id}
             onClick={() => {
-              onSelect(id);
-              window.scrollTo({ top: 0, behavior: 'smooth' });
+              if (id === 'look') {
+                document.getElementById('look-assistant')?.scrollIntoView({ behavior: 'smooth' });
+              } else {
+                onSelect(id);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }
             }}
             className={`flex flex-col items-center justify-center p-4 rounded-2xl
               transition-all duration-300 shadow-md hover:scale-105 bg-white/20 dark:bg-white/10
