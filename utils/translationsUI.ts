@@ -4242,6 +4242,19 @@ shoppingListFor: {
   ar: "قائمة التسوق ليوم",
   he: "רשימת קניות עבור"
 },
+logout: {
+  pl: 'Wyloguj się',
+  en: 'Log out',
+  de: 'Abmelden',
+  fr: 'Se déconnecter',
+  es: 'Cerrar sesión',
+  ua: 'Вийти',
+  ru: 'Выйти',
+  zh: '退出登录',
+  ar: 'تسجيل الخروج',
+  hi: 'लॉग आउट करें',
+  he: 'התנתק'
+},
 
 };
 

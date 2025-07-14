@@ -1,11 +1,11 @@
-// components/LangAndThemeToggle.tsx
-
 "use client";
 
 import { useEffect, useState } from 'react';
 import { LangKey, languageLabels } from '@/utils/i18n';
 import { useRouter } from 'next/router';
 import { SunIcon, MoonIcon } from 'lucide-react';
+import { supabase } from '@/lib/supabaseClient';
+import { tUI } from '@/utils/i18n';
 
 export default function LangAndThemeToggle() {
   const router = useRouter();
@@ -13,7 +13,6 @@ export default function LangAndThemeToggle() {
   const [lang, setLang] = useState<LangKey>('pl');
   const [isDark, setIsDark] = useState(false);
 
-  // Load lang and theme from localStorage
   useEffect(() => {
     const storedLang = localStorage.getItem('platformLang') as LangKey;
     if (storedLang) setLang(storedLang);
@@ -24,7 +23,6 @@ export default function LangAndThemeToggle() {
     document.documentElement.classList.toggle('dark', dark);
   }, []);
 
-  // Handle language change
   const handleLangChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedLang = e.target.value as LangKey;
     setLang(selectedLang);
@@ -32,7 +30,6 @@ export default function LangAndThemeToggle() {
     router.reload();
   };
 
-  // Handle theme toggle
   const toggleTheme = () => {
     const newIsDark = !isDark;
     setIsDark(newIsDark);
@@ -40,20 +37,25 @@ export default function LangAndThemeToggle() {
     localStorage.setItem('theme', newIsDark ? 'dark' : 'light');
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/'); // lub '/login' jeśli masz stronę logowania
+  };
+
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex flex-col items-end gap-2">
       {/* LANGUAGE SELECTOR */}
       <select
-    className="px-2 py-1 rounded-md border border-gray-300 text-black bg-white dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-    value={lang}
-    onChange={handleLangChange}
-  >
-    {Object.entries(languageLabels).map(([key, label]) => (
-      <option key={key} value={key}>
-        {label}
-      </option>
-    ))}
-  </select>
+        className="px-2 py-1 rounded-md border border-gray-300 text-black bg-white dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+        value={lang}
+        onChange={handleLangChange}
+      >
+        {Object.entries(languageLabels).map(([key, label]) => (
+          <option key={key} value={key}>
+            {label}
+          </option>
+        ))}
+      </select>
 
       {/* THEME TOGGLE */}
       <button
@@ -73,6 +75,14 @@ export default function LangAndThemeToggle() {
           )}
         </div>
       </button>
+
+      {/* 🔴 WYLOGUJ SIĘ */}
+      <button
+      onClick={handleLogout}
+      className="text-sm text-red-300 hover:text-red-500 transition"
+    >
+      {tUI('logout', lang)}
+    </button>
     </div>
   );
 }
