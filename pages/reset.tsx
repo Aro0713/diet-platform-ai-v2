@@ -11,19 +11,21 @@ export default function ResetPasswordPage() {
   const [message, setMessage] = useState('');
   const [lang, setLang] = useState<LangKey>('pl');
 
-  useEffect(() => {
-    const url = new URL(window.location.href);
-    const type = url.searchParams.get('type');
+useEffect(() => {
+  const url = new URL(window.location.href);
+  const type = url.searchParams.get('type');
+  const access_token = url.searchParams.get('access_token');
 
-    if (type !== 'recovery') {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) router.push('/');
-      });
-    }
+  // Wymuszamy sesję jeśli to reset
+  if (type === 'recovery' && access_token) {
+    supabase.auth.exchangeCodeForSession(access_token).then(({ error }) => {
+      if (error) console.error('❌ Token exchange error', error);
+    });
+  }
 
-    const storedLang = localStorage.getItem('platformLang') as LangKey;
-    if (storedLang) setLang(storedLang);
-  }, []);
+  const storedLang = localStorage.getItem('platformLang') as LangKey;
+  if (storedLang) setLang(storedLang);
+}, []);
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
