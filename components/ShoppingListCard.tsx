@@ -1,5 +1,6 @@
 import React from 'react';
 import { tUI, type LangKey } from '@/utils/i18n';
+import { weekDaysMap } from '@/utils/weekDaysMap';
 
 export default function ShoppingListCard({
   response,
