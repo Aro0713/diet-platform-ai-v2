@@ -27,14 +27,39 @@ export default function ShoppingListCard({
         🛒 {tUI('shoppingListFor', lang)} {response.day}
       </h3>
 
-      <ul className="space-y-2 text-sm">
-        {response.shoppingList?.map((item: any, idx: number) => (
-          <li key={idx} className="border-b border-gray-300 pb-2">
-            <strong>{item.product}</strong> — {item.quantity} {item.unit} <br />
-            🏪 {item.localPrice} ({item.shopSuggestion}) | 🌐 {item.onlinePrice}
-          </li>
-        ))}
-      </ul>
+      {/* 🆕 Obsługa shoppingGroups */}
+      {response.shoppingGroups?.length > 0 ? (
+        <div className="space-y-4">
+          {response.shoppingGroups.map((group: any, i: number) => (
+            <div
+              key={i}
+              className="p-3 bg-white/80 rounded-md border border-emerald-200"
+            >
+              <h4 className="font-semibold text-sm mb-2">
+                🏬 {group.shop}
+              </h4>
+              <ul className="list-disc pl-5 text-sm space-y-1">
+                {group.items.map((item: any, j: number) => (
+                  <li key={j}>
+                    <strong>{item.product}</strong> — {item.quantity} {item.unit}
+                    {item.localPrice && <> – 💰 {item.localPrice}</>}
+                    {item.onlinePrice && <> | 🌐 {item.onlinePrice}</>}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <ul className="space-y-2 text-sm">
+          {response.shoppingList?.map((item: any, idx: number) => (
+            <li key={idx} className="border-b border-gray-300 pb-2">
+              <strong>{item.product}</strong> — {item.quantity} {item.unit} <br />
+              🏪 {item.localPrice} ({item.shopSuggestion}) | 🌐 {item.onlinePrice}
+            </li>
+          ))}
+        </ul>
+      )}
 
       <div className="mt-4 font-semibold text-green-700 text-sm">
         💰 {tUI('localTotal', lang)} {response.totalEstimatedCost?.local} <br />
