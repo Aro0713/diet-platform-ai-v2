@@ -485,42 +485,44 @@ const goToSectionWithScroll = (id: string) => {
         )}
 
 
-        {selectedSection === 'diet' && (
+{selectedSection === 'diet' && (
   <div className="space-y-6">
-    {/* Wybór celu, modelu, kuchni */}
-   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-center">
-  <div className="min-h-[180px] w-full max-w-[240px] flex flex-col justify-between items-center mx-auto">
-    <DietGoalForm
-      lang={lang}
-      onChange={(goal) => setInterviewData({ ...interviewData, goal })}
-    />
-  </div>
+    {/* 🧠 Cel, model, kuchnia, posiłki – 2 rzędy po 2 kolumny */}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-center">
+      <div className="min-h-[180px] w-full max-w-[360px] flex flex-col justify-between items-center mx-auto">
+        <DietGoalForm
+          lang={lang}
+          onChange={(goal) => setInterviewData({ ...interviewData, goal })}
+        />
+      </div>
 
-  <div className="min-h-[180px] w-full max-w-[240px] flex flex-col justify-between items-center mx-auto">
-    <SelectModelForm
-      lang={lang}
-      onChange={(model) => setInterviewData({ ...interviewData, model })}
-    />
-  </div>
+      <div className="min-h-[180px] w-full max-w-[360px] flex flex-col justify-between items-center mx-auto">
+        <SelectModelForm
+          lang={lang}
+          onChange={(model) => setInterviewData({ ...interviewData, model })}
+        />
+      </div>
 
-  <div className="min-h-[180px] w-full max-w-[240px] flex flex-col justify-between items-center mx-auto">
-    <SelectCuisineForm
-      lang={lang}
-      onChange={(cuisine) => setInterviewData({ ...interviewData, cuisine })}
-    />
-  </div>
+      <div className="min-h-[180px] w-full max-w-[360px] flex flex-col justify-between items-center mx-auto">
+        <SelectCuisineForm
+          lang={lang}
+          onChange={(cuisine) => setInterviewData({ ...interviewData, cuisine })}
+        />
+      </div>
 
-  <div className="min-h-[180px] w-full max-w-[240px] flex flex-col justify-between items-center mx-auto">
-    <SelectMealsPerDayForm
-      value={interviewData?.mealsPerDay}
-      onChange={(meals: number) =>
-        setInterviewData({ ...interviewData, mealsPerDay: meals })
-      }
-    />
-  </div>
-</div>
+      <div className="min-h-[180px] w-full max-w-[360px] flex flex-col justify-between items-center mx-auto">
+        <SelectMealsPerDayForm
+          value={interviewData?.mealsPerDay}
+          onChange={(meals: number) =>
+            setInterviewData({ ...interviewData, mealsPerDay: meals })
+          }
+        />
+      </div>
+    </div>
 
-<div className="space-y-4">
+    {/* 🔽 Kolejna sekcja – status, przyciski, tabela */}
+    <div className="space-y-4">
+
 
   {/* ⏳ Status generowania */}
   {isGenerating && (
