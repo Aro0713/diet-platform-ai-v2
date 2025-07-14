@@ -489,28 +489,37 @@ const goToSectionWithScroll = (id: string) => {
   <div className="space-y-6">
     {/* Wybór celu, modelu, kuchni */}
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-  <DietGoalForm
-    lang={lang}
-    onChange={(goal) => setInterviewData({ ...interviewData, goal })}
-  />
+  <div className="min-h-[180px] flex flex-col justify-between">
+    <DietGoalForm
+      lang={lang}
+      onChange={(goal) => setInterviewData({ ...interviewData, goal })}
+    />
+  </div>
 
-  <SelectModelForm
-    lang={lang}
-    onChange={(model) => setInterviewData({ ...interviewData, model })}
-  />
+  <div className="min-h-[180px] flex flex-col justify-between">
+    <SelectModelForm
+      lang={lang}
+      onChange={(model) => setInterviewData({ ...interviewData, model })}
+    />
+  </div>
 
-  <SelectCuisineForm
-    lang={lang}
-    onChange={(cuisine) => setInterviewData({ ...interviewData, cuisine })}
-  />
+  <div className="min-h-[180px] flex flex-col justify-between">
+    <SelectCuisineForm
+      lang={lang}
+      onChange={(cuisine) => setInterviewData({ ...interviewData, cuisine })}
+    />
+  </div>
 
-  <SelectMealsPerDayForm
-  value={interviewData?.mealsPerDay}
-  onChange={(meals: number) =>
-    setInterviewData({ ...interviewData, mealsPerDay: meals })
-  }
-  />
+  <div className="min-h-[180px] flex flex-col justify-between">
+    <SelectMealsPerDayForm
+      value={interviewData?.mealsPerDay}
+      onChange={(meals: number) =>
+        setInterviewData({ ...interviewData, mealsPerDay: meals })
+      }
+    />
+  </div>
 </div>
+
 
 <div className="space-y-4">
 
