@@ -272,14 +272,7 @@ useEffect(() => {
     console.log('🧪 t("phone"):', t('phone'));
     console.log('🧪 t("continueWithoutRegister"):', t('continueWithoutRegister'));
   }, [lang]);
-
-  if (!langReady || !router.isReady) {
-    return (
-      <main className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500 text-sm">⏳ Ładowanie języka...</p>
-      </main>
-    );
-  }
+ 
   useEffect(() => {
     if (resetCooldown <= 0) return;
     const timer = setInterval(() => {
@@ -287,6 +280,14 @@ useEffect(() => {
     }, 1000);
     return () => clearInterval(timer);
   }, [resetCooldown]);
+  
+  if (!langReady || !router.isReady) {
+    return (
+      <main className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-500 text-sm">⏳ Ładowanie języka...</p>
+      </main>
+    );
+  }
 
 const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
   event.preventDefault();
