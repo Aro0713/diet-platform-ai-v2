@@ -489,28 +489,28 @@ const goToSectionWithScroll = (id: string) => {
   <div className="space-y-6">
     {/* 🧠 Cel, model, kuchnia, posiłki – 2 rzędy po 2 kolumny */}
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-center">
-      <div className="min-h-[180px] w-full max-w-[360px] flex flex-col justify-between items-center mx-auto">
+      <div className="w-full sm:max-w-[360px] min-h-[180px] flex flex-col justify-between items-center px-4 mx-auto">
         <DietGoalForm
           lang={lang}
           onChange={(goal) => setInterviewData({ ...interviewData, goal })}
         />
       </div>
 
-      <div className="min-h-[180px] w-full max-w-[360px] flex flex-col justify-between items-center mx-auto">
+      <div className="w-full sm:max-w-[360px] min-h-[180px] flex flex-col justify-between items-center px-4 mx-auto">
         <SelectModelForm
           lang={lang}
           onChange={(model) => setInterviewData({ ...interviewData, model })}
         />
       </div>
 
-      <div className="min-h-[180px] w-full max-w-[360px] flex flex-col justify-between items-center mx-auto">
-        <SelectCuisineForm
+     <div className="w-full sm:max-w-[360px] min-h-[180px] flex flex-col justify-between items-center px-4 mx-auto">
+       <SelectCuisineForm
           lang={lang}
           onChange={(cuisine) => setInterviewData({ ...interviewData, cuisine })}
         />
       </div>
 
-      <div className="min-h-[180px] w-full max-w-[360px] flex flex-col justify-between items-center mx-auto">
+      <div className="w-full sm:max-w-[360px] min-h-[180px] flex flex-col justify-between items-center px-4 mx-auto">
         <SelectMealsPerDayForm
           value={interviewData?.mealsPerDay}
           onChange={(meals: number) =>
