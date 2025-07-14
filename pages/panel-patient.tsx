@@ -74,24 +74,17 @@ useEffect(() => {
 
   console.log("📦 form w panel-patient:", form);
 
-  // ✅ Pobranie danych pacjenta po załadowaniu komponentu
-useEffect(() => {
-  fetchPatientData(); // ✅ ta wersja jest zgodna z Twoim hookiem
-}, []);
-
-
-  // 🔁 Pobranie danych przy powrocie do sekcji 'medical'
-  useEffect(() => {
-    if (selectedSection === 'medical') {
-      const userId = localStorage.getItem('currentUserID');
-      if (userId) {fetchPatientData(); 
-      }
-    }
-  }, [selectedSection]);
+// 🔁 Pobranie danych przy powrocie do sekcji 'medical' + załaduj zatwierdzoną dietę, jeśli nie ma jeszcze żadnej
 useEffect(() => {
   const userId = localStorage.getItem('currentUserID');
   if (!userId) return;
 
+  // Jeśli wracamy do sekcji medycznej – odśwież dane
+  if (selectedSection === 'medical') {
+    fetchPatientData();
+  }
+
+  // Pobierz dietę tylko jeśli nie została już ustawiona
   supabase
     .from('patient_diets')
     .select('*')
@@ -103,14 +96,21 @@ useEffect(() => {
       if (error) {
         console.error('❌ Błąd przy pobieraniu diety:', error.message);
       } else if (data && data[0]) {
-        setEditableDiet(data[0].diet_plan); // ✅ kluczowy moment!
+        setEditableDiet((prev: Record<string, Meal[]> | undefined) => {
+        if (prev && Object.keys(prev).length > 0) {
+          console.log("🔁 Dieta już była ustawiona — pomijam nadpisywanie.");
+          return prev;
+        } else {
+          console.log('✅ Załadowano zatwierdzoną dietę z Supabase:', data[0]);
+          return data[0].diet_plan;
+        }
+      });
         setDietApproved(true);
-        console.log('✅ Załadowano potwierdzoną dietę:', data[0]);
       } else {
         console.warn('⚠️ Brak potwierdzonej diety');
       }
     });
-}, []);
+}, [selectedSection]);
 
   const saveDietToSupabaseAndPdf = async () => {
     try {
