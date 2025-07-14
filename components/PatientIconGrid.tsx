@@ -52,18 +52,18 @@ export const PatientIconGrid: React.FC<PatientIconGridProps> = ({ lang, onSelect
       ring: 'ring-blue-300'
     },
     {
-      id: 'look',
-      label: tUI('askLook', lang),
-      icon: () => (
-        <img
-          src="/Look.png"
-          alt="Look avatar"
-          className="w-[42px] h-[42px] rounded-full border-2 border-white shadow"
-        />
-      ),
-      color: '',
-      ring: 'ring-purple-300'
-    }
+  id: 'scanner',
+  label: tUI('askLook', lang), // 🔁 nowa etykieta
+  icon: () => (
+    <img
+      src="/Look.png"
+      alt="Look avatar"
+      className="w-[42px] h-[42px] rounded-full border-2 border-white shadow"
+    />
+  ),
+  color: '',
+  ring: 'ring-purple-300'
+}
 
   ];
 
