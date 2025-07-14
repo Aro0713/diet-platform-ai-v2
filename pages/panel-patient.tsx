@@ -23,6 +23,7 @@ import { generateDietPdf } from '@/utils/generateDietPdf';
 import NeonNextArrow from "@/components/NeonNextArrow";
 import ProductAssistantPanel from '@/components/ProductAssistantPanel';
 import BasketTable from '@/components/BasketTable';
+import SelectMealsPerDayForm from '@/components/SelectMealsPerDay';
 
 
 export default function DoctorPanelPage(): React.JSX.Element {
@@ -487,22 +488,29 @@ const goToSectionWithScroll = (id: string) => {
         {selectedSection === 'diet' && (
   <div className="space-y-6">
     {/* Wybór celu, modelu, kuchni */}
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <DietGoalForm
-        lang={lang}
-        onChange={(goal) => setInterviewData({ ...interviewData, goal })}
-        />
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+  <DietGoalForm
+    lang={lang}
+    onChange={(goal) => setInterviewData({ ...interviewData, goal })}
+  />
 
-        <SelectModelForm
-        lang={lang}
-        onChange={(model) => setInterviewData({ ...interviewData, model })}
-        />
+  <SelectModelForm
+    lang={lang}
+    onChange={(model) => setInterviewData({ ...interviewData, model })}
+  />
 
-        <SelectCuisineForm
-        lang={lang}
-        onChange={(cuisine) => setInterviewData({ ...interviewData, cuisine })}
-        />
-    </div>
+  <SelectCuisineForm
+    lang={lang}
+    onChange={(cuisine) => setInterviewData({ ...interviewData, cuisine })}
+  />
+
+  <SelectMealsPerDayForm
+  value={interviewData?.mealsPerDay}
+  onChange={(meals: number) =>
+    setInterviewData({ ...interviewData, mealsPerDay: meals })
+  }
+  />
+</div>
 
 <div className="space-y-4">
 
