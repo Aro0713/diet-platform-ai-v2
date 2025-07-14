@@ -100,6 +100,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         audio: null
       });
     }
+function getTargetDay(question: string): string {
+  const today = new Date();
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const lower = question.toLowerCase();
+
+  if (lower.includes('jutro') || lower.includes('tomorrow')) {
+    return days[(today.getDay() + 1) % 7];
+  }
+
+  if (lower.includes('dzisiaj') || lower.includes('today')) {
+    return days[today.getDay()];
+  }
+
+  for (let i = 0; i < days.length; i++) {
+    if (lower.includes(days[i].toLowerCase())) {
+      return days[i];
+    }
+  }
+
+  return 'Saturday'; // fallback default
+}
+const targetDay = getTargetDay(question); // <- dynamicznie ustalamy dzień
 
 const prompt = `
 You are Look — a friendly personal assistant inside the Diet Care Platform (DCP).
@@ -114,28 +136,32 @@ NEVER suggest external apps, services or tools — you are part of DCP and must 
 
 If the user asks about a specific product — return mode: "product".
 If the user asks about shopping or what to buy — return mode: "shopping".
+If the user explicitly asks to group products by shop (e.g. "group by shop", "separate by store", "which shop sells what"), then return a grouped list using the "shoppingGroups" format instead of a flat list.
 If the question is general or instructional — return mode: "response".
 
 Shopping list mode example:
 {
   "mode": "shopping",
-  "day": "Saturday",
-  "shoppingList": [
+  "day": "${targetDay}",
+  "shoppingGroups": [
     {
-      "product": "Quinoa",
-      "quantity": "80",
-      "unit": "g",
-      "localPrice": "5.20 PLN",
-      "onlinePrice": "6.00 PLN",
-      "shopSuggestion": "Lidl"
+      "shop": "Lidl",
+      "items": [
+        { "product": "Quinoa", "quantity": "80", "unit": "g" }
+      ]
     },
-    ...
+    {
+      "shop": "Biedronka",
+      "items": [
+        { "product": "Tofu", "quantity": "100", "unit": "g" }
+      ]
+    }
   ],
   "totalEstimatedCost": {
     "local": "34.50 PLN",
     "online": "39.80 PLN"
   },
-  "summary": "Your shopping list for Saturday with optimized prices.",
+  "summary": "Your shopping list grouped by store with optimized prices.",
   "audio": "(optional text-to-speech URL)"
 }
 
@@ -178,6 +204,7 @@ Always greet the patient by name: "${firstName}" — naturally and politely.
 - shopping list generator
 
 🛍️ If the user asks about what to buy, generate a full shopping list using mode: "shopping", including prices and shops.
+If they ask to group products by store — return a structured response using "shoppingGroups", one group per shop.
 🧺 If the user asks about a product, use mode: "product" and provide shop, price, better alternative, and explanation.
 💬 If the question is general, reply with mode: "response".
 
