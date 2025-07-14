@@ -114,6 +114,7 @@ const [disclaimer, setDisclaimer] = useState('');
   const [jurisdiction, setJurisdiction] = useState('');
   const [licenseNumber, setLicenseNumber] = useState('');
   const [recoveryID, setRecoveryID] = useState('');
+  const [resetCooldown, setResetCooldown] = useState(0);
   const [consentGiven, setConsentGiven] = useState(false);
   const [region, setRegion] = useState('');
   const [location, setLocation] = useState('');
@@ -279,6 +280,13 @@ useEffect(() => {
       </main>
     );
   }
+  useEffect(() => {
+    if (resetCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setResetCooldown((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resetCooldown]);
 
 const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
   event.preventDefault();
@@ -359,7 +367,13 @@ if (role === 'doctor' || role === 'dietitian') {
     const { error } = await supabase.auth.resetPasswordForEmail(recoveryID, {
       redirectTo: 'https://dcp.care/reset',
     });
-    if (error) return alert(tUI('passwordResetError') + ': ' + error.message);
+    if (error) {
+  if (error.message.includes('rate limit')) {
+    setResetCooldown(60); // ⏱️ Start cooldown 60s
+    return;
+  }
+  return alert(tUI('passwordResetError') + ': ' + error.message);
+}
    alert(tUI('passwordResetSent'));
   };
 
@@ -599,12 +613,15 @@ return (
         aria-label={t('email')}
       />
       <button
-        type="button"
-        className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded w-full transition"
-        onClick={handleResetPassword}
-      >
-        {t('resetPassword')}
-      </button>
+      type="button"
+      className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded w-full transition disabled:opacity-50"
+      onClick={handleResetPassword}
+      disabled={resetCooldown > 0}
+    >
+      {resetCooldown > 0
+        ? `${t('resetPassword')} (${resetCooldown}s)`
+        : t('resetPassword')}
+    </button>
     </div>
   </article>
 
