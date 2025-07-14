@@ -84,12 +84,33 @@ useEffect(() => {
   useEffect(() => {
     if (selectedSection === 'medical') {
       const userId = localStorage.getItem('currentUserID');
-      if (userId) {
-        fetchPatientData(); 
+      if (userId) {fetchPatientData(); 
       }
     }
   }, [selectedSection]);
+useEffect(() => {
+  const userId = localStorage.getItem('currentUserID');
+  if (!userId) return;
 
+  supabase
+    .from('patient_diets')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('status', 'confirmed')
+    .order('confirmed_at', { ascending: false })
+    .limit(1)
+    .then(({ data, error }) => {
+      if (error) {
+        console.error('❌ Błąd przy pobieraniu diety:', error.message);
+      } else if (data && data[0]) {
+        setEditableDiet(data[0].diet_plan); // ✅ kluczowy moment!
+        setDietApproved(true);
+        console.log('✅ Załadowano potwierdzoną dietę:', data[0]);
+      } else {
+        console.warn('⚠️ Brak potwierdzonej diety');
+      }
+    });
+}, []);
 
   const saveDietToSupabaseAndPdf = async () => {
     try {
