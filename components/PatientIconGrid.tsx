@@ -56,14 +56,15 @@ export const PatientIconGrid: React.FC<PatientIconGridProps> = ({ lang, onSelect
       label: tUI('askLook', lang),
       icon: () => (
         <img
-          src="/look-avatar.png" // 🖼️ <- podmień ścieżkę jeśli inna
-          alt="Look"
-          className="w-10 h-10 rounded-full border-2 border-white shadow"
+          src="/Look.png"
+          alt="Look avatar"
+          className="w-[42px] h-[42px] rounded-full border-2 border-white shadow"
         />
       ),
       color: '',
       ring: 'ring-purple-300'
     }
+
   ];
 
   return (
