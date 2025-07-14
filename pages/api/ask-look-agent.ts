@@ -103,24 +103,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 function getTargetDay(question: string): string {
   const today = new Date();
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const polishDays = ['niedziela', 'poniedziałek', 'wtorek', 'środa', 'czwartek', 'piątek', 'sobota'];
   const lower = question.toLowerCase();
 
+  // Jutro
   if (lower.includes('jutro') || lower.includes('tomorrow')) {
     return days[(today.getDay() + 1) % 7];
   }
 
+  // Dzisiaj
   if (lower.includes('dzisiaj') || lower.includes('today')) {
     return days[today.getDay()];
   }
 
-  for (let i = 0; i < days.length; i++) {
-    if (lower.includes(days[i].toLowerCase())) {
-      return days[i];
-    }
+  // Weekend
+  if (lower.includes('weekend') || lower.includes('na weekend')) {
+    return today.getDay() === 6 ? 'Sunday' : 'Saturday'; // jeśli dziś sobota, to niedziela; inaczej sobota
   }
 
-  return 'Saturday'; // fallback default
+  // Konkretne dni po polsku
+  for (let i = 0; i < polishDays.length; i++) {
+    if (lower.includes(polishDays[i])) return days[i];
+  }
+
+  // Konkretne dni po angielsku
+  for (let i = 0; i < days.length; i++) {
+    if (lower.includes(days[i].toLowerCase())) return days[i];
+  }
+
+  return 'Saturday'; // fallback
 }
+
 const targetDay = getTargetDay(question); // <- dynamicznie ustalamy dzień
 
 const prompt = `
@@ -138,6 +151,8 @@ If the user asks about a specific product — return mode: "product".
 If the user asks about shopping or what to buy — return mode: "shopping".
 If the user explicitly asks to group products by shop (e.g. "group by shop", "separate by store", "which shop sells what"), then return a grouped list using the "shoppingGroups" format instead of a flat list.
 If the question is general or instructional — return mode: "response".
+
+🛎️ You MUST return the value of "day" exactly as provided: "${targetDay}". Do not replace it, guess it, or infer it from the question again.
 
 Shopping list mode example:
 {

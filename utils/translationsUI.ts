@@ -4228,6 +4228,19 @@ askLook: {
   hi: "Look से पूछें",
   ar: "اسأل Look",
   he: "שאל את Look"
+},
+shoppingListFor: {
+  pl: "Lista zakupów na",
+  en: "Shopping list for",
+  es: "Lista de compras para",
+  fr: "Liste de courses pour",
+  de: "Einkaufsliste für",
+  ua: "Список покупок на",
+  ru: "Список покупок на",
+  zh: "购物清单：",
+  hi: "के लिए खरीदारी सूची",
+  ar: "قائمة التسوق ليوم",
+  he: "רשימת קניות עבור"
 }
 
 };
