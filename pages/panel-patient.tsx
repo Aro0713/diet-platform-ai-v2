@@ -379,36 +379,36 @@ const handleGenerateDiet = async () => {
     setProgressMessage('');
   }
 };
-function saveDraftToSupabase(): Promise<void> {
-  return (async () => {
-    try {
-      const userId = localStorage.getItem('currentUserID');
-      if (!userId) {
-        alert(tUI('noUserIdError', lang));
-        return;
-      }
 
-      const { error } = await supabase
-        .from('patient_diets')
-        .upsert({
-          user_id: userId,
-          diet_plan: editableDiet,
-          status: 'draft',
-          patient_name: form?.name || '',
-          selected_doctor_id: selectedDoctor
-        }, { onConflict: 'user_id' });
+async function saveDraftToSupabaseWithDoctor(email: string): Promise<void> {
+  try {
+    const userId = localStorage.getItem('currentUserID');
 
-      if (error) {
-        console.error(`${tUI('draftSaveErrorLog', lang)}:`, error.message);
-        alert(tUI('dietSubmissionError', lang));
-      } else {
-        alert(tUI('dietSubmissionSuccess', lang));
-      }
-    } catch (err) {
-      console.error(`${tUI('draftSaveCatchErrorLog', lang)}:`, err);
-      alert(tUI('dietSaveError', lang));
+    if (!userId) {
+      alert(tUI('noUserIdError', lang));
+      return;
     }
-  })();
+
+    const { error } = await supabase
+      .from('patient_diets')
+      .upsert({
+        user_id: userId,
+        diet_plan: editableDiet,
+        status: 'draft',
+        patient_name: form?.name || '',
+        selected_doctor_id: email
+      }, { onConflict: 'user_id' });
+
+    if (error) {
+      console.error(`${tUI('draftSaveErrorLog', lang)}:`, error.message);
+      alert(tUI('dietSubmissionError', lang));
+    } else {
+      alert(tUI('dietSubmissionSuccess', lang));
+    }
+  } catch (err) {
+    console.error(`${tUI('draftSaveCatchErrorLog', lang)}:`, err);
+    alert(tUI('dietSaveError', lang));
+  }
 }
 
 const handleGenerateRecipes = async () => {
@@ -823,63 +823,81 @@ useEffect(() => {
   </div>
 )}
 
-{/* 📤 Wyślij do lekarza */}
-<button
-  onClick={async () => {
-    const confirm = window.confirm(tUI('confirmSendDietToDoctor', lang));
-    if (!confirm) return;
+{doctorList.length > 0 && (
+  <div className="relative inline-block text-left w-full max-w-xs">
+    <div>
+      <button
+        type="button"
+        className="w-full h-28 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition"
+        id="doctor-menu"
+        aria-haspopup="true"
+        aria-expanded="true"
+      >
+        <span className="text-4xl leading-none">📤</span>
+        <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
+          {tUI('sendDietToDoctor', lang)}
+        </span>
+      </button>
+    </div>
 
-    if (!selectedDoctor) {
-      alert(tUI('selectDoctor', lang));
-      return;
-    }
+    {/* Dropdown lista lekarzy */}
+    <div className="origin-top-right absolute mt-2 w-full rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+      <div className="py-1">
+        {doctorList.map((doc) => (
+          <button
+            key={doc.id}
+            onClick={async () => {
+              const confirm = window.confirm(`${tUI('confirmSendDietToDoctor', lang)}\n${doc.name} (${doc.email})`);
+              if (!confirm) return;
 
-    setProgressMessage(tUI('savingDraft', lang));
-    startFakeProgress(10, 95);
+              setSelectedDoctor(doc.email); // 🧠 aktualizujemy stan
+              setProgressMessage(tUI('savingDraft', lang));
+              startFakeProgress(10, 95);
 
-    await saveDraftToSupabase();
+              await saveDraftToSupabaseWithDoctor(doc.email);
 
-    setProgressMessage(tUI('sendingNotification', lang));
+              setProgressMessage(tUI('sendingNotification', lang));
 
-    try {
-      const response = await fetch('/api/send-diet-notification', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          doctorEmail: selectedDoctor,
-          patientName: form?.name || '',
-          lang
-        })
-      });
+              try {
+                const response = await fetch('/api/send-diet-notification', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    doctorEmail: doc.email,
+                    patientName: form?.name || '',
+                    lang
+                  })
+                });
 
-      if (response.ok) {
-        stopFakeProgress();
-        setProgress(100);
-        setProgressMessage(tUI('notificationSent', lang));
-      } else {
-        throw new Error('Mail failed');
-      }
-    } catch (err) {
-      console.error('❌ Email error:', err);
-      alert(tUI('notificationFailed', lang));
-      stopFakeProgress();
-      setProgress(0);
-      setProgressMessage('');
-    } finally {
-      setTimeout(() => {
-        setProgress(0);
-        setProgressMessage('');
-      }, 1000);
-    }
-  }}
-  disabled={!editableDiet || Object.keys(editableDiet).length === 0}
-  className="w-28 h-28 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition disabled:opacity-50"
->
-  <span className="text-4xl leading-none">📤</span>
-  <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
-    {tUI('sendDietToDoctor', lang)}
-  </span>
-</button>
+                if (response.ok) {
+                  stopFakeProgress();
+                  setProgress(100);
+                  setProgressMessage(tUI('notificationSent', lang));
+                } else {
+                  throw new Error('Mail failed');
+                }
+              } catch (err) {
+                console.error('❌ Email error:', err);
+                alert(tUI('notificationFailed', lang));
+                stopFakeProgress();
+                setProgress(0);
+                setProgressMessage('');
+              } finally {
+                setTimeout(() => {
+                  setProgress(0);
+                  setProgressMessage('');
+                }, 1000);
+              }
+            }}
+            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+          >
+            {doc.name} ({doc.email})
+          </button>
+        ))}
+      </div>
+    </div>
+  </div>
+)}
 
 </div>
 
