@@ -25,9 +25,10 @@ import ProductAssistantPanel from '@/components/ProductAssistantPanel';
 import BasketTable from '@/components/BasketTable';
 import SelectMealsPerDayForm from '@/components/SelectMealsPerDay';
 import ProgressOverlay from '@/components/ProgressOverlay';
+import { useRef } from 'react';
 
 
-export default function DoctorPanelPage(): React.JSX.Element {
+export default function PatientPanelPage(): React.JSX.Element {
   const router = useRouter();
   const [lang, setLang] = useState<LangKey>('pl');
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
@@ -38,31 +39,14 @@ export default function DoctorPanelPage(): React.JSX.Element {
   const [dietApproved, setDietApproved] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [recipes, setRecipes] = useState<any>(null);
-  const [isGeneratingRecipes, setIsGeneratingRecipes] = useState(false)
+  const [isGeneratingRecipes, setIsGeneratingRecipes] = useState(false);
   const [progress, setProgress] = useState(0);
   const [progressMessage, setProgressMessage] = useState('');
   const [doctorList, setDoctorList] = useState<{ id: string; name: string; email: string }[]>([]);
   const [selectedDoctor, setSelectedDoctor] = useState<string>('');
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 🧠 Ustawienie języka z localStorage
-useEffect(() => {
-  const storedLang = localStorage.getItem('platformLang');
-  if (storedLang) setLang(storedLang as LangKey);
-}, []);
-
-// 💾 Ustawienie userId w localStorage do zapisu danych
-useEffect(() => {
-  supabase.auth.getUser().then(({ data }) => {
-    if (data?.user?.id) {
-      localStorage.setItem('currentUserID', data.user.id);
-      console.log("✅ Zapisano userId do localStorage:", data.user.id);
-    } else {
-      console.warn("❌ Brak user.id – użytkownik nie jest zalogowany?");
-    }
-  });
-}, []);
-
-  // 📦 Hook z danymi pacjenta
+  // ✅ HOOK na samym początku
   const {
     form,
     interviewData,
@@ -78,7 +62,66 @@ useEffect(() => {
     setEditableDiet
   } = usePatientData();
 
-  console.log("📦 form w panel-patient:", form);
+  // ✅ dopiero potem useEffect
+  useEffect(() => {
+    const storedLang = localStorage.getItem('platformLang');
+    if (storedLang) setLang(storedLang as LangKey);
+
+    supabase.auth.getUser().then(({ data }) => {
+      const userId = data?.user?.id;
+      if (!userId) {
+        console.warn("❌ Brak user.id – użytkownik nie jest zalogowany?");
+        return;
+      }
+
+      localStorage.setItem('currentUserID', userId);
+      console.log("✅ userId zapisany:", userId);
+
+      supabase
+        .from('patient_diets')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('status', 'confirmed')
+        .order('confirmed_at', { ascending: false })
+        .limit(1)
+        .then(({ data, error }) => {
+          if (error) {
+            console.error('❌ Błąd przy pobieraniu diety:', error.message);
+            return;
+          }
+          if (data && data[0]) {
+            setEditableDiet((prev: Record<string, Meal[]> | undefined) => {
+              if (prev && Object.keys(prev).length > 0) {
+                console.log("🔁 Dieta już ustawiona — pomijam.");
+                return prev;
+              }
+              console.log("✅ Załadowano dietę:", data[0]);
+              return data[0].diet_plan;
+            });
+            setDietApproved(true);
+          } else {
+            console.warn('⚠️ Brak potwierdzonej diety');
+          }
+        });
+    });
+  }, []);
+
+const startFakeProgress = (from = 5, to = 95, step = 1, delay = 300) => {
+  setProgress(from);
+  progressIntervalRef.current = setInterval(() => {
+    setProgress((prev) => {
+      if (prev >= to) return prev;
+      return prev + step;
+    });
+  }, delay);
+};
+
+const stopFakeProgress = () => {
+  if (progressIntervalRef.current) {
+    clearInterval(progressIntervalRef.current);
+    progressIntervalRef.current = null;
+  }
+};
 
 // 🔁 Pobranie danych przy powrocie do sekcji 'medical' + załaduj zatwierdzoną dietę, jeśli nie ma jeszcze żadnej
 useEffect(() => {
@@ -120,16 +163,17 @@ useEffect(() => {
 
 const saveDietToSupabaseAndPdf = async () => {
   try {
-    setProgress(5);
     setProgressMessage(tUI('savingDiet', lang));
+    startFakeProgress(5, 95);
 
     const bmi = form.weight && form.height
       ? parseFloat((form.weight / ((form.height / 100) ** 2)).toFixed(1))
       : 0;
 
     const mealArray: Meal[] = (Object.values(editableDiet || {}) as Meal[][]).flat();
-    if (!Array.isArray(mealArray) || mealArray.length === 0) {
+    if (!mealArray.length) {
       alert(tUI('noMealsToSave', lang));
+      stopFakeProgress();
       setProgress(0);
       setProgressMessage('');
       return;
@@ -138,30 +182,24 @@ const saveDietToSupabaseAndPdf = async () => {
     const userId = localStorage.getItem('currentUserID');
     if (!userId) {
       alert(tUI('noUserId', lang));
+      stopFakeProgress();
       setProgress(0);
       setProgressMessage('');
       return;
     }
 
-const { error } = await supabase
-  .from('patient_diets')
-    .upsert({
-    user_id: userId,
-    diet_plan: editableDiet,
-    status: 'draft',
-    patient_name: form?.name || '',
-    selected_doctor_id: selectedDoctor
-  }, { onConflict: 'user_id' });
+    const { error } = await supabase
+      .from('patient_diets')
+      .upsert({
+        user_id: userId,
+        diet_plan: editableDiet,
+        status: 'draft',
+        patient_name: form?.name || '',
+        selected_doctor_id: selectedDoctor
+      }, { onConflict: 'user_id' });
 
-  if (error) {
-      console.error(`${tUI('supabaseSaveErrorPrefix', lang)} ${error.message}`);
-      alert(tUI('dietSaveFailed', lang));
-      setProgress(0);
-      setProgressMessage('');
-      return;
-    }
+    if (error) throw new Error(error.message);
 
-    setProgress(40);
     setProgressMessage(tUI('generatingPdf', lang));
 
     await generateDietPdf(
@@ -188,16 +226,19 @@ const { error } = await supabase
       recipes
     );
 
+    stopFakeProgress();
     setProgress(100);
     setProgressMessage(tUI('pdfReady', lang));
     setTimeout(() => {
       setProgress(0);
       setProgressMessage('');
     }, 1000);
+
     alert(tUI('dietSaveSuccess', lang));
   } catch (err) {
-    console.error(`${tUI('dietApprovalErrorPrefix', lang)} ${err}`);
+    console.error(`${tUI('dietApprovalErrorPrefix', lang)}:`, err);
     alert(tUI('dietApprovalFailed', lang));
+    stopFakeProgress();
     setProgress(0);
     setProgressMessage('');
   }
@@ -208,86 +249,39 @@ const saveDietToSupabaseOnly = async () => {
 
   const userId = localStorage.getItem('currentUserID');
   if (!userId) {
-    alert(tUI("notLoggedIn", lang));
+    alert(tUI('notLoggedIn', lang));
     return;
   }
 
   try {
-    setProgress(10);
     setProgressMessage(tUI('savingDiet', lang));
+    startFakeProgress(10, 95);
 
     const { error } = await supabase
-  .from('patient_diets')
-  .upsert({
-    user_id: userId,
-    diet_plan: editableDiet,
-    status: 'confirmed',
-    confirmed_at: new Date().toISOString(),
-    patient_name: form?.name || ''
-  }, { onConflict: 'user_id' });
+      .from('patient_diets')
+      .upsert({
+        user_id: userId,
+        diet_plan: editableDiet,
+        status: 'confirmed',
+        confirmed_at: new Date().toISOString(),
+        patient_name: form?.name || ''
+      }, { onConflict: 'user_id' });
 
-    if (error) {
-      console.error("❌ Błąd zapisu diety:", error.message);
-      alert(tUI("errorSavingDiet", lang));
-    } else {
-      alert(tUI("dietApproved", lang));
-    }
+    if (error) throw new Error(error.message);
 
+    stopFakeProgress();
     setProgress(100);
     setProgressMessage(tUI('dietReady', lang));
     setTimeout(() => {
       setProgress(0);
       setProgressMessage('');
     }, 1000);
+
+    alert(tUI('dietApproved', lang));
   } catch (err) {
     console.error("❌ Błąd zapisu diety (try/catch):", err);
     alert(tUI("errorSavingDiet", lang));
-    setProgress(0);
-    setProgressMessage('');
-  }
-};
-
-const saveDraftToSupabase = async () => {
-  try {
-    setProgress(10);
-    setProgressMessage(tUI('savingDraft', lang));
-
-    const userId = localStorage.getItem('currentUserID');
-    if (!userId) {
-      alert(tUI('noUserIdError', lang));
-      setProgress(0);
-      setProgressMessage('');
-      return;
-    }
-
- const { error } = await supabase
-  .from('patient_diets')
-  .upsert({
-    user_id: userId,
-    diet_plan: editableDiet,
-    status: 'draft',
-    patient_name: form?.name || '',
-    selected_doctor_id: selectedDoctor
-  }, { onConflict: 'user_id' });
-
-    if (error) {
-      console.error(`${tUI('draftSaveErrorLog', lang)}:`, error.message);
-      alert(tUI('dietSubmissionError', lang));
-      setProgress(0);
-      setProgressMessage('');
-      return;
-    }
-
-    alert(tUI('dietSubmissionSuccess', lang));
-    setProgress(100);
-    setProgressMessage(tUI('draftSaved', lang));
-    setTimeout(() => {
-      setProgress(0);
-      setProgressMessage('');
-    }, 1000);
-  } catch (err) {
-    console.error(`${tUI('draftSaveCatchErrorLog', lang)}:`, err);
-    alert(tUI('dietSaveError', lang));
+    stopFakeProgress();
     setProgress(0);
     setProgressMessage('');
   }
@@ -320,8 +314,8 @@ const handleGenerateDiet = async () => {
     const recommendation = interviewData.recommendation?.trim();
     const goalExplanation = goalMap[interviewData.goal] || '';
 
-    setProgress(20);
     setProgressMessage(tUI('sendingDataToAI', lang));
+    startFakeProgress(20, 95);
 
     const res = await fetch('/api/generate-diet', {
       method: 'POST',
@@ -366,6 +360,7 @@ const handleGenerateDiet = async () => {
       setEditableDiet(transformed);
       setDietApproved(true);
 
+      stopFakeProgress();
       setProgress(100);
       setProgressMessage(tUI('dietReady', lang));
       setTimeout(() => {
@@ -375,14 +370,46 @@ const handleGenerateDiet = async () => {
       return;
     }
 
-    alert(tUI('dietPlanMissing', lang));
+    throw new Error('Brak poprawnego obiektu dietPlan');
   } catch (err) {
     console.error(`${tUI('dietGenerationErrorPrefix', lang)} ${err}`);
     alert(tUI('dietGenerationFailed', lang));
+    stopFakeProgress();
     setProgress(0);
     setProgressMessage('');
   }
 };
+function saveDraftToSupabase(): Promise<void> {
+  return (async () => {
+    try {
+      const userId = localStorage.getItem('currentUserID');
+      if (!userId) {
+        alert(tUI('noUserIdError', lang));
+        return;
+      }
+
+      const { error } = await supabase
+        .from('patient_diets')
+        .upsert({
+          user_id: userId,
+          diet_plan: editableDiet,
+          status: 'draft',
+          patient_name: form?.name || '',
+          selected_doctor_id: selectedDoctor
+        }, { onConflict: 'user_id' });
+
+      if (error) {
+        console.error(`${tUI('draftSaveErrorLog', lang)}:`, error.message);
+        alert(tUI('dietSubmissionError', lang));
+      } else {
+        alert(tUI('dietSubmissionSuccess', lang));
+      }
+    } catch (err) {
+      console.error(`${tUI('draftSaveCatchErrorLog', lang)}:`, err);
+      alert(tUI('dietSaveError', lang));
+    }
+  })();
+}
 
 const handleGenerateRecipes = async () => {
   try {
@@ -796,61 +823,64 @@ useEffect(() => {
   </div>
 )}
 
-  {/* 📤 Wyślij do lekarza */}
-  <button
-    onClick={async () => {
-  const confirm = window.confirm(tUI('confirmSendDietToDoctor', lang));
-  if (!confirm) return;
+{/* 📤 Wyślij do lekarza */}
+<button
+  onClick={async () => {
+    const confirm = window.confirm(tUI('confirmSendDietToDoctor', lang));
+    if (!confirm) return;
 
-  if (!selectedDoctor) {
-    alert(tUI('selectDoctor', lang));
-    return;
-  }
-
-  setProgress(10);
-  setProgressMessage(tUI('savingDraft', lang));
-
-  await saveDraftToSupabase(); // zostawiamy jak jest
-
-  setProgress(50);
-  setProgressMessage(tUI('sendingNotification', lang));
-
-  try {
-    const response = await fetch('/api/send-diet-notification', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        doctorEmail: selectedDoctor,
-        patientName: form?.name || '',
-        lang
-      })
-    });
-
-    if (response.ok) {
-      setProgress(100);
-      setProgressMessage(tUI('notificationSent', lang));
-    } else {
-      throw new Error('Mail failed');
+    if (!selectedDoctor) {
+      alert(tUI('selectDoctor', lang));
+      return;
     }
-  } catch (err) {
-    console.error('❌ Email error:', err);
-    alert(tUI('notificationFailed', lang));
-  } finally {
-    setTimeout(() => {
+
+    setProgressMessage(tUI('savingDraft', lang));
+    startFakeProgress(10, 95);
+
+    await saveDraftToSupabase();
+
+    setProgressMessage(tUI('sendingNotification', lang));
+
+    try {
+      const response = await fetch('/api/send-diet-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          doctorEmail: selectedDoctor,
+          patientName: form?.name || '',
+          lang
+        })
+      });
+
+      if (response.ok) {
+        stopFakeProgress();
+        setProgress(100);
+        setProgressMessage(tUI('notificationSent', lang));
+      } else {
+        throw new Error('Mail failed');
+      }
+    } catch (err) {
+      console.error('❌ Email error:', err);
+      alert(tUI('notificationFailed', lang));
+      stopFakeProgress();
       setProgress(0);
       setProgressMessage('');
-    }, 1000);
-  }
-}}
+    } finally {
+      setTimeout(() => {
+        setProgress(0);
+        setProgressMessage('');
+      }, 1000);
+    }
+  }}
+  disabled={!editableDiet || Object.keys(editableDiet).length === 0}
+  className="w-28 h-28 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition disabled:opacity-50"
+>
+  <span className="text-4xl leading-none">📤</span>
+  <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
+    {tUI('sendDietToDoctor', lang)}
+  </span>
+</button>
 
-    disabled={!editableDiet || Object.keys(editableDiet).length === 0}
-    className="w-28 h-28 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition disabled:opacity-50"
-  >
-    <span className="text-4xl leading-none">📤</span>
-    <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
-      {tUI('sendDietToDoctor', lang)}
-    </span>
-  </button>
 </div>
 
 </div>
