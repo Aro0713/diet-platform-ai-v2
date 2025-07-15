@@ -332,9 +332,6 @@ const handleGenerateDiet = async () => {
 
     if (!res.body) throw new Error('Brak treści w odpowiedzi serwera.');
 
-    setProgress(40);
-    setProgressMessage(tUI('processingInterview', lang));
-
     const reader = res.body.getReader();
     const decoder = new TextDecoder('utf-8');
     let rawText = '';
@@ -353,7 +350,18 @@ const handleGenerateDiet = async () => {
     setProgress(70);
     setProgressMessage(tUI('validatingDiet', lang));
 
-    const json = JSON.parse(rawCompleteText);
+    // ✅ Spróbuj sparsować wynik
+    let json;
+    try {
+      json = JSON.parse(rawCompleteText);
+    } catch (e) {
+      console.error('❌ Błąd parsowania JSON z diety:', rawCompleteText);
+      alert(tUI('dietGenerationFailed', lang));
+      stopFakeProgress();
+      setProgress(0);
+      setProgressMessage('');
+      return;
+    }
 
     if (json.dietPlan && typeof json.dietPlan === 'object') {
       const transformed = transformDietPlanToEditableFormat(json.dietPlan, lang);
@@ -793,56 +801,36 @@ useEffect(() => {
   </button>
 
   {/* 🍽️ Generuj przepisy */}
-  {editableDiet && Object.keys(editableDiet).length > 0 && (
-    <button
-      onClick={handleGenerateRecipes}
-      disabled={isGeneratingRecipes}
-      className="w-28 h-28 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition disabled:opacity-50"
-    >
-      <span className="text-4xl leading-none">🍽️</span>
-      <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
-        {tUI('generateRecipes', lang)}
-      </span>
-    </button>
-  )}
-  {doctorList.length > 0 && (
-  <div className="mb-2">
-    <label className="block text-sm font-medium text-white mb-1">
-      {tUI('selectDoctor', lang)}
-    </label>
-    <select
-      value={selectedDoctor}
-      onChange={(e) => setSelectedDoctor(e.target.value)}
-      className="w-full bg-white text-black rounded px-3 py-2 text-sm"
-    >
-      <option value="">{tUI('selectDoctor', lang)}</option>
-      {doctorList.map((doc) => (
-        <option key={doc.id} value={doc.email}>
-          {doc.name} ({doc.email})
-        </option>
-      ))}
-    </select>
-  </div>
+{editableDiet && Object.keys(editableDiet).length > 0 && (
+  <button
+    onClick={handleGenerateRecipes}
+    disabled={isGeneratingRecipes}
+    className="w-28 h-28 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition disabled:opacity-50"
+  >
+    <span className="text-4xl leading-none">🍽️</span>
+    <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
+      {tUI('generateRecipes', lang)}
+    </span>
+  </button>
 )}
 
-{doctorList.length > 0 && (
+{/* 📤 Wyślij dietę do lekarza/dietetyka */}
+{editableDiet && Object.keys(editableDiet).length > 0 && doctorList.length > 0 && (
   <div className="relative inline-block text-left w-full max-w-xs">
-    <div>
-      <button
-        type="button"
-        className="w-full h-28 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition"
-        id="doctor-menu"
-        aria-haspopup="true"
-        aria-expanded="true"
-      >
-        <span className="text-4xl leading-none">📤</span>
-        <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
-          {tUI('sendDietToDoctor', lang)}
-        </span>
-      </button>
-    </div>
+    <button
+      type="button"
+      className="w-full h-28 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition"
+      id="doctor-menu"
+      aria-haspopup="true"
+      aria-expanded="true"
+    >
+      <span className="text-4xl leading-none">📤</span>
+      <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
+        {tUI('sendDietToDoctor', lang)}
+      </span>
+    </button>
 
-    {/* Dropdown lista lekarzy */}
+    {/* Dropdown lista lekarzy/dietetyków */}
     <div className="origin-top-right absolute mt-2 w-full rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
       <div className="py-1">
         {doctorList.map((doc) => (
@@ -852,7 +840,7 @@ useEffect(() => {
               const confirm = window.confirm(`${tUI('confirmSendDietToDoctor', lang)}\n${doc.name} (${doc.email})`);
               if (!confirm) return;
 
-              setSelectedDoctor(doc.email); // 🧠 aktualizujemy stan
+              setSelectedDoctor(doc.email);
               setProgressMessage(tUI('savingDraft', lang));
               startFakeProgress(10, 95);
 
@@ -900,7 +888,6 @@ useEffect(() => {
     </div>
   </div>
 )}
-
 </div>
 
 </div>
