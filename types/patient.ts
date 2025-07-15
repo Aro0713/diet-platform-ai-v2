@@ -78,4 +78,17 @@ export interface BasicData {
     currentMedications: string;
     currentSupplements: string;
   }
+  export interface PatientData {
+  name: string;
+  email: string;
+  phone?: string;
+  sex?: string;
+  age?: number;
+  height?: number;
+  weight?: number;
+  region?: string;
+ assigned_doctor_email?: string; // dokładnie tak, jak używasz
+
+}
+
   export {};

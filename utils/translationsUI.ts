@@ -4568,6 +4568,19 @@ selectDoctorPrompt: {
   ar: 'اختر طبيبًا أو اختصاصي تغذية',
   he: 'בחר רופא או דיאטנית'
 },
+noAssignedDoctor: {
+  pl: 'Brak przypisanego lekarza lub dietetyka.',
+  en: 'No assigned doctor or dietitian.',
+  de: 'Kein zugewiesener Arzt oder Ernährungsberater.',
+  fr: 'Aucun médecin ou diététicien assigné.',
+  es: 'No hay médico o dietista asignado.',
+  ua: 'Не призначено лікаря або дієтолога.',
+  ru: 'Нет назначенного врача или диетолога.',
+  zh: '未分配医生或营养师。',
+  hi: 'कोई नियुक्त डॉक्टर या डाइटीशियन नहीं है।',
+  ar: 'لا يوجد طبيب أو اختصاصي تغذية معين.',
+  he: 'לא הוקצה רופא או דיאטן.'
+}
 
 };
 

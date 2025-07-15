@@ -849,26 +849,21 @@ const handleShowDoctors = async () => {
 
 {/* 📤 Wyślij dietę do lekarza/dietetyka */}
 {editableDiet && Object.keys(editableDiet).length > 0 && (
-  <div className="w-28 h-28 bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition">
-  <span className="text-4xl leading-none">📤</span>
-  <select
-    id="doctorSelect"
-    className="mt-2 w-[90%] text-sm text-black px-2 py-1 rounded bg-white focus:outline-none"
-    onClick={handleShowDoctors}
-    onChange={async (e) => {
-      const selectedEmail = e.target.value;
-      if (!selectedEmail) return;
-
-      const selectedDoc = doctorList.find((doc) => doc.email === selectedEmail);
-      if (!selectedDoc) return;
-
-      const confirm = window.confirm(`${tUI('confirmSendDietToDoctor', lang)}\n${selectedDoc.name} (${selectedDoc.email})`);
+  <button
+    onClick={async () => {
+      const confirm = window.confirm(tUI('confirmSendDietToDoctor', lang));
       if (!confirm) return;
+
+      const doctorEmail = form?.assigned_doctor_email;
+      if (!doctorEmail) {
+        alert(tUI('noAssignedDoctor', lang));
+        return;
+      }
 
       setProgressMessage(tUI('savingDraft', lang));
       startFakeProgress(10, 95);
 
-      await saveDraftToSupabaseWithDoctor(selectedEmail);
+      await saveDraftToSupabaseWithDoctor(doctorEmail);
 
       setProgressMessage(tUI('sendingNotification', lang));
 
@@ -877,7 +872,7 @@ const handleShowDoctors = async () => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            doctorEmail: selectedDoc.email,
+            doctorEmail,
             patientName: form?.name || '',
             lang
           })
@@ -903,16 +898,13 @@ const handleShowDoctors = async () => {
         }, 1000);
       }
     }}
+    className="w-28 h-28 bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition disabled:opacity-50"
   >
-    <option value="">{tUI('selectDoctorPrompt', lang)}</option>
-    {doctorList.map((doc) => (
-      <option key={doc.id} value={doc.email}>
-        {doc.name} ({doc.email})
-      </option>
-    ))}
-  </select>
-</div>
-
+    <span className="text-4xl leading-none">📤</span>
+    <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
+      {tUI('sendDietToDoctor', lang)}
+    </span>
+  </button>
 )}
 
 </div>

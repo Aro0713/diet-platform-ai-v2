@@ -73,7 +73,9 @@ export function usePatientData(): UsePatientDataResult {
     allergies: data.allergies || '',
     goal: data.goal || '',
     cuisine: data.cuisine || '',
-    model: data.model || ''
+    model: data.model || '',
+    assigned_doctor_email: data.assigned_doctor_email || '',
+
   });
 
   setTimeout(() => {

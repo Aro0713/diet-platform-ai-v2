@@ -76,6 +76,21 @@ const handleSave = async () => {
 
   setSaving(false);
 };
+const [doctorList, setDoctorList] = useState<{ id: string; name: string; email: string }[]>([]);
+
+useEffect(() => {
+  supabase
+    .from('users')
+    .select('id, name, email')
+    .in('role', ['doctor', 'dietitian'])
+    .then(({ data, error }) => {
+      if (error) {
+        console.error('❌ Błąd pobierania lekarzy:', error.message);
+      } else {
+        setDoctorList(data || []);
+      }
+    });
+}, []);
 
   return (
     <div className="space-y-4 max-w-xl mx-auto">
@@ -104,6 +119,23 @@ const handleSave = async () => {
         className="w-full px-4 py-2 rounded-md bg-white text-black placeholder-gray-500 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors"
         placeholder={tUI('phone', lang)}
       />
+        <div className="flex flex-col gap-1">
+  <label className="text-sm font-medium text-white">
+    {tUI('assignedDoctorLabel', lang)}
+  </label>
+  <select
+    className="px-3 py-2 rounded bg-white text-black shadow focus:outline-none"
+    value={value.assigned_doctor_email}
+    onChange={(e) => onChange?.({ ...value, assigned_doctor_email: e.target.value })}
+  >
+    <option value="">{tUI('selectDoctorPrompt', lang)}</option>
+    {doctorList.map((doc) => (
+      <option key={doc.id} value={doc.email}>
+        {doc.name} ({doc.email})
+      </option>
+    ))}
+  </select>
+</div>
 
       <select
         name="sex"
