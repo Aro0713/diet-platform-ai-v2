@@ -62,6 +62,8 @@ const fetchPatientData = async () => {
       goal: data.goal || '',
       cuisine: data.cuisine || '',
       model: data.model || '',
+      assigned_doctor_email: data.assigned_doctor_email || '',
+
     });
 
     // Dane medyczne
