@@ -504,24 +504,25 @@ const handleSectionChange = async (newSection: string) => {
   }, 50);
 };
 
-useEffect(() => {
-  const fetchDoctors = async () => {
-    const { data, error } = await supabase
-      .from('users')
-      .select('id, name, email')
-      .in('role', ['doctor', 'dietitian']);
+const [showDoctorDropdown, setShowDoctorDropdown] = useState(false);
 
-    if (error) {
-      console.error('❌ Błąd pobierania listy lekarzy:', error.message);
-    } else {
-      console.log('✅ Lista lekarzy z Supabase:', data); // 👈 DODAJ TO
-      setDoctorList((data || []).sort((a, b) => a.name.localeCompare(b.name)));
+const handleShowDoctors = async () => {
+  if (!showDoctorDropdown) {
+    setShowDoctorDropdown(true);
+    if (doctorList.length === 0) {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, name, email')
+        .in('role', ['doctor', 'dietitian']);
+
+      if (error) {
+        console.error('❌ Błąd pobierania listy lekarzy:', error.message);
+      } else {
+        setDoctorList((data || []).sort((a, b) => a.name.localeCompare(b.name)));
+      }
     }
-  };
-
-  fetchDoctors();
-}, []);
-
+  }
+};
 
   return (
     
@@ -815,79 +816,74 @@ useEffect(() => {
 )}
 
 {/* 📤 Wyślij dietę do lekarza/dietetyka */}
-{editableDiet && Object.keys(editableDiet).length > 0 && doctorList.length > 0 && (
-  <div className="relative inline-block text-left w-full max-w-xs">
-    <button
-      type="button"
-      className="w-full h-28 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition"
-      id="doctor-menu"
-      aria-haspopup="true"
-      aria-expanded="true"
+{editableDiet && Object.keys(editableDiet).length > 0 && (
+  <div className="w-full max-w-xs flex flex-col items-center">
+    <label htmlFor="doctorSelect" className="text-sm font-medium text-white mb-1">
+      {tUI('sendDietToDoctor', lang)}
+    </label>
+    <select
+      id="doctorSelect"
+      className="w-full h-12 px-3 py-2 rounded-md bg-white text-black shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+      onClick={handleShowDoctors} // 👈 pobiera listę tylko przy kliknięciu
+      onChange={async (e) => {
+        const selectedEmail = e.target.value;
+        if (!selectedEmail) return;
+
+        const selectedDoc = doctorList.find((doc) => doc.email === selectedEmail);
+        if (!selectedDoc) return;
+
+        const confirm = window.confirm(`${tUI('confirmSendDietToDoctor', lang)}\n${selectedDoc.name} (${selectedDoc.email})`);
+        if (!confirm) return;
+
+        setProgressMessage(tUI('savingDraft', lang));
+        startFakeProgress(10, 95);
+
+        await saveDraftToSupabaseWithDoctor(selectedEmail);
+
+        setProgressMessage(tUI('sendingNotification', lang));
+
+        try {
+          const response = await fetch('/api/send-diet-notification', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              doctorEmail: selectedDoc.email,
+              patientName: form?.name || '',
+              lang
+            })
+          });
+
+          if (response.ok) {
+            stopFakeProgress();
+            setProgress(100);
+            setProgressMessage(tUI('notificationSent', lang));
+          } else {
+            throw new Error('Mail failed');
+          }
+        } catch (err) {
+          console.error('❌ Email error:', err);
+          alert(tUI('notificationFailed', lang));
+          stopFakeProgress();
+          setProgress(0);
+          setProgressMessage('');
+        } finally {
+          setTimeout(() => {
+            setProgress(0);
+            setProgressMessage('');
+          }, 1000);
+        }
+      }}
     >
-      <span className="text-4xl leading-none">📤</span>
-      <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
-        {tUI('sendDietToDoctor', lang)}
-      </span>
-    </button>
-
-    {/* Dropdown lista lekarzy/dietetyków */}
-    <div className="origin-top-right absolute mt-2 w-full rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
-      <div className="py-1">
-        {doctorList.map((doc) => (
-          <button
-            key={doc.id}
-            onClick={async () => {
-              const confirm = window.confirm(`${tUI('confirmSendDietToDoctor', lang)}\n${doc.name} (${doc.email})`);
-              if (!confirm) return;
-
-              setSelectedDoctor(doc.email);
-              setProgressMessage(tUI('savingDraft', lang));
-              startFakeProgress(10, 95);
-
-              await saveDraftToSupabaseWithDoctor(doc.email);
-
-              setProgressMessage(tUI('sendingNotification', lang));
-
-              try {
-                const response = await fetch('/api/send-diet-notification', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    doctorEmail: doc.email,
-                    patientName: form?.name || '',
-                    lang
-                  })
-                });
-
-                if (response.ok) {
-                  stopFakeProgress();
-                  setProgress(100);
-                  setProgressMessage(tUI('notificationSent', lang));
-                } else {
-                  throw new Error('Mail failed');
-                }
-              } catch (err) {
-                console.error('❌ Email error:', err);
-                alert(tUI('notificationFailed', lang));
-                stopFakeProgress();
-                setProgress(0);
-                setProgressMessage('');
-              } finally {
-                setTimeout(() => {
-                  setProgress(0);
-                  setProgressMessage('');
-                }, 1000);
-              }
-            }}
-            className="w-full px-4 py-2 text-sm text-gray-800 hover:bg-blue-100 hover:text-blue-900 cursor-pointer transition-colors text-left"
-          >
-            {doc.name} ({doc.email})
-          </button>
-        ))}
-      </div>
-    </div>
+      <option value="">{tUI('selectDoctorPrompt', lang)}</option>
+      {doctorList.map((doc) => (
+        <option key={doc.id} value={doc.email}>
+          {doc.name} ({doc.email})
+        </option>
+      ))}
+    </select>
   </div>
 )}
+
 </div>
 
 </div>
