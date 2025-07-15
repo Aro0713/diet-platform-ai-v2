@@ -181,6 +181,7 @@ const saveDietToSupabaseAndPdf = async () => {
 
     const userId = localStorage.getItem('currentUserID');
     if (!userId) {
+      console.error('❌ Brak userId przy zapisie diety!');
       alert(tUI('noUserId', lang));
       stopFakeProgress();
       setProgress(0);
@@ -188,43 +189,35 @@ const saveDietToSupabaseAndPdf = async () => {
       return;
     }
 
-  if (!editableDiet || typeof editableDiet !== 'object' || Array.isArray(editableDiet)) {
-  console.error('❌ Nieprawidłowy diet_plan:', editableDiet);
-  alert(tUI('dietDataInvalid', lang));
-  stopFakeProgress();
-  setProgress(0);
-  setProgressMessage('');
-  return;
-}
+    if (!editableDiet || typeof editableDiet !== 'object' || Array.isArray(editableDiet)) {
+      console.error('❌ Nieprawidłowy diet_plan:', editableDiet);
+      alert(tUI('dietDataInvalid', lang));
+      stopFakeProgress();
+      setProgress(0);
+      setProgressMessage('');
+      return;
+    }
 
-if (!userId) {
-  console.error('❌ Brak userId przy zapisie diety!');
-  alert(tUI('noUserId', lang));
-  stopFakeProgress();
-  setProgress(0);
-  setProgressMessage('');
-  return;
-}
+    const cleanDiet = JSON.parse(JSON.stringify(editableDiet));
 
-const { error } = await supabase
-  .from('patient_diets')
-  .upsert({
-    user_id: userId,
-    diet_plan: editableDiet,
-    status: 'draft',
-    patient_name: form?.name || '',
-    ...(selectedDoctor && { selected_doctor_id: selectedDoctor }) // 👈 tylko jeśli podano
-  }, { onConflict: 'user_id' });
+    const { error } = await supabase
+      .from('patient_diets')
+      .upsert({
+        user_id: userId,
+        diet_plan: cleanDiet,
+        status: 'draft',
+        patient_name: form?.name || '',
+        ...(selectedDoctor && { selected_doctor_id: selectedDoctor }) // 👈 tylko jeśli podano
+      }, { onConflict: 'user_id' });
 
-if (error) {
-  console.error('❌ Błąd zapisu draftu:', error.message);
-  alert(tUI('dietApprovalFailed', lang));
-  stopFakeProgress();
-  setProgress(0);
-  setProgressMessage('');
-  return;
-}
-
+    if (error) {
+      console.error('❌ Błąd zapisu draftu:', error.message);
+      alert(tUI('dietApprovalFailed', lang));
+      stopFakeProgress();
+      setProgress(0);
+      setProgressMessage('');
+      return;
+    }
 
     setProgressMessage(tUI('generatingPdf', lang));
 
@@ -269,6 +262,7 @@ if (error) {
     setProgressMessage('');
   }
 };
+
 
 const saveDietToSupabaseOnly = async () => {
   if (!editableDiet || Object.keys(editableDiet).length === 0) return;
@@ -429,12 +423,14 @@ async function saveDraftToSupabaseWithDoctor(email: string): Promise<void> {
       return;
     }
 
+    const cleanDiet = JSON.parse(JSON.stringify(editableDiet));
+
     const { error } = await supabase
       .from('patient_diets')
       .upsert(
         {
           user_id: userId,
-          diet_plan: editableDiet,
+          diet_plan: cleanDiet,
           status: 'draft',
           patient_name: form?.name || '',
           ...(email && { selected_doctor_id: email }) // 👈 tylko jeśli email podany
@@ -853,71 +849,70 @@ const handleShowDoctors = async () => {
 
 {/* 📤 Wyślij dietę do lekarza/dietetyka */}
 {editableDiet && Object.keys(editableDiet).length > 0 && (
-  <div className="w-full max-w-xs flex flex-col items-center">
-    <label htmlFor="doctorSelect" className="text-sm font-medium text-white mb-1">
-      {tUI('sendDietToDoctor', lang)}
-    </label>
-    <select
-      id="doctorSelect"
-      className="w-full h-12 px-3 py-2 rounded-md bg-white text-black shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-      onClick={handleShowDoctors} // 👈 pobiera listę tylko przy kliknięciu
-      onChange={async (e) => {
-        const selectedEmail = e.target.value;
-        if (!selectedEmail) return;
+  <div className="w-28 h-28 bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition">
+  <span className="text-4xl leading-none">📤</span>
+  <select
+    id="doctorSelect"
+    className="mt-2 w-[90%] text-sm text-black px-2 py-1 rounded bg-white focus:outline-none"
+    onClick={handleShowDoctors}
+    onChange={async (e) => {
+      const selectedEmail = e.target.value;
+      if (!selectedEmail) return;
 
-        const selectedDoc = doctorList.find((doc) => doc.email === selectedEmail);
-        if (!selectedDoc) return;
+      const selectedDoc = doctorList.find((doc) => doc.email === selectedEmail);
+      if (!selectedDoc) return;
 
-        const confirm = window.confirm(`${tUI('confirmSendDietToDoctor', lang)}\n${selectedDoc.name} (${selectedDoc.email})`);
-        if (!confirm) return;
+      const confirm = window.confirm(`${tUI('confirmSendDietToDoctor', lang)}\n${selectedDoc.name} (${selectedDoc.email})`);
+      if (!confirm) return;
 
-        setProgressMessage(tUI('savingDraft', lang));
-        startFakeProgress(10, 95);
+      setProgressMessage(tUI('savingDraft', lang));
+      startFakeProgress(10, 95);
 
-        await saveDraftToSupabaseWithDoctor(selectedEmail);
+      await saveDraftToSupabaseWithDoctor(selectedEmail);
 
-        setProgressMessage(tUI('sendingNotification', lang));
+      setProgressMessage(tUI('sendingNotification', lang));
 
-        try {
-          const response = await fetch('/api/send-diet-notification', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              doctorEmail: selectedDoc.email,
-              patientName: form?.name || '',
-              lang
-            })
-          });
+      try {
+        const response = await fetch('/api/send-diet-notification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            doctorEmail: selectedDoc.email,
+            patientName: form?.name || '',
+            lang
+          })
+        });
 
-          if (response.ok) {
-            stopFakeProgress();
-            setProgress(100);
-            setProgressMessage(tUI('notificationSent', lang));
-          } else {
-            throw new Error('Mail failed');
-          }
-        } catch (err) {
-          console.error('❌ Email error:', err);
-          alert(tUI('notificationFailed', lang));
+        if (response.ok) {
           stopFakeProgress();
+          setProgress(100);
+          setProgressMessage(tUI('notificationSent', lang));
+        } else {
+          throw new Error('Mail failed');
+        }
+      } catch (err) {
+        console.error('❌ Email error:', err);
+        alert(tUI('notificationFailed', lang));
+        stopFakeProgress();
+        setProgress(0);
+        setProgressMessage('');
+      } finally {
+        setTimeout(() => {
           setProgress(0);
           setProgressMessage('');
-        } finally {
-          setTimeout(() => {
-            setProgress(0);
-            setProgressMessage('');
-          }, 1000);
-        }
-      }}
-    >
-      <option value="">{tUI('selectDoctorPrompt', lang)}</option>
-      {doctorList.map((doc) => (
-        <option key={doc.id} value={doc.email}>
-          {doc.name} ({doc.email})
-        </option>
-      ))}
-    </select>
-  </div>
+        }, 1000);
+      }
+    }}
+  >
+    <option value="">{tUI('selectDoctorPrompt', lang)}</option>
+    {doctorList.map((doc) => (
+      <option key={doc.id} value={doc.email}>
+        {doc.name} ({doc.email})
+      </option>
+    ))}
+  </select>
+</div>
+
 )}
 
 </div>

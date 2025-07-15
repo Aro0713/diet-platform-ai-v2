@@ -4555,6 +4555,19 @@ dietSubmissionError: {
   hi: "डाइट सबमिट करने में विफल",
   he: "השליחה של התפריט נכשלה"
 },
+selectDoctorPrompt: {
+  pl: 'Wybierz lekarza lub dietetyka',
+  en: 'Select a doctor or dietitian',
+  de: 'Wähle einen Arzt oder Ernährungsberater',
+  fr: 'Sélectionner un médecin ou diététicien',
+  es: 'Selecciona un médico o dietista',
+  ua: 'Оберіть лікаря або дієтолога',
+  ru: 'Выберите врача или диетолога',
+  zh: '选择医生或营养师',
+  hi: 'डॉक्टर या डाइटीशियन चुनें',
+  ar: 'اختر طبيبًا أو اختصاصي تغذية',
+  he: 'בחר רופא או דיאטנית'
+},
 
 };
 
