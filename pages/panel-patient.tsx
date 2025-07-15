@@ -188,17 +188,43 @@ const saveDietToSupabaseAndPdf = async () => {
       return;
     }
 
-    const { error } = await supabase
-      .from('patient_diets')
-      .upsert({
-        user_id: userId,
-        diet_plan: editableDiet,
-        status: 'draft',
-        patient_name: form?.name || '',
-        selected_doctor_id: selectedDoctor
-      }, { onConflict: 'user_id' });
+  if (!editableDiet || typeof editableDiet !== 'object' || Array.isArray(editableDiet)) {
+  console.error('❌ Nieprawidłowy diet_plan:', editableDiet);
+  alert(tUI('dietDataInvalid', lang));
+  stopFakeProgress();
+  setProgress(0);
+  setProgressMessage('');
+  return;
+}
 
-    if (error) throw new Error(error.message);
+if (!userId) {
+  console.error('❌ Brak userId przy zapisie diety!');
+  alert(tUI('noUserId', lang));
+  stopFakeProgress();
+  setProgress(0);
+  setProgressMessage('');
+  return;
+}
+
+const { error } = await supabase
+  .from('patient_diets')
+  .upsert({
+    user_id: userId,
+    diet_plan: editableDiet,
+    status: 'draft',
+    patient_name: form?.name || '',
+    ...(selectedDoctor && { selected_doctor_id: selectedDoctor }) // 👈 tylko jeśli podano
+  }, { onConflict: 'user_id' });
+
+if (error) {
+  console.error('❌ Błąd zapisu draftu:', error.message);
+  alert(tUI('dietApprovalFailed', lang));
+  stopFakeProgress();
+  setProgress(0);
+  setProgressMessage('');
+  return;
+}
+
 
     setProgressMessage(tUI('generatingPdf', lang));
 
@@ -397,15 +423,24 @@ async function saveDraftToSupabaseWithDoctor(email: string): Promise<void> {
       return;
     }
 
+    if (!editableDiet || typeof editableDiet !== 'object' || Array.isArray(editableDiet)) {
+      console.error('❌ Nieprawidłowy diet_plan:', editableDiet);
+      alert(tUI('dietDataInvalid', lang));
+      return;
+    }
+
     const { error } = await supabase
       .from('patient_diets')
-      .upsert({
-        user_id: userId,
-        diet_plan: editableDiet,
-        status: 'draft',
-        patient_name: form?.name || '',
-        selected_doctor_id: email
-      }, { onConflict: 'user_id' });
+      .upsert(
+        {
+          user_id: userId,
+          diet_plan: editableDiet,
+          status: 'draft',
+          patient_name: form?.name || '',
+          ...(email && { selected_doctor_id: email }) // 👈 tylko jeśli email podany
+        },
+        { onConflict: 'user_id' }
+      );
 
     if (error) {
       console.error(`${tUI('draftSaveErrorLog', lang)}:`, error.message);
@@ -418,6 +453,7 @@ async function saveDraftToSupabaseWithDoctor(email: string): Promise<void> {
     alert(tUI('dietSaveError', lang));
   }
 }
+
 
 const handleGenerateRecipes = async () => {
   try {
