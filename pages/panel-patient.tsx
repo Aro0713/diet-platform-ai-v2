@@ -506,12 +506,14 @@ useEffect(() => {
     if (error) {
       console.error('❌ Błąd pobierania listy lekarzy:', error.message);
     } else {
+      console.log('✅ Lista lekarzy z Supabase:', data); // 👈 DODAJ TO
       setDoctorList((data || []).sort((a, b) => a.name.localeCompare(b.name)));
     }
   };
 
   fetchDoctors();
 }, []);
+
 
   return (
     
