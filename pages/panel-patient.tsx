@@ -24,6 +24,7 @@ import NeonNextArrow from "@/components/NeonNextArrow";
 import ProductAssistantPanel from '@/components/ProductAssistantPanel';
 import BasketTable from '@/components/BasketTable';
 import SelectMealsPerDayForm from '@/components/SelectMealsPerDay';
+import ProgressOverlay from '@/components/ProgressOverlay';
 
 
 export default function DoctorPanelPage(): React.JSX.Element {
@@ -38,6 +39,10 @@ export default function DoctorPanelPage(): React.JSX.Element {
   const [isGenerating, setIsGenerating] = useState(false);
   const [recipes, setRecipes] = useState<any>(null);
   const [isGeneratingRecipes, setIsGeneratingRecipes] = useState(false)
+  const [progress, setProgress] = useState(0);
+  const [progressMessage, setProgressMessage] = useState('');
+  const [doctorList, setDoctorList] = useState<{ id: string; name: string; email: string }[]>([]);
+  const [selectedDoctor, setSelectedDoctor] = useState<string>('');
 
   // 🧠 Ustawienie języka z localStorage
 useEffect(() => {
@@ -113,71 +118,91 @@ useEffect(() => {
     });
 }, [selectedSection]);
 
-  const saveDietToSupabaseAndPdf = async () => {
-    try {
-      const bmi = form.weight && form.height
-        ? parseFloat((form.weight / ((form.height / 100) ** 2)).toFixed(1))
-        : 0;
+const saveDietToSupabaseAndPdf = async () => {
+  try {
+    setProgress(5);
+    setProgressMessage(tUI('savingDiet', lang));
 
-      const mealArray: Meal[] = (Object.values(editableDiet || {}) as Meal[][]).flat();
+    const bmi = form.weight && form.height
+      ? parseFloat((form.weight / ((form.height / 100) ** 2)).toFixed(1))
+      : 0;
 
-      if (!Array.isArray(mealArray) || mealArray.length === 0) {
-        alert(tUI('noMealsToSave', lang));
-        return;
-      }
-
-      const userId = localStorage.getItem('currentUserID');
-      if (!userId) {
-        alert(tUI('noUserId', lang));
-        return;
-      }
-
-      const { error } = await supabase
-      .from('patient_diets')
-      .upsert({
-        user_id: userId,
-        diet_plan: editableDiet,
-        status: 'confirmed',
-        confirmed_at: new Date().toISOString()
-      }, { onConflict: 'user_id' });
-
-      if (error) {
-        console.error(`${tUI('supabaseSaveErrorPrefix', lang)} ${error.message}`);
-        alert(tUI('dietSaveFailed', lang));
-        return;
-      }
-
-      alert(tUI('dietSaveSuccess', lang));
-
-      await generateDietPdf(
-        form,
-        bmi,
-        mealArray,
-        true,
-        notes,
-        lang,
-        interviewData,
-        {
-            bmi: interviewData.bmi,
-            ppm: interviewData.ppm,
-            cpm: interviewData.cpm,
-            pal: interviewData.pal,
-            kcalMaintain: interviewData.kcalMaintain,
-            kcalReduce: interviewData.kcalReduce,
-            kcalGain: interviewData.kcalGain,
-            nmcBroca: interviewData.nmcBroca,
-            nmcLorentz: interviewData.nmcLorentz
-        },
-        'download',
-        narrativeText,
-        recipes
-        );
-
-    } catch (err) {
-      console.error(`${tUI('dietApprovalErrorPrefix', lang)} ${err}`);
-      alert(tUI('dietApprovalFailed', lang));
+    const mealArray: Meal[] = (Object.values(editableDiet || {}) as Meal[][]).flat();
+    if (!Array.isArray(mealArray) || mealArray.length === 0) {
+      alert(tUI('noMealsToSave', lang));
+      setProgress(0);
+      setProgressMessage('');
+      return;
     }
-  };
+
+    const userId = localStorage.getItem('currentUserID');
+    if (!userId) {
+      alert(tUI('noUserId', lang));
+      setProgress(0);
+      setProgressMessage('');
+      return;
+    }
+
+const { error } = await supabase
+  .from('patient_diets')
+    .upsert({
+    user_id: userId,
+    diet_plan: editableDiet,
+    status: 'draft',
+    patient_name: form?.name || '',
+    selected_doctor_id: selectedDoctor
+  }, { onConflict: 'user_id' });
+
+  if (error) {
+      console.error(`${tUI('supabaseSaveErrorPrefix', lang)} ${error.message}`);
+      alert(tUI('dietSaveFailed', lang));
+      setProgress(0);
+      setProgressMessage('');
+      return;
+    }
+
+    setProgress(40);
+    setProgressMessage(tUI('generatingPdf', lang));
+
+    await generateDietPdf(
+      form,
+      bmi,
+      mealArray,
+      true,
+      notes,
+      lang,
+      interviewData,
+      {
+        bmi: interviewData.bmi,
+        ppm: interviewData.ppm,
+        cpm: interviewData.cpm,
+        pal: interviewData.pal,
+        kcalMaintain: interviewData.kcalMaintain,
+        kcalReduce: interviewData.kcalReduce,
+        kcalGain: interviewData.kcalGain,
+        nmcBroca: interviewData.nmcBroca,
+        nmcLorentz: interviewData.nmcLorentz
+      },
+      'download',
+      narrativeText,
+      recipes
+    );
+
+    setProgress(100);
+    setProgressMessage(tUI('pdfReady', lang));
+    setTimeout(() => {
+      setProgress(0);
+      setProgressMessage('');
+    }, 1000);
+    alert(tUI('dietSaveSuccess', lang));
+  } catch (err) {
+    console.error(`${tUI('dietApprovalErrorPrefix', lang)} ${err}`);
+    alert(tUI('dietApprovalFailed', lang));
+    setProgress(0);
+    setProgressMessage('');
+  }
+};
+
 const saveDietToSupabaseOnly = async () => {
   if (!editableDiet || Object.keys(editableDiet).length === 0) return;
 
@@ -188,13 +213,17 @@ const saveDietToSupabaseOnly = async () => {
   }
 
   try {
-  const { error } = await supabase
-  .from("patient_diets")
+    setProgress(10);
+    setProgressMessage(tUI('savingDiet', lang));
+
+    const { error } = await supabase
+  .from('patient_diets')
   .upsert({
     user_id: userId,
     diet_plan: editableDiet,
-    status: "confirmed",
-    confirmed_at: new Date().toISOString()
+    status: 'confirmed',
+    confirmed_at: new Date().toISOString(),
+    patient_name: form?.name || ''
   }, { onConflict: 'user_id' });
 
     if (error) {
@@ -203,48 +232,77 @@ const saveDietToSupabaseOnly = async () => {
     } else {
       alert(tUI("dietApproved", lang));
     }
+
+    setProgress(100);
+    setProgressMessage(tUI('dietReady', lang));
+    setTimeout(() => {
+      setProgress(0);
+      setProgressMessage('');
+    }, 1000);
   } catch (err) {
     console.error("❌ Błąd zapisu diety (try/catch):", err);
     alert(tUI("errorSavingDiet", lang));
+    setProgress(0);
+    setProgressMessage('');
   }
 };
 
 const saveDraftToSupabase = async () => {
   try {
+    setProgress(10);
+    setProgressMessage(tUI('savingDraft', lang));
+
     const userId = localStorage.getItem('currentUserID');
     if (!userId) {
       alert(tUI('noUserIdError', lang));
+      setProgress(0);
+      setProgressMessage('');
       return;
     }
 
-   const { error } = await supabase
+ const { error } = await supabase
   .from('patient_diets')
   .upsert({
     user_id: userId,
     diet_plan: editableDiet,
-    status: 'draft'
+    status: 'draft',
+    patient_name: form?.name || '',
+    selected_doctor_id: selectedDoctor
   }, { onConflict: 'user_id' });
 
     if (error) {
-  console.error(`${tUI('draftSaveErrorLog', lang)}:`, error.message);
-  alert(tUI('dietSubmissionError', lang));
-  return;
-}
+      console.error(`${tUI('draftSaveErrorLog', lang)}:`, error.message);
+      alert(tUI('dietSubmissionError', lang));
+      setProgress(0);
+      setProgressMessage('');
+      return;
+    }
 
-alert(tUI('dietSubmissionSuccess', lang));
-} catch (err) {
-  console.error(`${tUI('draftSaveCatchErrorLog', lang)}:`, err);
-  alert(tUI('dietSaveError', lang));
-}
+    alert(tUI('dietSubmissionSuccess', lang));
+    setProgress(100);
+    setProgressMessage(tUI('draftSaved', lang));
+    setTimeout(() => {
+      setProgress(0);
+      setProgressMessage('');
+    }, 1000);
+  } catch (err) {
+    console.error(`${tUI('draftSaveCatchErrorLog', lang)}:`, err);
+    alert(tUI('dietSaveError', lang));
+    setProgress(0);
+    setProgressMessage('');
+  }
 };
+
 const handleGenerateDiet = async () => {
-  setIsGenerating(true);
+  setProgress(5);
+  setProgressMessage(tUI('startingDietGeneration', lang));
   setStreamingText('');
   setDietApproved(false);
 
   if (!medicalData) {
     alert(tUI('medicalApprovalRequired', lang));
-    setIsGenerating(false);
+    setProgress(0);
+    setProgressMessage('');
     return;
   }
 
@@ -259,10 +317,11 @@ const handleGenerateDiet = async () => {
       kidney: 'The goal is to support kidney function and manage fluid/sodium balance.'
     };
 
-    // 🧠 Pacjent nie ustawia liczby posiłków – agent to zrobi na podstawie wywiadu i wyników
-
     const recommendation = interviewData.recommendation?.trim();
     const goalExplanation = goalMap[interviewData.goal] || '';
+
+    setProgress(20);
+    setProgressMessage(tUI('sendingDataToAI', lang));
 
     const res = await fetch('/api/generate-diet', {
       method: 'POST',
@@ -279,6 +338,9 @@ const handleGenerateDiet = async () => {
 
     if (!res.body) throw new Error('Brak treści w odpowiedzi serwera.');
 
+    setProgress(40);
+    setProgressMessage(tUI('processingInterview', lang));
+
     const reader = res.body.getReader();
     const decoder = new TextDecoder('utf-8');
     let rawText = '';
@@ -294,44 +356,70 @@ const handleGenerateDiet = async () => {
       setStreamingText(rawText);
     }
 
+    setProgress(70);
+    setProgressMessage(tUI('validatingDiet', lang));
+
     const json = JSON.parse(rawCompleteText);
 
     if (json.dietPlan && typeof json.dietPlan === 'object') {
       const transformed = transformDietPlanToEditableFormat(json.dietPlan, lang);
       setEditableDiet(transformed);
       setDietApproved(true);
+
+      setProgress(100);
+      setProgressMessage(tUI('dietReady', lang));
+      setTimeout(() => {
+        setProgress(0);
+        setProgressMessage('');
+      }, 1000);
       return;
     }
 
- alert(tUI('dietPlanMissing', lang));
-} catch (err) {
-  console.error(`${tUI('dietGenerationErrorPrefix', lang)} ${err}`);
-  alert(tUI('dietGenerationFailed', lang));
-} finally {
-  setIsGenerating(false);
-}
-
+    alert(tUI('dietPlanMissing', lang));
+  } catch (err) {
+    console.error(`${tUI('dietGenerationErrorPrefix', lang)} ${err}`);
+    alert(tUI('dietGenerationFailed', lang));
+    setProgress(0);
+    setProgressMessage('');
+  }
 };
+
 const handleGenerateRecipes = async () => {
   try {
-    setIsGeneratingRecipes(true);
+    setProgress(10);
+    setProgressMessage(tUI('generatingRecipes', lang));
+
     const res = await fetch('/api/generate-recipes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ dietPlan: editableDiet })
     });
 
+    setProgress(60);
+    setProgressMessage(tUI('processingRecipes', lang));
+
     const json = await res.json();
     setRecipes(json.recipes);
+
+    setProgress(100);
+    setProgressMessage(tUI('recipesReady', lang));
+    setTimeout(() => {
+      setProgress(0);
+      setProgressMessage('');
+    }, 1000);
   } catch (err) {
     console.error('❌ Błąd generowania przepisów:', err);
     alert(tUI('errorGeneratingRecipes', lang));
-  } finally {
-    setIsGeneratingRecipes(false);
+    setProgress(0);
+    setProgressMessage('');
   }
 };
+
 const handleGenerateNarrative = async () => {
   try {
+    setProgress(20);
+    setProgressMessage(tUI('generatingNarrative', lang));
+
     const response = await fetch('/api/interview-narrative', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -345,21 +433,61 @@ const handleGenerateNarrative = async () => {
 
     const { narrativeText } = await response.json();
     if (narrativeText) setNarrativeText(narrativeText);
+
+    setProgress(100);
+    setProgressMessage(tUI('narrativeReady', lang));
+    setTimeout(() => {
+      setProgress(0);
+      setProgressMessage('');
+    }, 1000);
   } catch (err) {
     console.error('❌ Błąd przy pobieraniu opisu AI:', err);
     setNarrativeText('⚠️ Błąd generowania opisu wywiadu przez AI');
+    setProgress(0);
+    setProgressMessage('');
   }
 };
+
 console.log("📦 form w panel-patient:", form);
 
-const goToSectionWithScroll = (id: string) => {
-  setSelectedSection(id);
+const handleSectionChange = async (newSection: string) => {
+  // zapisz dane z aktualnej sekcji
+  if (selectedSection === 'medical' && medicalData) {
+    await saveMedicalData(medicalData);
+    console.log('💾 Autozapis: dane medyczne zapisane');
+  }
+
+  if (selectedSection === 'interview' && interviewData) {
+    await saveInterviewData(interviewData);
+    console.log('💾 Autozapis: dane z wywiadu zapisane');
+  }
+
+  // zmień sekcję i przewiń
+  setSelectedSection(newSection);
   setTimeout(() => {
-    document.getElementById(`section-${id}`)?.scrollIntoView({ behavior: 'smooth' });
+    document.getElementById(`section-${newSection}`)?.scrollIntoView({ behavior: 'smooth' });
   }, 50);
 };
 
+useEffect(() => {
+  const fetchDoctors = async () => {
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, name, email')
+      .in('role', ['doctor', 'dietitian']);
+
+    if (error) {
+      console.error('❌ Błąd pobierania listy lekarzy:', error.message);
+    } else {
+      setDoctorList((data || []).sort((a, b) => a.name.localeCompare(b.name)));
+    }
+  };
+
+  fetchDoctors();
+}, []);
+
   return (
+    
     <main className="relative min-h-screen bg-[#0f271e]/70 bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 backdrop-blur-[12px] shadow-[inset_0_0_60px_rgba(255,255,255,0.08)] flex flex-col justify-start items-center pt-10 px-6 text-white transition-all duration-300">
       <Head>
         <title>{tUI('doctorPanelTitle', lang)}</title>
@@ -382,8 +510,8 @@ const goToSectionWithScroll = (id: string) => {
       </div>
 
       {/* Ikony */}
-      <PatientIconGrid lang={lang} selected={selectedSection} onSelect={(id) => setSelectedSection(id)} />
-     
+      <PatientIconGrid lang={lang} selected={selectedSection} onSelect={handleSectionChange} />
+    
             {/* Główna zawartość */}
       <div className="z-10 flex flex-col w-full max-w-[1000px] mx-auto gap-6 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 mt-20 dark:text-white transition-colors animate-flip-in origin-center">
         {selectedSection === 'data' && (
@@ -394,7 +522,7 @@ const goToSectionWithScroll = (id: string) => {
             />
             <div className="flex justify-end mt-6">
           <NeonNextArrow
-            onClick={() => goToSectionWithScroll("medical")}
+            onClick={() => handleSectionChange("medical")}
             label={tUI("nextSection_medical", lang)}
           />
         </div>
@@ -424,7 +552,7 @@ const goToSectionWithScroll = (id: string) => {
           {/* 🔽 Neonowa strzałka Dalej */}
          <div className="mt-6 flex justify-end">
           <NeonNextArrow
-           onClick={() => goToSectionWithScroll("interview")}
+           onClick={() => handleSectionChange("interview")}
             label={tUI("nextSection_interview", lang)}
           />
         </div>
@@ -452,7 +580,7 @@ const goToSectionWithScroll = (id: string) => {
           {/* 🔽 Neonowa strzałka Dalej */}
           <div className="mt-6 flex justify-end">
           <NeonNextArrow
-            onClick={() => goToSectionWithScroll("calculator")}
+            onClick={() => handleSectionChange("calculator")}
             label={tUI("nextSection_calculator", lang)}
           />
         </div>
@@ -477,7 +605,7 @@ const goToSectionWithScroll = (id: string) => {
             {/* 🔽 Neonowa strzałka Dalej */}
             <div className="mt-6 flex justify-end">
             <NeonNextArrow
-              onClick={() => goToSectionWithScroll("diet")}
+              onClick={() => handleSectionChange("diet")}
               label={tUI("nextSection_diet", lang)}
             />
           </div>
@@ -545,23 +673,33 @@ const goToSectionWithScroll = (id: string) => {
     </span>
   </button>
 
-  {/* 📄 Generuj PDF */}
-  <button
-    onClick={async () => {
-      try {
-        setIsGenerating(true);
-        const { generateDietPdf } = await import('@/utils/generateDietPdf');
-        const bmi = form.weight && form.height
+{/* 📄 Generuj PDF */}
+<button
+  onClick={async () => {
+    try {
+      setProgress(10);
+      setProgressMessage(tUI('generatingPdf', lang));
+
+      const { generateDietPdf } = await import('@/utils/generateDietPdf');
+
+      const bmi =
+        form.weight && form.height
           ? parseFloat((form.weight / ((form.height / 100) ** 2)).toFixed(1))
           : 0;
-        const mealArray: Meal[] = (Object.values(editableDiet || {}) as Meal[][]).flat();
 
-        if (!Array.isArray(mealArray) || mealArray.length === 0) {
-          alert(tUI('dietPlanEmptyOrInvalid', lang));
-          return;
-        }
+      const mealArray: Meal[] = (Object.values(editableDiet || {}) as Meal[][]).flat();
 
-       await generateDietPdf(
+      if (!Array.isArray(mealArray) || mealArray.length === 0) {
+        alert(tUI('dietPlanEmptyOrInvalid', lang));
+        setProgress(0);
+        setProgressMessage('');
+        return;
+      }
+
+      setProgress(40);
+      setProgressMessage(tUI('processingInterview', lang));
+
+      await generateDietPdf(
         form,
         bmi,
         mealArray,
@@ -570,35 +708,43 @@ const goToSectionWithScroll = (id: string) => {
         lang,
         interviewData,
         {
-            bmi: interviewData.bmi,
-            ppm: interviewData.ppm,
-            cpm: interviewData.cpm,
-            pal: interviewData.pal,
-            kcalMaintain: interviewData.kcalMaintain,
-            kcalReduce: interviewData.kcalReduce,
-            kcalGain: interviewData.kcalGain,
-            nmcBroca: interviewData.nmcBroca,
-            nmcLorentz: interviewData.nmcLorentz
+          bmi: interviewData.bmi,
+          ppm: interviewData.ppm,
+          cpm: interviewData.cpm,
+          pal: interviewData.pal,
+          kcalMaintain: interviewData.kcalMaintain,
+          kcalReduce: interviewData.kcalReduce,
+          kcalGain: interviewData.kcalGain,
+          nmcBroca: interviewData.nmcBroca,
+          nmcLorentz: interviewData.nmcLorentz
         },
         'download',
         narrativeText,
-        recipes 
-        );
-      } catch (e) {
-        alert(tUI('errorGeneratingPdf', lang));
-        console.error(e);
-      } finally {
-        setIsGenerating(false);
-      }
-    }}
-    disabled={isGenerating || !editableDiet || Object.keys(editableDiet).length === 0}
-    className="w-28 h-28 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition disabled:opacity-50"
-  >
-    <span className="text-4xl leading-none">📄</span>
-    <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
-      {tUI('generatePdf', lang)}
-    </span>
-  </button>
+        recipes
+      );
+
+      setProgress(100);
+      setProgressMessage(tUI('pdfReady', lang));
+      setTimeout(() => {
+        setProgress(0);
+        setProgressMessage('');
+      }, 1000);
+    } catch (e) {
+      console.error('❌ PDF generation error:', e);
+      alert(tUI('errorGeneratingPdf', lang));
+      setProgress(0);
+      setProgressMessage('');
+    }
+  }}
+  disabled={!editableDiet || Object.keys(editableDiet).length === 0 || progress > 0}
+  className="w-28 h-28 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition disabled:opacity-50"
+>
+  <span className="text-4xl leading-none">📄</span>
+  <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
+    {tUI('generatePdf', lang)}
+  </span>
+</button>
+
 
   {/* ✅ Zatwierdź dietę */}
   <button
@@ -630,14 +776,73 @@ const goToSectionWithScroll = (id: string) => {
       </span>
     </button>
   )}
+  {doctorList.length > 0 && (
+  <div className="mb-2">
+    <label className="block text-sm font-medium text-white mb-1">
+      {tUI('selectDoctor', lang)}
+    </label>
+    <select
+      value={selectedDoctor}
+      onChange={(e) => setSelectedDoctor(e.target.value)}
+      className="w-full bg-white text-black rounded px-3 py-2 text-sm"
+    >
+      <option value="">{tUI('selectDoctor', lang)}</option>
+      {doctorList.map((doc) => (
+        <option key={doc.id} value={doc.email}>
+          {doc.name} ({doc.email})
+        </option>
+      ))}
+    </select>
+  </div>
+)}
 
   {/* 📤 Wyślij do lekarza */}
   <button
     onClick={async () => {
-      const confirm = window.confirm(tUI('confirmSendDietToDoctor', lang));
-      if (!confirm) return;
-      await saveDraftToSupabase();
-    }}
+  const confirm = window.confirm(tUI('confirmSendDietToDoctor', lang));
+  if (!confirm) return;
+
+  if (!selectedDoctor) {
+    alert(tUI('selectDoctor', lang));
+    return;
+  }
+
+  setProgress(10);
+  setProgressMessage(tUI('savingDraft', lang));
+
+  await saveDraftToSupabase(); // zostawiamy jak jest
+
+  setProgress(50);
+  setProgressMessage(tUI('sendingNotification', lang));
+
+  try {
+    const response = await fetch('/api/send-diet-notification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        doctorEmail: selectedDoctor,
+        patientName: form?.name || '',
+        lang
+      })
+    });
+
+    if (response.ok) {
+      setProgress(100);
+      setProgressMessage(tUI('notificationSent', lang));
+    } else {
+      throw new Error('Mail failed');
+    }
+  } catch (err) {
+    console.error('❌ Email error:', err);
+    alert(tUI('notificationFailed', lang));
+  } finally {
+    setTimeout(() => {
+      setProgress(0);
+      setProgressMessage('');
+    }, 1000);
+  }
+}}
+
     disabled={!editableDiet || Object.keys(editableDiet).length === 0}
     className="w-28 h-28 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition disabled:opacity-50"
   >
@@ -721,6 +926,10 @@ const goToSectionWithScroll = (id: string) => {
           </p>
         )}
       </div>
+      {progress > 0 && progress < 100 && (
+  <ProgressOverlay message={progressMessage} percent={progress} />
+)}
+
     </main>
   );
 }
