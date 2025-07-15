@@ -4527,7 +4527,34 @@ notificationFailed: {
   ar: 'فشل إرسال الإشعار.',
   hi: 'सूचना भेजने में विफल।',
   he: 'שליחת ההודעה נכשלה.'
-}
+},
+draftSaveErrorLog: {
+  pl: "Błąd zapisu wersji roboczej diety",
+  en: "Error saving draft diet",
+  de: "Fehler beim Speichern des Diätentwurfs",
+  fr: "Erreur lors de l'enregistrement du brouillon du régime",
+  es: "Error al guardar el borrador de la dieta",
+  ua: "Помилка збереження чернетки дієти",
+  ru: "Ошибка сохранения черновика диеты",
+  zh: "保存饮食草稿时出错",
+  ar: "حدث خطأ أثناء حفظ مسودة النظام الغذائي",
+  hi: "डाइट ड्राफ़्ट सहेजने में त्रुटि",
+  he: "שגיאה בשמירת טיוטת התפריט"
+},
+
+dietSubmissionError: {
+  pl: "Nie udało się zapisać diety",
+  en: "Failed to submit diet",
+  de: "Diät konnte nicht übermittelt werden",
+  fr: "Échec de la soumission du régime",
+  es: "No se pudo enviar la dieta",
+  ua: "Не вдалося надіслати дієту",
+  ru: "Не удалось отправить диету",
+  zh: "提交饮食计划失败",
+  ar: "فشل في إرسال النظام الغذائي",
+  hi: "डाइट सबमिट करने में विफल",
+  he: "השליחה של התפריט נכשלה"
+},
 
 };
 

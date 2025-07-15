@@ -879,7 +879,7 @@ useEffect(() => {
                 }, 1000);
               }
             }}
-            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            className="w-full px-4 py-2 text-sm text-gray-800 hover:bg-blue-100 hover:text-blue-900 cursor-pointer transition-colors text-left"
           >
             {doc.name} ({doc.email})
           </button>
