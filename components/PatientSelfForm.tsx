@@ -20,6 +20,7 @@ const PatientSelfForm: React.FC<Props> = ({ lang, value, onChange }) => {
     height: '',
     weight: '',
     region: '',
+    assigned_doctor_email: '',
   });
 
   useEffect(() => {
@@ -35,6 +36,7 @@ const PatientSelfForm: React.FC<Props> = ({ lang, value, onChange }) => {
       height: value.height?.toString() || '',
       weight: value.weight?.toString() || '',
       region: value.region || '',
+      assigned_doctor_email: value.assigned_doctor_email || '',
     });
   }
 }, [value]);
@@ -120,22 +122,25 @@ useEffect(() => {
         placeholder={tUI('phone', lang)}
       />
         <div className="flex flex-col gap-1">
-  <label className="text-sm font-medium text-white">
-    {tUI('assignedDoctorLabel', lang)}
-  </label>
-  <select
-    className="px-3 py-2 rounded bg-white text-black shadow focus:outline-none"
-    value={value.assigned_doctor_email}
-    onChange={(e) => onChange?.({ ...value, assigned_doctor_email: e.target.value })}
-  >
-    <option value="">{tUI('selectDoctorPrompt', lang)}</option>
-    {doctorList.map((doc) => (
-      <option key={doc.id} value={doc.email}>
-        {doc.name} ({doc.email})
-      </option>
-    ))}
-  </select>
-</div>
+        <label htmlFor="assignedDoctor" className="text-sm font-medium text-white">
+          {tUI('assignedDoctorLabel', lang)}
+        </label>
+        <select
+          id="assignedDoctor"
+          name="assigned_doctor_email"
+          value={patient.assigned_doctor_email}
+          onChange={handleChange}
+          className="h-[44px] text-sm bg-white dark:bg-gray-800 text-black dark:text-white border border-gray-300 dark:border-gray-600 rounded px-3 focus:outline-none"
+        >
+
+          <option value="">{tUI('selectDoctorPrompt', lang)}</option>
+          {doctorList.map((doc) => (
+            <option key={doc.id} value={doc.email}>
+              {doc.name} ({doc.email})
+            </option>
+          ))}
+        </select>
+      </div>
 
       <select
         name="sex"

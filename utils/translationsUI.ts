@@ -4580,6 +4580,19 @@ noAssignedDoctor: {
   hi: 'कोई नियुक्त डॉक्टर या डाइटीशियन नहीं है।',
   ar: 'لا يوجد طبيب أو اختصاصي تغذية معين.',
   he: 'לא הוקצה רופא או דיאטן.'
+},
+assignedDoctorLabel: {
+  pl: 'Lekarz lub dietetyk prowadzący',
+  en: 'Supervising doctor or dietitian',
+  de: 'Behandelnder Arzt oder Ernährungsberater',
+  fr: 'Médecin ou diététicien référent',
+  es: 'Médico o dietista responsable',
+  ua: 'Лікар або дієтолог, який вас веде',
+  ru: 'Лечащий врач или диетолог',
+  zh: '主治医生或营养师',
+  hi: 'प्रभारी डॉक्टर या डाइटीशियन',
+  ar: 'الطبيب أو اختصاصي التغذية المشرف',
+  he: 'רופא או דיאטן אחראי'
 }
 
 };
