@@ -4593,7 +4593,60 @@ assignedDoctorLabel: {
   hi: 'प्रभारी डॉक्टर या डाइटीशियन',
   ar: 'الطبيب أو اختصاصي التغذية المشرف',
   he: 'רופא או דיאטן אחראי'
+},
+localTotal: {
+  pl: "Suma lokalna",
+  en: "Local total",
+  de: "Lokale Gesamtsumme",
+  fr: "Total local",
+  es: "Total local",
+  ua: "Місцева сума",
+  ru: "Локальная сумма",
+  zh: "本地总计",
+  hi: "स्थानीय कुल",
+  ar: "المجموع المحلي",
+  he: "סך מקומי"
+},
+onlineTotal: {
+  pl: "Suma online",
+  en: "Online total",
+  de: "Online-Gesamtsumme",
+  fr: "Total en ligne",
+  es: "Total en línea",
+  ua: "Сума онлайн",
+  ru: "Сумма онлайн",
+  zh: "线上总计",
+  hi: "ऑनलाइन कुल",
+  ar: "المجموع عبر الإنترنت",
+  he: "סך אונליין"
+},
+'dietSubmissionSuccess': {
+  pl: 'Dieta została przesłana do Twojego lekarza / dietetyka.',
+  en: 'The diet has been sent to your doctor or dietitian.',
+  de: 'Der Diätplan wurde an deinen Arzt oder Ernährungsberater gesendet.',
+  fr: 'Le régime a été envoyé à votre médecin ou diététicien.',
+  es: 'La dieta ha sido enviada a tu médico o dietista.',
+  ua: 'Дієта була надіслана вашому лікарю або дієтологу.',
+  ru: 'Диета была отправлена вашему врачу или диетологу.',
+  zh: '饮食计划已发送给您的医生或营养师。',
+  ar: 'تم إرسال النظام الغذائي إلى طبيبك أو أخصائي التغذية.',
+  hi: 'आहार योजना आपके डॉक्टर या आहार विशेषज्ञ को भेज दी गई है।',
+  he: 'התפריט נשלח לרופא או לדיאטנית שלך.'
+},
+'dietSentToDoctor': {
+  pl: 'Dieta została zapisana i wysłana do lekarza.',
+  en: 'The diet has been saved and sent to the doctor.',
+  de: 'Die Diät wurde gespeichert und an den Arzt gesendet.',
+  fr: 'Le régime a été enregistré et envoyé au médecin.',
+  es: 'La dieta ha sido guardada y enviada al médico.',
+  ua: 'Дієта збережена і надіслана лікарю.',
+  ru: 'Диета сохранена и отправлена врачу.',
+  zh: '饮食计划已保存并发送给医生。',
+  ar: 'تم حفظ النظام الغذائي وإرساله إلى الطبيب.',
+  hi: 'आहार योजना को सहेज लिया गया है और डॉक्टर को भेज दिया गया है।',
+  he: 'התפריט נשמר ונשלח לרופא.'
 }
+
 
 };
 

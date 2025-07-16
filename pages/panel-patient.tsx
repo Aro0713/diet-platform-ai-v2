@@ -106,15 +106,20 @@ export default function PatientPanelPage(): React.JSX.Element {
     });
   }, []);
 
-const startFakeProgress = (from = 5, to = 95, step = 1, delay = 300) => {
+const startFakeProgress = (from = 5, to = 95, durationMs = 300000) => {
+  stopFakeProgress(); // reset ewentualnego poprzedniego interwału
   setProgress(from);
+  const steps = to - from;
+  const delay = Math.floor(durationMs / steps);
+
   progressIntervalRef.current = setInterval(() => {
     setProgress((prev) => {
       if (prev >= to) return prev;
-      return prev + step;
+      return prev + 1;
     });
   }, delay);
 };
+
 
 const stopFakeProgress = () => {
   if (progressIntervalRef.current) {
@@ -164,7 +169,7 @@ useEffect(() => {
 const saveDietToSupabaseAndPdf = async () => {
   try {
     setProgressMessage(tUI('savingDiet', lang));
-    startFakeProgress(5, 95);
+    startFakeProgress(5, 95, 300000);
 
     const bmi = form.weight && form.height
       ? parseFloat((form.weight / ((form.height / 100) ** 2)).toFixed(1))
@@ -275,7 +280,7 @@ const saveDietToSupabaseOnly = async () => {
 
   try {
     setProgressMessage(tUI('savingDiet', lang));
-    startFakeProgress(10, 95);
+    startFakeProgress(10, 95, 300000);
 
     const { error } = await supabase
       .from('patient_diets')
@@ -335,7 +340,7 @@ const handleGenerateDiet = async () => {
     const goalExplanation = goalMap[interviewData.goal] || '';
 
     setProgressMessage(tUI('sendingDataToAI', lang));
-    startFakeProgress(20, 95);
+    startFakeProgress(20, 95, 300000);
 
     const res = await fetch('/api/generate-diet', {
       method: 'POST',
@@ -848,6 +853,7 @@ const handleShowDoctors = async () => {
 )}
 
 {/* 📤 Wyślij dietę do lekarza/dietetyka */}
+{/* 📤 Wyślij dietę do lekarza/dietetyka (tworzy draft) */}
 {editableDiet && Object.keys(editableDiet).length > 0 && (
   <button
     onClick={async () => {
@@ -860,42 +866,44 @@ const handleShowDoctors = async () => {
         return;
       }
 
+      const userId = localStorage.getItem('currentUserID');
+      if (!userId) {
+        alert(tUI('noUserIdError', lang));
+        return;
+      }
+
       setProgressMessage(tUI('savingDraft', lang));
-      startFakeProgress(10, 95);
-
-      await saveDraftToSupabaseWithDoctor(doctorEmail);
-
-      setProgressMessage(tUI('sendingNotification', lang));
+      startFakeProgress(10, 95, 300000);
 
       try {
-        const response = await fetch('/api/send-diet-notification', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            doctorEmail,
-            patientName: form?.name || '',
-            lang
-          })
-        });
+        const cleanDiet = JSON.parse(JSON.stringify(editableDiet));
+        const { error } = await supabase.from('patient_diets').upsert(
+          {
+            user_id: userId,
+            diet_plan: cleanDiet,
+            status: 'draft',
+            patient_name: form?.name || '',
+            selected_doctor_id: doctorEmail
+          },
+          { onConflict: 'user_id' }
+        );
 
-        if (response.ok) {
-          stopFakeProgress();
-          setProgress(100);
-          setProgressMessage(tUI('notificationSent', lang));
-        } else {
-          throw new Error('Mail failed');
-        }
-      } catch (err) {
-        console.error('❌ Email error:', err);
-        alert(tUI('notificationFailed', lang));
-        stopFakeProgress();
-        setProgress(0);
-        setProgressMessage('');
-      } finally {
+        if (error) throw error;
+
+        setProgress(100);
+        setProgressMessage(tUI('dietSentToDoctor', lang));
         setTimeout(() => {
           setProgress(0);
           setProgressMessage('');
         }, 1000);
+
+        alert(tUI('dietSubmissionSuccess', lang));
+      } catch (err) {
+        console.error("❌ Błąd zapisu wersji roboczej diety:", err);
+        alert(tUI('dietSubmissionError', lang));
+        stopFakeProgress();
+        setProgress(0);
+        setProgressMessage('');
       }
     }}
     className="w-28 h-28 bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition disabled:opacity-50"
@@ -906,7 +914,6 @@ const handleShowDoctors = async () => {
     </span>
   </button>
 )}
-
 </div>
 
 </div>
