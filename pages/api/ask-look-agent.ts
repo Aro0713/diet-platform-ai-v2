@@ -198,6 +198,7 @@ Shopping list mode example:
 },
 "summary": "Your shopping list grouped by store with optimized prices.",
 "audio": "(optional text-to-speech URL)"
+}
 
 🧠 Based on the patient's region or location, always determine the correct local currency.
 Examples:
