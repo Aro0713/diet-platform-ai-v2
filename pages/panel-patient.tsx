@@ -45,6 +45,7 @@ export default function PatientPanelPage(): React.JSX.Element {
   const [doctorList, setDoctorList] = useState<{ id: string; name: string; email: string }[]>([]);
   const [selectedDoctor, setSelectedDoctor] = useState<string>('');
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [isSending, setIsSending] = useState(false);
 
   // ✅ HOOK na samym początku
   const {
@@ -852,7 +853,6 @@ const handleShowDoctors = async () => {
   </button>
 )}
 
-{/* 📤 Wyślij dietę do lekarza/dietetyka */}
 {/* 📤 Wyślij dietę do lekarza/dietetyka (tworzy draft) */}
 {editableDiet && Object.keys(editableDiet).length > 0 && (
   <button
@@ -872,8 +872,9 @@ const handleShowDoctors = async () => {
         return;
       }
 
+      setIsSending(true); // 🔒 blokada klikania
       setProgressMessage(tUI('savingDraft', lang));
-      startFakeProgress(10, 95, 300000);
+      startFakeProgress(10, 25, 60000); // 🔄 1 minuta max
 
       try {
         const cleanDiet = JSON.parse(JSON.stringify(editableDiet));
@@ -890,6 +891,7 @@ const handleShowDoctors = async () => {
 
         if (error) throw error;
 
+        stopFakeProgress();
         setProgress(100);
         setProgressMessage(tUI('dietSentToDoctor', lang));
         setTimeout(() => {
@@ -904,8 +906,11 @@ const handleShowDoctors = async () => {
         stopFakeProgress();
         setProgress(0);
         setProgressMessage('');
+      } finally {
+        setIsSending(false); // 🔓 odblokuj
       }
     }}
+    disabled={isSending}
     className="w-28 h-28 bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition disabled:opacity-50"
   >
     <span className="text-4xl leading-none">📤</span>
@@ -914,6 +919,7 @@ const handleShowDoctors = async () => {
     </span>
   </button>
 )}
+
 </div>
 
 </div>
