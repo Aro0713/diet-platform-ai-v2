@@ -74,7 +74,7 @@ export default function ProductAssistantPanel({
   const [error, setError] = useState<string | null>(null);
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const { addProduct, basket } = useBasket();
-  const [shoppingResponse, setShoppingResponse] = useState<any>(null);
+
 
   const handleAsk = async () => {
     if (!question.trim()) return;
@@ -109,9 +109,10 @@ export default function ProductAssistantPanel({
         ...(data.audio ? { audio: data.audio } : {})
       });
       
-      if (data.mode === 'shopping') {
-        setShoppingResponse(data); // 🟢 zapisz osobno
-        }
+      {response?.mode === 'shopping' && (
+      <ShoppingListCard response={response} lang={lang} />
+      )}
+
 
     setChatHistory((prev) => [
         ...prev,
@@ -246,11 +247,9 @@ export default function ProductAssistantPanel({
           }}
         />
       )}
-
-{shoppingResponse && (
-  <ShoppingListCard response={shoppingResponse} lang={lang} />
-)}
-
-    </div>
-  );
+    {response?.mode === 'shopping' && (
+    <ShoppingListCard response={response} lang={lang} />
+    )}
+</div>
+);
 }
