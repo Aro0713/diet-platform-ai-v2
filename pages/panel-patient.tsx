@@ -891,6 +891,17 @@ const handleShowDoctors = async () => {
 
         if (error) throw error;
 
+        // 🟢 Wyślij powiadomienie e-mail do lekarza
+        await fetch('/api/send-diet-notification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            doctorEmail,
+            patientName: form?.name,
+            lang
+          })
+        });
+        
         stopFakeProgress();
         setProgress(100);
         setProgressMessage(tUI('dietSentToDoctor', lang));
