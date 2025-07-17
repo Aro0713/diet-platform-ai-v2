@@ -488,26 +488,28 @@ return (
   >
     {/* Pasek z nagłówkiem i przełącznikiem */}
     <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between px-4">
-      <div className="flex flex-col">
-        {userData?.name && (
-          <span className="text-sm font-medium text-white dark:text-white">
-            {userData.title &&
-              translatedTitles[userData.title as 'dr' | 'drhab' | 'prof']?.[lang] && (
-                <>{translatedTitles[userData.title as 'dr' | 'drhab' | 'prof'][lang]} </>
-              )}
-            {userData.name}
-            {userData.role &&
-              translationsUI[userData.role as 'doctor' | 'dietitian']?.[lang] && (
-                <> – {translationsUI[userData.role as 'doctor' | 'dietitian'][lang]}</>
-              )}
-          </span>
-        )}
-        <h1 className="text-2xl font-bold text-white dark:text-white">
-        {tUI('doctorPanelTitle', lang)}
-      </h1>
-      </div>
-      <LangAndThemeToggle />
-    </div>
+  <div className="flex flex-col">
+    <h1 className="text-2xl font-bold text-white dark:text-white">
+      {tUI('doctorPanelTitle', lang)}
+    </h1>
+
+    {userData?.name && (
+      <p className="text-sm font-medium text-white/90 dark:text-white/90">
+        {userData.title &&
+          translatedTitles[userData.title as 'dr' | 'drhab' | 'prof']?.[lang] && (
+            <>{translatedTitles[userData.title as 'dr' | 'drhab' | 'prof'][lang]} </>
+          )}
+        {userData.name}
+        {userData.role &&
+          translationsUI[userData.role as 'doctor' | 'dietitian']?.[lang] && (
+            <> – {translationsUI[userData.role][lang]}</>
+          )}
+      </p>
+    )}
+  </div>
+
+  <LangAndThemeToggle />
+</div>
 
     {/* Główna zawartość */}
     <div className="z-10 flex flex-col w-full max-w-[1400px] mx-auto gap-6 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 mt-20 dark:text-white transition-colors">
