@@ -741,8 +741,9 @@ return (
         />
       </PanelCard>
     
-<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6 w-full">
-  <div className="flex">
+<div className="flex flex-wrap justify-between items-stretch gap-4 mt-6 w-full">
+  {/* 🔵 Wygeneruj dietę */}
+  <div className="flex-1">
     <button
       type="button"
       onClick={handleSubmit}
@@ -758,8 +759,9 @@ return (
     </button>
   </div>
 
-  <div className="flex">
-    {editableDiet && !dietApproved && (
+  {/* 🟣 Zatwierdź dietę */}
+  {editableDiet && !dietApproved && (
+    <div className="flex-1">
       <button
         type="button"
         className="w-full h-full bg-purple-700 text-white px-4 py-3 rounded-md font-medium hover:bg-purple-800 disabled:opacity-50"
@@ -768,11 +770,12 @@ return (
       >
         ✅ {tUI('confirmDiet', lang)}
       </button>
-    )}
-  </div>
+    </div>
+  )}
 
-  <div className="flex">
-    {editableDiet && dietApproved && (
+  {/* 📤 Wyślij dietę do pacjenta */}
+  {editableDiet && dietApproved && (
+    <div className="flex-1">
       <button
         type="button"
         className="w-full h-full bg-indigo-600 text-white px-4 py-3 rounded-md font-medium hover:bg-indigo-700 disabled:opacity-50"
@@ -781,10 +784,11 @@ return (
       >
         📤 {tUI('sendDietToPatient', lang)}
       </button>
-    )}
-  </div>
+    </div>
+  )}
 
-  <div className="flex">
+  {/* 📄 PDF */}
+  <div className="flex-1">
     <button
       type="button"
       className="w-full h-full bg-green-700 text-white px-4 py-3 rounded-md font-medium hover:bg-green-800 disabled:opacity-50"
