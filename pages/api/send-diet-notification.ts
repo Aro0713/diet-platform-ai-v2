@@ -104,9 +104,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
-        Authorization: process.env.RESEND_API_KEY || '',
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
         'Content-Type': 'application/json'
-      },
+        },
       body: JSON.stringify({
         from: 'DCP <no-reply@dcp.care>',
         to: doctorEmail,
