@@ -5,6 +5,7 @@ import OpenAI from 'openai';
 import formidable from 'formidable';
 import { readFile } from 'fs/promises';
 import { analyzeProductInput } from '@/agents/productAgent';
+import { dietModelMeta } from '@/utils/dietModelMeta';
 
 export const config = {
   api: {
@@ -13,8 +14,7 @@ export const config = {
 };
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-async function detectQuestionType(question: string, lang: string): Promise<'shopping' | 'product' | 'other'> {
+async function detectQuestionType(question: string, lang: string): Promise<'shopping' | 'shoppingGroups' | 'product' | 'other'> {
   const response = await openai.chat.completions.create({
     model: 'gpt-4o',
     temperature: 0,
@@ -22,20 +22,21 @@ async function detectQuestionType(question: string, lang: string): Promise<'shop
       {
         role: 'system',
         content: `You are an intent classifier inside Diet Care Platform (DCP).
-Classify the user question into:
-- "shopping": if it's about buying, stores, availability, cost, prices
-- "product": if it's about a food, nutrition, ingredients, barcode, packaging
+Classify the user question into one of the following:
+- "shoppingGroups": if it's about grouping purchases by store (e.g. Lidl, Biedronka), splitting by location, or comparing shops
+- "shopping": if it's about what to buy, list of items, prices, costs, availability in general
+- "product": if it's about a specific food, ingredient, barcode, nutrition, packaging, allergens
 - "other": anything else
 
-Only return the word: shopping, product, or other.
-Always classify in language: ${lang}`
+Only respond with one of the following: shoppingGroups, shopping, product, or other.
+Use language: ${lang}`
       },
       { role: 'user', content: question }
     ]
   });
 
   const intent = response.choices[0]?.message?.content?.trim().toLowerCase();
-  if (intent === 'shopping' || intent === 'product') return intent;
+  if (intent === 'shoppinggroups' || intent === 'shopping' || intent === 'product') return intent as any;
   return 'other';
 }
 
@@ -72,7 +73,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const questionType = await detectQuestionType(question, lang);
     const firstName = patient?.name?.split?.(' ')[0] || 'Pacjencie';
 
-    if (questionType === 'product' || base64Image) {
+    if ((questionType === 'product' || base64Image) && !question.toLowerCase().includes('co kupić')) {
       const result = await analyzeProductInput({
         barcode: 'N/A',
         productName: '[From user question]',
@@ -153,6 +154,13 @@ If the user explicitly asks to group products by shop (e.g. "group by shop", "se
 If the question is general or instructional — return mode: "response".
 🍽️ If the user asks whether they can eat or drink something — like sausage, cake, alcohol, dairy — always analyze it based on their health, diet model, and goals.
 This falls under mode: "response".
+🍽️ If the user asks about a specific food, like "Can I eat this?" or "Is milk 3.2% allowed?", return mode: "product".
+🛍️ If the user asks what to buy, return mode: "shopping".
+🛍️ If the user asks to group items by store, return mode: "shoppingGroups".
+
+💡 Never confuse product questions (nutritional analysis) with shopping list requests (what to buy).
+Always return the correct mode based on user intent.
+
 
 If mode is "shopping", always set:  
 "answer": "Your shopping list is below 👇"
@@ -228,6 +236,7 @@ Patient:
 
 Interview: ${JSON.stringify(interviewData)}
 Form: ${JSON.stringify(formData)}
+Model metadata: ${JSON.stringify(dietModelMeta[formData?.model || ''] || {})}
 Medical: ${JSON.stringify(medical)}
 Diet plan: ${JSON.stringify(dietPlan)}
 Basket: ${JSON.stringify(basket)}

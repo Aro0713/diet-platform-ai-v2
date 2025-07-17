@@ -1,6 +1,7 @@
 import { Agent, tool } from '@openai/agents';
 import OpenAI from 'openai';
 import { z } from 'zod';
+import { dietModelMeta } from '@/utils/dietModelMeta';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -22,7 +23,6 @@ const AnalyzeProductSchema = z.object({
   dietPlan: z.any().optional()
 });
 
-// 📆 obsługa "jutro", "poniedziałek", itd.
 function getNextDayName(): string {
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   const today = new Date();
@@ -72,6 +72,12 @@ export async function analyzeProductInput(input: any) {
 
   const inferredDay = detectDayFromQuestion(question || '') || 'Saturday';
 
+  const modelMeta = dietModelMeta[patient?.dietModel || ''] || {};
+
+  const forbidden = modelMeta.forbiddenIngredients?.length
+    ? `⚠️ Forbidden ingredients in this diet: ${modelMeta.forbiddenIngredients.join(', ')}`
+    : 'No specific ingredient restrictions found.';
+
   const prompt = `
 You are a clinical dietitian assistant AI.
 Please respond fully in language: ${lang}. Never use English.
@@ -119,6 +125,8 @@ Patient:
 - Diet model: ${patient.dietModel || 'unspecified'}
 - Region: ${patient.region || 'Poland'}
 - Location: ${patient.location || 'unknown'}
+
+${forbidden}
 
 If an image is attached — do your best to visually identify the product, even without label.
 Describe what you see and guess the product type if needed. Don't refuse to assist.
@@ -205,8 +213,6 @@ Return strictly valid JSON in ${lang} (no markdown):
   }
 }
 
-// 📦 Helpers
-
 function extractShoppingListFromDiet(dietPlan: any, day: string, patient: any) {
   const meals = dietPlan[day] || [];
   const list: any[] = [];
@@ -236,20 +242,29 @@ function estimateOnlinePrice(name: string) {
 }
 
 function suggestShop(name: string, region = '', location = '') {
-  const key = `${region.toLowerCase()}-${location.toLowerCase()}`;
+  const country = (region || '').toLowerCase();
+  const product = name.toLowerCase();
 
-  if (name.toLowerCase().includes('tofu')) {
-    if (key.includes('warszawa')) return 'Lidl Warszawa – ul. Puławska';
-    if (key.includes('kraków')) return 'Lidl Kraków – ul. Zakopiańska';
-    return 'Lidl';
+  if (country.includes('pol')) {
+    if (product.includes('tofu') || product.includes('soja')) return 'Lidl';
+    if (product.includes('olej') || product.includes('bio')) return 'Auchan';
+    if (product.includes('pieczywo') || product.includes('chleb')) return 'Carrefour';
+    if (product.includes('nabiał') || product.includes('jogurt') || product.includes('mleko')) return 'Biedronka';
+    return ['Lidl', 'Biedronka', 'Carrefour'][Math.floor(Math.random() * 3)];
   }
 
-  if (name.toLowerCase().includes('olej')) {
-    if (key.includes('warszawa')) return 'Auchan Warszawa – Jubilerska';
-    return 'Auchan';
+  if (country.includes('usa')) {
+    if (product.includes('organic') || product.includes('tofu')) return 'Whole Foods';
+    if (product.includes('meat') || product.includes('eggs')) return 'Walmart';
+    return 'Kroger';
   }
 
-  return 'Biedronka';
+  if (country.includes('germany')) return 'Rewe';
+  if (country.includes('france')) return 'Carrefour';
+  if (country.includes('india')) return 'Big Bazaar';
+  if (country.includes('ukraine')) return 'Silpo';
+
+  return 'Local Market';
 }
 
 function calculateTotalCost(list: any[]) {
