@@ -101,8 +101,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const html = htmlMap[lang] || htmlMap['pl'];
   const text = `Pacjent ${patientName} (${patientEmail}) przesłał dietę do weryfikacji.\nZaloguj się do DCP: https://dcp.care`;
   const from = 'DCP <no-reply@dcp.care>';
+  const resendKey = 're_D98FQu3q_JdmvKPSHLVGtMv86pU2LrFDz'; // tymczasowo
 
-  // ✅ Log debugowy
   console.log('[send-diet-notification] Sending email with:', {
     from,
     to: doctorEmail,
@@ -111,39 +111,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     htmlSnippet: html?.slice(0, 100) + '...'
   });
 
-  console.log('[DEBUG] RESEND_API_KEY (first 8) =', process.env.RESEND_API_KEY?.slice(0, 8));
+  console.log('[DEBUG] RESEND_SECRET (first 8) =', resendKey.slice(0, 8));
 
-try {
-  const resendKey = 're_D98FQu3q_JdmvKPSHLVGtMv86pU2LrFDz';
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${resendKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from,
+        to: doctorEmail,
+        subject,
+        text,
+        html
+      })
+    });
 
-  console.log('[DEBUG] RESEND_SECRET (first 8) =', resendKey?.slice(0, 8));
+    if (!response.ok) {
+      const error = await response.json();
+      console.error('[send-diet-notification] ❌ Resend API error:', error);
+      return res.status(response.status).json({ error });
+    }
 
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-  Authorization: `Bearer ${resendKey}`,
-  'Content-Type': 'application/json'
-},
-    body: JSON.stringify({
-      from,
-      to: doctorEmail,
-      subject,
-      text,
-      html
-    })
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    console.error('[send-diet-notification] ❌ Resend API error:', error);
-    return res.status(response.status).json({ error });
+    const data = await response.json();
+    console.log('[send-diet-notification] ✅ Email sent:', data);
+    return res.status(200).json({ success: true, data });
+  } catch (err: any) {
+    console.error('[send-diet-notification] ❌ Unexpected error:', err);
+    return res.status(500).json({ error: err.message || 'Unknown error' });
   }
-
-  const data = await response.json();
-  console.log('[send-diet-notification] ✅ Email sent:', data);
-  return res.status(200).json({ success: true, data });
-} catch (err: any) {
-  console.error('[send-diet-notification] ❌ Unexpected error:', err);
-  return res.status(500).json({ error: err.message || 'Unknown error' });
-}
 }
