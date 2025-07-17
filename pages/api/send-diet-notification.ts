@@ -114,16 +114,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   console.log('[DEBUG] RESEND_API_KEY (first 8) =', process.env.RESEND_API_KEY?.slice(0, 8));
 
 try {
-  const resendKey = process.env.RESEND_SECRET;
+  const resendKey = 're_D98FQu3q_JdmvKPSHLVGtMv86pU2LrFDz';
 
   console.log('[DEBUG] RESEND_SECRET (first 8) =', resendKey?.slice(0, 8));
 
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${resendKey}`,
-      'Content-Type': 'application/json'
-    },
+  Authorization: `Bearer ${resendKey}`,
+  'Content-Type': 'application/json'
+},
     body: JSON.stringify({
       from,
       to: doctorEmail,
