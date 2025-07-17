@@ -741,90 +741,92 @@ return (
         />
       </PanelCard>
     
-     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-
-  {/* 1. 🔵 Generuj dietę */}
-  <button
-    type="button"
-    onClick={handleSubmit}
-    className="w-full bg-blue-600 text-white px-4 py-3 rounded-md font-medium hover:bg-blue-700 disabled:opacity-50"
-    disabled={isGenerating}
-  >
-    {isGenerating ? (
-      <span className="flex items-center gap-2">
-        <span className="animate-spin">⚙️</span>
-        {tUI('writingDiet', lang)}
-      </span>
-    ) : tUI('generate', lang)}
-  </button>
-
-  {/* 2. 🟣 Zatwierdź dietę */}
-  {editableDiet && !dietApproved && (
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6 w-full">
+  <div className="flex">
     <button
       type="button"
-      className="w-full bg-purple-700 text-white px-4 py-3 rounded-md font-medium hover:bg-purple-800 disabled:opacity-50"
-      onClick={handleApproveDiet}
+      onClick={handleSubmit}
+      className="w-full h-full bg-blue-600 text-white px-4 py-3 rounded-md font-medium hover:bg-blue-700 disabled:opacity-50"
       disabled={isGenerating}
     >
-      ✅ {tUI('confirmDiet', lang)}
+      {isGenerating ? (
+        <span className="flex items-center gap-2">
+          <span className="animate-spin">⚙️</span>
+          {tUI('writingDiet', lang)}
+        </span>
+      ) : tUI('generate', lang)}
     </button>
-  )}
+  </div>
 
-  {/* 3. 📤 Wyślij dietę do pacjenta */}
-  {editableDiet && dietApproved && (
+  <div className="flex">
+    {editableDiet && !dietApproved && (
+      <button
+        type="button"
+        className="w-full h-full bg-purple-700 text-white px-4 py-3 rounded-md font-medium hover:bg-purple-800 disabled:opacity-50"
+        onClick={handleApproveDiet}
+        disabled={isGenerating}
+      >
+        ✅ {tUI('confirmDiet', lang)}
+      </button>
+    )}
+  </div>
+
+  <div className="flex">
+    {editableDiet && dietApproved && (
+      <button
+        type="button"
+        className="w-full h-full bg-indigo-600 text-white px-4 py-3 rounded-md font-medium hover:bg-indigo-700 disabled:opacity-50"
+        onClick={handleSendDietToPatient}
+        disabled={isGenerating || !form?.email}
+      >
+        📤 {tUI('sendDietToPatient', lang)}
+      </button>
+    )}
+  </div>
+
+  <div className="flex">
     <button
       type="button"
-      className="w-full bg-indigo-600 text-white px-4 py-3 rounded-md font-medium hover:bg-indigo-700 disabled:opacity-50"
-      onClick={handleSendDietToPatient}
-      disabled={isGenerating || !form?.email}
+      className="w-full h-full bg-green-700 text-white px-4 py-3 rounded-md font-medium hover:bg-green-800 disabled:opacity-50"
+      disabled={isGenerating || !confirmedDiet || !dietApproved}
+      onClick={async () => {
+        try {
+          setIsGenerating(true);
+          const { generateDietPdf } = await import('@/utils/generateDietPdf');
+          await generateDietPdf(
+            form,
+            bmi,
+            confirmedDiet!,
+            dietApproved,
+            notes,
+            lang,
+            interviewData,
+            {
+              bmi: interviewData.bmi,
+              ppm: interviewData.ppm,
+              cpm: interviewData.cpm,
+              pal: interviewData.pal,
+              kcalMaintain: interviewData.kcalMaintain,
+              kcalReduce: interviewData.kcalReduce,
+              kcalGain: interviewData.kcalGain,
+              nmcBroca: interviewData.nmcBroca,
+              nmcLorentz: interviewData.nmcLorentz
+            },
+            'download',
+            narrativeText
+          );
+        } catch (e) {
+          alert('❌ Błąd przy generowaniu PDF');
+          console.error(e);
+        } finally {
+          setIsGenerating(false);
+        }
+      }}
     >
-      📤 {tUI('sendDietToPatient', lang)}
+      📄 {tUI('pdf', lang)}
     </button>
-  )}
-
-  {/* 4. 📄 Pobierz PDF */}
-  <button
-    type="button"
-    className="w-full bg-green-700 text-white px-4 py-3 rounded-md font-medium hover:bg-green-800 disabled:opacity-50"
-    disabled={isGenerating || !confirmedDiet || !dietApproved}
-    onClick={async () => {
-      try {
-        setIsGenerating(true);
-        const { generateDietPdf } = await import('@/utils/generateDietPdf');
-        await generateDietPdf(
-          form,
-          bmi,
-          confirmedDiet!,
-          dietApproved,
-          notes,
-          lang,
-          interviewData,
-          {
-            bmi: interviewData.bmi,
-            ppm: interviewData.ppm,
-            cpm: interviewData.cpm,
-            pal: interviewData.pal,
-            kcalMaintain: interviewData.kcalMaintain,
-            kcalReduce: interviewData.kcalReduce,
-            kcalGain: interviewData.kcalGain,
-            nmcBroca: interviewData.nmcBroca,
-            nmcLorentz: interviewData.nmcLorentz
-          },
-          'download',
-          narrativeText
-        );
-      } catch (e) {
-        alert('❌ Błąd przy generowaniu PDF');
-        console.error(e);
-      } finally {
-        setIsGenerating(false);
-      }
-    }}
-  >
-    📄 {tUI('pdf', lang)}
-  </button>
+  </div>
 </div>
-
 
 {isGenerating && (
   <div className="text-sm text-gray-600 italic mt-4 animate-pulse">
