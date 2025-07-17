@@ -448,6 +448,34 @@ const handleApproveDiet = async () => {
     alert(tUI('dietApprovedError', lang));
   }
 };
+const handleSendDietToPatient = async () => {
+  if (!form.email || !form.name) {
+    alert(tUI('missingPatientEmailOrName', lang));
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/send-diet-approved-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        patientEmail: form.email,
+        patientName: form.name,
+        lang
+      })
+    });
+
+    const json = await res.json();
+    if (json.success) {
+      alert(tUI('dietSentSuccess', lang));
+    } else {
+      alert(tUI('dietSentError', lang));
+    }
+  } catch (err) {
+    console.error('❌ Błąd przy wysyłaniu maila:', err);
+    alert(tUI('dietSentError', lang));
+  }
+};
 
 return (
   <main className="relative min-h-screen
@@ -713,9 +741,9 @@ return (
         />
       </PanelCard>
     
-      <div className="flex flex-wrap justify-center items-center gap-4 mt-6">
+     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
 
-  {/* 🔵 Generuj dietę */}
+  {/* 1. 🔵 Generuj dietę */}
   <button
     type="button"
     onClick={handleSubmit}
@@ -730,17 +758,31 @@ return (
     ) : tUI('generate', lang)}
   </button>
 
-  {/* 🟣 Zatwierdź dietę */}
-<button
-  type="button"
-  className="w-full bg-purple-700 text-white px-4 py-3 rounded-md font-medium hover:bg-purple-800 disabled:opacity-50"
-  onClick={handleApproveDiet} // ✅ nowa funkcja
-  disabled={isGenerating || !confirmedDiet}
->
-  {isGenerating ? '⏳ Czekaj...' : `✅ ${tUI('approvedDiet', lang)}`}
-</button>
+  {/* 2. 🟣 Zatwierdź dietę */}
+  {editableDiet && !dietApproved && (
+    <button
+      type="button"
+      className="w-full bg-purple-700 text-white px-4 py-3 rounded-md font-medium hover:bg-purple-800 disabled:opacity-50"
+      onClick={handleApproveDiet}
+      disabled={isGenerating}
+    >
+      ✅ {tUI('confirmDiet', lang)}
+    </button>
+  )}
 
-  {/* ✅ Pobierz PDF */}
+  {/* 3. 📤 Wyślij dietę do pacjenta */}
+  {editableDiet && dietApproved && (
+    <button
+      type="button"
+      className="w-full bg-indigo-600 text-white px-4 py-3 rounded-md font-medium hover:bg-indigo-700 disabled:opacity-50"
+      onClick={handleSendDietToPatient}
+      disabled={isGenerating || !form?.email}
+    >
+      📤 {tUI('sendDietToPatient', lang)}
+    </button>
+  )}
+
+  {/* 4. 📄 Pobierz PDF */}
   <button
     type="button"
     className="w-full bg-green-700 text-white px-4 py-3 rounded-md font-medium hover:bg-green-800 disabled:opacity-50"
@@ -779,10 +821,10 @@ return (
       }
     }}
   >
-    {isGenerating ? '⏳ Generowanie...' : `📄 ${tUI('pdf', lang)}`}
+    📄 {tUI('pdf', lang)}
   </button>
-
 </div>
+
 
 {isGenerating && (
   <div className="text-sm text-gray-600 italic mt-4 animate-pulse">

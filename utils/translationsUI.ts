@@ -4671,7 +4671,72 @@ eliminationDietPdfWarning: {
   hi: "⚠️ यह एलिमिनेशन डाइट इंटरव्यू पर आधारित है। बिना डॉक्टर या डाइटीशियन की सलाह के इसे न अपनाएं।",
   ar: "⚠️ هذا النظام الغذائي الإقصائي مبني على مقابلة. لا تتبعه دون استشارة طبيب أو اختصاصي تغذية.",
   he: "⚠️ דיאטת האלימינציה מבוססת על ראיון. אין ליישמה ללא ייעוץ רפואי או תזונתי."
-}
+},
+  sendDietToPatient: {
+    pl: 'Wyślij dietę do pacjenta',
+    en: 'Send diet to patient',
+    de: 'Diät an Patienten senden',
+    fr: 'Envoyer le régime au patient',
+    es: 'Enviar la dieta al paciente',
+    ua: 'Надіслати дієту пацієнту',
+    ru: 'Отправить диету пациенту',
+    zh: '发送饮食计划给患者',
+    ar: 'إرسال النظام الغذائي إلى المريض',
+    hi: 'मरीज को डाइट भेजें',
+    he: 'שלח דיאטה למטופל'
+  },
+  dietSentSuccess: {
+    pl: '✅ Dieta została wysłana do pacjenta.',
+    en: '✅ Diet was successfully sent to the patient.',
+    de: '✅ Die Diät wurde erfolgreich an den Patienten gesendet.',
+    fr: '✅ Le régime a été envoyé au patient.',
+    es: '✅ La dieta ha sido enviada al paciente.',
+    ua: '✅ Дієта успішно надіслана пацієнту.',
+    ru: '✅ Диета успешно отправлена пациенту.',
+    zh: '✅ 饮食计划已成功发送给患者。',
+    ar: '✅ تم إرسال النظام الغذائي إلى المريض بنجاح.',
+    hi: '✅ डाइट सफलतापूर्वक मरीज को भेज दी गई है।',
+    he: '✅ הדיאטה נשלחה בהצלחה למטופל.'
+  },
+  dietSentError: {
+    pl: '❌ Nie udało się wysłać diety do pacjenta.',
+    en: '❌ Failed to send diet to the patient.',
+    de: '❌ Fehler beim Senden der Diät an den Patienten.',
+    fr: '❌ Échec de l\'envoi du régime au patient.',
+    es: '❌ No se pudo enviar la dieta al paciente.',
+    ua: '❌ Не вдалося надіслати дієту пацієнту.',
+    ru: '❌ Не удалось отправить диету пациенту.',
+    zh: '❌ 无法将饮食计划发送给患者。',
+    ar: '❌ فشل في إرسال النظام الغذائي إلى المريض.',
+    hi: '❌ मरीज को डाइट भेजने में विफल।',
+    he: '❌ נכשל בשליחת הדיאטה למטופל.'
+  },
+  missingPatientEmailOrName: {
+    pl: '❗ Brakuje e-maila lub imienia pacjenta.',
+    en: '❗ Missing patient email or name.',
+    de: '❗ Patienten-E-Mail oder Name fehlt.',
+    fr: '❗ Email ou nom du patient manquant.',
+    es: '❗ Falta el correo o nombre del paciente.',
+    ua: '❗ Відсутній email або ім’я пацієнта.',
+    ru: '❗ Отсутствует email или имя пациента.',
+    zh: '❗ 缺少患者的电子邮件或姓名。',
+    ar: '❗ البريد الإلكتروني أو اسم المريض مفقود.',
+    hi: '❗ मरीज का ईमेल या नाम नहीं है।',
+    he: '❗ חסר דוא"ל או שם המטופל.'
+  },
+  confirmDiet: {
+    pl: 'Zatwierdź dietę',
+    en: 'Confirm diet',
+    de: 'Diät bestätigen',
+    fr: 'Confirmer le régime',
+    es: 'Confirmar dieta',
+    ua: 'Підтвердити дієту',
+    ru: 'Подтвердить диету',
+    zh: '确认饮食',
+    ar: 'تأكيد النظام الغذائي',
+    hi: 'डाइट की पुष्टि करें',
+    he: 'אשר דיאטה'
+  }
 
 };
 
