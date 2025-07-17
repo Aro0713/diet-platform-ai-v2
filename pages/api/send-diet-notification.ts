@@ -8,6 +8,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { doctorEmail, patientName, patientEmail, lang = 'pl' } = req.body;
 
   if (!doctorEmail || !patientName || !patientEmail) {
+    console.warn('[send-diet-notification] ❌ Missing fields', { doctorEmail, patientName, patientEmail });
     return res.status(400).json({ error: 'Missing doctorEmail, patientName or patientEmail' });
   }
 
@@ -99,6 +100,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const subject = subjectMap[lang] || subjectMap['pl'];
   const html = htmlMap[lang] || htmlMap['pl'];
   const text = `Pacjent ${patientName} (${patientEmail}) przesłał dietę do weryfikacji.\nZaloguj się do DCP: https://dcp.care`;
+  const from = 'DCP <no-reply@dcp.care>';
+
+  // ✅ Log debugowy
+  console.log('[send-diet-notification] Sending email with:', {
+    from,
+    to: doctorEmail,
+    subject,
+    text,
+    htmlSnippet: html?.slice(0, 100) + '...'
+  });
 
   try {
     const response = await fetch('https://api.resend.com/emails', {
@@ -106,9 +117,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       headers: {
         Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
         'Content-Type': 'application/json'
-        },
+      },
       body: JSON.stringify({
-        from: 'DCP <no-reply@dcp.care>',
+        from,
         to: doctorEmail,
         subject,
         text,
@@ -118,12 +129,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (!response.ok) {
       const error = await response.json();
+      console.error('[send-diet-notification] ❌ Resend API error:', error);
       return res.status(response.status).json({ error });
     }
 
     const data = await response.json();
+    console.log('[send-diet-notification] ✅ Email sent:', data);
     return res.status(200).json({ success: true, data });
   } catch (err: any) {
+    console.error('[send-diet-notification] ❌ Unexpected error:', err);
     return res.status(500).json({ error: err.message || 'Unknown error' });
   }
 }
