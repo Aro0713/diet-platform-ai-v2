@@ -1,5 +1,3 @@
-// pages/api/send-diet-notification.ts
-
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -7,10 +5,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Only POST allowed' });
   }
 
-  const { doctorEmail, patientName, lang = 'pl' } = req.body;
+  const { doctorEmail, patientName, patientEmail, lang = 'pl' } = req.body;
 
-  if (!doctorEmail || !patientName) {
-    return res.status(400).json({ error: 'Missing doctorEmail or patientName' });
+  if (!doctorEmail || !patientName || !patientEmail) {
+    return res.status(400).json({ error: 'Missing doctorEmail, patientName or patientEmail' });
   }
 
   const subjectMap: Record<string, string> = {
@@ -27,60 +25,95 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     he: '🧾 תפריט חדש מהמטופל'
   };
 
-  const plainTextMap: Record<string, string> = {
-    pl: `Pacjent ${patientName} przesłał dietę do weryfikacji.\nhttps://dcp.care/panel`,
-    en: `Patient ${patientName} submitted a diet for review.\nhttps://dcp.care/panel`,
-    de: `Patient ${patientName} hat eine Diät zur Überprüfung eingereicht.\nhttps://dcp.care/panel`,
-    fr: `Le patient ${patientName} a soumis un régime à vérifier.\nhttps://dcp.care/panel`,
-    es: `El paciente ${patientName} ha enviado una dieta para revisión.\nhttps://dcp.care/panel`,
-    ua: `Пацієнт ${patientName} надіслав дієту для перевірки.\nhttps://dcp.care/panel`,
-    ru: `Пациент ${patientName} отправил диету на проверку.\nhttps://dcp.care/panel`,
-    zh: `患者 ${patientName} 提交了饮食计划以供审核。\nhttps://dcp.care/panel`,
-    ar: `المريض ${patientName} أرسل حمية للمراجعة.\nhttps://dcp.care/panel`,
-    hi: `रोगी ${patientName} ने डाइट प्लान भेजा है।\nhttps://dcp.care/panel`,
-    he: `המטופל ${patientName} שלח תפריט לבדיקה.\nhttps://dcp.care/panel`
-  };
+  const htmlTemplate = (greeting: string, loginInstruction: string, signature: string) => `
+    <div style="font-family:Arial,sans-serif;font-size:16px;line-height:1.5">
+      <p>${greeting}</p>
+      <p><strong>${patientName}</strong> (<a href="mailto:${patientEmail}">${patientEmail}</a>) ${loginInstruction}</p>
+      <p>
+        <a href="https://dcp.care" style="padding:12px 24px;background:#4f46e5;color:white;
+          border-radius:8px;text-decoration:none;display:inline-block;">
+          🔐 Zaloguj się do DCP
+        </a>
+      </p>
+      <p>${signature}</p>
+    </div>`;
 
   const htmlMap: Record<string, string> = {
-    pl: `
-      <h2>🧾 Nowa dieta od pacjenta</h2>
-      <p>Pacjent <strong>${patientName}</strong> przesłał dietę do weryfikacji.</p>
-      <p>
-        <a href="https://dcp.care/panel" style="padding:12px 24px;background:#4f46e5;color:white;
-          border-radius:8px;text-decoration:none;display:inline-block;">
-          🔍 Otwórz panel DCP
-        </a>
-      </p>`,
-    en: `
-      <h2>🧾 New diet from patient</h2>
-      <p>Patient <strong>${patientName}</strong> submitted a diet for your review.</p>
-      <p>
-        <a href="https://dcp.care/panel" style="padding:12px 24px;background:#4f46e5;color:white;
-          border-radius:8px;text-decoration:none;display:inline-block;">
-          🔍 Open DCP Panel
-        </a>
-      </p>`
-    // TODO: możesz dodać inne języki analogicznie
+    pl: htmlTemplate(
+      'Pacjent przesłał dietę do weryfikacji i akceptacji.',
+      'przesłał dietę do weryfikacji. Aby się zalogować, przejdź na stronę DCP i użyj swojego loginu (adres e-mail), aby pobrać dane pacjenta.',
+      'Pozdrawiamy, <br />Zespół DCP'
+    ),
+    en: htmlTemplate(
+      'The patient has submitted a diet for review and approval.',
+      'has submitted a diet for your review. Please log in to DCP using your email address to access the patient data.',
+      'Best regards,<br />DCP Team'
+    ),
+    de: htmlTemplate(
+      'Der Patient hat einen Diätplan zur Überprüfung und Genehmigung eingereicht.',
+      'hat einen Diätplan eingereicht. Bitte melden Sie sich mit Ihrer E-Mail-Adresse bei DCP an, um auf die Patientendaten zuzugreifen.',
+      'Mit freundlichen Grüßen,<br />Ihr DCP-Team'
+    ),
+    fr: htmlTemplate(
+      'Le patient a soumis un régime pour examen et approbation.',
+      'a soumis un régime. Connectez-vous à DCP avec votre adresse e-mail pour accéder aux données du patient.',
+      'Cordialement,<br />L’équipe DCP'
+    ),
+    es: htmlTemplate(
+      'El paciente ha enviado una dieta para revisión y aprobación.',
+      'ha enviado una dieta. Inicia sesión en DCP con tu correo electrónico para acceder a los datos del paciente.',
+      'Atentamente,<br />Equipo DCP'
+    ),
+    ua: htmlTemplate(
+      'Пацієнт надіслав дієту для перевірки та затвердження.',
+      'надіслав дієту. Увійдіть до DCP, використовуючи свою електронну адресу, щоб отримати дані пацієнта.',
+      'З повагою,<br />Команда DCP'
+    ),
+    ru: htmlTemplate(
+      'Пациент отправил диету на проверку и утверждение.',
+      'отправил диету. Войдите в DCP, используя свой email, чтобы получить данные пациента.',
+      'С уважением,<br />Команда DCP'
+    ),
+    zh: htmlTemplate(
+      '患者提交了饮食计划以供审核和批准。',
+      '提交了饮食计划。请使用您的电子邮件登录 DCP 以获取患者数据。',
+      '此致,<br />DCP 团队'
+    ),
+    ar: htmlTemplate(
+      'قام المريض بإرسال خطة غذائية للمراجعة والموافقة.',
+      'أرسل خطة غذائية. الرجاء تسجيل الدخول إلى DCP باستخدام بريدك الإلكتروني للوصول إلى بيانات المريض.',
+      'مع تحيات,<br />فريق DCP'
+    ),
+    hi: htmlTemplate(
+      'रोगी ने समीक्षा और अनुमोदन के लिए एक डाइट योजना भेजी है।',
+      'ने डाइट भेजी है। कृपया अपनी ईमेल आईडी से DCP में लॉगिन करें और मरीज की जानकारी प्राप्त करें।',
+      'सादर,<br />DCP टीम'
+    ),
+    he: htmlTemplate(
+      'המטופל שלח תפריט לבדיקה ואישור.',
+      'שלח תפריט. התחבר ל-DCP עם כתובת האימייל שלך כדי לצפות בפרטי המטופל.',
+      'בברכה,<br />צוות DCP'
+    )
   };
 
   const subject = subjectMap[lang] || subjectMap['pl'];
-  const text = plainTextMap[lang] || plainTextMap['pl'];
   const html = htmlMap[lang] || htmlMap['pl'];
+  const text = `Pacjent ${patientName} (${patientEmail}) przesłał dietę do weryfikacji.\nZaloguj się do DCP: https://dcp.care`;
 
   try {
     const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-        Authorization: process.env.RESEND_API_KEY || '', // re_xxx
+      method: 'POST',
+      headers: {
+        Authorization: process.env.RESEND_API_KEY || '',
         'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
+      },
+      body: JSON.stringify({
         from: 'DCP <no-reply@dcp.care>',
         to: doctorEmail,
         subject,
         text,
         html
-    })
+      })
     });
 
     if (!response.ok) {

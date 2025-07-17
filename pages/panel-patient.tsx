@@ -898,10 +898,11 @@ const handleShowDoctors = async () => {
           body: JSON.stringify({
             doctorEmail,
             patientName: form?.name,
+            patientEmail: form?.email,
             lang
           })
         });
-        
+
         stopFakeProgress();
         setProgress(100);
         setProgressMessage(tUI('dietSentToDoctor', lang));
