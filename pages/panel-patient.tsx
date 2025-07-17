@@ -325,6 +325,12 @@ const handleGenerateDiet = async () => {
     setProgressMessage('');
     return;
   }
+  if (form?.model === 'Dieta eliminacyjna' && (!interviewData || Object.keys(interviewData).length === 0)) {
+  alert(tUI('interviewRequiredForElimination', lang));
+  setProgress(0);
+  setProgressMessage('');
+  return;
+}
 
   try {
     const goalMap: Record<string, string> = {

@@ -4645,8 +4645,33 @@ onlineTotal: {
   ar: 'تم حفظ النظام الغذائي وإرساله إلى الطبيب.',
   hi: 'आहार योजना को सहेज लिया गया है और डॉक्टर को भेज दिया गया है।',
   he: 'התפריט נשמר ונשלח לרופא.'
+},
+interviewRequiredForElimination: {
+  pl: "Aby wygenerować dietę eliminacyjną, musisz najpierw uzupełnić wywiad.",
+  en: "To generate an elimination diet, you must first complete the interview.",
+  de: "Um eine Eliminationsdiät zu erstellen, musst du zuerst das Interview ausfüllen.",
+  fr: "Pour générer un régime d'élimination, vous devez d'abord compléter l'entretien.",
+  es: "Para generar una dieta de eliminación, primero debes completar la entrevista.",
+  ua: "Щоб створити елімінаційну дієту, спочатку заповніть опитування.",
+  ru: "Чтобы создать элиминационную диету, сначала заполните анкету.",
+  zh: "要生成排除饮食，您必须先完成问卷调查。",
+  hi: "एलिमिनेशन डाइट बनाने के लिए पहले इंटरव्यू पूरा करना आवश्यक है।",
+  ar: "لإنشاء نظام غذائي إقصائي، يجب أولاً إكمال المقابلة.",
+  he: "כדי ליצור תפריט אלימינציה, יש להשלים תחילה את הראיון."
+},
+eliminationDietPdfWarning: {
+  pl: "⚠️ Dieta eliminacyjna została ułożona na podstawie wywiadu. Nie stosuj jej bez konsultacji z lekarzem lub dietetykiem klinicznym.",
+  en: "⚠️ This elimination diet is based on interview data. Do not follow it without consultation with a doctor or clinical dietitian.",
+  de: "⚠️ Diese Eliminationsdiät basiert auf einem Interview. Konsultieren Sie vor der Anwendung einen Arzt oder Ernährungsberater.",
+  fr: "⚠️ Ce régime d'élimination est basé sur un entretien. Consultez un médecin ou un diététicien avant de le suivre.",
+  es: "⚠️ Esta dieta de eliminación se basa en una entrevista. Consulta a un médico o dietista clínico antes de seguirla.",
+  ua: "⚠️ Ця елімінаційна дієта створена на основі опитування. Не застосовуйте без консультації з лікарем або дієтологом.",
+  ru: "⚠️ Эта элиминационная диета составлена на основе опроса. Не применяйте без консультации с врачом или диетологом.",
+  zh: "⚠️ 本排除饮食基于问卷信息制定。请务必在医生或临床营养师指导下使用。",
+  hi: "⚠️ यह एलिमिनेशन डाइट इंटरव्यू पर आधारित है। बिना डॉक्टर या डाइटीशियन की सलाह के इसे न अपनाएं।",
+  ar: "⚠️ هذا النظام الغذائي الإقصائي مبني على مقابلة. لا تتبعه دون استشارة طبيب أو اختصاصي تغذية.",
+  he: "⚠️ דיאטת האלימינציה מבוססת על ראיון. אין ליישמה ללא ייעוץ רפואי או תזונתי."
 }
-
 
 };
 

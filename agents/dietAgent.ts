@@ -56,6 +56,95 @@ const dayNames: Record<string, string[]> = {
   hi: ["सोमवार", "मंगलवार", "बुधवार", "गुरुवार", "शुक्रवार", "शनिवार", "रविवार"],
   he: ["יום שני", "יום שלישי", "יום רביעי", "יום חמישי", "יום שישי", "שבת", "יום ראשון"]
 };
+const dietModelMap: Record<string, {
+  macros: { protein: string; fat: string; carbs: string };
+  notes?: string[];
+}> = {
+  "easily digestible": {
+    macros: { protein: "15–20%", fat: "20–30%", carbs: "50–60%" }
+  },
+  "fodmap": {
+    macros: { protein: "20–25%", fat: "30–35%", carbs: "40–50%" },
+    notes: [
+      "Use only Low FODMAP ingredients.",
+      "Allowed vegetables: carrot, cucumber, zucchini, eggplant, hokkaido pumpkin, arugula, small amount of tomato.",
+      "Allowed fruits: unripe banana, kiwi, strawberries, grapes, orange.",
+      "Allowed dairy: lactose-free products and hard cheeses.",
+      "Allowed carbs: rice, oats, quinoa, potatoes, gluten-free bread (without fructans)."
+    ]
+  },
+  "vegan": {
+    macros: { protein: "15–20%", fat: "25–35%", carbs: "45–60%" }
+  },
+  "vegetarian": {
+    macros: { protein: "15–20%", fat: "25–35%", carbs: "45–60%" }
+  },
+  "ketogenic": {
+    macros: { protein: "15–25%", fat: "70–80%", carbs: "5–10%" }
+  },
+  "mediterranean": {
+    macros: { protein: "15–20%", fat: "30–40%", carbs: "40–55%" }
+  },
+  "paleo": {
+    macros: { protein: "20–35%", fat: "35–50%", carbs: "20–40%" }
+  },
+  "low carb": {
+    macros: { protein: "25–35%", fat: "40–60%", carbs: "10–30%" }
+  },
+  "low fat": {
+    macros: { protein: "15–25%", fat: "15–25%", carbs: "50–65%" }
+  },
+  "high protein": {
+    macros: { protein: "25–35%", fat: "25–35%", carbs: "30–45%" }
+  },
+  "renal": {
+    macros: { protein: "10–12%", fat: "30–35%", carbs: "50–60%" }
+  },
+  "liver": {
+    macros: { protein: "15–20%", fat: "20–30%", carbs: "50–60%" }
+  },
+  "anti-inflammatory": {
+    macros: { protein: "15–25%", fat: "30–40%", carbs: "35–50%" }
+  },
+  "autoimmune": {
+    macros: { protein: "20–30%", fat: "30–45%", carbs: "25–45%" },
+    notes: ["Interview data is **required** for autoimmune diets."]
+  },
+  "intermittent fasting": {
+    macros: { protein: "variable", fat: "variable", carbs: "variable" },
+    notes: ["Eating window: 8 hours", "Fasting window: 16 hours"]
+  },
+  "low sugar": {
+    macros: { protein: "20–30%", fat: "30–40%", carbs: "35–50%" }
+  },
+  "low sodium": {
+    macros: { protein: "15–20%", fat: "25–30%", carbs: "50–60%" }
+  },
+  "very low sodium": {
+    macros: { protein: "15–20%", fat: "25–30%", carbs: "50–60%" },
+    notes: ["Sodium < 1500 mg per day (~3.75g of salt)"]
+  },
+  "diabetes": {
+    macros: { protein: "15–20%", fat: "25–35%", carbs: "40–50%" },
+    notes: ["Use only low glycemic index products."]
+  },
+  "insulin resistance": {
+    macros: { protein: "20–30%", fat: "30–40%", carbs: "30–40%" },
+    notes: ["Use low glycemic index ingredients."]
+  },
+  "hypertension": {
+    macros: { protein: "15–20%", fat: "25–35%", carbs: "45–55%" },
+    notes: ["Use low glycemic index and low sodium products."]
+  },
+  "gluten free": {
+    macros: { protein: "15–20%", fat: "30–40%", carbs: "40–55%" },
+    notes: [
+      "Use only naturally gluten-free grains: rice, corn, buckwheat, quinoa, amaranth, millet, sorghum, potato, tapioca.",
+      "All vegetables and fruits are allowed.",
+      "Avoid gluten contamination."
+    ]
+  }
+};
 
 export const generateDietTool = tool({
   name: "generate_diet_plan",
@@ -75,6 +164,9 @@ export const generateDietTool = tool({
   async execute(input: any) {
     const { input: nested } = input;
     const { form, interviewData, lang = "pl", goalExplanation = "", recommendation = "", medical } = nested;
+    if ((form?.model?.toLowerCase() === "dieta eliminacyjna") && (!interviewData || Object.keys(interviewData).length === 0)) {
+     throw new Error("Interview data is required to generate an elimination diet.");
+    }
     const daysInLang = dayNames[lang] || dayNames['pl'];
     const daysList = daysInLang.map(d => `- ${d}`).join('\n');
 
@@ -90,6 +182,19 @@ export const generateDietTool = tool({
     const modelDiet = form.model?.toLowerCase();
     const cuisine = interviewData.cuisine?.toLowerCase() || "global";
     const cuisineContext = cuisineContextMap[interviewData.cuisine] || "general healthy cooking style";
+    const modelDefinition = dietModelMap[modelDiet || ""] || {};
+    const modelMacroStr = modelDefinition.macros
+      ? Object.entries(modelDefinition.macros).map(([k, v]) => `- ${k}: ${v}`).join('\n')
+      : "No macronutrient guidance found for this model.";
+
+    const modelNotes = modelDefinition.notes?.join('\n') || "";
+
+    const modelDetails = `
+    ⚙️ Diet Model Requirements (${modelDiet || "N/A"}):
+    ${modelMacroStr}
+    ${modelNotes ? `\n📌 Notes:\n${modelNotes}` : ""}
+    `;
+
     const jsonFormatPreview = daysInLang.map(day => `    "${day}": { ... }`).join(',\n');
 
     const patientData = {
@@ -105,8 +210,10 @@ export const generateDietTool = tool({
       medical
     };
 
-   const prompt = `
+  const prompt = `
 You are a clinical dietitian AI.
+
+${modelDetails}
 
 Generate a complete 7-day diet plan. DO NOT stop after 1 or 2 days.
 

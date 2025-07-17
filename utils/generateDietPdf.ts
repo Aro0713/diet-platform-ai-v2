@@ -116,6 +116,15 @@ if (!finalNarrative) {
   { text: '', pageBreak: 'after' }
 );
 
+if (patient.model === 'Dieta eliminacyjna') {
+  content.push({
+    text: tUI('eliminationDietPdfWarning', lang),
+    style: 'warning',
+    margin: [0, 10, 0, 10],
+    color: 'red',
+    bold: true
+  });
+}
   // ✅ Dane pacjenta
   content.push({ text: `📋 ${tUI('dietPlanTitle', lang)}`, style: 'header' });
   content.push({ text: `${tUI('date', lang)}: ${new Date().toLocaleString()}`, margin: [0, 0, 0, 10] });
@@ -474,7 +483,12 @@ table: {
       tableHeader: { bold: true, fillColor: '#d2f4e9', color: '#0b4b3c', alignment: 'center' },
       footer: { fontSize: 14, color: '#1d6f5e', alignment: 'center', margin: [0, 10, 0, 0] },
       boldCell: { bold: true },
-      smallCell: { fontSize: 9 }
+      smallCell: { fontSize: 9 },
+      warning: {
+        fontSize: 10,
+        italics: true,
+        color: 'red'
+      }
     },
     defaultStyle: {
       fontSize: 11,

@@ -3,6 +3,60 @@ import { Meal } from "@/types";
 import { calculateMealMacros } from "@/utils/nutrition/calculateMealMacros";
 import { validateDietWithModel } from "@/utils/validateDiet";
 
+const dietModelMap: Record<string, {
+  macros: { protein: string; fat: string; carbs: string };
+  notes?: string[];
+}> = {
+  "ketogenic": {
+    macros: { protein: "15–25%", fat: "70–80%", carbs: "5–10%" }
+  },
+  "high protein": {
+    macros: { protein: "25–35%", fat: "25–35%", carbs: "30–45%" }
+  },
+  "vegan": {
+    macros: { protein: "15–20%", fat: "25–35%", carbs: "45–60%" }
+  },
+  "low carb": {
+    macros: { protein: "25–35%", fat: "40–60%", carbs: "10–30%" }
+  },
+  "mediterranean": {
+    macros: { protein: "15–20%", fat: "30–40%", carbs: "40–55%" }
+  },
+  "gluten free": {
+    macros: { protein: "15–20%", fat: "30–40%", carbs: "40–55%" }
+  },
+  "fodmap": {
+    macros: { protein: "20–25%", fat: "30–35%", carbs: "40–50%" },
+    notes: ["Use only Low FODMAP ingredients"]
+  },
+  "renal": {
+    macros: { protein: "10–12%", fat: "30–35%", carbs: "50–60%" }
+  },
+  "liver": {
+    macros: { protein: "15–20%", fat: "20–30%", carbs: "50–60%" }
+  },
+  "anti-inflammatory": {
+    macros: { protein: "15–25%", fat: "30–40%", carbs: "35–50%" }
+  },
+  "low fat": {
+    macros: { protein: "15–25%", fat: "15–25%", carbs: "50–65%" }
+  },
+  "low sugar": {
+    macros: { protein: "20–30%", fat: "30–40%", carbs: "35–50%" }
+  },
+  "diabetes": {
+    macros: { protein: "15–20%", fat: "25–35%", carbs: "40–50%" },
+    notes: ["Use low glycemic index"]
+  },
+  "insulin resistance": {
+    macros: { protein: "20–30%", fat: "30–40%", carbs: "30–40%" }
+  },
+  "hypertension": {
+    macros: { protein: "15–20%", fat: "25–35%", carbs: "45–55%" }
+  }
+  // możesz uzupełnić więcej modeli w razie potrzeby
+};
+
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export const dqAgent = {
@@ -21,6 +75,40 @@ export const dqAgent = {
   }) => {
     const safeCpm = cpm ?? undefined;
     const safeWeight = weightKg ?? undefined;
+    const modelKey = model?.toLowerCase()?.trim() || "";
+      const modelDefinition = dietModelMap[modelKey];
+      const macroInfo = modelDefinition?.macros
+        ? Object.entries(modelDefinition.macros)
+            .map(([k, v]) => `- ${k}: ${v}`).join('\n')
+        : "No macro data available.";
+
+      const notesInfo = modelDefinition?.notes?.join('\n') || "";
+      const modelDetails = `
+
+      📊 Diet Model Expected Structure (${model}):
+      ${macroInfo}
+      ${notesInfo ? `\n📝 Notes:\n${notesInfo}` : ""}
+      `;
+      // 🔒 Walidacja diety eliminacyjnej bez wywiadu
+if (modelKey === 'dieta eliminacyjna') {
+  const totalMeals = Object.values(dietPlan).flatMap(day => Object.values(day));
+  const riskyIngredients = ["nabiał", "jaja", "gluten", "soja", "orzech", "migdał", "krewetki", "łosoś", "tuńczyk", "owoc morza"];
+
+  const hasPotentialAllergens = totalMeals.some(meal =>
+    meal.ingredients?.some(ing =>
+      riskyIngredients.some(allergen =>
+        ing.product.toLowerCase().includes(allergen)
+      )
+    )
+  );
+
+  if (hasPotentialAllergens) {
+    return {
+      type: "text",
+      content: "⚠️ Cannot validate elimination diet: potential allergens detected and no interview data provided."
+    };
+  }
+}
 
     // 🔁 Uzupełnij brakujące makroskładniki
     const enrichedPlan: Record<string, Record<string, Meal>> = JSON.parse(JSON.stringify(dietPlan)); // deep clone
@@ -34,7 +122,7 @@ export const dqAgent = {
       }
     }
 
-    const prompt = `
+const prompt = `
 You are a clinical AI diet quality controller.
 
 Your task is to validate and optionally fix a 7-day meal plan based on the following:
@@ -44,18 +132,17 @@ Your task is to validate and optionally fix a 7-day meal plan based on the follo
 - Target energy requirement (CPM): ${safeCpm} kcal
 - Patient weight: ${safeWeight} kg
 
+${modelDetails}
+
 Analyze the plan by:
 1. Checking total daily and weekly kcal vs CPM (±10% acceptable)
-2. Verifying macronutrient structure per model:
-   - ketogenic → high fat, low carb
-   - high-protein → ≥25% protein
-   - vegan → no animal products
-   - low-carb → < 100g carbs/day
-   - mediterranean → olive oil, fish, legumes, diversity
+2. Verifying macronutrient structure per model
 3. Detecting unrealistic nutrient gaps or excess
 4. Checking consistent number of meals per day
 
 Return one of the following:
+...
+
 
 ✅ VALID — if all rules are met
 
