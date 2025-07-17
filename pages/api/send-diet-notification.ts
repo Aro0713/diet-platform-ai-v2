@@ -110,6 +110,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     text,
     htmlSnippet: html?.slice(0, 100) + '...'
   });
+  
+  console.log('[DEBUG] RESEND_API_KEY (first 8) =', process.env.RESEND_API_KEY?.slice(0, 8));
 
   try {
     const response = await fetch('https://api.resend.com/emails', {
