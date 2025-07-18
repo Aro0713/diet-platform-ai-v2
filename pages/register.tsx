@@ -6,13 +6,14 @@ import { translationsRegister } from '@/utils/translations/register';
 import { translationsUI } from '@/utils/translationsUI';
 import { type LangKey, languageLabels } from '@/utils/i18n';
 import { PhoneInput } from 'react-international-phone';
+import type { CountryIso2 } from 'react-international-phone';
 import 'react-international-phone/style.css';
 
 const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_KEY || '';
 
 export default function RegisterPage() {
   const router = useRouter();
-   const [detectedCountry, setDetectedCountry] = useState<'pl'>('pl');
+   const [detectedCountry, setDetectedCountry] = useState<CountryIso2 | undefined>(undefined);
    const runInsert = async () => {
     const { data } = await supabase.auth.getSession();
     const user = data.session?.user;
@@ -121,7 +122,7 @@ const [disclaimer, setDisclaimer] = useState('');
 
 
   // 🌍 JĘZYK PLATFORMY
- useEffect(() => {
+useEffect(() => {
   fetch('https://ipapi.co/json/')
     .then((res) => res.json())
     .then((data) => {
@@ -129,25 +130,28 @@ const [disclaimer, setDisclaimer] = useState('');
       const regionName = data?.country_name || null;
       const cityLocation = `${data?.city || ''}, ${data?.region || ''}`;
 
-      // 🌐 Ustaw język platformy, jeśli wykryto i obsługiwany
+      // 📞 Ustaw domyślny kraj dla PhoneInput
+      const countryCode = data?.country?.toLowerCase(); // ⬅️ TU DODAJ
+      if (countryCode) {
+        setDetectedCountry(countryCode); // ⬅️ TU DODAJ
+      }
+
       if (detectedLangRaw && Object.keys(languageLabels).includes(detectedLangRaw)) {
         setLang(detectedLangRaw as LangKey);
         localStorage.setItem('platformLang', detectedLangRaw);
-        console.log('🌍 Wykryty język:', detectedLangRaw);
       }
 
-      // 🌍 Lokalizacja do zapisu w Supabase (jeśli dostępna)
       if (regionName) {
         setRegion(regionName);
       }
+
       setLocation(cityLocation);
       setLangReady(true);
-
-      console.log('🌍 Lokalizacja:', regionName, cityLocation);
     })
     .catch((err) => {
       console.warn('🌍 Nie udało się pobrać lokalizacji:', err);
       setLang('pl');
+      setDetectedCountry('pl'); // fallback 🇵🇱
       setRegion('Poland');
       setLocation('');
       setLangReady(true);
@@ -715,18 +719,19 @@ return (
 
       <div className="w-full">
       <label htmlFor="phone" className="sr-only">{t('phone')}</label>
-     <PhoneInput
-      value={form.phone}
-      onChange={(phone) => setForm({ ...form, phone })}
-      inputClassName="w-full h-[44px] text-sm bg-white dark:bg-gray-800 text-black dark:text-white border border-gray-300 dark:border-gray-600 rounded px-3 py-2"
-      inputProps={{
-        name: 'phone',
-        required: true,
-        id: 'phone',
-        'aria-label': t('phone'),
-        placeholder: t('phone'),
-      }}
-    />
+      <PhoneInput
+        defaultCountry={detectedCountry}
+        value={form.phone}
+        onChange={(phone) => setForm({ ...form, phone })}
+        inputClassName="w-full h-[44px] text-sm bg-white dark:bg-gray-800 text-black dark:text-white border border-gray-300 dark:border-gray-600 rounded px-3 py-2"
+        inputProps={{
+          name: 'phone',
+          required: true,
+          id: 'phone',
+          'aria-label': t('phone'),
+          placeholder: t('phone'),
+        }}
+      />
       </div>
       
       <div>
