@@ -4749,8 +4749,46 @@ eliminationDietPdfWarning: {
   ar: '❌ فشل في إنشاء النظام الغذائي. حاول مرة أخرى.',
   hi: '❌ डाइट जनरेट नहीं हो सकी। कृपया पुनः प्रयास करें।',
   he: '❌ לא ניתן היה ליצור את הדיאטה. נסה שוב.'
+},
+cookieConsentText: {
+  pl: "Ta strona korzysta z plików cookies, aby poprawić komfort użytkowania. Korzystając z niej, wyrażasz zgodę na ich użycie zgodnie z naszą polityką prywatności.",
+  en: "This website uses cookies to enhance user experience. By using it, you agree to our use of cookies in accordance with our privacy policy.",
+  de: "Diese Website verwendet Cookies, um die Benutzerfreundlichkeit zu verbessern. Durch die Nutzung stimmen Sie der Verwendung gemäß unserer Datenschutzrichtlinie zu.",
+  fr: "Ce site utilise des cookies pour améliorer l'expérience utilisateur. En l'utilisant, vous acceptez leur utilisation conformément à notre politique de confidentialité.",
+  es: "Este sitio utiliza cookies para mejorar la experiencia del usuario. Al utilizarlo, acepta su uso de acuerdo con nuestra política de privacidad.",
+  ua: "Цей сайт використовує файли cookie для покращення зручності. Користуючись ним, ви погоджуєтеся з нашою політикою конфіденційності.",
+  ru: "Этот сайт использует файлы cookie для удобства пользователей. Используя его, вы соглашаетесь с нашей политикой конфиденциальности.",
+  zh: "本网站使用 Cookie 以改善用户体验。继续浏览即表示您同意我们的隐私政策。",
+  hi: "यह वेबसाइट उपयोगकर्ता अनुभव को बेहतर बनाने के लिए कुकीज़ का उपयोग करती है। इसका उपयोग करके, आप हमारी गोपनीयता नीति से सहमत होते हैं।",
+  ar: "يستخدم هذا الموقع ملفات تعريف الارتباط لتحسين تجربة المستخدم. باستخدامه، فإنك توافق على سياسة الخصوصية الخاصة بنا.",
+  he: "אתר זה משתמש בעוגיות כדי לשפר את חוויית המשתמש. בשימוש באתר אתה מסכים למדיניות הפרטיות שלנו."
+},
+cookieAcceptButton: {
+  pl: "Akceptuję",
+  en: "Accept",
+  de: "Akzeptieren",
+  fr: "Accepter",
+  es: "Aceptar",
+  ua: "Приймаю",
+  ru: "Принять",
+  zh: "接受",
+  hi: "स्वीकार करें",
+  ar: "أوافق",
+  he: "מאשר"
+},
+privacyPolicy: {
+  pl: "polityką prywatności",
+  en: "privacy policy",
+  de: "Datenschutzrichtlinie",
+  fr: "politique de confidentialité",
+  es: "política de privacidad",
+  ua: "політикою конфіденційності",
+  ru: "политикой конфиденциальности",
+  zh: "隐私政策",
+  hi: "गोपनीयता नीति",
+  ar: "سياسة الخصوصية",
+  he: "מדיניות הפרטיות"
 }
-
 
 };
 
