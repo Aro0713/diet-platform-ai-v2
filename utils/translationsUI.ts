@@ -4736,7 +4736,21 @@ eliminationDietPdfWarning: {
     ar: 'تأكيد النظام الغذائي',
     hi: 'डाइट की पुष्टि करें',
     he: 'אשר דיאטה'
-  }
+  },
+  dietGenerationError: {
+  pl: '❌ Nie udało się wygenerować diety. Spróbuj ponownie.',
+  en: '❌ Failed to generate the diet. Please try again.',
+  de: '❌ Die Diät konnte nicht erstellt werden. Bitte versuche es erneut.',
+  fr: '❌ Échec de la génération du régime. Veuillez réessayer.',
+  es: '❌ No se pudo generar la dieta. Inténtalo de nuevo.',
+  ua: '❌ Не вдалося створити дієту. Спробуйте ще раз.',
+  ru: '❌ Не удалось создать диету. Пожалуйста, попробуйте снова.',
+  zh: '❌ 无法生成饮食计划。请再试一次。',
+  ar: '❌ فشل في إنشاء النظام الغذائي. حاول مرة أخرى.',
+  hi: '❌ डाइट जनरेट नहीं हो सकी। कृपया पुनः प्रयास करें।',
+  he: '❌ לא ניתן היה ליצור את הדיאטה. נסה שוב.'
+}
+
 
 };
 

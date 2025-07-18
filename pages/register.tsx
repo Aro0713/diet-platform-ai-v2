@@ -280,7 +280,7 @@ useEffect(() => {
     }, 1000);
     return () => clearInterval(timer);
   }, [resetCooldown]);
-  
+
   if (!langReady || !router.isReady) {
     return (
       <main className="min-h-screen flex items-center justify-center">
@@ -799,21 +799,6 @@ return (
         {t('registerTitle')}
       </button>
     </form>
-
-    {userType === 'patient' && (
-      <div className="mt-6 text-sm text-gray-600 dark:text-gray-300 text-center">
-        <p className="italic mb-2">{disclaimer}</p>
-        <div className="mt-4">
-          <button
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-            onClick={() => router.push('/panel-patient')}
-            disabled={!consentGiven}
-          >
-            {continueWithoutRegister}
-          </button>
-        </div>
-      </div>
-    )}
   </article>
 </section>
     </main>
