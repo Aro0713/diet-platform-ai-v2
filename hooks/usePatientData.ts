@@ -19,6 +19,25 @@ interface UsePatientDataResult {
 }
 
 export function usePatientData(providedUserId?: string | null): UsePatientDataResult {
+  if (!providedUserId) {
+    console.warn("🚫 usePatientData wywołany bez userId – zwracam puste dane.");
+    return {
+      form: {} as any,
+      setForm: () => {},
+      interviewData: {},
+      setInterviewData: () => {},
+      medicalData: null,
+      setMedicalData: () => {},
+      fetchPatientData: async () => {},
+      saveMedicalData: async () => {},
+      saveInterviewData: async () => {},
+      initialMedicalData: undefined,
+      initialInterviewData: undefined,
+      editableDiet: {},
+      setEditableDiet: () => {}
+    };
+  }
+
   const [form, setForm] = useState<PatientData>({} as PatientData);
   const [interviewData, setInterviewData] = useState<any>({});
   const [medicalData, setMedicalData] = useState<any>(null);
@@ -26,72 +45,70 @@ export function usePatientData(providedUserId?: string | null): UsePatientDataRe
   const [initialInterviewData, setInitialInterviewData] = useState<any>(undefined);
   const [editableDiet, setEditableDiet] = useState<any>({});
 
- const fetchPatientData = async () => {
-  console.log("🚀 fetchPatientData start");
+  const fetchPatientData = async () => {
+    console.log("🚀 fetchPatientData start");
 
-  // 🔁 Pobierz user_id bezpośrednio z sesji Supabase
-  const userId = providedUserId || (await supabase.auth.getUser()).data.user?.id;
-  console.log("🧠 userId w usePatientData:", userId);
+    const userId = providedUserId || (await supabase.auth.getUser()).data.user?.id;
+    console.log("🧠 userId w usePatientData:", userId);
 
-  if (!userId) {
-    console.warn("❌ Brak userId – nie można pobrać danych pacjenta");
-    return;
-  }
+    if (!userId) {
+      console.warn("❌ Brak userId – nie można pobrać danych pacjenta");
+      return;
+    }
 
-  const { data, error: patientError } = await supabase
-    .from('patients')
-    .select('*')
-    .eq('user_id', userId)
-    .maybeSingle();
+    const { data, error: patientError } = await supabase
+      .from('patients')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
 
-  if (patientError) {
-    console.error('❌ Błąd z Supabase:', patientError.message);
-    return;
-  }
+    if (patientError) {
+      console.error('❌ Błąd z Supabase:', patientError.message);
+      return;
+    }
 
-  if (!data) {
-    console.warn('⚠️ Supabase zwrócił null — brak wpisu w patients?');
-    return;
-  }
+    if (!data) {
+      console.warn('⚠️ Supabase zwrócił null — brak wpisu w patients?');
+      return;
+    }
 
-  console.log('✅ Supabase dane:', JSON.stringify(data, null, 2));
+    console.log('✅ Supabase dane:', JSON.stringify(data, null, 2));
 
-  setForm({
-    user_id: data.user_id,
-    name: data.name,
-    email: data.email,
-    phone: data.phone,
-    sex: data.sex,
-    age: data.age,
-    height: data.height,
-    weight: data.weight,
-    region: data.region,
-    medical: Array.isArray(data.medical) ? data.medical : [],
-    conditionGroups: Array.isArray(data.conditionGroups) ? data.conditionGroups : [],
-    conditions: Array.isArray(data.conditions) ? data.conditions : [],
-    allergies: data.allergies || '',
-    goal: data.goal || '',
-    cuisine: data.cuisine || '',
-    model: data.model || '',
-    assigned_doctor_email: data.assigned_doctor_email || '',
+    setForm({
+      user_id: data.user_id,
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      sex: data.sex,
+      age: data.age,
+      height: data.height,
+      weight: data.weight,
+      region: data.region,
+      medical: Array.isArray(data.medical) ? data.medical : [],
+      conditionGroups: Array.isArray(data.conditionGroups) ? data.conditionGroups : [],
+      conditions: Array.isArray(data.conditions) ? data.conditions : [],
+      allergies: data.allergies || '',
+      goal: data.goal || '',
+      cuisine: data.cuisine || '',
+      model: data.model || '',
+      assigned_doctor_email: data.assigned_doctor_email || '',
+    });
 
-  });
+    setTimeout(() => {
+      console.log("📢 AFTER setForm:", form);
+    }, 500);
 
-  setTimeout(() => {
-    console.log("📢 AFTER setForm:", form);
-  }, 500);
+    setMedicalData({
+      summary: data.health_status || '',
+      json: data.medical_data || null
+    });
 
-  setMedicalData({
-    summary: data.health_status || '',
-    json: data.medical_data || null
-  });
+    setInterviewData(data.interview_data || {});
 
-  setInterviewData(data.interview_data || {});
-
-  const freshInitial = buildInitialDataFromSupabase(data);
-  console.log('🔥 initialMedicalData z Supabase:', freshInitial);
-  setInitialMedicalData(JSON.parse(JSON.stringify(freshInitial)));
-  setInitialInterviewData(JSON.parse(JSON.stringify(data.interview_data || {})));
+    const freshInitial = buildInitialDataFromSupabase(data);
+    console.log('🔥 initialMedicalData z Supabase:', freshInitial);
+    setInitialMedicalData(JSON.parse(JSON.stringify(freshInitial)));
+    setInitialInterviewData(JSON.parse(JSON.stringify(data.interview_data || {})));
 
   // 🔍 Najpierw próbuj pobrać potwierdzoną dietę
   const { data: confirmed } = await supabase
