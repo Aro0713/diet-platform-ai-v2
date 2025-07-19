@@ -70,15 +70,6 @@ export default function PatientPanelPage(): React.JSX.Element {
     });
   }, []);
 
-  // ⛔ Zatrzymaj renderowanie dopóki sesja nie będzie gotowa
-  if (isLoadingUser || !userId || !patientData?.form) {
-    return (
-      <main className="min-h-screen flex items-center justify-center">
-        <p className="text-white text-sm">⏳ {tUI('loadingUser', lang)}</p>
-      </main>
-    );
-  }
-
   // ✅ Destrukturyzacja dopiero teraz
   const {
     form,
