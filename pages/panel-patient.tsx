@@ -68,29 +68,28 @@ export default function PatientPanelPage(): React.JSX.Element {
   }, []);
 
   // ⏳ Ekran ładowania, zanim będzie dostępny userId
-  if (isLoadingUser) {
-    return (
-      <main className="min-h-screen flex items-center justify-center">
-        <p className="text-white text-sm">⏳ {tUI('loadingUser', lang)}</p>
-      </main>
-    );
-  }
+  if (isLoadingUser || !userId) {
+  return (
+    <main className="min-h-screen flex items-center justify-center">
+      <p className="text-white text-sm">⏳ {tUI('loadingUser', lang)}</p>
+    </main>
+  );
+}
 
-  // ✅ HOOK z przekazaniem userId
-  const {
-    form,
-    interviewData,
-    setInterviewData,
-    medicalData,
-    setMedicalData,
-    fetchPatientData,
-    saveMedicalData,
-    saveInterviewData,
-    initialMedicalData,
-    initialInterviewData,
-    editableDiet,
-    setEditableDiet
-  } = usePatientData(userId);
+const {
+  form,
+  interviewData,
+  setInterviewData,
+  medicalData,
+  setMedicalData,
+  fetchPatientData,
+  saveMedicalData,
+  saveInterviewData,
+  initialMedicalData,
+  initialInterviewData,
+  editableDiet,
+  setEditableDiet
+} = usePatientData(userId);
 
   useEffect(() => {
   const storedLang = localStorage.getItem('platformLang');
