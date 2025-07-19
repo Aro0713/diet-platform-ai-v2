@@ -50,24 +50,10 @@ export default function PatientPanelPage(): React.JSX.Element {
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [isSending, setIsSending] = useState(false);
 
-  // ✅ HOOK bez przekazywania userId — działa jak wcześniej
-  const {
-    form,
-    setForm,
-    interviewData,
-    setInterviewData,
-    medicalData,
-    setMedicalData,
-    fetchPatientData,
-    saveMedicalData,
-    saveInterviewData,
-    initialMedicalData,
-    initialInterviewData,
-    editableDiet,
-    setEditableDiet
-  } = usePatientData(); // 👈 bez parametru
+  // ✅ HOOK bezwarunkowo — React nie krzyczy
+  const patientData = usePatientData();
 
-  // 🔐 Pobierz userId z Supabase tylko raz
+  // ⏳ Pobierz userId z Supabase tylko raz
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       const uid = data?.session?.user?.id;
@@ -85,13 +71,31 @@ export default function PatientPanelPage(): React.JSX.Element {
   }, []);
 
   // ⛔ Zatrzymaj renderowanie dopóki sesja nie będzie gotowa
-  if (isLoadingUser || !userId) {
+  if (isLoadingUser || !userId || !patientData?.form) {
     return (
       <main className="min-h-screen flex items-center justify-center">
         <p className="text-white text-sm">⏳ {tUI('loadingUser', lang)}</p>
       </main>
     );
   }
+
+  // ✅ Destrukturyzacja dopiero teraz
+  const {
+    form,
+    setForm,
+    interviewData,
+    setInterviewData,
+    medicalData,
+    setMedicalData,
+    fetchPatientData,
+    saveMedicalData,
+    saveInterviewData,
+    initialMedicalData,
+    initialInterviewData,
+    editableDiet,
+    setEditableDiet
+  } = patientData;
+
 
   useEffect(() => {
   const storedLang = localStorage.getItem('platformLang');
