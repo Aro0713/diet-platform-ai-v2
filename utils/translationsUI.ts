@@ -4895,6 +4895,18 @@ nip: {
   hi: "पैन/जीएसटी नंबर (वैकल्पिक)",
   he: "מספר עוסק / מע\"מ (אופציונלי)"
 },
-
+loadingUser: {
+  pl: "Ładowanie użytkownika...",
+  en: "Loading user...",
+  de: "Benutzer wird geladen...",
+  fr: "Chargement de l'utilisateur...",
+  es: "Cargando usuario...",
+  ua: "Завантаження користувача...",
+  ru: "Загрузка пользователя...",
+  zh: "正在加载用户...",
+  ar: "جارٍ تحميل المستخدم...",
+  hi: "उपयोगकर्ता लोड हो रहा है...",
+  he: "טוען משתמש..."
+},
 };
 

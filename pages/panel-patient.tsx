@@ -50,13 +50,13 @@ export default function PatientPanelPage(): React.JSX.Element {
   const [userId, setUserId] = useState<string | null>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
 
-  if (isLoadingUser) {
+if (isLoadingUser) {
   return (
     <main className="min-h-screen flex items-center justify-center">
       <p className="text-white text-sm">⏳ {tUI('loadingUser', lang)}</p>
     </main>
   );
-  }
+}
 
   // ✅ HOOK na samym początku
   const {
@@ -78,17 +78,19 @@ export default function PatientPanelPage(): React.JSX.Element {
   const storedLang = localStorage.getItem('platformLang');
   if (storedLang) setLang(storedLang as LangKey);
 
-  supabase.auth.getUser().then(async ({ data }) => {
-    const uid = data?.user?.id;
+  supabase.auth.getSession().then(async ({ data }) => {
+    const uid = data?.session?.user?.id;
     if (!uid) {
       console.warn("❌ Brak user.id – użytkownik nie jest zalogowany?");
+      setIsLoadingUser(false);
       return;
     }
 
-    setUserId(uid); // ✅ lokalny stan, bez localStorage
+    setUserId(uid); // ✅ zapis lokalny
+    console.log("✅ userId:", uid);
 
     try {
-      // 🔽 Pobierz flagę płatności
+      // 🔽 Flaga płatności
       const { data: patientData, error: patientError } = await supabase
         .from('patients')
         .select('has_paid')
@@ -99,9 +101,10 @@ export default function PatientPanelPage(): React.JSX.Element {
         console.error('❌ Błąd pobierania has_paid:', patientError.message);
       } else {
         setHasPaid(patientData?.has_paid === true);
+        console.log("💰 has_paid:", patientData?.has_paid);
       }
 
-      // 🔽 Pobierz dietę
+      // 🔽 Dieta
       const { data: dietData, error: dietError } = await supabase
         .from('patient_diets')
         .select('*')
@@ -119,12 +122,13 @@ export default function PatientPanelPage(): React.JSX.Element {
         });
         setDietApproved(true);
       }
+    } catch (err) {
+      console.error("❌ Błąd w ładowaniu danych użytkownika:", err);
     } finally {
-      setIsLoadingUser(false); // ✅ dane gotowe
+      setIsLoadingUser(false); // ✅ zakończ ładowanie
     }
   });
 }, []);
-
 
 const startFakeProgress = (from = 5, to = 95, durationMs = 300000) => {
   stopFakeProgress(); // reset ewentualnego poprzedniego interwału
