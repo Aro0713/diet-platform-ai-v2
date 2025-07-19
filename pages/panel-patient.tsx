@@ -27,7 +27,6 @@ import SelectMealsPerDayForm from '@/components/SelectMealsPerDay';
 import ProgressOverlay from '@/components/ProgressOverlay';
 import { useRef } from 'react';
 
-
 export default function PatientPanelPage(): React.JSX.Element {
   const router = useRouter();
   const [lang, setLang] = useState<LangKey>('pl');
@@ -51,7 +50,24 @@ export default function PatientPanelPage(): React.JSX.Element {
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [isSending, setIsSending] = useState(false);
 
-  // ⏳ Pobierz userId z sesji Supabase
+  // ✅ HOOK bez przekazywania userId — działa jak wcześniej
+  const {
+    form,
+    setForm,
+    interviewData,
+    setInterviewData,
+    medicalData,
+    setMedicalData,
+    fetchPatientData,
+    saveMedicalData,
+    saveInterviewData,
+    initialMedicalData,
+    initialInterviewData,
+    editableDiet,
+    setEditableDiet
+  } = usePatientData(); // 👈 bez parametru
+
+  // 🔐 Pobierz userId z Supabase tylko raz
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       const uid = data?.session?.user?.id;
@@ -68,7 +84,7 @@ export default function PatientPanelPage(): React.JSX.Element {
     });
   }, []);
 
-  // ⛔ NIE URUCHAMIAJ hooka dopóki nie ma userId
+  // ⛔ Zatrzymaj renderowanie dopóki sesja nie będzie gotowa
   if (isLoadingUser || !userId) {
     return (
       <main className="min-h-screen flex items-center justify-center">
@@ -76,24 +92,6 @@ export default function PatientPanelPage(): React.JSX.Element {
       </main>
     );
   }
-
-  // ✅ Bezpieczne wywołanie hooka
-  const {
-    form,
-    setForm,
-    interviewData,
-    setInterviewData,
-    medicalData,
-    setMedicalData,
-    fetchPatientData,
-    saveMedicalData,
-    saveInterviewData,
-    initialMedicalData,
-    initialInterviewData,
-    editableDiet,
-    setEditableDiet
-  } = usePatientData(userId);
-
 
   useEffect(() => {
   const storedLang = localStorage.getItem('platformLang');
@@ -173,17 +171,23 @@ const stopFakeProgress = () => {
   }
 };
 
-// 🔁 Pobranie danych przy powrocie do sekcji 'medical' + załaduj zatwierdzoną dietę, jeśli nie ma jeszcze żadnej
+// 🔁 Pobranie danych pacjenta przy wejściu w sekcję: 'data', 'medical', 'interview'
+// + załaduj zatwierdzoną dietę, jeśli nie została jeszcze ustawiona
 useEffect(() => {
   const userId = localStorage.getItem('currentUserID');
   if (!userId) return;
 
-  // Jeśli wracamy do sekcji medycznej – odśwież dane
-  if (selectedSection === 'medical') {
+  const shouldFetchPatient =
+    selectedSection === 'data' ||
+    selectedSection === 'medical' ||
+    selectedSection === 'interview';
+
+  if (shouldFetchPatient && !form?.user_id) {
+    console.log('🔁 Auto-fetch danych pacjenta (sekcja):', selectedSection);
     fetchPatientData();
   }
 
-  // Pobierz dietę tylko jeśli nie została już ustawiona
+  // ✅ Pobierz zatwierdzoną dietę, tylko jeśli jeszcze nie została ustawiona
   supabase
     .from('patient_diets')
     .select('*')
@@ -196,14 +200,14 @@ useEffect(() => {
         console.error('❌ Błąd przy pobieraniu diety:', error.message);
       } else if (data && data[0]) {
         setEditableDiet((prev: Record<string, Meal[]> | undefined) => {
-        if (prev && Object.keys(prev).length > 0) {
-          console.log("🔁 Dieta już była ustawiona — pomijam nadpisywanie.");
-          return prev;
-        } else {
-          console.log('✅ Załadowano zatwierdzoną dietę z Supabase:', data[0]);
-          return data[0].diet_plan;
-        }
-      });
+          if (prev && Object.keys(prev).length > 0) {
+            console.log("🔁 Dieta już była ustawiona — pomijam nadpisywanie.");
+            return prev;
+          } else {
+            console.log('✅ Załadowano zatwierdzoną dietę z Supabase:', data[0]);
+            return data[0].diet_plan;
+          }
+        });
         setDietApproved(true);
       } else {
         console.warn('⚠️ Brak potwierdzonej diety');

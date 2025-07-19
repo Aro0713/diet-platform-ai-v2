@@ -18,26 +18,7 @@ interface UsePatientDataResult {
   setEditableDiet: (diet: any) => void;
 }
 
-export function usePatientData(providedUserId?: string | null): UsePatientDataResult {
-  if (!providedUserId) {
-    console.warn("🚫 usePatientData wywołany bez userId – zwracam puste dane.");
-    return {
-      form: {} as any,
-      setForm: () => {},
-      interviewData: {},
-      setInterviewData: () => {},
-      medicalData: null,
-      setMedicalData: () => {},
-      fetchPatientData: async () => {},
-      saveMedicalData: async () => {},
-      saveInterviewData: async () => {},
-      initialMedicalData: undefined,
-      initialInterviewData: undefined,
-      editableDiet: {},
-      setEditableDiet: () => {}
-    };
-  }
-
+export function usePatientData(): UsePatientDataResult {
   const [form, setForm] = useState<PatientData>({} as PatientData);
   const [interviewData, setInterviewData] = useState<any>({});
   const [medicalData, setMedicalData] = useState<any>(null);
@@ -48,9 +29,7 @@ export function usePatientData(providedUserId?: string | null): UsePatientDataRe
   const fetchPatientData = async () => {
     console.log("🚀 fetchPatientData start");
 
-    const userId = providedUserId || (await supabase.auth.getUser()).data.user?.id;
-    console.log("🧠 userId w usePatientData:", userId);
-
+    const userId = localStorage.getItem('currentUserID');
     if (!userId) {
       console.warn("❌ Brak userId – nie można pobrać danych pacjenta");
       return;
@@ -106,55 +85,55 @@ export function usePatientData(providedUserId?: string | null): UsePatientDataRe
     setInterviewData(data.interview_data || {});
 
     const freshInitial = buildInitialDataFromSupabase(data);
-    console.log('🔥 initialMedicalData z Supabase:', freshInitial);
     setInitialMedicalData(JSON.parse(JSON.stringify(freshInitial)));
     setInitialInterviewData(JSON.parse(JSON.stringify(data.interview_data || {})));
 
-  // 🔍 Najpierw próbuj pobrać potwierdzoną dietę
-  const { data: confirmed } = await supabase
-    .from('patient_diets')
-    .select('diet_plan')
-    .eq('user_id', userId)
-    .eq('status', 'confirmed')
-    .order('confirmed_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    // 🔍 Najpierw próbuj pobrać potwierdzoną dietę
+    const { data: confirmed } = await supabase
+      .from('patient_diets')
+      .select('diet_plan')
+      .eq('user_id', userId)
+      .eq('status', 'confirmed')
+      .order('confirmed_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-  if (confirmed?.diet_plan) {
-    try {
-      const parsed = typeof confirmed.diet_plan === 'string'
-        ? JSON.parse(confirmed.diet_plan)
-        : confirmed.diet_plan;
-      setEditableDiet(parsed);
-      console.log('✅ Ustawiono dietę: confirmed');
-      return; // 🛑 nie pobieraj draftu, skoro confirmed istnieje
-    } catch (err) {
-      console.error('❌ Błąd parsowania confirmed diet_plan:', err);
+    if (confirmed?.diet_plan) {
+      try {
+        const parsed = typeof confirmed.diet_plan === 'string'
+          ? JSON.parse(confirmed.diet_plan)
+          : confirmed.diet_plan;
+        setEditableDiet(parsed);
+        console.log('✅ Ustawiono dietę: confirmed');
+        return; // 🛑 nie pobieraj draftu, skoro confirmed istnieje
+      } catch (err) {
+        console.error('❌ Błąd parsowania confirmed diet_plan:', err);
+      }
     }
-  }
 
-  // 🟡 Jeśli brak confirmed — pobierz draft
-  const { data: draft } = await supabase
-    .from('patient_diets')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('status', 'draft')
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    // 🟡 Jeśli brak confirmed — pobierz draft
+    const { data: draft } = await supabase
+      .from('patient_diets')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('status', 'draft')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-  if (draft?.diet_plan) {
-    try {
-      const parsed = typeof draft.diet_plan === 'string'
-        ? JSON.parse(draft.diet_plan)
-        : draft.diet_plan;
-      setEditableDiet(parsed);
-      console.log('ℹ️ Ustawiono dietę: draft (bo brak confirmed)');
-    } catch (err) {
-      console.error('❌ Błąd parsowania draft diet_plan:', err);
+    if (draft?.diet_plan) {
+      try {
+        const parsed = typeof draft.diet_plan === 'string'
+          ? JSON.parse(draft.diet_plan)
+          : draft.diet_plan;
+        setEditableDiet(parsed);
+        console.log('ℹ️ Ustawiono dietę: draft (bo brak confirmed)');
+      } catch (err) {
+        console.error('❌ Błąd parsowania draft diet_plan:', err);
+      }
     }
-  }
-};
+  };
+
   const saveMedicalData = async ({
     selectedGroups,
     selectedConditions,
