@@ -31,6 +31,9 @@ import { useRef } from 'react';
 export default function PatientPanelPage(): React.JSX.Element {
   const router = useRouter();
   const [lang, setLang] = useState<LangKey>('pl');
+  const [userId, setUserId] = useState<string | null>(null);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
+
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
   const [notes, setNotes] = useState({});
   const [isConfirmed, setIsConfirmed] = useState(false);
@@ -47,49 +50,50 @@ export default function PatientPanelPage(): React.JSX.Element {
   const [selectedDoctor, setSelectedDoctor] = useState<string>('');
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [isSending, setIsSending] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [isLoadingUser, setIsLoadingUser] = useState(true);
 
-  // ⏳ Czekaj na załadowanie sesji Supabase (userId)
+  // ⏳ Pobierz userId z sesji Supabase
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       const uid = data?.session?.user?.id;
       if (!uid) {
-        console.warn("❌ Brak user.id – użytkownik nie jest zalogowany?");
+        console.warn('❌ Brak user.id – użytkownik nie jest zalogowany?');
         setIsLoadingUser(false);
         return;
       }
 
-      console.log("✅ userId z sesji:", uid);
+      console.log('✅ userId z sesji:', uid);
       localStorage.setItem('currentUserID', uid);
       setUserId(uid);
       setIsLoadingUser(false);
     });
   }, []);
 
-  // ⏳ Ekran ładowania, zanim będzie dostępny userId
+  // ⛔ NIE URUCHAMIAJ hooka dopóki nie ma userId
   if (isLoadingUser || !userId) {
-  return (
-    <main className="min-h-screen flex items-center justify-center">
-      <p className="text-white text-sm">⏳ {tUI('loadingUser', lang)}</p>
-    </main>
-  );
-}
+    return (
+      <main className="min-h-screen flex items-center justify-center">
+        <p className="text-white text-sm">⏳ {tUI('loadingUser', lang)}</p>
+      </main>
+    );
+  }
 
-const {
-  form,
-  interviewData,
-  setInterviewData,
-  medicalData,
-  setMedicalData,
-  fetchPatientData,
-  saveMedicalData,
-  saveInterviewData,
-  initialMedicalData,
-  initialInterviewData,
-  editableDiet,
-  setEditableDiet
-} = usePatientData(userId);
+  // ✅ Bezpieczne wywołanie hooka
+  const {
+    form,
+    setForm,
+    interviewData,
+    setInterviewData,
+    medicalData,
+    setMedicalData,
+    fetchPatientData,
+    saveMedicalData,
+    saveInterviewData,
+    initialMedicalData,
+    initialInterviewData,
+    editableDiet,
+    setEditableDiet
+  } = usePatientData(userId);
+
 
   useEffect(() => {
   const storedLang = localStorage.getItem('platformLang');
