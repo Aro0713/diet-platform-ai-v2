@@ -73,10 +73,6 @@ export function usePatientData(): UsePatientDataResult {
       assigned_doctor_email: data.assigned_doctor_email || '',
     });
 
-    setTimeout(() => {
-      console.log("📢 AFTER setForm:", form);
-    }, 500);
-
     setMedicalData({
       summary: data.health_status || '',
       json: data.medical_data || null
@@ -88,7 +84,7 @@ export function usePatientData(): UsePatientDataResult {
     setInitialMedicalData(JSON.parse(JSON.stringify(freshInitial)));
     setInitialInterviewData(JSON.parse(JSON.stringify(data.interview_data || {})));
 
-    // 🔍 Najpierw próbuj pobrać potwierdzoną dietę
+    // 🔍 Dieta potwierdzona
     const { data: confirmed } = await supabase
       .from('patient_diets')
       .select('diet_plan')
@@ -105,13 +101,13 @@ export function usePatientData(): UsePatientDataResult {
           : confirmed.diet_plan;
         setEditableDiet(parsed);
         console.log('✅ Ustawiono dietę: confirmed');
-        return; // 🛑 nie pobieraj draftu, skoro confirmed istnieje
+        return;
       } catch (err) {
         console.error('❌ Błąd parsowania confirmed diet_plan:', err);
       }
     }
 
-    // 🟡 Jeśli brak confirmed — pobierz draft
+    // 🔄 Jeśli brak confirmed – sprawdź draft
     const { data: draft } = await supabase
       .from('patient_diets')
       .select('*')
@@ -127,7 +123,7 @@ export function usePatientData(): UsePatientDataResult {
           ? JSON.parse(draft.diet_plan)
           : draft.diet_plan;
         setEditableDiet(parsed);
-        console.log('ℹ️ Ustawiono dietę: draft (bo brak confirmed)');
+        console.log('ℹ️ Ustawiono dietę: draft');
       } catch (err) {
         console.error('❌ Błąd parsowania draft diet_plan:', err);
       }
