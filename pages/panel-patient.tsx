@@ -37,6 +37,7 @@ export default function PatientPanelPage(): React.JSX.Element {
   const [streamingText, setStreamingText] = useState('');
   const [narrativeText, setNarrativeText] = useState('');
   const [dietApproved, setDietApproved] = useState(false);
+  const [hasPaid, setHasPaid] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [recipes, setRecipes] = useState<any>(null);
   const [isGeneratingRecipes, setIsGeneratingRecipes] = useState(false);
@@ -76,6 +77,19 @@ export default function PatientPanelPage(): React.JSX.Element {
       }
 
       localStorage.setItem('currentUserID', userId);
+      supabase
+      .from('patients')
+      .select('has_paid')
+      .eq('user_id', userId)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('❌ Błąd pobierania has_paid:', error.message);
+        } else {
+          setHasPaid(data?.has_paid === true);
+          console.log('💰 has_paid:', data?.has_paid);
+        }
+      });
       console.log("✅ userId zapisany:", userId);
 
       supabase
@@ -572,8 +586,7 @@ const handleShowDoctors = async () => {
     
     <main className="relative min-h-screen bg-[#0f271e]/70 bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 backdrop-blur-[12px] shadow-[inset_0_0_60px_rgba(255,255,255,0.08)] flex flex-col justify-start items-center pt-10 px-6 text-white transition-all duration-300">
       <Head>
-        <title>{tUI('doctorPanelTitle', lang)}</title>
-
+        <title>{tUI('patientPanelTitle', lang)}</title>
       </Head>
 
       {/* Pasek nagłówka */}
@@ -592,8 +605,13 @@ const handleShowDoctors = async () => {
       </div>
 
       {/* Ikony */}
-      <PatientIconGrid lang={lang} selected={selectedSection} onSelect={handleSectionChange} />
-    
+      <PatientIconGrid
+      lang={lang}
+      selected={selectedSection}
+      onSelect={handleSectionChange}
+      hasPaid={hasPaid}
+    />
+        
             {/* Główna zawartość */}
       <div className="z-10 flex flex-col w-full max-w-[1000px] mx-auto gap-6 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 mt-20 dark:text-white transition-colors animate-flip-in origin-center">
         {selectedSection === 'data' && (
@@ -1007,11 +1025,11 @@ const handleShowDoctors = async () => {
         </>
       )}
 
-        {!selectedSection && (
-          <p className="text-center text-gray-300 text-sm max-w-xl mx-auto">
-            {tUI('iconInstructionFull', lang)}
-          </p>
-        )}
+       {!selectedSection && (
+        <p className="text-center text-white text-sm max-w-xl mx-auto">
+          {tUI('welcomeMessagePatient', lang).replace('{{name}}', form?.name || '')}
+        </p>
+      )}
       </div>
       {progress > 0 && progress < 100 && (
   <ProgressOverlay message={progressMessage} percent={progress} />

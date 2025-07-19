@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { tUI, type LangKey } from '@/utils/i18n';
+import Link from 'next/link';
 
 interface Props {
   lang: LangKey;
@@ -10,6 +11,7 @@ interface Props {
 
 const PatientSelfForm: React.FC<Props> = ({ lang, value, onChange }) => {
   const [saving, setSaving] = useState(false);
+  const [formSaved, setFormSaved] = useState(false);
   const [message, setMessage] = useState('');
   const [patient, setPatient] = useState({
     name: '',
@@ -73,6 +75,7 @@ const handleSave = async () => {
     setMessage(tUI('saveError', lang));
   } else {
     setMessage(tUI('saveSuccess', lang));
+    setFormSaved(true);
     if (onChange) onChange(patient); // ✅ wywołanie tylko po sukcesie zapisu
   }
 
@@ -198,6 +201,15 @@ useEffect(() => {
       </button>
 
       {message && <p className="text-sm text-blue-600 mt-2">{message}</p>}
+      {formSaved && (
+      <div className="mt-6 text-center">
+        <Link href="/payment">
+          <button className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded shadow transition">
+            {tUI('goToPayment', lang) || 'Zapłać za plan diety'}
+          </button>
+        </Link>
+      </div>
+    )}
     </div>
   );
 };

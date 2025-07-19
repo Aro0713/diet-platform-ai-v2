@@ -1127,6 +1127,32 @@ patientData: {
   ar: 'بيانات المريض',
   he: 'נתוני מטופל',
 },
+registrationLabel: {
+  pl: 'Rejestracja',
+  en: 'Registration',
+  de: 'Registrierung',
+  fr: 'Inscription',
+  es: 'Registro',
+  ua: 'Реєстрація',
+  ru: 'Регистрация',
+  zh: '注册',
+  ar: 'التسجيل',
+  hi: 'पंजीकरण',
+  he: 'הרשמה'
+},
+goToPayment: {
+  pl: "Zapłać za plan diety",
+  en: "Proceed to payment",
+  de: "Zur Zahlung",
+  fr: "Passer au paiement",
+  es: "Proceder al pago",
+  ua: "Перейти до оплати",
+  ru: "Перейти к оплате",
+  zh: "前往付款",
+  ar: "المتابعة للدفع",
+  hi: "भुगतान करें",
+  he: "המשך לתשלום"
+},
 createAccount: {
   pl: 'Załóż konto',
   en: 'Create account',
@@ -2604,18 +2630,18 @@ generatingNarrativePending: {
   ar: 'لوحة المريض',
   he: 'לוח מטופל',
 },
-iconInstructionFull: {
-  pl: 'Wybierz jedną z ikon powyżej, aby otworzyć konkretną sekcję – dane, badania, wywiad lub dietę. To Twój osobisty panel zdrowia!',
-  en: 'Select one of the icons above to open a section – data, medical, interview or diet. This is your personal health panel!',
-  es: 'Selecciona uno de los iconos de arriba para abrir una sección: datos, análisis, entrevista o dieta. ¡Este es tu panel de salud personal!',
-  fr: 'Sélectionnez une des icônes ci-dessus pour accéder à une section – données, examens, entretien ou régime. C’est votre espace santé personnel !',
-  de: 'Wähle eines der Symbole oben aus, um einen Bereich zu öffnen – Daten, Medizin, Interview oder Ernährung. Das ist dein persönliches Gesundheitszentrum!',
-  ua: 'Оберіть одну з піктограм вище, щоб відкрити розділ – дані, аналізи, опитування чи дієту. Це ваша особиста панель здоров’я!',
-  ru: 'Выберите одну из иконок выше, чтобы открыть раздел – данные, анализы, опрос или диета. Это ваша персональная панель здоровья!',
-  zh: '请选择上方的图标之一，进入资料、检测、问卷或饮食部分。这里是你的健康中心！',
-  hi: 'ऊपर दिए गए आइकनों में से एक चुनें – डेटा, जांच, साक्षात्कार या डाइट देखने के लिए। यह आपका निजी स्वास्थ्य पैनल है।',
-  ar: 'اختر أحد الأيقونات أعلاه لفتح قسم: البيانات أو التحاليل أو المقابلة أو النظام الغذائي. هذا هو لوحتك الصحية الشخصية!',
-  he: 'בחר אחת מהאייקונים למעלה כדי לפתוח אזור – מידע, בדיקות, ריאיון או תפריט תזונה. זהו לוח הבריאות האישי שלך!',
+welcomeMessagePatient: {
+  pl: '{{name}}, jesteś w prywatnej strefie dietetyki. Przejdź do Rejestracji, aby uzupełnić dane potrzebne do przygotowania spersonalizowanej diety.',
+  en: '{{name}}, you are in your private dietetics zone. Go to Registration to complete the information needed to create your personalized plan.',
+  de: '{{name}}, du befindest dich in deinem privaten Ernährungsbereich. Gehe zur Registrierung, um deine Daten zu vervollständigen.',
+  fr: '{{name}}, vous êtes dans votre espace personnel de diététique. Rendez-vous dans l’enregistrement pour compléter vos données.',
+  es: '{{name}}, estás en tu zona privada de dietética. Ve a Registro para completar tus datos.',
+  ua: '{{name}}, ви у своїй приватній зоні дієтології. Перейдіть до реєстрації, щоб заповнити необхідні дані.',
+  ru: '{{name}}, вы в своей личной зоне диетологии. Перейдите в Регистрацию, чтобы заполнить данные.',
+  zh: '{{name}}，您已进入私人营养空间。请前往注册以完善信息。',
+  hi: '{{name}}, आप अपनी व्यक्तिगत डाइट ज़ोन में हैं। अपना डाइट प्लान शुरू करने के लिए पंजीकरण पूरा करें।',
+  ar: '{{name}}، أنت في منطقتك الخاصة للتغذية. انتقل إلى التسجيل لإكمال البيانات المطلوبة.',
+  he: '{{name}}, אתה באזור הדיאטה הפרטי שלך. עבור לרישום כדי למלא את הנתונים.'
 },
 fullName: {
   pl: 'Imię i nazwisko',
@@ -4788,7 +4814,87 @@ privacyPolicy: {
   hi: "गोपनीयता नीति",
   ar: "سياسة الخصوصية",
   he: "מדיניות הפרטיות"
-}
+},
+paymentTitle: {
+  pl: "Płatność za plan diety",
+  en: "Payment for diet plan",
+  de: "Zahlung für Ernährungsplan",
+  fr: "Paiement pour le plan diététique",
+  es: "Pago por el plan de dieta",
+  ua: "Оплата за дієтичний план",
+  ru: "Оплата диетического плана",
+  zh: "饮食计划付款",
+  ar: "دفع خطة النظام الغذائي",
+  hi: "आहार योजना के लिए भुगतान",
+  he: "תשלום עבור תוכנית תזונה"
+},
+paymentConfirmed: {
+  pl: "Płatność potwierdzona",
+  en: "Payment confirmed",
+  de: "Zahlung bestätigt",
+  fr: "Paiement confirmé",
+  es: "Pago confirmado",
+  ua: "Платіж підтверджено",
+  ru: "Платёж подтверждён",
+  zh: "付款已确认",
+  ar: "تم تأكيد الدفع",
+  hi: "भुगतान की पुष्टि हो गई",
+  he: "התשלום אושר"
+},
+paymentPending: {
+  pl: "Oczekuje na płatność",
+  en: "Payment pending",
+  de: "Zahlung ausstehend",
+  fr: "Paiement en attente",
+  es: "Pago pendiente",
+  ua: "Очікується платіж",
+  ru: "Ожидается платёж",
+  zh: "待付款",
+  ar: "الدفع قيد الانتظار",
+  hi: "भुगतान लंबित है",
+  he: "ממתין לתשלום"
+},
+payNow: {
+  pl: "Zapłać teraz",
+  en: "Pay now",
+  de: "Jetzt bezahlen",
+  fr: "Payer maintenant",
+  es: "Pagar ahora",
+  ua: "Сплатити зараз",
+  ru: "Оплатить сейчас",
+  zh: "立即支付",
+  ar: "ادفع الآن",
+  hi: "अब भुगतान करें",
+  he: "שלם עכשיו"
+},
+
+address: {
+  pl: "Adres (np. ul. Zielona 12, Warszawa)",
+  en: "Address (e.g. Green St 12, Warsaw)",
+  de: "Adresse (z.B. Grüne Straße 12, Warschau)",
+  fr: "Adresse (ex. rue Verte 12, Varsovie)",
+  es: "Dirección (ej. Calle Verde 12, Varsovia)",
+  ua: "Адреса (наприклад, Зелена 12, Варшава)",
+  ru: "Адрес (например, Зелёная 12, Варшава)",
+  zh: "地址（例如 Green St 12, 华沙）",
+  ar: "العنوان (مثال: شارع الأخضر 12، وارسو)",
+  hi: "पता (जैसे: ग्रीन स्ट्रीट 12, वारसॉ)",
+  he: "כתובת (לדוג': רחוב הירוק 12, ורשה)"
+},
+
+nip: {
+  pl: "NIP (opcjonalnie)",
+  en: "VAT ID (optional)",
+  de: "USt-IdNr (optional)",
+  fr: "N° de TVA (optionnel)",
+  es: "CIF / NIF (opcional)",
+  ua: "ІПН (необов’язково)",
+  ru: "ИНН (необязательно)",
+  zh: "税号（可选）",
+  ar: "الرقم الضريبي (اختياري)",
+  hi: "पैन/जीएसटी नंबर (वैकल्पिक)",
+  he: "מספר עוסק / מע\"מ (אופציונלי)"
+},
 
 };
 

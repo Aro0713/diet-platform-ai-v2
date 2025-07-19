@@ -1,24 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { tUI, type LangKey } from '@/utils/i18n';
 import {
   NotebookPen,
   Stethoscope,
   FileText,
   Calculator,
-  ChefHat
+  ChefHat,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 
 interface PatientIconGridProps {
   lang: LangKey;
   onSelect: (section: string) => void;
   selected: string | null;
+  hasPaid: boolean;
 }
 
-export const PatientIconGrid: React.FC<PatientIconGridProps> = ({ lang, onSelect, selected }) => {
+export const PatientIconGrid: React.FC<PatientIconGridProps> = ({ lang, onSelect, selected, hasPaid }) => {
   const icons = [
     {
       id: 'data',
-      label: tUI('patientData', lang),
+      label: tUI('registrationLabel', lang),
       icon: NotebookPen,
       color: 'text-red-500',
       ring: 'ring-red-300'
@@ -52,38 +55,50 @@ export const PatientIconGrid: React.FC<PatientIconGridProps> = ({ lang, onSelect
       ring: 'ring-blue-300'
     },
     {
-  id: 'scanner',
-  label: tUI('askLook', lang), // 🔁 nowa etykieta
-  icon: () => (
-    <img
-      src="/Look.png"
-      alt="Look avatar"
-      className="w-[42px] h-[42px] rounded-full border-2 border-white shadow"
-    />
-  ),
-  color: '',
-  ring: 'ring-purple-300'
-}
-
+      id: 'scanner',
+      label: tUI('askLook', lang),
+      icon: () => (
+        <img
+          src="/Look.png"
+          alt="Look avatar"
+          className="w-[42px] h-[42px] rounded-full border-2 border-white shadow"
+        />
+      ),
+      color: '',
+      ring: 'ring-purple-300'
+    },
+    {
+      id: 'status',
+      label: hasPaid ? tUI('paymentConfirmed', lang) : tUI('paymentPending', lang),
+      icon: hasPaid ? CheckCircle : XCircle,
+      color: hasPaid ? 'text-green-500' : 'text-red-500',
+      ring: hasPaid ? 'ring-green-300' : 'ring-red-300'
+    }
   ];
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 mt-12 px-4">
       {icons.map(({ id, label, icon: Icon, color, ring }) => {
         const isActive = selected === id;
+        const isDisabled = !hasPaid && id !== 'data' && id !== 'status';
+
         return (
           <button
             key={id}
+            disabled={isDisabled}
             onClick={() => {
-              if (id === 'look') {
+              if (isDisabled) return;
+              if (id === 'scanner') {
                 document.getElementById('look-assistant')?.scrollIntoView({ behavior: 'smooth' });
-              } else {
+              } else if (id !== 'status') {
                 onSelect(id);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }
             }}
             className={`flex flex-col items-center justify-center p-4 rounded-2xl
-              transition-all duration-300 shadow-md hover:scale-105 bg-white/20 dark:bg-white/10
+              transition-all duration-300 shadow-md
+              ${isDisabled ? 'opacity-30 cursor-not-allowed' : 'hover:scale-105'}
+              bg-white/20 dark:bg-white/10
               ${isActive ? `scale-105 animate-pulse ring-2 ${ring}` : ''}`}
           >
             <Icon
