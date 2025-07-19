@@ -47,6 +47,16 @@ export default function PatientPanelPage(): React.JSX.Element {
   const [selectedDoctor, setSelectedDoctor] = useState<string>('');
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [isSending, setIsSending] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
+
+  if (isLoadingUser) {
+  return (
+    <main className="min-h-screen flex items-center justify-center">
+      <p className="text-white text-sm">⏳ {tUI('loadingUser', lang)}</p>
+    </main>
+  );
+  }
 
   // ✅ HOOK na samym początku
   const {
@@ -64,62 +74,57 @@ export default function PatientPanelPage(): React.JSX.Element {
     setEditableDiet
   } = usePatientData();
 
-  // ✅ dopiero potem useEffect
   useEffect(() => {
-    const storedLang = localStorage.getItem('platformLang');
-    if (storedLang) setLang(storedLang as LangKey);
+  const storedLang = localStorage.getItem('platformLang');
+  if (storedLang) setLang(storedLang as LangKey);
 
-    supabase.auth.getUser().then(({ data }) => {
-      const userId = data?.user?.id;
-      if (!userId) {
-        console.warn("❌ Brak user.id – użytkownik nie jest zalogowany?");
-        return;
+  supabase.auth.getUser().then(async ({ data }) => {
+    const uid = data?.user?.id;
+    if (!uid) {
+      console.warn("❌ Brak user.id – użytkownik nie jest zalogowany?");
+      return;
+    }
+
+    setUserId(uid); // ✅ lokalny stan, bez localStorage
+
+    try {
+      // 🔽 Pobierz flagę płatności
+      const { data: patientData, error: patientError } = await supabase
+        .from('patients')
+        .select('has_paid')
+        .eq('user_id', uid)
+        .maybeSingle();
+
+      if (patientError) {
+        console.error('❌ Błąd pobierania has_paid:', patientError.message);
+      } else {
+        setHasPaid(patientData?.has_paid === true);
       }
 
-      localStorage.setItem('currentUserID', userId);
-      supabase
-      .from('patients')
-      .select('has_paid')
-      .eq('user_id', userId)
-      .maybeSingle()
-      .then(({ data, error }) => {
-        if (error) {
-          console.error('❌ Błąd pobierania has_paid:', error.message);
-        } else {
-          setHasPaid(data?.has_paid === true);
-          console.log('💰 has_paid:', data?.has_paid);
-        }
-      });
-      console.log("✅ userId zapisany:", userId);
-
-      supabase
+      // 🔽 Pobierz dietę
+      const { data: dietData, error: dietError } = await supabase
         .from('patient_diets')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', uid)
         .eq('status', 'confirmed')
         .order('confirmed_at', { ascending: false })
-        .limit(1)
-        .then(({ data, error }) => {
-          if (error) {
-            console.error('❌ Błąd przy pobieraniu diety:', error.message);
-            return;
-          }
-          if (data && data[0]) {
-            setEditableDiet((prev: Record<string, Meal[]> | undefined) => {
-              if (prev && Object.keys(prev).length > 0) {
-                console.log("🔁 Dieta już ustawiona — pomijam.");
-                return prev;
-              }
-              console.log("✅ Załadowano dietę:", data[0]);
-              return data[0].diet_plan;
-            });
-            setDietApproved(true);
-          } else {
-            console.warn('⚠️ Brak potwierdzonej diety');
-          }
+        .limit(1);
+
+      if (dietError) {
+        console.error('❌ Błąd przy pobieraniu diety:', dietError.message);
+      } else if (dietData && dietData[0]) {
+        setEditableDiet((prev: Record<string, Meal[]> | undefined) => {
+          if (prev && Object.keys(prev).length > 0) return prev;
+          return dietData[0].diet_plan;
         });
-    });
-  }, []);
+        setDietApproved(true);
+      }
+    } finally {
+      setIsLoadingUser(false); // ✅ dane gotowe
+    }
+  });
+}, []);
+
 
 const startFakeProgress = (from = 5, to = 95, durationMs = 300000) => {
   stopFakeProgress(); // reset ewentualnego poprzedniego interwału
