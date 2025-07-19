@@ -50,15 +50,33 @@ export default function PatientPanelPage(): React.JSX.Element {
   const [userId, setUserId] = useState<string | null>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
 
-if (isLoadingUser) {
-  return (
-    <main className="min-h-screen flex items-center justify-center">
-      <p className="text-white text-sm">⏳ {tUI('loadingUser', lang)}</p>
-    </main>
-  );
-}
+  // ⏳ Czekaj na załadowanie sesji Supabase (userId)
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      const uid = data?.session?.user?.id;
+      if (!uid) {
+        console.warn("❌ Brak user.id – użytkownik nie jest zalogowany?");
+        setIsLoadingUser(false);
+        return;
+      }
 
-  // ✅ HOOK na samym początku
+      console.log("✅ userId z sesji:", uid);
+      localStorage.setItem('currentUserID', uid);
+      setUserId(uid);
+      setIsLoadingUser(false);
+    });
+  }, []);
+
+  // ⏳ Ekran ładowania, zanim będzie dostępny userId
+  if (isLoadingUser) {
+    return (
+      <main className="min-h-screen flex items-center justify-center">
+        <p className="text-white text-sm">⏳ {tUI('loadingUser', lang)}</p>
+      </main>
+    );
+  }
+
+  // ✅ HOOK z przekazaniem userId
   const {
     form,
     interviewData,
@@ -72,7 +90,7 @@ if (isLoadingUser) {
     initialInterviewData,
     editableDiet,
     setEditableDiet
-  } = usePatientData();
+  } = usePatientData(userId);
 
   useEffect(() => {
   const storedLang = localStorage.getItem('platformLang');

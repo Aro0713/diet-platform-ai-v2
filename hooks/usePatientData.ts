@@ -18,7 +18,7 @@ interface UsePatientDataResult {
   setEditableDiet: (diet: any) => void;
 }
 
-export function usePatientData(): UsePatientDataResult {
+export function usePatientData(providedUserId?: string | null): UsePatientDataResult {
   const [form, setForm] = useState<PatientData>({} as PatientData);
   const [interviewData, setInterviewData] = useState<any>({});
   const [medicalData, setMedicalData] = useState<any>(null);
@@ -30,9 +30,8 @@ export function usePatientData(): UsePatientDataResult {
   console.log("🚀 fetchPatientData start");
 
   // 🔁 Pobierz user_id bezpośrednio z sesji Supabase
-  const { data: { user }, error } = await supabase.auth.getUser();
-  const userId = user?.id;
-  console.log("🧠 userId z supabase.auth:", userId);
+  const userId = providedUserId || (await supabase.auth.getUser()).data.user?.id;
+  console.log("🧠 userId w usePatientData:", userId);
 
   if (!userId) {
     console.warn("❌ Brak userId – nie można pobrać danych pacjenta");
