@@ -5064,6 +5064,20 @@ vatIncluded: {
   hi: '23% VAT सहित',
   ar: 'بما في ذلك 23% ضريبة القيمة المضافة',
   he: 'כולל 23% מע\"מ'
+},
+loadingPrice: {
+  pl: 'Ładowanie ceny...',
+  en: 'Loading price...',
+  es: 'Cargando el precio...',
+  fr: 'Chargement du prix...',
+  de: 'Preis wird geladen...',
+  ua: 'Завантаження ціни...',
+  ru: 'Загрузка цены...',
+  zh: '正在加载价格...',
+  hi: 'मूल्य लोड हो रहा है...',
+  ar: 'جارٍ تحميل السعر...',
+  he: 'טוען מחיר...'
 }
+
 };
 

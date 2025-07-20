@@ -11,6 +11,12 @@ const planPrices = {
   '365d': 129900
 } as const;
 
+const currencyByCountry = (country: string): 'pln' | 'eur' | 'usd' => {
+  if (country === 'PL') return 'pln';
+  const eu = ['DE', 'FR', 'ES', 'IT', 'NL', 'BE', 'AT', 'FI', 'GR', 'IE', 'PT', 'LU', 'SK', 'SI', 'LV', 'LT', 'EE', 'CY', 'MT', 'HR'];
+  return eu.includes(country) ? 'eur' : 'usd';
+};
+
 type PlanKey = keyof typeof planPrices;
 
 export default function PaymentPage() {
@@ -22,10 +28,11 @@ export default function PaymentPage() {
     email: '',
     address: '',
     nip: '',
-    region: 'PL' // domyślnie
+    region: 'PL'
   });
   const [selectedPlan, setSelectedPlan] = useState<PlanKey | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [exchangeRates, setExchangeRates] = useState({ eur: 1, usd: 1 });
 
   useEffect(() => {
     const storedLang = localStorage.getItem('platformLang') as LangKey;
@@ -50,69 +57,86 @@ export default function PaymentPage() {
         });
       }
     });
+
+    fetch('https://api.nbp.pl/api/exchangerates/rates/a/eur/?format=json')
+      .then(res => res.json())
+      .then(data => setExchangeRates(prev => ({ ...prev, eur: data.rates[0].mid })));
+
+    fetch('https://api.nbp.pl/api/exchangerates/rates/a/usd/?format=json')
+      .then(res => res.json())
+      .then(data => setExchangeRates(prev => ({ ...prev, usd: data.rates[0].mid })));
   }, []);
 
-const handleSubmit = async (e: FormEvent) => {
-  e.preventDefault();
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
 
-  if (!selectedPlan) {
-    alert(tUI('selectPlanFirst', lang));
-    return;
-  }
+    if (!selectedPlan) {
+      alert(tUI('selectPlanFirst', lang));
+      return;
+    }
 
-  // jawne zawężenie typu (TS już wie, że to nie null)
-  const plan = selectedPlan as PlanKey;
-  const price = planPrices[plan];
+    const plan = selectedPlan as PlanKey;
+    const price = planPrices[plan];
 
-  setIsLoading(true);
+    setIsLoading(true);
 
-  const res = await fetch('/api/create-checkout-session', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      ...form,
-      plan,
-      price,
-      service: tUI(`plan${plan}`, lang),
-      userId,
-      lang,
-      country: form.region || 'PL'
-    })
-  });
+    const res = await fetch('/api/create-checkout-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...form,
+        plan,
+        price,
+        service: tUI(`plan${plan}`, lang),
+        userId,
+        lang,
+        country: form.region || 'PL'
+      })
+    });
 
-  const { url } = await res.json();
+    const { url } = await res.json();
 
-  if (url) {
-    window.location.href = url;
-  } else {
-    alert(tUI('paymentInitError', lang));
-  }
+    if (url) {
+      window.location.href = url;
+    } else {
+      alert(tUI('paymentInitError', lang));
+    }
 
-  setIsLoading(false);
-};
+    setIsLoading(false);
+  };
 
-const planOptions: { id: PlanKey; title: string; description: string }[] = [
-  {
-    id: '7d',
-    title: tUI('plan7d', lang),
-    description: tUI('plan7dDesc', lang)
-  },
-  {
-    id: '30d',
-    title: tUI('plan30d', lang),
-    description: tUI('plan30dDesc', lang)
-  },
-  {
-    id: '90d',
-    title: tUI('plan90d', lang),
-    description: tUI('plan90dDesc', lang)
-  },
-  {
-    id: '365d',
-    title: tUI('plan365d', lang),
-    description: tUI('plan365dDesc', lang)
-  }
-];
+  const planOptions: { id: PlanKey; title: string; description: string }[] = [
+    {
+      id: '7d',
+      title: tUI('plan7d', lang),
+      description: tUI('plan7dDesc', lang)
+    },
+    {
+      id: '30d',
+      title: tUI('plan30d', lang),
+      description: tUI('plan30dDesc', lang)
+    },
+    {
+      id: '90d',
+      title: tUI('plan90d', lang),
+      description: tUI('plan90dDesc', lang)
+    },
+    {
+      id: '365d',
+      title: tUI('plan365d', lang),
+      description: tUI('plan365dDesc', lang)
+    }
+  ];
+
+  const displayPrice = (planId: PlanKey) => {
+    const base = planPrices[planId];
+    const currency = currencyByCountry(form.region.toUpperCase());
+    if (currency === 'pln') return `${(base / 100).toFixed(2)} PLN`;
+    const rate = exchangeRates[currency];
+    if (!rate || isNaN(rate) || rate <= 0) return `${(base / 100).toFixed(2)} PLN`;
+    const converted = (base / 100 / rate).toFixed(2);
+    return `${converted} ${currency.toUpperCase()} (${(base / 100).toFixed(2)} PLN)`;
+  };
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 backdrop-blur text-white p-6">
@@ -130,43 +154,42 @@ const planOptions: { id: PlanKey; title: string; description: string }[] = [
             <option key={key} value={key}>{label}</option>
           ))}
         </select>
-      </nav>
-         
-          <button
-            onClick={() => {
-                const current = document.documentElement.classList.contains('dark');
-                document.documentElement.classList.toggle('dark', !current);
-                localStorage.setItem('theme', !current ? 'dark' : 'light');
-            }}
-            className="ml-auto text-sm text-white/80 hover:text-white"
-            >
-            {tUI('toggleContrast', lang)}
-            </button>
 
-     <h1 className="text-2xl font-normal text-center mb-6">
-    {tUI('choosePlan', lang)}
-    </h1>
+        <button
+          onClick={() => {
+            const current = document.documentElement.classList.contains('dark');
+            document.documentElement.classList.toggle('dark', !current);
+            localStorage.setItem('theme', !current ? 'dark' : 'light');
+          }}
+          className="ml-auto text-sm text-white/80 hover:text-white"
+        >
+          {tUI('toggleContrast', lang)}
+        </button>
+      </nav>
+
+      <h1 className="text-2xl font-normal text-center mb-6">
+        {tUI('choosePlan', lang)}
+      </h1>
 
       <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {planOptions.map(plan => (
             <div
-                key={plan.id}
-                onClick={() => setSelectedPlan(plan.id as any)}
-                className={`cursor-pointer rounded-lg p-4 border ${
+              key={plan.id}
+              onClick={() => setSelectedPlan(plan.id)}
+              className={`cursor-pointer rounded-lg p-4 border ${
                 selectedPlan === plan.id
-                    ? 'border-green-400 bg-green-900/40'
-                    : 'border-white/20 bg-white/10'
-                }`}
+                  ? 'border-green-400 bg-green-900/40'
+                  : 'border-white/20 bg-white/10'
+              }`}
             >
-                <h2 className="text-xl font-bold mb-1">{plan.title}</h2>
-                <p className="text-sm text-emerald-300 mb-2">
-                {(planPrices[plan.id] / 100).toFixed(2)} PLN{' '}
-                <span className="text-xs text-white/60">({tUI('vatIncluded', lang)})</span>
-                </p>
-                <p className="text-sm whitespace-pre-line">{plan.description}</p>
+              <h2 className="text-xl font-bold mb-1">{plan.title}</h2>
+              <p className="text-sm text-emerald-300 mb-2">
+                {displayPrice(plan.id)} <span className="text-xs text-white/60">({tUI('vatIncluded', lang)})</span>
+              </p>
+              <p className="text-sm whitespace-pre-line">{plan.description}</p>
             </div>
-            ))}
+          ))}
         </div>
 
         <button
