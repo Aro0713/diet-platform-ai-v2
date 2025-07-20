@@ -131,6 +131,17 @@ const planOptions: { id: PlanKey; title: string; description: string }[] = [
           ))}
         </select>
       </nav>
+         
+          <button
+            onClick={() => {
+                const current = document.documentElement.classList.contains('dark');
+                document.documentElement.classList.toggle('dark', !current);
+                localStorage.setItem('theme', !current ? 'dark' : 'light');
+            }}
+            className="ml-auto text-sm text-white/80 hover:text-white"
+            >
+            {tUI('toggleContrast', lang)}
+            </button>
 
      <h1 className="text-2xl font-normal text-center mb-6">
     {tUI('choosePlan', lang)}
@@ -150,7 +161,8 @@ const planOptions: { id: PlanKey; title: string; description: string }[] = [
             >
                 <h2 className="text-xl font-bold mb-1">{plan.title}</h2>
                 <p className="text-sm text-emerald-300 mb-2">
-                {planPrices[plan.id]} PLN <span className="text-xs text-white/60">({tUI('vatIncluded', lang)})</span>
+                {(planPrices[plan.id] / 100).toFixed(2)} PLN{' '}
+                <span className="text-xs text-white/60">({tUI('vatIncluded', lang)})</span>
                 </p>
                 <p className="text-sm whitespace-pre-line">{plan.description}</p>
             </div>
