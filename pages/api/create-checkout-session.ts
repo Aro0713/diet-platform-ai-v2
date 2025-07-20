@@ -49,8 +49,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         nip: buyerNIP,
         lang: lang || 'pl',
       },
-      success_url: `${req.headers.origin}/success`,
-      cancel_url: `${req.headers.origin}/cancel`,
+      success_url: `${req.headers.origin}/panel-patient?payment=success`,
+     cancel_url: `${req.headers.origin}/panel-patient?payment=cancel`,
+
     });
 
     return res.status(200).json({ url: session.url });
