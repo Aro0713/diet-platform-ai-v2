@@ -49,6 +49,14 @@ export default function PatientPanelPage(): React.JSX.Element {
   const [selectedDoctor, setSelectedDoctor] = useState<string>('');
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [isSending, setIsSending] = useState(false);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string>('none');
+  const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
+  const [subscriptionStartedAt, setSubscriptionStartedAt] = useState<string | null>(null);
+  
+  const formatDate = (dateString: string | null) => {
+  if (!dateString) return '';
+  return new Date(dateString).toLocaleDateString(lang || 'pl');
+  };
 
   // ✅ HOOK bezwarunkowo — React nie krzyczy
   const patientData = usePatientData();
@@ -105,18 +113,24 @@ export default function PatientPanelPage(): React.JSX.Element {
 
     try {
       // 🔽 Flaga płatności
-      const { data: patientData, error: patientError } = await supabase
-        .from('patients')
-        .select('has_paid')
-        .eq('user_id', uid)
-        .maybeSingle();
+    const { data: patientData, error: patientError } = await supabase
+      .from('patients')
+      .select('subscription_status, subscription_started_at, subscription_expires_at')
+      .eq('user_id', uid)
+      .maybeSingle();
 
-      if (patientError) {
-        console.error('❌ Błąd pobierania has_paid:', patientError.message);
-      } else {
-        setHasPaid(patientData?.has_paid === true);
-        console.log("💰 has_paid:", patientData?.has_paid);
-      }
+    if (patientError) {
+      console.error('❌ Błąd pobierania danych subskrypcji:', patientError.message);
+    } else {
+      const status = patientData?.subscription_status || 'none';
+      const expires = patientData?.subscription_expires_at || null;
+
+      setHasPaid(status !== 'none' && status !== 'expired');
+      setSubscriptionStatus(status);
+      setSubscriptionExpiresAt(expires);
+
+      console.log(`💳 status: ${status} | wygasa: ${expires}`);
+    }
 
       // 🔽 Dieta
       const { data: dietData, error: dietError } = await supabase
@@ -640,7 +654,12 @@ const handleShowDoctors = async () => {
       onSelect={handleSectionChange}
       hasPaid={hasPaid}
     />
-        
+        {subscriptionStatus !== 'none' && subscriptionStatus !== 'expired' && (
+        <p className="text-sm text-green-400 text-center mt-2">
+          Twój plan: <strong>{subscriptionStatus}</strong><br />
+          ważny do: <strong>{formatDate(subscriptionExpiresAt)}</strong>
+        </p>
+      )}
             {/* Główna zawartość */}
       <div className="z-10 flex flex-col w-full max-w-[1000px] mx-auto gap-6 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 mt-20 dark:text-white transition-colors animate-flip-in origin-center">
         {selectedSection === 'data' && (
