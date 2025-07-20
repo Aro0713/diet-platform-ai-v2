@@ -27,6 +27,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       price,
     } = req.body;
 
+    const netAmount = (price || 12900) / 100; // PLN netto
+    const vatRate = 0.23;
+
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       payment_method_types: ['card'],
@@ -35,23 +38,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           price_data: {
             currency: 'pln',
             product_data: {
-              name: service || 'Plan diety',
+              name: service || 'Plan diety 7 dni',
             },
-            unit_amount: price || 12900, // w groszach (czyli 129,00 PLN)
+            unit_amount: price || 12900, // cena brutto w groszach
           },
           quantity: 1,
         },
       ],
       customer_email: email,
       metadata: {
-        name: buyerName,
-        address: buyerAddress,
-        nip: buyerNIP,
+        buyerName,
+        buyerAddress,
+        buyerNIP,
+        email,
         lang: lang || 'pl',
+        service: service || 'Plan diety 7 dni',
+        netAmount: netAmount.toFixed(2), // np. 129.00
+        vatRate: vatRate.toFixed(2),      // 0.23
       },
       success_url: `${req.headers.origin}/panel-patient?payment=success`,
-     cancel_url: `${req.headers.origin}/panel-patient?payment=cancel`,
-
+      cancel_url: `${req.headers.origin}/panel-patient?payment=cancel`,
     });
 
     return res.status(200).json({ url: session.url });
