@@ -35,38 +35,39 @@ type PlanKey = keyof typeof planPrices;
         const [exchangeRates, setExchangeRates] = useState({ eur: 1, usd: 1 });
 
         useEffect(() => {
-            const storedLang = localStorage.getItem('platformLang') as LangKey;
-            if (storedLang) setLang(storedLang);
+        const storedLang = localStorage.getItem('platformLang') as LangKey;
+        if (storedLang) setLang(storedLang);
 
-            supabase.auth.getSession().then(async ({ data }) => {
-        const uid = data?.session?.user?.id;
-        const userEmail = data?.session?.user?.email || '';
-        if (!uid) return;
-        setUserId(uid);
-        const { data: patient } = await supabase
+        supabase.auth.getSession().then(async ({ data }) => {
+            const uid = data?.session?.user?.id;
+            const userEmail = data?.session?.user?.email || '';
+            if (!uid) return;
+
+            setUserId(uid);
+
+            const { data: patient } = await supabase
             .from('patients')
             .select('name, email, address, nip, region')
             .eq('user_id', uid)
             .maybeSingle();
-        if (patient) {
+
             setForm({
-            name: patient.name || '',
-            email: patient.email || userEmail,
-            address: patient.address || '',
-            nip: patient.nip || '',
-            region: patient.region || 'PL'
+            name: patient?.name || '',
+            email: patient?.email || userEmail,
+            address: patient?.address || '',
+            nip: patient?.nip || '',
+            region: patient?.region || 'PL'
             });
-        }
         });
 
-    fetch('https://api.nbp.pl/api/exchangerates/rates/a/eur/?format=json')
-      .then(res => res.json())
-      .then(data => setExchangeRates(prev => ({ ...prev, eur: data.rates[0].mid })));
+        fetch('https://api.nbp.pl/api/exchangerates/rates/a/eur/?format=json')
+            .then(res => res.json())
+            .then(data => setExchangeRates(prev => ({ ...prev, eur: data.rates[0].mid })));
 
-    fetch('https://api.nbp.pl/api/exchangerates/rates/a/usd/?format=json')
-      .then(res => res.json())
-      .then(data => setExchangeRates(prev => ({ ...prev, usd: data.rates[0].mid })));
-  }, []);
+        fetch('https://api.nbp.pl/api/exchangerates/rates/a/usd/?format=json')
+            .then(res => res.json())
+            .then(data => setExchangeRates(prev => ({ ...prev, usd: data.rates[0].mid })));
+        }, []);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
