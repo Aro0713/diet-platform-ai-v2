@@ -12,7 +12,9 @@ export const config = {
   },
 };
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2025-06-30.basil',
+});
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -76,7 +78,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
 
     if (uploadError) {
-      console.error('❌ Upload error:', uploadError);
+      console.error('❌ Upload error:', uploadError.message);
       return res.status(500).json({ error: 'Upload to Supabase failed' });
     }
 
@@ -103,7 +105,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       method: paymentMethod,
     });
 
-    await supabase.from('patients').update({ has_paid: true }).eq('email', email);
+    // 🔁 Aktualizacja has_paid = true
+    const { error: updateError } = await supabase
+      .from('patients')
+      .update({ has_paid: true })
+      .eq('email', email);
+
+    if (updateError) {
+      console.error('❌ Błąd aktualizacji has_paid:', updateError.message);
+    } else {
+      console.log(`✅ has_paid ustawione dla: ${email}`);
+    }
   }
 
   res.status(200).json({ received: true });
