@@ -19,44 +19,45 @@ const currencyByCountry = (country: string): 'pln' | 'eur' | 'usd' => {
 
 type PlanKey = keyof typeof planPrices;
 
-export default function PaymentPage() {
-  const router = useRouter();
-  const [lang, setLang] = useState<LangKey>('pl');
-  const [userId, setUserId] = useState<string>('');
-  const [form, setForm] = useState({
-    name: '',
-    email: '',
-    address: '',
-    nip: '',
-    region: 'PL'
-  });
-  const [selectedPlan, setSelectedPlan] = useState<PlanKey | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [exchangeRates, setExchangeRates] = useState({ eur: 1, usd: 1 });
-
-  useEffect(() => {
-    const storedLang = localStorage.getItem('platformLang') as LangKey;
-    if (storedLang) setLang(storedLang);
-
-    supabase.auth.getSession().then(async ({ data }) => {
-      const uid = data?.session?.user?.id;
-      if (!uid) return;
-      setUserId(uid);
-      const { data: patient } = await supabase
-        .from('patients')
-        .select('name, email, address, nip, region')
-        .eq('user_id', uid)
-        .maybeSingle();
-      if (patient) {
-        setForm({
-          name: patient.name || '',
-          email: patient.email || '',
-          address: patient.address || '',
-          nip: patient.nip || '',
-          region: patient.region || 'PL'
+        export default function PaymentPage() {
+        const router = useRouter();
+        const [lang, setLang] = useState<LangKey>('pl');
+        const [userId, setUserId] = useState<string>('');
+        const [form, setForm] = useState({
+            name: '',
+            email: '',
+            address: '',
+            nip: '',
+            region: 'PL'
         });
-      }
-    });
+        const [selectedPlan, setSelectedPlan] = useState<PlanKey | null>(null);
+        const [isLoading, setIsLoading] = useState(false);
+        const [exchangeRates, setExchangeRates] = useState({ eur: 1, usd: 1 });
+
+        useEffect(() => {
+            const storedLang = localStorage.getItem('platformLang') as LangKey;
+            if (storedLang) setLang(storedLang);
+
+            supabase.auth.getSession().then(async ({ data }) => {
+        const uid = data?.session?.user?.id;
+        const userEmail = data?.session?.user?.email || '';
+        if (!uid) return;
+        setUserId(uid);
+        const { data: patient } = await supabase
+            .from('patients')
+            .select('name, email, address, nip, region')
+            .eq('user_id', uid)
+            .maybeSingle();
+        if (patient) {
+            setForm({
+            name: patient.name || '',
+            email: patient.email || userEmail,
+            address: patient.address || '',
+            nip: patient.nip || '',
+            region: patient.region || 'PL'
+            });
+        }
+        });
 
     fetch('https://api.nbp.pl/api/exchangerates/rates/a/eur/?format=json')
       .then(res => res.json())
