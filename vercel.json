@@ -4,21 +4,13 @@
     "STRIPE_WEBHOOK_SECRET": "@stripe_webhook_secret",
     "RESEND_SECRET": "@resend_secret"
   },
-  "build": {
-    "env": {
-      "NODE_ENV": "production",
-      "DCP_RELEASE": "true"
+  "functions": {
+    "api/*": {
+      "env": {
+        "STRIPE_SECRET_KEY": "@stripe_secret_key",
+        "STRIPE_WEBHOOK_SECRET": "@stripe_webhook_secret",
+        "RESEND_SECRET": "@resend_secret"
+      }
     }
-  },
-  "rewrites": [
-    { "source": "/dietetyk", "destination": "/panel" },
-    { "source": "/start", "destination": "/register" }
-  ],
-  "redirects": [
-    {
-      "source": "/old-register",
-      "destination": "/register",
-      "permanent": true
-    }
-  ]
+  }
 }
