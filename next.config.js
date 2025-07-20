@@ -1,12 +1,10 @@
 ﻿const { i18n } = require('./next-i18next.config');
-const webpack = require('webpack');
 
 module.exports = {
   eslint: {
     ignoreDuringBuilds: true,
   },
 
-  // ✅ Dopisz jawnie konfigurację i18n (Next.js tego potrzebuje)
   i18n: {
     locales: [
       'pl', 'en', 'es', 'fr', 'de',
@@ -17,22 +15,7 @@ module.exports = {
   },
 
   webpack: (config) => {
-    config.resolve.fallback = {
-      ...config.resolve.fallback,
-      process: require.resolve('process/browser'),
-    };
-
-    config.resolve.alias = {
-      ...(config.resolve.alias || {}),
-      'node:process': require.resolve('process/browser'),
-    };
-
-    config.plugins.push(
-      new webpack.ProvidePlugin({
-        process: 'process/browser',
-      })
-    );
-
+    // ❌ usunięto zastępowanie process.env wersją z browsera
     return config;
   },
 };
