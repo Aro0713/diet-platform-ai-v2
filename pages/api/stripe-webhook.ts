@@ -105,18 +105,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       method: paymentMethod,
     });
 
-    // 🔁 Aktualizacja has_paid = true
-    const { error: updateError } = await supabase
-      .from('patients')
-      .update({ has_paid: true })
-      .eq('email', email);
+        // 📅 Ustawienie planu subskrypcji i daty wygaśnięcia
+        const plan = session.metadata?.plan || '7d';
+        const start = new Date();
+        const end = new Date();
 
-    if (updateError) {
-      console.error('❌ Błąd aktualizacji has_paid:', updateError.message);
-    } else {
-      console.log(`✅ has_paid ustawione dla: ${email}`);
+        switch (plan) {
+        case '7d': end.setDate(start.getDate() + 7); break;
+        case '30d': end.setDate(start.getDate() + 30); break;
+        case '90d': end.setDate(start.getDate() + 90); break;
+        case '365d': end.setDate(start.getDate() + 365); break;
+        default: end.setDate(start.getDate() + 7); break;
+        }
+
+        const { error: updateError } = await supabase
+        .from('patients')
+        .update({
+            subscription_status: plan,
+            subscription_started_at: start.toISOString(),
+            subscription_expires_at: end.toISOString(),
+        })
+        .eq('email', email);
+
+        if (updateError) {
+        console.error('❌ Błąd update subskrypcji:', updateError.message);
+        } else {
+        console.log(`✅ Plan: ${plan}, start: ${start.toISOString()}, koniec: ${end.toISOString()} dla ${email}`);
+        }
+     }
+    res.status(200).json({ received: true });
     }
-  }
-
-  res.status(200).json({ received: true });
-}
