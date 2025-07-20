@@ -1054,12 +1054,12 @@ const handleShowDoctors = async () => {
         </>
       )}
 
-       {!selectedSection && (
-        <p className="text-center text-white text-sm max-w-xl mx-auto">
-          {tUI('welcomeMessagePatient', lang).replace('{{name}}', form?.name || '')}
-        </p>
-      )}
-      </div>
+      {!selectedSection && (
+      <p className="text-center text-white text-sm max-w-xl mx-auto">
+        {tUI('welcomeMessagePatient', lang)}
+      </p>
+    )}
+     </div>
       {progress > 0 && progress < 100 && (
   <ProgressOverlay message={progressMessage} percent={progress} />
 )}

@@ -2631,17 +2631,17 @@ generatingNarrativePending: {
   he: 'לוח מטופל',
 },
 welcomeMessagePatient: {
-  pl: '{{name}}, jesteś w prywatnej strefie dietetyki. Przejdź do Rejestracji, aby uzupełnić dane potrzebne do przygotowania spersonalizowanej diety.',
-  en: '{{name}}, you are in your private dietetics zone. Go to Registration to complete the information needed to create your personalized plan.',
-  de: '{{name}}, du befindest dich in deinem privaten Ernährungsbereich. Gehe zur Registrierung, um deine Daten zu vervollständigen.',
-  fr: '{{name}}, vous êtes dans votre espace personnel de diététique. Rendez-vous dans l’enregistrement pour compléter vos données.',
-  es: '{{name}}, estás en tu zona privada de dietética. Ve a Registro para completar tus datos.',
-  ua: '{{name}}, ви у своїй приватній зоні дієтології. Перейдіть до реєстрації, щоб заповнити необхідні дані.',
-  ru: '{{name}}, вы в своей личной зоне диетологии. Перейдите в Регистрацию, чтобы заполнить данные.',
-  zh: '{{name}}，您已进入私人营养空间。请前往注册以完善信息。',
-  hi: '{{name}}, आप अपनी व्यक्तिगत डाइट ज़ोन में हैं। अपना डाइट प्लान शुरू करने के लिए पंजीकरण पूरा करें।',
-  ar: '{{name}}، أنت في منطقتك الخاصة للتغذية. انتقل إلى التسجيل لإكمال البيانات المطلوبة.',
-  he: '{{name}}, אתה באזור הדיאטה הפרטי שלך. עבור לרישום כדי למלא את הנתונים.'
+  pl: 'Jesteś w prywatnej strefie dietetyki. Przejdź do Rejestracji, aby uzupełnić dane potrzebne do przygotowania spersonalizowanej diety.',
+  en: 'You are in your private diet care area. Go to Registration to complete the data needed to prepare a personalized diet.',
+  es: 'Estás en tu zona privada de dietética. Ve al Registro para completar los datos necesarios para preparar una dieta personalizada.',
+  fr: 'Vous êtes dans votre espace diététique privé. Allez dans l’inscription pour compléter les informations nécessaires à une alimentation personnalisée.',
+  de: 'Du befindest dich in deinem privaten Diätbereich. Gehe zur Registrierung, um die Daten für deinen persönlichen Ernährungsplan einzugeben.',
+  ua: 'Ви у приватній зоні дієтології. Перейдіть до реєстрації, щоб заповнити дані для персоналізованої дієти.',
+  ru: 'Вы находитесь в личной зоне диетологии. Перейдите к регистрации, чтобы заполнить данные для персонализированной диеты.',
+  zh: '您正在私人营养区域。请前往注册以填写制定个性化饮食所需的信息。',
+  hi: 'आप निजी डाइट क्षेत्र में हैं। कृपया पंजीकरण पर जाएं ताकि व्यक्तिगत डाइट की तैयारी के लिए आवश्यक डेटा पूरा किया जा सके।',
+  ar: 'أنت الآن في منطقتك الخاصة بالتغذية. انتقل إلى التسجيل لإكمال البيانات المطلوبة لإعداد نظام غذائي مخصص.',
+  he: 'אתה נמצא באזור הדיאטה הפרטי שלך. עבור להרשמה כדי להשלים את הנתונים הדרושים להכנת תפריט מותאם אישית.'
 },
 fullName: {
   pl: 'Imię i nazwisko',
