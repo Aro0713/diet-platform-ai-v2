@@ -5,7 +5,17 @@ module.exports = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  i18n,
+
+  // ✅ Dopisz jawnie konfigurację i18n (Next.js tego potrzebuje)
+  i18n: {
+    locales: [
+      'pl', 'en', 'es', 'fr', 'de',
+      'ua', 'ru', 'zh', 'hi', 'ar', 'he'
+    ],
+    defaultLocale: 'pl',
+    localeDetection: true
+  },
+
   webpack: (config) => {
     config.resolve.fallback = {
       ...config.resolve.fallback,
