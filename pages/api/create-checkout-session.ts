@@ -6,7 +6,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
 });
 
 // ceny brutto w groszach (lub centach dla USD)
-const priceMap: Record<string, Record<string, number>> = {
+const priceMap: Record<string, Record<'pln' | 'usd' | 'eur', number>> = {
   '7d': { pln: 12900, usd: 1500, eur: 1400 },
   '30d': { pln: 24900, usd: 3000, eur: 2800 },
   '90d': { pln: 59900, usd: 8000, eur: 7500 },
@@ -19,7 +19,6 @@ const currencyByCountry = (countryCode: string): 'pln' | 'eur' | 'usd' => {
   if (euCountries.includes(countryCode)) return 'eur';
   return 'usd';
 };
-
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -39,7 +38,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       country // np. 'PL', 'US', 'DE'
     } = req.body;
 
+    // log wejścia
+    console.log('🧾 Received request to create checkout session:', {
+      email, plan, userId, country
+    });
+
+    // Walidacja danych wejściowych
     if (!plan || !email || !userId || !country) {
+      console.warn('❌ Missing required fields:', { plan, email, userId, country });
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -47,13 +53,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const price = priceMap[plan]?.[currency];
 
     if (!price) {
+      console.warn('❌ Invalid plan or country combination:', { plan, currency });
       return res.status(400).json({ error: 'Invalid plan or country' });
     }
 
     const vatRate = 0.23;
     const netAmount = currency === 'pln'
       ? price / 100 / (1 + vatRate)
-      : price / 100; // assume no VAT outside Poland
+      : price / 100;
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
@@ -88,6 +95,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       cancel_url: `${req.headers.origin}/panel-patient?payment=cancel`,
     });
 
+    console.log(`✅ Stripe session created: ${session.id}`);
     return res.status(200).json({ url: session.url });
   } catch (err: any) {
     console.error('❌ Stripe error:', err.message);
