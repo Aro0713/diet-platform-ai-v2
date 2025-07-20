@@ -1,15 +1,28 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error('❌ STRIPE_SECRET_KEY is not set');
+}
 
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+ apiVersion: '2025-06-30.basil'
+});
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Only POST allowed' });
   }
 
-  const { buyerName, buyerAddress, buyerNIP, email, lang = 'pl', service = 'Plan diety 7 dni', price = 12900 } = req.body;
+  const {
+    buyerName,
+    buyerAddress,
+    buyerNIP,
+    email,
+    lang = 'pl',
+    service = 'Plan diety 7 dni',
+    price = 12900
+  } = req.body;
 
   try {
     const session = await stripe.checkout.sessions.create({
@@ -22,7 +35,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           quantity: 1,
           price_data: {
             currency: 'pln',
-            unit_amount: price, // 12900 = 129.00 PLN
+            unit_amount: price,
             product_data: {
               name: service
             }
