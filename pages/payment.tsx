@@ -1,141 +1,146 @@
-import React, { useEffect, useState, FormEvent } from 'react';
+import React, { useState, useEffect, FormEvent } from 'react';
 import { useRouter } from 'next/router';
-import { type LangKey, languageLabels, tUI as getTUI } from '@/utils/i18n';
-import { translationsUI } from '@/utils/translationsUI';
+import { supabase } from '@/lib/supabaseClient';
+import { tUI, type LangKey, languageLabels } from '@/utils/i18n';
+import 'react-international-phone/style.css';
 
 export default function PaymentPage() {
   const router = useRouter();
   const [lang, setLang] = useState<LangKey>('pl');
-  const tUI = (key: keyof typeof translationsUI) => getTUI(key, lang);
-
-  const [darkMode, setDarkMode] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-
+  const [userId, setUserId] = useState<string>('');
   const [form, setForm] = useState({
-    name: '',
-    email: '',
-    address: '',
-    nip: ''
-  });
-
+  name: '',
+  email: '',
+  address: '',
+  nip: '',
+  region: 'PL' // domyślnie
+});
+  const [selectedPlan, setSelectedPlan] = useState<'7d' | '30d' | '90d' | '365d' | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  
   useEffect(() => {
     const storedLang = localStorage.getItem('platformLang') as LangKey;
-    const storedTheme = localStorage.getItem('theme');
     if (storedLang) setLang(storedLang);
-    if (storedTheme === 'dark') setDarkMode(true);
-  }, []);
 
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', darkMode);
-    localStorage.setItem('theme', darkMode ? 'dark' : 'light');
-  }, [darkMode]);
+    supabase.auth.getSession().then(async ({ data }) => {
+      const uid = data?.session?.user?.id;
+      if (!uid) return;
+      setUserId(uid);
+      const { data: patient } = await supabase
+        .from('patients')
+        .select('*')
+        .eq('user_id', uid)
+        .maybeSingle();
+      if (patient) {
+        setForm({
+        name: patient.name || '',
+        email: patient.email || '',
+        address: patient.address || '',
+        nip: patient.nip || '',
+        region: patient.region || 'PL'
+        });
+      }
+    });
+  }, []);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!selectedPlan) return alert(tUI('selectPlanFirst', lang));
     setIsLoading(true);
 
+    const priceMap = {
+      '7d': 12900,
+      '30d': 24900,
+      '90d': 59900,
+      '365d': 129900
+    };
+
     const res = await fetch('/api/create-checkout-session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        buyerName: form.name,
-        buyerAddress: form.address,
-        buyerNIP: form.nip,
-        email: form.email,
-        lang,
-        service: 'Plan diety 7 dni',
-        price: 12900
-      })
-    });
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    ...form,
+    plan: selectedPlan,
+    price: priceMap[selectedPlan],
+    service: tUI(`plan${selectedPlan}`, lang),
+    userId,
+    lang,
+    country: form.region || 'PL' // lub geo.countryCode, jeśli masz wynik z API
+  })
+});
 
     const { url } = await res.json();
     if (url) window.location.href = url;
-    else alert('Błąd inicjacji płatności');
+    else alert(tUI('paymentInitError', lang));
 
     setIsLoading(false);
   };
 
-  return (
-    <main className="relative min-h-screen bg-[#0f271e]/70 bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 backdrop-blur-[12px] shadow-[inset_0_0_60px_rgba(255,255,255,0.08)] flex flex-col justify-start items-center pt-10 px-6 text-white transition-all duration-300">
-      <nav className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between px-4">
-        <div className="flex items-center gap-2">
-          <label htmlFor="language-select" className="sr-only">Język</label>
-          <select
-            id="language-select"
-            value={lang}
-            onChange={(e) => {
-              const selected = e.target.value as LangKey;
-              setLang(selected);
-              localStorage.setItem('platformLang', selected);
-            }}
-            className="border rounded px-3 py-1 shadow bg-white/80 text-black backdrop-blur dark:bg-gray-800 dark:text-white"
-            aria-label="Language selection"
-          >
-            {Object.entries(languageLabels).map(([key, label]) => (
-              <option key={key} value={key}>{label}</option>
-            ))}
-          </select>
-        </div>
+  const planOptions = [
+    {
+      id: '7d',
+      title: tUI('plan7d', lang),
+      description: tUI('plan7dDesc', lang)
+    },
+    {
+      id: '30d',
+      title: tUI('plan30d', lang),
+      description: tUI('plan30dDesc', lang)
+    },
+    {
+      id: '90d',
+      title: tUI('plan90d', lang),
+      description: tUI('plan90dDesc', lang)
+    },
+    {
+      id: '365d',
+      title: tUI('plan365d', lang),
+      description: tUI('plan365dDesc', lang)
+    }
+  ];
 
-        <div className="flex items-center gap-2 group" title={darkMode ? tUI('lightMode') : tUI('darkMode')}>
-          <span className="text-xs text-black dark:text-white">{tUI('toggleContrast')}</span>
-          <button
-            onClick={() => setDarkMode(!darkMode)}
-            className={`relative inline-flex items-center h-6 w-11 rounded-full transition-colors ${darkMode ? 'bg-gray-700' : 'bg-yellow-400'}`}
-            aria-label={tUI('toggleContrast')}
-          >
-            <span className={`absolute left-1 text-sm ${darkMode ? 'opacity-0' : 'opacity-100'}`}>☀️</span>
-            <span className={`absolute right-1 text-sm ${darkMode ? 'opacity-100' : 'opacity-0'}`}>🌙</span>
-            <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-300 ${darkMode ? 'translate-x-5' : 'translate-x-1'}`} />
-          </button>
-        </div>
+  return (
+    <main className="min-h-screen bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 backdrop-blur text-white p-6">
+      <nav className="flex justify-between mb-8">
+        <select
+          value={lang}
+          onChange={(e) => {
+            const val = e.target.value as LangKey;
+            setLang(val);
+            localStorage.setItem('platformLang', val);
+          }}
+          className="bg-white text-black px-3 py-1 rounded"
+        >
+          {Object.entries(languageLabels).map(([key, label]) => (
+            <option key={key} value={key}>{label}</option>
+          ))}
+        </select>
       </nav>
 
-      <section className="z-10 mt-20 max-w-xl w-full bg-white/30 dark:bg-gray-900/30 backdrop-blur-md p-10 rounded-2xl shadow-xl transition-colors dark:text-white">
-        <h2 className="text-2xl font-bold text-center mb-6">{tUI('paymentTitle')}</h2>
+      <h1 className="text-2xl font-bold text-center mb-6">{tUI('choosePlan', lang)}</h1>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="text"
-            required
-            placeholder={tUI('fullName')}
-            className="w-full bg-white text-black border border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 rounded px-3 py-2"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-          />
-          <input
-            type="email"
-            required
-            placeholder={tUI('email')}
-            className="w-full bg-white text-black border border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 rounded px-3 py-2"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-          />
-          <input
-            type="text"
-            required
-            placeholder={tUI('address')}
-            className="w-full bg-white text-black border border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 rounded px-3 py-2"
-            value={form.address}
-            onChange={(e) => setForm({ ...form, address: e.target.value })}
-          />
-          <input
-            type="text"
-            placeholder={tUI('nip')}
-            className="w-full bg-white text-black border border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 rounded px-3 py-2"
-            value={form.nip}
-            onChange={(e) => setForm({ ...form, nip: e.target.value })}
-          />
+      <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {planOptions.map(plan => (
+            <div
+              key={plan.id}
+              onClick={() => setSelectedPlan(plan.id as any)}
+              className={`cursor-pointer rounded-lg p-4 border ${selectedPlan === plan.id ? 'border-green-400 bg-green-900/40' : 'border-white/20 bg-white/10'}`}
+            >
+              <h2 className="text-xl font-bold mb-2">{plan.title}</h2>
+              <p className="text-sm whitespace-pre-line">{plan.description}</p>
+            </div>
+          ))}
+        </div>
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded w-full transition disabled:opacity-50"
-          >
-            {isLoading ? tUI('loading') : tUI('payNow')}
-          </button>
-        </form>
-      </section>
+        <button
+          type="submit"
+          disabled={!selectedPlan || isLoading}
+          className="block w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-4 rounded disabled:opacity-50"
+        >
+          {tUI('payNow', lang)}
+        </button>
+      </form>
     </main>
   );
 }

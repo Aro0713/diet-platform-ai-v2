@@ -1,4 +1,3 @@
-// pages/api/create-checkout-session.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
 
@@ -6,14 +5,25 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: '2025-06-30.basil',
 });
 
+// ceny brutto w groszach (lub centach dla USD)
+const priceMap: Record<string, Record<string, number>> = {
+  '7d': { pln: 12900, usd: 1500, eur: 1400 },
+  '30d': { pln: 24900, usd: 3000, eur: 2800 },
+  '90d': { pln: 59900, usd: 8000, eur: 7500 },
+  '365d': { pln: 129900, usd: 29000, eur: 27000 },
+};
+
+const euCountries = ['DE', 'FR', 'ES', 'IT', 'NL', 'BE', 'AT', 'FI', 'GR', 'IE', 'PT', 'LU', 'SK', 'SI', 'LV', 'LT', 'EE', 'CY', 'MT', 'HR'];
+const currencyByCountry = (countryCode: string): 'pln' | 'eur' | 'usd' => {
+  if (countryCode === 'PL') return 'pln';
+  if (euCountries.includes(countryCode)) return 'eur';
+  return 'usd';
+};
+
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
-  }
-
-  if (!process.env.STRIPE_SECRET_KEY) {
-    console.error('❌ STRIPE_SECRET_KEY is missing');
-    return res.status(500).json({ error: 'Stripe secret key not found' });
   }
 
   try {
@@ -24,11 +34,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       email,
       lang,
       service,
-      price,
+      plan,
+      userId,
+      country // np. 'PL', 'US', 'DE'
     } = req.body;
 
-    const netAmount = (price || 12900) / 100; // PLN netto
+    if (!plan || !email || !userId || !country) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const currency = currencyByCountry(country.toUpperCase());
+    const price = priceMap[plan]?.[currency];
+
+    if (!price) {
+      return res.status(400).json({ error: 'Invalid plan or country' });
+    }
+
     const vatRate = 0.23;
+    const netAmount = currency === 'pln'
+      ? price / 100 / (1 + vatRate)
+      : price / 100; // assume no VAT outside Poland
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
@@ -36,25 +61,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       line_items: [
         {
           price_data: {
-            currency: 'pln',
+            currency,
             product_data: {
-              name: service || 'Plan diety 7 dni',
+              name: service || 'Plan diety',
             },
-            unit_amount: price || 12900, // cena brutto w groszach
+            unit_amount: price,
           },
           quantity: 1,
         },
       ],
       customer_email: email,
       metadata: {
+        userId,
         buyerName,
         buyerAddress,
         buyerNIP,
         email,
         lang: lang || 'pl',
-        service: service || 'Plan diety 7 dni',
-        netAmount: netAmount.toFixed(2), // np. 129.00
-        vatRate: vatRate.toFixed(2),      // 0.23
+        plan,
+        service: service || 'Plan diety',
+        currency,
+        netAmount: netAmount.toFixed(2),
+        vatRate: currency === 'pln' ? vatRate.toFixed(2) : '0'
       },
       success_url: `${req.headers.origin}/panel-patient?payment=success`,
       cancel_url: `${req.headers.origin}/panel-patient?payment=cancel`,
