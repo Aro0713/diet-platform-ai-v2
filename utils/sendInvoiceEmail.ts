@@ -146,7 +146,7 @@ export async function sendInvoiceEmail({
 
   const subject = subjectMap[lang] || subjectMap['pl'];
   const html = htmlMap[lang] || htmlMap['pl'];
-  const from = 'DCP Faktury <faktury@dcp.care>';
+  const from = 'DCP Faktury <no-reply@dcp.care>';
 
   await resend.emails.send({ to, from, subject, html });
 }
