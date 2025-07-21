@@ -131,7 +131,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       lang,
     });
 
-    const { error: insertError } = await supabase
+const { error: insertError } = await supabase
   .from('invoices')
   .insert({
     number: invoiceNumber,
@@ -142,6 +142,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     vat,
     paid_at: paymentDate,
     method: paymentMethod,
+    user_id: null, // 👈 DODANE!
   });
 
 if (insertError) {
