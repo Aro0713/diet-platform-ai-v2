@@ -52,32 +52,42 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       service,
       netAmount,
       vatRate,
-      plan
+      plan,
     } = session.metadata;
 
     const email = session.customer_email;
     const paymentMethod = session.payment_method_types?.[0] === 'card' ? 'Karta' : 'Przelew';
     const paymentDate = new Date().toISOString();
     const lang = session.metadata?.lang === 'en' ? 'en' : 'pl';
+    const currency = (session.currency?.toUpperCase() || 'PLN') as 'PLN' | 'EUR' | 'USD';
 
     const invoiceNumber = await generateInvoiceNumber();
     const net = parseFloat(netAmount?.toString() || '0');
     const vat = parseFloat(vatRate?.toString() || '0.23');
+    const grossAmount = net + net * vat;
 
     let pdfBuffer;
     try {
       pdfBuffer = await generateInvoicePdf({
-        buyerName,
-        buyerAddress,
-        buyerNIP,
-        email,
-        paymentDate,
-        paymentMethod,
-        service,
-        netAmount: net,
-        vatRate: vat,
-        lang,
-      });
+  buyerName,
+  buyerAddress,
+  buyerNIP,
+  email,
+  paymentDate,
+  paymentMethod,
+  lang,
+  currency,
+  items: [
+    {
+      name: service,
+      quantity: 1,
+      unit: 'szt.',
+      unitPrice: net,
+      vatRate: net > 0 ? Math.round((vat / net) * 100) : 0,
+    }
+  ],
+});
+
     } catch (err) {
       console.error('❌ Błąd generowania PDF:', err);
       return res.status(500).json({ error: 'PDF generation failed' });
@@ -99,14 +109,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const url = supabase.storage.from('invoices').getPublicUrl(`${year}/${filename}`).data.publicUrl;
-    const grossAmount = net + (net * vat);
 
     await sendInvoiceEmail({
       to: email,
       invoiceNumber,
       url,
       service,
-      gross: grossAmount.toFixed(2) + ' zł',
+      gross: `${grossAmount.toFixed(2)} ${currency}`,
       lang,
     });
 
