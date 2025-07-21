@@ -116,9 +116,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
 
     if (uploadError) {
-      console.error('❌ Upload error:', uploadError.message);
-      return res.status(500).json({ error: 'Upload to Supabase failed' });
-    }
+  console.error('❌ Upload error (storage):', uploadError.message);
+  return res.status(500).json({ error: 'Upload to storage failed', message: uploadError.message });
+}
 
     const url = supabase.storage.from('invoices').getPublicUrl(`${year}/${filename}`).data.publicUrl;
 
