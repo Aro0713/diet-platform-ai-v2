@@ -201,15 +201,24 @@ useEffect(() => {
       </button>
 
       {message && <p className="text-sm text-blue-600 mt-2">{message}</p>}
-      {formSaved && (
       <div className="mt-6 text-center">
-        <Link href="/payment">
-          <button className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded shadow transition">
-            {tUI('goToPayment', lang) || 'Zapłać za plan diety'}
-          </button>
-        </Link>
+        {!value?.subscription_status || value.subscription_status === 'none' || value.subscription_status === 'expired' ? (
+          <Link href="/payment">
+            <button className="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-6 py-3 rounded shadow transition">
+              💳 {tUI('goToPayment', lang) || 'Zapłać za plan diety'}
+            </button>
+          </Link>
+        ) : value?.invoice_url ? (
+          <a
+            href={value.invoice_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-3 rounded shadow transition"
+          >
+            📄 {tUI('downloadInvoice', lang) || 'Pobierz fakturę PDF'}
+          </a>
+        ) : null}
       </div>
-    )}
     </div>
   );
 };
