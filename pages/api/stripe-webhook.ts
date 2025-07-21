@@ -45,15 +45,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     console.log('📦 Metadata:', session.metadata);
 
-    const {
-      buyerName,
-      buyerAddress,
-      buyerNIP,
-      service,
-      netAmount,
-      vatRate,
-      plan,
-    } = session.metadata;
+    // ✅ Fallbacky dla pól wymaganych do PDF
+    const buyerName = session.metadata?.buyerName || session.customer_details?.name || 'Nieznany klient';
+    const buyerAddress = session.metadata?.buyerAddress || 'Brak adresu';
+    const buyerNIP = session.metadata?.buyerNIP || '';
+    const service = session.metadata?.service || 'Usługa DCP';
+    const netAmount = session.metadata?.netAmount || '0';
+    const vatRate = session.metadata?.vatRate || '0.23';
+    const plan = session.metadata?.plan;
 
     const email = session.customer_email;
     const paymentMethod = session.payment_method_types?.[0] === 'card' ? 'Karta' : 'Przelew';
@@ -62,32 +61,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const currency = (session.currency?.toUpperCase() || 'PLN') as 'PLN' | 'EUR' | 'USD';
 
     const invoiceNumber = await generateInvoiceNumber();
-    const net = parseFloat(netAmount?.toString() || '0');
-    const vat = parseFloat(vatRate?.toString() || '0.23');
+    const net = parseFloat(netAmount.toString());
+    const vat = parseFloat(vatRate.toString());
     const grossAmount = net + net * vat;
 
     let pdfBuffer;
     try {
       pdfBuffer = await generateInvoicePdf({
-  buyerName,
-  buyerAddress,
-  buyerNIP,
-  email,
-  paymentDate,
-  paymentMethod,
-  lang,
-  currency,
-  items: [
-    {
-      name: service,
-      quantity: 1,
-      unit: 'szt.',
-      unitPrice: net,
-      vatRate: net > 0 ? Math.round((vat / net) * 100) : 0,
-    }
-  ],
-});
-
+        buyerName,
+        buyerAddress,
+        buyerNIP,
+        email,
+        paymentDate,
+        paymentMethod,
+        lang,
+        currency,
+        items: [
+          {
+            name: service,
+            quantity: 1,
+            unit: 'szt.',
+            unitPrice: net,
+            vatRate: net > 0 ? Math.round((vat / net) * 100) : 0,
+          }
+        ],
+      });
     } catch (err) {
       console.error('❌ Błąd generowania PDF:', err);
       return res.status(500).json({ error: 'PDF generation failed' });

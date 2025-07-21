@@ -1,5 +1,6 @@
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { generateInvoiceNumber } from '@/utils/generateInvoiceNumber';
+import { tUI } from '@/utils/i18n';
 
 interface InvoiceItem {
   name: string;
@@ -51,59 +52,58 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<Uint8Array>
 
   const lang = data.lang || 'pl';
   const currency = data.currency;
+  const t = (key: string) => tUI(key, lang);
+
   const issueDate = new Date(data.paymentDate).toLocaleDateString(lang === 'pl' ? 'pl-PL' : 'en-GB');
   const place = data.placeOfIssue || 'Zdzieszowice';
 
-  // Header
-  draw(`ALS sp. z o.o.`, 50, 800);
-  draw(`Filarskiego 39, 47-330 Zdzieszowice`, 50, 785);
-  draw(`Tel.: 500720242, NIP: 6252121456`, 50, 770);
-  draw(`PKO BP SA,`, 50, 755);
-  draw(`89102024980000880201365063`, 50, 740);
+  const totalNet = data.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+  const totalVat = data.items.reduce((sum, item) => sum + (item.unitPrice * item.quantity * item.vatRate / 100), 0);
+  const totalGross = totalNet + totalVat;
 
-  draw(`Miejsce wystawienia: ${place}`, 400, 800);
-  draw(`Data zakończenia dostawy/usług: ${issueDate}`, 400, 785);
-  draw(`Data wystawienia: ${issueDate}`, 400, 770);
+  // Header
+  draw('ALS sp. z o.o.', 50, 800);
+  draw('Filarskiego 39, 47-330 Zdzieszowice', 50, 785);
+  draw('Tel.: 500720242, NIP: 6252121456', 50, 770);
+  draw('PKO BP SA,', 50, 755);
+  draw('89102024980000880201365063', 50, 740);
+
+  draw(`${t('placeOfIssue')}: ${place}`, 400, 800);
+  draw(`${t('deliveryDate')}: ${issueDate}`, 400, 785);
+  draw(`${t('issueDate')}: ${issueDate}`, 400, 770);
 
   // Buyer / Seller
-  draw(`Sprzedawca:`, 50, 720);
-  draw(`ALS sp. z o.o.`, 50, 705);
-  draw(`Filarskiego 39`, 50, 690);
-  draw(`47-330 Zdzieszowice`, 50, 675);
-  draw(`NIP: 6252121456`, 50, 660);
+  draw(`${t('seller')}:`, 50, 720);
+  draw('ALS sp. z o.o.', 50, 705);
+  draw('Filarskiego 39', 50, 690);
+  draw('47-330 Zdzieszowice', 50, 675);
+  draw('NIP: 6252121456', 50, 660);
 
-  draw(`Nabywca:`, 300, 720);
+  draw(`${t('buyer')}:`, 300, 720);
   draw(data.buyerName, 300, 705);
   draw(data.buyerAddress, 300, 690);
   if (data.buyerNIP) draw(`NIP: ${data.buyerNIP}`, 300, 675);
-  draw(`Email: ${data.email}`, 300, 660);
+  draw(`${t('email')}: ${data.email}`, 300, 660);
 
-  draw(`Faktura VAT ${invoiceNumber} oryginał`, 50, 630, 12);
+  draw(`${t('invoiceTitle')} ${invoiceNumber} ${t('original')}`, 50, 630, 12);
 
   // Table Header
-  draw(`Lp`, 50, 610);
-  draw(`Nazwa`, 70, 610);
-  draw(`Kod`, 220, 610);
-  draw(`Ilość`, 270, 610);
-  draw(`j.m.`, 310, 610);
-  draw(`Cena`, 350, 610);
-  draw(`VAT %`, 410, 610);
-  draw(`Netto`, 460, 610);
-  draw(`VAT`, 510, 610);
-  draw(`Brutto`, 550, 610);
+  draw('Lp', 50, 610);
+  draw(t('service'), 70, 610);
+  draw(t('code'), 220, 610);
+  draw(t('quantity'), 270, 610);
+  draw(t('unit'), 310, 610);
+  draw(t('price'), 350, 610);
+  draw('VAT %', 410, 610);
+  draw(t('net'), 460, 610);
+  draw('VAT', 510, 610);
+  draw(t('gross'), 550, 610);
 
   let y = 590;
-  let totalNet = 0;
-  let totalVat = 0;
-  let totalGross = 0;
-
   data.items.forEach((item, i) => {
     const net = item.unitPrice * item.quantity;
     const vat = net * (item.vatRate / 100);
     const gross = net + vat;
-    totalNet += net;
-    totalVat += vat;
-    totalGross += gross;
 
     draw(`${i + 1}`, 50, y);
     draw(item.name, 70, y);
@@ -118,20 +118,19 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<Uint8Array>
     y -= 18;
   });
 
-  // Summary
-  draw(`Razem:`, 400, y);
+  draw(`${t('total')}:`, 400, y);
   draw(formatCurrency(totalNet, currency, lang), 460, y);
   draw(formatCurrency(totalVat, currency, lang), 510, y);
   draw(formatCurrency(totalGross, currency, lang), 550, y);
   y -= 30;
 
-  draw(`Razem do zapłaty: ${formatCurrency(totalGross, currency, lang)}`, 50, y, 12);
+  draw(`${t('totalDue')}: ${formatCurrency(totalGross, currency, lang)}`, 50, y, 12);
   y -= 20;
-  draw(`Słownie: ${numberToWords(totalGross, currency, lang)}`, 50, y);
+  draw(`${t('inWords')}: ${numberToWords(totalGross, currency, lang)}`, 50, y);
   y -= 40;
 
-  draw(`Wystawił(a): ${data.issuedBy || 'DCP system'}`, 50, y);
-  draw(`Odebrał(a): __________________________`, 300, y);
+  draw(`${t('issuedBy')}: ${data.issuedBy || 'DCP system'}`, 50, y);
+  draw(`${t('receivedBy')}: __________________________`, 300, y);
 
   return await pdfDoc.save();
 }
