@@ -65,6 +65,7 @@ function Panel() {
   const [history, setHistory] = useState<any[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const router = useRouter();
+  const [patientMode, setPatientMode] = useState<'registered' | 'unregistered'>('registered');
 
  const {
   form, setForm,
@@ -569,6 +570,31 @@ return (
     <div className="z-10 flex flex-col w-full max-w-[1400px] mx-auto gap-6 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 mt-20 dark:text-white transition-colors">
 
 <PanelCard>
+  <div className="flex gap-4 mb-4">
+  <label className="flex items-center gap-2">
+    <input
+      type="radio"
+      name="patientMode"
+      value="registered"
+      checked={patientMode === 'registered'}
+      onChange={() => setPatientMode('registered')}
+    />
+    {tUI('modeRegistered', lang)}
+  </label>
+  <label className="flex items-center gap-2">
+    <input
+      type="radio"
+      name="patientMode"
+      value="unregistered"
+      checked={patientMode === 'unregistered'}
+      onChange={() => setPatientMode('unregistered')}
+    />
+    {tUI('modeUnregistered', lang)}
+  </label>
+</div>
+
+<div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+  {/* 🔵 LEWA: Pacjent z kontem DCP */}
   <div className="flex flex-col gap-4">
     <label className="text-sm font-medium text-black dark:text-white">
       {tUI('patientData', lang)}
@@ -580,122 +606,82 @@ return (
       onChange={(e) => setPatientEmailInput(e.target.value)}
       placeholder={tUI('enterEmail', lang)}
       className="rounded px-4 py-2 text-black w-full"
+      disabled={patientMode !== 'registered'}
     />
     <button
       onClick={handleSearchPatient}
       className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+      disabled={patientMode !== 'registered'}
     >
       🔍 {tUI('fetchPatientData', lang)}
     </button>
 
-    {patientLoadStatus === 'notFound' && (
+    {patientLoadStatus === 'notFound' && patientMode === 'registered' && (
       <div className="text-yellow-400 mt-2">
         ❌ {tUI('patientNotFound', lang)}
       </div>
     )}
 
-    {patientLoadStatus === 'success' && (
-      <>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          <input
-            type="text"
-            value={form.name || ''}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            placeholder={tUI('fullName', lang)}
-            className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white"
-          />
-          <input
-            type="email"
-            value={form.email || ''}
-            disabled
-            className="rounded px-3 py-2 bg-gray-200 text-black dark:bg-gray-700 dark:text-white cursor-not-allowed"
-          />
-          <input
-            type="tel"
-            value={form.phone || ''}
-            onChange={(e) => setForm({ ...form, phone: e.target.value })}
-            placeholder={tUI('phone', lang)}
-            className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white"
-          />
-          <select
-            value={form.sex || ''}
-            onChange={(e) => {
-              const val = e.target.value;
-              if (val === 'male' || val === 'female') {
-                setForm({ ...form, sex: val as 'male' | 'female' });
-              }
-            }}
-            className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white"
-          >
-            <option value="">{`-- ${tUI('selectSex', lang)} --`}</option>
-            <option value="male">{tUI('male', lang)}</option>
-            <option value="female">{tUI('female', lang)}</option>
-          </select>
-          <input
-            type="number"
-            value={form.age || ''}
-            onChange={(e) => setForm({ ...form, age: Number(e.target.value) })}
-            placeholder={tUI('age', lang)}
-            className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white"
-          />
-          <input
-            type="number"
-            value={form.height || ''}
-            onChange={(e) => setForm({ ...form, height: Number(e.target.value) })}
-            placeholder={tUI('height', lang)}
-            className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white"
-          />
-          <input
-            type="number"
-            value={form.weight || ''}
-            onChange={(e) => setForm({ ...form, weight: Number(e.target.value) })}
-            placeholder={tUI('weight', lang)}
-            className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white"
-          />
-          <select
-            value={form.region || ''}
-            onChange={(e) => setForm({ ...form, region: e.target.value })}
-            className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white"
-          >
-            <option value="">{`-- ${tUI('selectRegion', lang)} --`}</option>
-            <option value="Europa">{tUI('regionEurope', lang)}</option>
-            <option value="Ameryka Północna">{tUI('regionNorthAmerica', lang)}</option>
-            <option value="Ameryka Południowa">{tUI('regionSouthAmerica', lang)}</option>
-            <option value="Azja">{tUI('regionAsia', lang)}</option>
-            <option value="Afryka">{tUI('regionAfrica', lang)}</option>
-            <option value="Australia">{tUI('regionAustralia', lang)}</option>
-          </select>
-        </div>
-
-        <button
-          onClick={async () => {
-            const { error } = await supabase
-              .from('patients')
-              .update({
-                name: form.name,
-                phone: form.phone,
-                sex: form.sex,
-                age: form.age,
-                height: form.height,
-                weight: form.weight,
-                region: form.region
-              })
-              .eq('user_id', form.user_id);
-
-            if (!error) {
-              alert(`✅ ${tUI('patientSavedSuccess', lang)}`);
-            } else {
-              alert(`❌ ${tUI('patientSavedError', lang)}: ` + error.message);
-            }
-          }}
-          className="mt-4 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded"
-        >
-          💾 {tUI('savePatientData', lang)}
-        </button>
-      </>
+    {patientLoadStatus === 'success' && patientMode === 'registered' && (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <input type="text" value={form.name || ''} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={tUI('fullName', lang)} className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white" disabled={patientMode !== 'registered'} />
+        <input type="email" value={form.email || ''} disabled className="rounded px-3 py-2 bg-gray-200 text-black dark:bg-gray-700 dark:text-white cursor-not-allowed" />
+        <input type="tel" value={form.phone || ''} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder={tUI('phone', lang)} className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white" disabled={patientMode !== 'registered'} />
+        <select value={form.sex || ''} onChange={(e) => setForm({ ...form, sex: e.target.value as 'male' | 'female' })} className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white" disabled={patientMode !== 'registered'}>
+          <option value="">-- {tUI('selectSex', lang)} --</option>
+          <option value="male">{tUI('male', lang)}</option>
+          <option value="female">{tUI('female', lang)}</option>
+        </select>
+        <input type="number" value={form.age || ''} onChange={(e) => setForm({ ...form, age: Number(e.target.value) })} placeholder={tUI('age', lang)} className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white" disabled={patientMode !== 'registered'} />
+        <input type="number" value={form.height || ''} onChange={(e) => setForm({ ...form, height: Number(e.target.value) })} placeholder={tUI('height', lang)} className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white" disabled={patientMode !== 'registered'} />
+        <input type="number" value={form.weight || ''} onChange={(e) => setForm({ ...form, weight: Number(e.target.value) })} placeholder={tUI('weight', lang)} className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white" disabled={patientMode !== 'registered'} />
+        <select value={form.region || ''} onChange={(e) => setForm({ ...form, region: e.target.value })} className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white" disabled={patientMode !== 'registered'}>
+          <option value="">-- {tUI('selectRegion', lang)} --</option>
+          <option value="Europa">{tUI('regionEurope', lang)}</option>
+          <option value="Ameryka Północna">{tUI('regionNorthAmerica', lang)}</option>
+          <option value="Ameryka Południowa">{tUI('regionSouthAmerica', lang)}</option>
+          <option value="Azja">{tUI('regionAsia', lang)}</option>
+          <option value="Afryka">{tUI('regionAfrica', lang)}</option>
+          <option value="Australia">{tUI('regionAustralia', lang)}</option>
+        </select>
+      </div>
     )}
   </div>
+
+  {/* 🟣 PRAWA: Pacjent bez rejestracji */}
+  <div className="flex flex-col gap-3">
+    <label className="text-sm font-medium text-black dark:text-white">
+      {tUI('unregisteredPatient', lang)}
+    </label>
+    <p className="text-xs text-yellow-500 dark:text-yellow-400">
+      ⚠️ {tUI('unregisteredWarning', lang)}
+    </p>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+      <input type="text" value={form.name || ''} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={tUI('fullName', lang)} className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white" disabled={patientMode !== 'unregistered'} />
+      <input type="tel" value={form.phone || ''} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder={tUI('phone', lang)} className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white" disabled={patientMode !== 'unregistered'} />
+      <select value={form.sex || ''} onChange={(e) => setForm({ ...form, sex: e.target.value as 'male' | 'female' })} className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white" disabled={patientMode !== 'unregistered'}>
+        <option value="">-- {tUI('selectSex', lang)} --</option>
+        <option value="male">{tUI('male', lang)}</option>
+        <option value="female">{tUI('female', lang)}</option>
+      </select>
+      <input type="number" value={form.age || ''} onChange={(e) => setForm({ ...form, age: Number(e.target.value) })} placeholder={tUI('age', lang)} className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white" disabled={patientMode !== 'unregistered'} />
+      <input type="number" value={form.height || ''} onChange={(e) => setForm({ ...form, height: Number(e.target.value) })} placeholder={tUI('height', lang)} className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white" disabled={patientMode !== 'unregistered'} />
+      <input type="number" value={form.weight || ''} onChange={(e) => setForm({ ...form, weight: Number(e.target.value) })} placeholder={tUI('weight', lang)} className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white" disabled={patientMode !== 'unregistered'} />
+      <select value={form.region || ''} onChange={(e) => setForm({ ...form, region: e.target.value })} className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white" disabled={patientMode !== 'unregistered'}>
+        <option value="">-- {tUI('selectRegion', lang)} --</option>
+        <option value="Europa">{tUI('regionEurope', lang)}</option>
+        <option value="Ameryka Północna">{tUI('regionNorthAmerica', lang)}</option>
+        <option value="Ameryka Południowa">{tUI('regionSouthAmerica', lang)}</option>
+        <option value="Azja">{tUI('regionAsia', lang)}</option>
+        <option value="Afryka">{tUI('regionAfrica', lang)}</option>
+        <option value="Australia">{tUI('regionAustralia', lang)}</option>
+      </select>
+    </div>
+  </div>
+</div>
+
 </PanelCard>
+
 
       {/* Sekcja 2: Dane medyczne */}
       <PanelCard className="z-30">

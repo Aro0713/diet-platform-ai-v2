@@ -5573,6 +5573,32 @@ buySubscription: {
   ar: 'اشترِ اشتراكًا',
   hi: 'सदस्यता खरीदें',
   he: 'רכוש מנוי'
+},
+unregisteredPatient: {
+  pl: 'Pacjent bez rejestracji',
+  en: 'Unregistered patient',
+  de: 'Patient ohne Registrierung',
+  fr: 'Patient non enregistré',
+  es: 'Paciente sin registro',
+  ua: 'Пацієнт без реєстрації',
+  ru: 'Пациент без регистрации',
+  zh: '未注册的患者',
+  ar: 'مريض غير مسجل',
+  hi: 'पंजीकरण रहित मरीज़',
+  he: 'מטופל ללא הרשמה'
+},
+unregisteredWarning: {
+  pl: 'Dane pacjenta nie zostaną zapisane w bazie DCP. Po zakończonej analizie zalecam wygenerowanie PDF i przekazanie wyników pacjentowi.',
+  en: 'Patient data will not be saved in the DCP database. After completing the analysis, we recommend generating a PDF and sharing the results with the patient.',
+  de: 'Patientendaten werden nicht in der DCP-Datenbank gespeichert. Nach Abschluss der Analyse empfehlen wir, ein PDF zu generieren und die Ergebnisse dem Patienten zu übergeben.',
+  fr: 'Les données du patient ne seront pas enregistrées dans la base DCP. Après l’analyse, il est recommandé de générer un PDF et de transmettre les résultats au patient.',
+  es: 'Los datos del paciente no se guardarán en la base de datos de DCP. Tras completar el análisis, se recomienda generar un PDF y entregar los resultados al paciente.',
+  ua: 'Дані пацієнта не будуть збережені в базі DCP. Після завершення аналізу рекомендується згенерувати PDF та передати результати пацієнту.',
+  ru: 'Данные пациента не будут сохранены в базе DCP. После анализа рекомендуется сгенерировать PDF и передать результаты пациенту.',
+  zh: '患者数据不会保存在 DCP 数据库中。分析完成后建议生成 PDF 并将结果提供给患者。',
+  ar: 'لن يتم حفظ بيانات المريض في قاعدة بيانات DCP. بعد الانتهاء من التحليل، يُنصح بإنشاء ملف PDF ومشاركة النتائج مع المريض.',
+  hi: 'मरीज़ का डेटा DCP डाटाबेस में सहेजा नहीं जाएगा। विश्लेषण पूर्ण होने पर PDF जनरेट करके परिणाम मरीज़ को देने की सिफारिश की जाती है।',
+  he: 'הנתונים לא יישמרו במסד הנתונים של DCP. לאחר סיום הניתוח, מומלץ ליצור PDF ולמסור את התוצאות למטופל.'
 }
 
 
