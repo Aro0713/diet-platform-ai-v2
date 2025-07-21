@@ -95,11 +95,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         console.log('🧾 Dane do faktury:', invoiceData);
 
         pdfBuffer = await generateInvoicePdf(invoiceData);
-        } catch (err) {
-        console.error('❌ Błąd generowania PDF:', err);
-        return res.status(500).json({ error: 'PDF generation failed' });
-        }
-
+        } catch (err: any) {
+  console.error('❌ Błąd generowania PDF:', err.message);
+  console.error('📄 Stack:', err.stack);
+  return res.status(500).json({
+    error: 'PDF generation failed',
+    message: err.message,
+    stack: err.stack
+  });
+}
 
     const year = new Date(paymentDate).getFullYear();
     const filename = `${invoiceNumber.replace(/\//g, '-')}.pdf`;
