@@ -25,6 +25,11 @@ interface InvoiceData {
   issuedBy?: string;
 }
 
+// 🔧 Usuwanie polskich znaków (dla PDF)
+function stripDiacritics(text: string): string {
+  return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
 function formatCurrency(value: number, currency: string, lang: string): string {
   const symbol = currency === 'PLN' ? 'zł' : currency;
   const amount = value.toFixed(2);
@@ -42,10 +47,8 @@ function numberToWords(amount: number, currency: string, lang: string): string {
 export async function generateInvoicePdf(data: InvoiceData): Promise<Uint8Array> {
   const invoiceNumber = await generateInvoiceNumber();
 
-  // ✅ DEBUG wejścia
   console.log('📥 Dane wejściowe do PDF:', JSON.stringify(data, null, 2));
 
-  // ✅ Walidacja
   if (!data.items || data.items.length === 0) {
     throw new Error('Brak pozycji na fakturze (items)');
   }
@@ -63,7 +66,7 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<Uint8Array>
   const page = pdfDoc.addPage([595.28, 841.89]); // A4
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const draw = (text: string, x: number, y: number, size = 10) => {
-    page.drawText(text, { x, y, size, font, color: rgb(0, 0, 0) });
+    page.drawText(stripDiacritics(text), { x, y, size, font, color: rgb(0, 0, 0) });
   };
 
   const lang = data.lang || 'pl';
