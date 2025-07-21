@@ -4,7 +4,12 @@ import { buffer } from 'micro';
 import { generateInvoicePdf } from '@/utils/generateInvoicePdf';
 import { generateInvoiceNumber } from '@/utils/generateInvoiceNumber';
 import { sendInvoiceEmail } from '@/utils/sendInvoiceEmail';
-import { supabase } from '@/lib/supabaseClient';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY! 
+);
 
 export const config = {
   api: {
