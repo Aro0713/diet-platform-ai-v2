@@ -486,25 +486,62 @@ return (
     flex flex-col justify-start items-center pt-10 px-6
     text-white transition-all duration-300"
   >
-    {/* Pasek z nagłówkiem i przełącznikiem */}
-    <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between px-4">
+{/* Pasek z nagłówkiem i przełącznikiem */}
+<div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between px-4">
   <div className="flex flex-col">
     <h1 className="text-2xl font-bold text-white dark:text-white">
       {tUI('doctorPanelTitle', lang)}
     </h1>
 
     {userData?.name && (
-      <p className="text-sm font-medium text-white/90 dark:text-white/90">
-        {userData.title &&
-          translatedTitles[userData.title as 'dr' | 'drhab' | 'prof']?.[lang] && (
-            <>{translatedTitles[userData.title as 'dr' | 'drhab' | 'prof'][lang]} </>
-          )}
-        {userData.name}
-        {userData.role &&
-          translationsUI[userData.role as 'doctor' | 'dietitian']?.[lang] && (
-            <> – {translationsUI[userData.role][lang]}</>
-          )}
-      </p>
+      <div className="flex flex-col gap-1 mt-1">
+        <p className="text-sm font-medium text-white/90 dark:text-white/90">
+          {userData.title &&
+            translatedTitles[userData.title as 'dr' | 'drhab' | 'prof']?.[lang] && (
+              <>{translatedTitles[userData.title as 'dr' | 'drhab' | 'prof'][lang]} </>
+            )}
+          {userData.name}
+          {userData.role &&
+            translationsUI[userData.role as 'doctor' | 'dietitian']?.[lang] && (
+              <> – {translationsUI[userData.role][lang]}</>
+            )}
+        </p>
+
+        {/* 🔔 Status subskrypcji */}
+        {userData?.plan ? (
+          new Date(userData.subscription_end) > new Date() ? (
+            <p className="text-xs text-green-400">
+              ✅ Abonament: {userData.plan === 'pro_annual' ? 'Professional roczny' : 'Professional miesięczny'}
+              <button
+                onClick={() => router.push('/payments')}
+                className="ml-4 underline text-white hover:text-blue-300 transition"
+              >
+                🔧 Zarządzaj
+              </button>
+            </p>
+          ) : (
+            <p className="text-xs text-yellow-400">
+              ⚠️ Abonament wygasł
+              <button
+                onClick={() => router.push('/payments')}
+                className="ml-4 underline text-white hover:text-blue-300 transition"
+              >
+                💳 Kup ponownie
+              </button>
+            </p>
+          )
+        ) : (
+          <p className="text-xs text-yellow-400">
+            ⚠️ Brak aktywnej subskrypcji
+            <button
+              onClick={() => router.push('/payments')}
+              className="ml-4 underline text-white hover:text-blue-300 transition"
+            >
+              💳 Kup abonament
+            </button>
+          </p>
+        )}
+      </div>
     )}
   </div>
 

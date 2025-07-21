@@ -173,6 +173,22 @@ if (insertError) {
             subscription_expires_at: end.toISOString(),
         })
         .eq('email', email);
+        // 🔁 Dodanie planu dla lekarza (users), jeśli istnieje
+            const { error: userUpdateError } = await supabase
+            .from('users')
+            .update({
+                plan: plan === '365d' ? 'pro_annual' : 'pro_monthly',
+                subscription_start: start.toISOString(),
+                subscription_end: end.toISOString(),
+            })
+            .eq('email', email); // lub .eq('user_id', metadata.userId) jeśli przekazujesz userId
+
+            if (userUpdateError) {
+            console.error('❌ Update error (users):', userUpdateError.message);
+            // nie przerywamy webhooka, tylko logujemy
+            } else {
+            console.log(`👨‍⚕️ Zaktualizowano abonament lekarza: ${plan}`);
+            }
 
         if (updateError) {
         console.error('❌ Update error (patients):', updateError.message);
