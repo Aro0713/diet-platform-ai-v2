@@ -5599,8 +5599,33 @@ unregisteredWarning: {
   ar: 'لن يتم حفظ بيانات المريض في قاعدة بيانات DCP. بعد الانتهاء من التحليل، يُنصح بإنشاء ملف PDF ومشاركة النتائج مع المريض.',
   hi: 'मरीज़ का डेटा DCP डाटाबेस में सहेजा नहीं जाएगा। विश्लेषण पूर्ण होने पर PDF जनरेट करके परिणाम मरीज़ को देने की सिफारिश की जाती है।',
   he: 'הנתונים לא יישמרו במסד הנתונים של DCP. לאחר סיום הניתוח, מומלץ ליצור PDF ולמסור את התוצאות למטופל.'
+},
+modeRegistered: {
+  pl: 'Pacjent z kontem DCP',
+  en: 'Registered patient',
+  de: 'Patient mit DCP-Konto',
+  fr: 'Patient enregistré',
+  es: 'Paciente con cuenta DCP',
+  ua: 'Пацієнт з обліковим записом DCP',
+  ru: 'Пациент с аккаунтом DCP',
+  zh: '已注册的 DCP 患者',
+  ar: 'مريض لديه حساب DCP',
+  hi: 'DCP खाता वाला मरीज़',
+  he: 'מטופל עם חשבון DCP'
+},
+modeUnregistered: {
+  pl: 'Pacjent bez rejestracji w DCP',
+  en: 'Unregistered patient',
+  de: 'Patient ohne Registrierung in DCP',
+  fr: 'Patient non enregistré',
+  es: 'Paciente sin registro en DCP',
+  ua: 'Пацієнт без реєстрації в DCP',
+  ru: 'Пациент без регистрации в DCP',
+  zh: '未在 DCP 注册的患者',
+  ar: 'مريض غير مسجل في DCP',
+  hi: 'DCP में बिना पंजीकरण के मरीज़',
+  he: 'מטופל ללא רישום ב-DCP'
 }
-
 
 };
 
