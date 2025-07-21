@@ -34,15 +34,31 @@ function formatCurrency(value: number, currency: string, lang: string): string {
 function numberToWords(amount: number, currency: string, lang: string): string {
   const main = Math.floor(amount);
   const minor = Math.round((amount - main) * 100);
-  if (lang === 'pl') {
-    return `${main} ${currency} ${minor.toString().padStart(2, '0')}/100`;
-  } else {
-    return `${main} ${currency} and ${minor.toString().padStart(2, '0')}/100`;
-  }
+  return lang === 'pl'
+    ? `${main} ${currency} ${minor.toString().padStart(2, '0')}/100`
+    : `${main} ${currency} and ${minor.toString().padStart(2, '0')}/100`;
 }
 
 export async function generateInvoicePdf(data: InvoiceData): Promise<Uint8Array> {
   const invoiceNumber = await generateInvoiceNumber();
+
+  // ✅ DEBUG wejścia
+  console.log('📥 Dane wejściowe do PDF:', JSON.stringify(data, null, 2));
+
+  // ✅ Walidacja
+  if (!data.items || data.items.length === 0) {
+    throw new Error('Brak pozycji na fakturze (items)');
+  }
+
+  data.items.forEach((item, index) => {
+    if (!item.name || typeof item.unitPrice !== 'number' || typeof item.vatRate !== 'number') {
+      throw new Error(`Nieprawidłowa pozycja [${index}]: ${JSON.stringify(item)}`);
+    }
+    if (isNaN(item.unitPrice) || isNaN(item.vatRate)) {
+      throw new Error(`unitPrice lub vatRate to NaN w pozycji [${index}]: ${JSON.stringify(item)}`);
+    }
+  });
+
   const pdfDoc = await PDFDocument.create();
   const page = pdfDoc.addPage([595.28, 841.89]); // A4
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -53,7 +69,6 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<Uint8Array>
   const lang = data.lang || 'pl';
   const currency = data.currency;
   const t = (key: string) => tUI(key, lang);
-
   const issueDate = new Date(data.paymentDate).toLocaleDateString(lang === 'pl' ? 'pl-PL' : 'en-GB');
   const place = data.placeOfIssue || 'Zdzieszowice';
 
