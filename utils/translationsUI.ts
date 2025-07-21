@@ -5548,6 +5548,33 @@ conditionPlaceholder: {
   hi: 'जैसे: डायबिटीज़',
   he: 'לדוגמה: סוכרת'
 },
+noActiveSubscription: {
+  pl: 'Brak aktywnej subskrypcji',
+  en: 'No active subscription',
+  de: 'Kein aktives Abonnement',
+  fr: 'Aucun abonnement actif',
+  es: 'Sin suscripción activa',
+  ua: 'Немає активної підписки',
+  ru: 'Нет активной подписки',
+  zh: '未激活订阅',
+  ar: 'لا توجد اشتراك نشط',
+  hi: 'कोई सक्रिय सदस्यता नहीं',
+  he: 'אין מנוי פעיל'
+},
+buySubscription: {
+  pl: 'Kup abonament',
+  en: 'Buy subscription',
+  de: 'Abonnement kaufen',
+  fr: 'Acheter un abonnement',
+  es: 'Comprar suscripción',
+  ua: 'Купити підписку',
+  ru: 'Купить подписку',
+  zh: '购买订阅',
+  ar: 'اشترِ اشتراكًا',
+  hi: 'सदस्यता खरीदें',
+  he: 'רכוש מנוי'
+}
+
 
 };
 
