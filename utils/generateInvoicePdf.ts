@@ -25,10 +25,17 @@ interface InvoiceData {
   issuedBy?: string;
 }
 
-// 🔧 Usuwanie polskich znaków (dla PDF)
 function stripDiacritics(text: string): string {
-  return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const map: Record<string, string> = {
+    ą: 'a', ć: 'c', ę: 'e', ł: 'l', ń: 'n',
+    ó: 'o', ś: 's', ż: 'z', ź: 'z',
+    Ą: 'A', Ć: 'C', Ę: 'E', Ł: 'L', Ń: 'N',
+    Ó: 'O', Ś: 'S', Ż: 'Z', Ź: 'Z',
+  };
+
+  return text.replace(/[ąćęłńóśżźĄĆĘŁŃÓŚŻŹ]/g, match => map[match] || match);
 }
+
 
 function formatCurrency(value: number, currency: string, lang: string): string {
   const symbol = currency === 'PLN' ? 'zł' : currency;
