@@ -160,21 +160,25 @@ if (insertError) {
       default: end.setDate(start.getDate() + 7); break;
     }
 
-    const { error: updateError } = await supabase
-      .from('patients')
-      .update({
-        subscription_status: plan,
-        subscription_started_at: start.toISOString(),
-        subscription_expires_at: end.toISOString(),
-      })
-      .eq('email', email);
+        const { error: updateError } = await supabase
+        .from('patients')
+        .update({
+            subscription_status: plan,
+            subscription_started_at: start.toISOString(),
+            subscription_expires_at: end.toISOString(),
+        })
+        .eq('email', email);
 
-    if (updateError) {
-      console.error('❌ Błąd update subskrypcji:', updateError.message);
-    } else {
-      console.log(`✅ Plan: ${plan}, start: ${start.toISOString()}, koniec: ${end.toISOString()} dla ${email}`);
-    }
-  }
+        if (updateError) {
+        console.error('❌ Update error (patients):', updateError.message);
+        return res.status(500).json({
+            error: 'Update patients failed',
+            message: updateError.message,
+        });
+        } else {
+        console.log(`✅ Plan: ${plan}, start: ${start.toISOString()}, koniec: ${end.toISOString()} dla ${email}`);
+        }
+        }
 
-  res.status(200).json({ received: true });
-}
+        res.status(200).json({ received: true });
+        }
