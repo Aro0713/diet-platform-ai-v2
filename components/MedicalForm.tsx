@@ -295,6 +295,7 @@ const handleConfirmAnalysis = async () => {
       selectedGroups={selectedGroups}
       setSelectedGroups={setSelectedGroups}
       options={groupOptions}
+      lang={lang}
     />
 
     {availableConditions.length > 0 && (

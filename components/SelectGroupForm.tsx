@@ -1,13 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import Select, { StylesConfig } from 'react-select';
+import { tUI, LangKey } from '@/utils/i18n';
 
 interface Props {
   selectedGroups: string[];
   setSelectedGroups: (groups: string[]) => void;
   options: { value: string; label: string }[];
+  lang: LangKey;
 }
 
-export default function SelectGroupForm({ selectedGroups, setSelectedGroups, options }: Props) {
+export default function SelectGroupForm({
+  selectedGroups,
+  setSelectedGroups,
+  options,
+  lang
+}: Props) {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
@@ -25,13 +32,15 @@ export default function SelectGroupForm({ selectedGroups, setSelectedGroups, opt
     return () => observer.disconnect();
   }, []);
 
-  const selectedValues = options.filter((opt) => selectedGroups.includes(opt.value));
+  const selectedValues = options.filter((opt) =>
+    selectedGroups.includes(opt.value)
+  );
 
   const customStyles: StylesConfig<any, true> = {
     control: (base) => ({
       ...base,
-      backgroundColor: isDarkMode ? '#1f2937' : '#ffffff', // bg-gray-800
-      borderColor: isDarkMode ? '#475569' : '#d1d5db',      // border-gray-600 / border-gray-300
+      backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
+      borderColor: isDarkMode ? '#475569' : '#d1d5db',
       color: isDarkMode ? 'white' : 'black',
       minHeight: '2.5rem',
       boxShadow: 'none',
@@ -84,15 +93,17 @@ export default function SelectGroupForm({ selectedGroups, setSelectedGroups, opt
   return (
     <div className="mt-4 text-black dark:text-white relative z-[9999] overflow-visible">
       <label className="block font-semibold mb-2 text-gray-800 dark:text-white">
-        Wybierz grupy chorób:
+        {tUI('selectDiseaseGroups', lang)}
       </label>
       <Select
         isMulti
         options={options}
         value={selectedValues}
-       onChange={(selected) => setSelectedGroups(
-        Array.isArray(selected) ? selected.map((s) => s.value) : []
-        )}
+        onChange={(selected) =>
+          setSelectedGroups(
+            Array.isArray(selected) ? selected.map((s) => s.value) : []
+          )
+        }
         classNamePrefix="react-select"
         menuPortalTarget={typeof window !== 'undefined' ? document.body : undefined}
         menuPlacement="auto"
