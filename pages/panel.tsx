@@ -96,24 +96,35 @@ const {
 
  useEffect(() => {
   const fetchUserData = async () => {
-    const role = localStorage.getItem('currentUserRole');
     const {
       data: { user },
       error
     } = await supabase.auth.getUser();
 
-    if (error) {
-      console.error('❌ Błąd pobierania użytkownika:', error.message);
+    if (error || !user?.id) {
+      console.error('❌ Nie udało się pobrać usera:', error?.message);
       return;
     }
 
-    const userId = user?.id;
-    console.log('👤 Zalogowano jako:', role, userId);
+    const { data, error: userError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (userError) {
+      console.error('❌ Błąd pobierania danych użytkownika:', userError.message);
+      return;
+    }
+
+    if (data) {
+      console.log('📦 userData:', data);
+      setUserData(data);
+    }
   };
 
   fetchUserData();
 }, []);
-
 
   useEffect(() => {
     const langStorage = localStorage.getItem('platformLang') as LangKey | null;
@@ -134,7 +145,11 @@ const {
   }, [interviewNarrative]);
   useEffect(() => {
   const fetchUserData = async () => {
-    const userId = localStorage.getItem('currentUserID');
+    const {
+  data: { user }
+  } = await supabase.auth.getUser();
+  const userId = user?.id;
+
     if (!userId) return;
 
     const { data, error } = await supabase
