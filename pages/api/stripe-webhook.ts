@@ -8,7 +8,7 @@ import { supabase } from '@/lib/supabaseClient';
 
 export const config = {
   api: {
-    bodyParser: false, // 🚨 Wymagane do poprawnej weryfikacji podpisu
+    bodyParser: false,
   },
 };
 
@@ -34,7 +34,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (event.type === 'checkout.session.completed') {
+    console.log('📥 Webhook received: checkout.session.completed');
+
     const session = event.data.object as Stripe.Checkout.Session;
+
+    if (!session.metadata || !session.metadata.plan || !session.customer_email) {
+      console.error('❌ Missing metadata or email – cannot generate invoice');
+      return res.status(400).json({ error: 'Missing required metadata or email' });
+    }
+
+    console.log('📦 Metadata:', session.metadata);
 
     const {
       buyerName,
@@ -43,9 +52,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       service,
       netAmount,
       vatRate,
-    } = session.metadata || {};
+      plan
+    } = session.metadata;
 
-    const email = session.customer_details?.email || session.customer_email || 'brak@dcp.care';
+    const email = session.customer_email;
     const paymentMethod = session.payment_method_types?.[0] === 'card' ? 'Karta' : 'Przelew';
     const paymentDate = new Date().toISOString();
     const lang = session.metadata?.lang === 'en' ? 'en' : 'pl';
@@ -54,18 +64,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const net = parseFloat(netAmount?.toString() || '0');
     const vat = parseFloat(vatRate?.toString() || '0.23');
 
-    const pdfBuffer = await generateInvoicePdf({
-      buyerName,
-      buyerAddress,
-      buyerNIP,
-      email,
-      paymentDate,
-      paymentMethod,
-      service,
-      netAmount: net,
-      vatRate: vat,
-      lang,
-    });
+    let pdfBuffer;
+    try {
+      pdfBuffer = await generateInvoicePdf({
+        buyerName,
+        buyerAddress,
+        buyerNIP,
+        email,
+        paymentDate,
+        paymentMethod,
+        service,
+        netAmount: net,
+        vatRate: vat,
+        lang,
+      });
+    } catch (err) {
+      console.error('❌ Błąd generowania PDF:', err);
+      return res.status(500).json({ error: 'PDF generation failed' });
+    }
 
     const year = new Date(paymentDate).getFullYear();
     const filename = `${invoiceNumber.replace(/\//g, '-')}.pdf`;
@@ -105,33 +121,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       method: paymentMethod,
     });
 
-        // 📅 Ustawienie planu subskrypcji i daty wygaśnięcia
-        const plan = session.metadata?.plan || '7d';
-        const start = new Date();
-        const end = new Date();
-
-        switch (plan) {
-        case '7d': end.setDate(start.getDate() + 7); break;
-        case '30d': end.setDate(start.getDate() + 30); break;
-        case '90d': end.setDate(start.getDate() + 90); break;
-        case '365d': end.setDate(start.getDate() + 365); break;
-        default: end.setDate(start.getDate() + 7); break;
-        }
-
-        const { error: updateError } = await supabase
-        .from('patients')
-        .update({
-            subscription_status: plan,
-            subscription_started_at: start.toISOString(),
-            subscription_expires_at: end.toISOString(),
-        })
-        .eq('email', email);
-
-        if (updateError) {
-        console.error('❌ Błąd update subskrypcji:', updateError.message);
-        } else {
-        console.log(`✅ Plan: ${plan}, start: ${start.toISOString()}, koniec: ${end.toISOString()} dla ${email}`);
-        }
-     }
-    res.status(200).json({ received: true });
+    const start = new Date();
+    const end = new Date();
+    switch (plan) {
+      case '7d': end.setDate(start.getDate() + 7); break;
+      case '30d': end.setDate(start.getDate() + 30); break;
+      case '90d': end.setDate(start.getDate() + 90); break;
+      case '365d': end.setDate(start.getDate() + 365); break;
+      default: end.setDate(start.getDate() + 7); break;
     }
+
+    const { error: updateError } = await supabase
+      .from('patients')
+      .update({
+        subscription_status: plan,
+        subscription_started_at: start.toISOString(),
+        subscription_expires_at: end.toISOString(),
+      })
+      .eq('email', email);
+
+    if (updateError) {
+      console.error('❌ Błąd update subskrypcji:', updateError.message);
+    } else {
+      console.log(`✅ Plan: ${plan}, start: ${start.toISOString()}, koniec: ${end.toISOString()} dla ${email}`);
+    }
+  }
+
+  res.status(200).json({ received: true });
+}
