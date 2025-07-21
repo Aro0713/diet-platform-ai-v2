@@ -131,16 +131,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       lang,
     });
 
-    await supabase.from('invoices').insert({
-      number: invoiceNumber,
-      buyer: buyerName,
-      email,
-      file_url: url,
-      amount: net,
-      vat,
-      paid_at: paymentDate,
-      method: paymentMethod,
-    });
+    const { error: insertError } = await supabase
+  .from('invoices')
+  .insert({
+    number: invoiceNumber,
+    buyer: buyerName,
+    email,
+    file_url: url,
+    amount: net,
+    vat,
+    paid_at: paymentDate,
+    method: paymentMethod,
+  });
+
+if (insertError) {
+  console.error('❌ Insert error:', insertError.message);
+  return res.status(500).json({ error: 'Insert to invoices failed', message: insertError.message });
+}
 
     const start = new Date();
     const end = new Date();
