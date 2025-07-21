@@ -66,30 +66,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const grossAmount = net + net * vat;
 
     let pdfBuffer;
-    try {
-      pdfBuffer = await generateInvoicePdf({
-        buyerName,
-        buyerAddress,
-        buyerNIP,
-        email,
-        paymentDate,
-        paymentMethod,
-        lang,
-        currency,
-        items: [
-          {
-            name: service,
-            quantity: 1,
-            unit: 'szt.',
-            unitPrice: net,
-            vatRate: net > 0 ? Math.round((vat / net) * 100) : 0,
-          }
-        ],
-      });
-    } catch (err) {
-      console.error('❌ Błąd generowania PDF:', err);
-      return res.status(500).json({ error: 'PDF generation failed' });
-    }
+        try {
+        const vat = parseFloat(vatRate);
+        const net = parseFloat(netAmount);
+        const vatPercent = Math.round(vat * 100); // 0.23 → 23
+        const grossAmount = net * (1 + vat);
+
+        const invoiceData = {
+            buyerName,
+            buyerAddress,
+            buyerNIP,
+            email,
+            paymentDate,
+            paymentMethod,
+            lang: lang as 'pl' | 'en',
+            currency,
+            items: [
+            {
+                name: service,
+                quantity: 1,
+                unit: 'szt.',
+                unitPrice: net,
+                vatRate: vatPercent,
+            }
+            ]
+        };
+
+        console.log('🧾 Dane do faktury:', invoiceData);
+
+        pdfBuffer = await generateInvoicePdf(invoiceData);
+        } catch (err) {
+        console.error('❌ Błąd generowania PDF:', err);
+        return res.status(500).json({ error: 'PDF generation failed' });
+        }
+
 
     const year = new Date(paymentDate).getFullYear();
     const filename = `${invoiceNumber.replace(/\//g, '-')}.pdf`;
