@@ -4,6 +4,7 @@ import { diseaseGroups } from '../lib/diseaseTestsMap';
 import { conditionLabels, conditionGroupLabels } from '@/utils/translations/translationsConditions';
 import { getTranslation, LangKey } from '@/utils/i18n';
 import PanelCard from '@/components/PanelCard';
+import { tUI } from '@/utils/i18n';
 
 interface Props {
   selectedConditions: string[];
@@ -106,12 +107,12 @@ const SelectConditionForm: React.FC<Props> = ({ selectedConditions, setSelectedC
 
   return (
     <PanelCard
-      title={lang === 'pl' ? '🧬 Wybór chorób i filtr' : '🧬 Select and Filter Conditions'}
+     title={`🧬 ${tUI('diseaseFilterTitle', lang)}`}
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="text-sm font-medium mb-2 block">
-            {lang === 'pl' ? 'Wybierz grupy chorób:' : 'Select disease groups:'}
+        {tUI('selectDiseaseGroups', lang)}
           </label>
           <Select
             isMulti
@@ -125,12 +126,12 @@ const SelectConditionForm: React.FC<Props> = ({ selectedConditions, setSelectedC
         </div>
 
         <div>
-          <label className="text-sm font-medium mb-2 block">
-            {lang === 'pl' ? 'Wyszukaj chorobę:' : 'Search condition:'}
-          </label>
+         <label className="text-sm font-medium mb-2 block">
+          {tUI('searchCondition', lang)}
+        </label>
           <input
             type="text"
-            placeholder={lang === 'pl' ? 'np. cukrzyca' : 'e.g. diabetes'}
+            placeholder={tUI('conditionPlaceholder', lang)}
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             className="w-full border rounded-md px-3 py-2 bg-white text-black placeholder:text-gray-500 
@@ -141,10 +142,8 @@ const SelectConditionForm: React.FC<Props> = ({ selectedConditions, setSelectedC
 
       <div className="mt-6">
         <label className="text-sm font-medium mb-2 block">
-          {lang === 'pl'
-            ? `Wybierz choroby (${selectedConditions.length} wybrane):`
-            : `Select conditions (${selectedConditions.length} selected):`}
-        </label>
+        {tUI('selectConditions', lang).replace('{count}', String(selectedConditions.length))}
+      </label>
         <Select
           isMulti
           options={conditionOptions}

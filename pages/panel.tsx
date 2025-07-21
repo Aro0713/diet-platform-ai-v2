@@ -523,39 +523,41 @@ return (
         </p>
 
         {/* 🔔 Status subskrypcji */}
-        {userData?.plan ? (
-          new Date(userData.subscription_end) > new Date() ? (
-            <p className="text-xs text-green-400">
-              ✅ Abonament: {userData.plan === 'pro_annual' ? 'Professional roczny' : 'Professional miesięczny'}
-              <button
-                onClick={() => router.push('/payments')}
-                className="ml-4 underline text-white hover:text-blue-300 transition"
-              >
-                🔧 Zarządzaj
-              </button>
-            </p>
-          ) : (
-            <p className="text-xs text-yellow-400">
-              ⚠️ Abonament wygasł
-              <button
-                onClick={() => router.push('/payments')}
-                className="ml-4 underline text-white hover:text-blue-300 transition"
-              >
-                💳 Kup ponownie
-              </button>
-            </p>
-          )
-        ) : (
-          <p className="text-xs text-yellow-400">
-            ⚠️ Brak aktywnej subskrypcji
+      {userData?.plan ? (
+        new Date(userData.subscription_end) > new Date() ? (
+          <p className="text-xs text-green-400">
+            ✅ {tUI('activeSubscription', lang)}: {userData.plan === 'pro_annual'
+              ? tUI('planAnnual', lang)
+              : tUI('planMonthly', lang)}
             <button
               onClick={() => router.push('/payments')}
               className="ml-4 underline text-white hover:text-blue-300 transition"
             >
-              💳 Kup abonament
+              {tUI('manageSubscription', lang)}
             </button>
           </p>
-        )}
+        ) : (
+          <p className="text-xs text-yellow-400">
+            ⚠️ {tUI('expiredSubscription', lang)}
+            <button
+              onClick={() => router.push('/payments')}
+              className="ml-4 underline text-white hover:text-blue-300 transition"
+            >
+              {tUI('renewSubscription', lang)}
+            </button>
+          </p>
+        )
+      ) : (
+        <p className="text-xs text-yellow-400">
+          ⚠️ {tUI('noActiveSubscription', lang)}
+          <button
+            onClick={() => router.push('/payments')}
+            className="ml-4 underline text-white hover:text-blue-300 transition"
+          >
+            {tUI('buySubscription', lang)}
+          </button>
+        </p>
+      )}
       </div>
     )}
   </div>
@@ -569,26 +571,27 @@ return (
 <PanelCard>
   <div className="flex flex-col gap-4">
     <label className="text-sm font-medium text-black dark:text-white">
-      Dane pacjenta
+      {tUI('patientData', lang)}
     </label>
 
-    {/* 🔍 Pobieranie pacjenta po e-mailu */}
     <input
       type="email"
       value={patientEmailInput}
       onChange={(e) => setPatientEmailInput(e.target.value)}
-      placeholder="adres@example.com"
+      placeholder={tUI('enterEmail', lang)}
       className="rounded px-4 py-2 text-black w-full"
     />
     <button
       onClick={handleSearchPatient}
       className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
     >
-      🔍 Pobierz dane pacjenta
+      🔍 {tUI('fetchPatientData', lang)}
     </button>
 
     {patientLoadStatus === 'notFound' && (
-      <div className="text-yellow-400 mt-2">❌ Nie znaleziono pacjenta</div>
+      <div className="text-yellow-400 mt-2">
+        ❌ {tUI('patientNotFound', lang)}
+      </div>
     )}
 
     {patientLoadStatus === 'success' && (
@@ -598,7 +601,7 @@ return (
             type="text"
             value={form.name || ''}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
-            placeholder="Imię i nazwisko"
+            placeholder={tUI('fullName', lang)}
             className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white"
           />
           <input
@@ -611,7 +614,7 @@ return (
             type="tel"
             value={form.phone || ''}
             onChange={(e) => setForm({ ...form, phone: e.target.value })}
-            placeholder="Telefon"
+            placeholder={tUI('phone', lang)}
             className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white"
           />
           <select
@@ -624,29 +627,29 @@ return (
             }}
             className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white"
           >
-            <option value="">-- Wybierz płeć --</option>
-            <option value="male">Mężczyzna</option>
-            <option value="female">Kobieta</option>
+            <option value="">{`-- ${tUI('selectSex', lang)} --`}</option>
+            <option value="male">{tUI('male', lang)}</option>
+            <option value="female">{tUI('female', lang)}</option>
           </select>
           <input
             type="number"
             value={form.age || ''}
             onChange={(e) => setForm({ ...form, age: Number(e.target.value) })}
-            placeholder="Wiek"
+            placeholder={tUI('age', lang)}
             className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white"
           />
           <input
             type="number"
             value={form.height || ''}
             onChange={(e) => setForm({ ...form, height: Number(e.target.value) })}
-            placeholder="Wzrost (cm)"
+            placeholder={tUI('height', lang)}
             className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white"
           />
           <input
             type="number"
             value={form.weight || ''}
             onChange={(e) => setForm({ ...form, weight: Number(e.target.value) })}
-            placeholder="Waga (kg)"
+            placeholder={tUI('weight', lang)}
             className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white"
           />
           <select
@@ -654,13 +657,13 @@ return (
             onChange={(e) => setForm({ ...form, region: e.target.value })}
             className="rounded px-3 py-2 bg-white text-black dark:bg-gray-800 dark:text-white"
           >
-            <option value="">-- Wybierz region --</option>
-            <option value="Europa">Europa</option>
-            <option value="Ameryka Północna">Ameryka Północna</option>
-            <option value="Ameryka Południowa">Ameryka Południowa</option>
-            <option value="Azja">Azja</option>
-            <option value="Afryka">Afryka</option>
-            <option value="Australia">Australia</option>
+            <option value="">{`-- ${tUI('selectRegion', lang)} --`}</option>
+            <option value="Europa">{tUI('regionEurope', lang)}</option>
+            <option value="Ameryka Północna">{tUI('regionNorthAmerica', lang)}</option>
+            <option value="Ameryka Południowa">{tUI('regionSouthAmerica', lang)}</option>
+            <option value="Azja">{tUI('regionAsia', lang)}</option>
+            <option value="Afryka">{tUI('regionAfrica', lang)}</option>
+            <option value="Australia">{tUI('regionAustralia', lang)}</option>
           </select>
         </div>
 
@@ -680,20 +683,19 @@ return (
               .eq('user_id', form.user_id);
 
             if (!error) {
-              alert('✅ Dane pacjenta zostały zapisane');
+              alert(`✅ ${tUI('patientSavedSuccess', lang)}`);
             } else {
-              alert('❌ Błąd przy zapisie danych pacjenta: ' + error.message);
+              alert(`❌ ${tUI('patientSavedError', lang)}: ` + error.message);
             }
           }}
           className="mt-4 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded"
         >
-          💾 Zapisz dane pacjenta
+          💾 {tUI('savePatientData', lang)}
         </button>
       </>
     )}
   </div>
 </PanelCard>
-
 
       {/* Sekcja 2: Dane medyczne */}
       <PanelCard className="z-30">
