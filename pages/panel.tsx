@@ -606,8 +606,6 @@ return (
   </label>
 </div>
 
-// 🔁 Załóż, że patientMode, form, setForm, formUnregistered, setFormUnregistered, lang, tUI są dostępne w komponencie
-
 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
   {/* 🔵 LEWA: Pacjent z kontem DCP */}
   <div className="flex flex-col gap-4">
