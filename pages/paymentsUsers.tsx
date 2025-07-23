@@ -175,7 +175,7 @@ const planOptions: { id: PlanKey; title: string; description: string }[] = [
               <p className="text-sm text-emerald-300 mb-2">
                 {displayPrice(plan.id)} <span className="text-xs text-white/60">({tUI('vatExemptNote', lang)})</span>
               </p>
-              <p className="text-sm whitespace-pre-line">{plan.description}</p>
+              <p className="text-sm whitespace-pre-line break-words text-white/90">{plan.description}</p>
             </div>
           ))}
         </div>

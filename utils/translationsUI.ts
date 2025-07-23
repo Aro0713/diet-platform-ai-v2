@@ -5679,93 +5679,94 @@ vatExemptNote: {
   he: 'פטור ממע\"מ (סעיף 43(1)(19))'
 },
 planDoctorFeatures: {
-  pl: `Pełna analiza wyników medycznych przez AI z możliwością korekty przez lekarza lub dietetyka
-Analityczne podsumowanie wywiadu dietetycznego z pacjentem
-7 modeli diety
-20 kuchni świata
-Generowanie diety przez AI z możliwością korekty przez specjalistę
-Eksport do PDF
-Bezpośredni eksport na konto pacjenta (jeśli posiada konto w Diet Care Platform)`,
+  pl: `→ Pełna analiza wyników medycznych przez AI z możliwością korekty przez lekarza lub dietetyka
+→ Analityczne podsumowanie wywiadu dietetycznego z pacjentem
+→ 7 modeli diety
+→ 20 kuchni świata
+→ Generowanie diety przez AI z możliwością korekty przez specjalistę
+→ Eksport do PDF
+→ Bezpośredni eksport na konto pacjenta (jeśli posiada konto w Diet Care Platform)`,
 
-  en: `Full medical results analysis by AI with correction by a doctor or dietitian
-Analytical summary of the dietary interview
-7 diet models
-20 world cuisines
-AI-generated diet plans with professional editing
-Export to PDF
-Direct export to patient's account (if registered in Diet Care Platform)`,
+  en: `→ Full medical results analysis by AI with correction by a doctor or dietitian
+→ Analytical summary of the dietary interview
+→ 7 diet models
+→ 20 world cuisines
+→ AI-generated diet plans with professional editing
+→ Export to PDF
+→ Direct export to the patient account (if registered in Diet Care Platform)`,
 
-  de: `Vollständige Analyse medizinischer Ergebnisse durch KI mit Korrekturmöglichkeit durch Arzt oder Ernährungsberater
-Analytische Zusammenfassung des Ernährungsgesprächs mit dem Patienten
-7 Diätmodelle
-20 Küchen der Welt
-KI-generierte Diätpläne mit Expertenkorrektur
-Export als PDF
-Direkter Export in das Patientenprofil (wenn registriert)`,
+  de: `→ Vollständige Analyse medizinischer Ergebnisse durch KI mit Korrekturmöglichkeit durch Arzt oder Ernährungsberater
+→ Analytische Zusammenfassung des Ernährungsgesprächs mit dem Patienten
+→ 7 Diätmodelle
+→ 20 Küchen der Welt
+→ KI-generierte Diätpläne mit Expertenkorrektur
+→ Export als PDF
+→ Direkter Export in das Patientenprofil (wenn registriert)`,
 
-  fr: `Analyse complète des résultats médicaux par l'IA avec possibilité de correction par un médecin ou un diététicien
-Résumé analytique de l'entretien diététique
-7 modèles de régime
-20 cuisines du monde
-Plans alimentaires générés par IA avec possibilité d'ajustement
-Export en PDF
-Export direct vers le compte du patient (s'il est inscrit)`,
+  fr: `→ Analyse complète des résultats médicaux par l'IA avec possibilité de correction par un médecin ou un diététicien
+→ Résumé analytique de l'entretien diététique
+→ 7 modèles de régime
+→ 20 cuisines du monde
+→ Plans alimentaires générés par IA avec possibilité d'ajustement
+→ Export en PDF
+→ Export direct vers le compte du patient (s'il est inscrit)`,
 
-  es: `Análisis completo de resultados médicos por IA con posibilidad de corrección por un médico o dietista
-Resumen analítico de la entrevista dietética
-7 modelos de dieta
-20 cocinas del mundo
-Planes de dieta generados por IA con edición profesional
-Exportación a PDF
-Exportación directa a la cuenta del paciente (si está registrado)`,
+  es: `→ Análisis completo de resultados médicos por IA con posibilidad de corrección por un médico o dietista
+→ Resumen analítico de la entrevista dietética
+→ 7 modelos de dieta
+→ 20 cocinas del mundo
+→ Planes de dieta generados por IA con edición profesional
+→ Exportación a PDF
+→ Exportación directa a la cuenta del paciente (si está registrado)`,
 
-  ua: `Повний аналіз медичних результатів за допомогою ШІ з можливістю корекції лікарем або дієтологом
-Аналітичне підсумування дієтичного опитування
-7 моделей дієт
-20 кухонь світу
-Генерація дієти за допомогою ШІ з можливістю редагування
-Експорт у PDF
-Прямий експорт до облікового запису пацієнта (якщо зареєстрований)`,
+  ua: `→ Повний аналіз медичних результатів за допомогою ШІ з можливістю корекції лікарем або дієтологом
+→ Аналітичне підсумування дієтичного опитування
+→ 7 моделей дієт
+→ 20 кухонь світу
+→ Генерація дієти за допомогою ШІ з можливістю редагування
+→ Експорт у PDF
+→ Прямий експорт до облікового запису пацієнта (якщо зареєстрований)`,
 
-  ru: `Полный анализ медицинских результатов с помощью ИИ с возможностью корректировки врачом или диетологом
-Аналитическое резюме диетологического опроса
-7 моделей диет
-20 кухонь мира
-Генерация диеты ИИ с возможностью правки
-Экспорт в PDF
-Прямой экспорт в аккаунт пациента (если зарегистрирован)`,
+  ru: `→ Полный анализ медицинских результатов с помощью ИИ с возможностью корректировки врачом или диетологом
+→ Аналитическое резюме диетологического опроса
+→ 7 моделей диет
+→ 20 кухонь мира
+→ Генерация диеты ИИ с возможностью правки
+→ Экспорт в PDF
+→ Прямой экспорт в аккаунт пациента (если зарегистрирован)`,
 
-  zh: `通过 AI 进行的完整医学结果分析，可由医生或营养师进行修正
-饮食问卷的分析性总结
-7 种饮食模型
-20 种世界菜系
-AI 生成的饮食计划，可由专家编辑
-导出为 PDF
-直接导出到患者账户（如已注册）`,
+  zh: `→ 通过 AI 进行的完整医学结果分析，可由医生或营养师进行修正
+→ 饮食问卷的分析性总结
+→ 7 种饮食模型
+→ 20 种世界菜系
+→ AI 生成的饮食计划，可由专家编辑
+→ 导出为 PDF
+→ 直接导出到患者账户（如已注册）`,
 
-  hi: `AI द्वारा पूर्ण चिकित्सा परिणाम विश्लेषण, डॉक्टर या आहार विशेषज्ञ द्वारा संशोधन योग्य
-आहार संबंधी साक्षात्कार का विश्लेषणात्मक सारांश
-7 प्रकार की डाइट मॉडल
-20 विश्व व्यंजन
-AI द्वारा निर्मित डाइट प्लान जिसे विशेषज्ञ संपादित कर सकते हैं
-PDF में निर्यात करें
-Diet Care Platform पर मरीज के खाते में सीधे निर्यात करें (यदि पंजीकृत हो)`,
+  hi: `→ AI द्वारा पूर्ण चिकित्सा परिणाम विश्लेषण, डॉक्टर या आहार विशेषज्ञ द्वारा संशोधन योग्य
+→ आहार संबंधी साक्षात्कार का विश्लेषणात्मक सारांश
+→ 7 प्रकार की डाइट मॉडल
+→ 20 विश्व व्यंजन
+→ AI द्वारा निर्मित डाइट प्लान जिसे विशेषज्ञ संपादित कर सकते हैं
+→ PDF में निर्यात करें
+→ Diet Care Platform पर मरीज के खाते में सीधे निर्यात करें (यदि पंजीकृत हो)`,
 
-  ar: `تحليل كامل للنتائج الطبية باستخدام الذكاء الاصطناعي مع إمكانية التعديل من قبل الطبيب أو أخصائي التغذية
-ملخص تحليلي للمقابلة الغذائية مع المريض
-7 نماذج للأنظمة الغذائية
-20 مطبخًا عالميًا
-توليد خطة غذائية باستخدام الذكاء الاصطناعي مع إمكانية التعديل
-تصدير إلى PDF
-تصدير مباشر إلى حساب المريض (إن كان مسجلاً)`,
+  ar: `→ تحليل كامل للنتائج الطبية باستخدام الذكاء الاصطناعي مع إمكانية التعديل من قبل الطبيب أو أخصائي التغذية
+→ ملخص تحليلي للمقابلة الغذائية مع المريض
+→ 7 نماذج للأنظمة الغذائية
+→ 20 مطبخًا عالميًا
+→ توليد خطة غذائية باستخدام الذكاء الاصطناعي مع إمكانية التعديل
+→ تصدير إلى PDF
+→ تصدير مباشر إلى حساب المريض (إن كان مسجلاً)`,
 
-  he: `ניתוח מלא של תוצאות רפואיות בעזרת AI עם אפשרות לתיקון על ידי רופא או דיאטן
-סיכום אנליטי של ראיון תזונתי עם המטופל
-7 מודלים של תזונה
-20 מטבחים מרחבי העולם
-יצירת תפריט בעזרת AI עם אפשרות עריכה
-ייצוא ל-PDF
-ייצוא ישיר לחשבון המטופל (אם קיים במערכת)`
-},
+  he: `→ ניתוח מלא של תוצאות רפואיות בעזרת AI עם אפשרות לתיקון על ידי רופא או דיאטן
+→ סיכום אנליטי של ראיון תזונתי עם המטופל
+→ 7 מודלים של תזונה
+→ 20 מטבחים מרחבי העולם
+→ יצירת תפריט בעזרת AI עם אפשרות עריכה
+→ ייצוא ל-PDF
+→ ייצוא ישיר לחשבון המטופל (אם קיים במערכת)`
+}
+
 
 };
