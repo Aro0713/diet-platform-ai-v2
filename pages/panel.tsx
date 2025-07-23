@@ -505,6 +505,20 @@ const handleSendDietToPatient = async () => {
     alert(tUI('dietSentError', lang));
   }
 };
+if (!userData?.plan || new Date(userData.subscription_end) < new Date()) {
+  return (
+    <main className="min-h-screen bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 backdrop-blur text-white p-6 flex flex-col justify-center items-center">
+      <h1 className="text-2xl font-bold mb-4">{tUI('noActiveSubscription', lang)}</h1>
+      <p className="text-sm mb-6 text-center max-w-md">{tUI('subscriptionRequiredInfo', lang)}</p>
+      <button
+        onClick={() => router.push('/paymentsUsers')}
+        className="bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-6 rounded"
+      >
+        💳 {tUI('buySubscription', lang)}
+      </button>
+    </main>
+  );
+}
 
 return (
   <main className="relative min-h-screen
@@ -536,43 +550,45 @@ return (
             )}
         </p>
 
-        {/* 🔔 Status subskrypcji */}
-      {userData?.plan ? (
-        new Date(userData.subscription_end) > new Date() ? (
-          <p className="text-xs text-green-400">
-            ✅ {tUI('activeSubscription', lang)}: {userData.plan === 'pro_annual'
-              ? tUI('planAnnual', lang)
-              : tUI('planMonthly', lang)}
-            <button
-              onClick={() => router.push('/payments')}
-              className="ml-4 underline text-white hover:text-blue-300 transition"
-            >
-              {tUI('manageSubscription', lang)}
-            </button>
-          </p>
-        ) : (
-          <p className="text-xs text-yellow-400">
-            ⚠️ {tUI('expiredSubscription', lang)}
-            <button
-              onClick={() => router.push('/payments')}
-              className="ml-4 underline text-white hover:text-blue-300 transition"
-            >
-              {tUI('renewSubscription', lang)}
-            </button>
-          </p>
-        )
+      {/* 🔔 Status subskrypcji */}
+      {userData?.plan && new Date(userData.subscription_end) > new Date() ? (
+        <p className="text-xs text-green-400">
+          ✅ {tUI('activeSubscription', lang)}:{' '}
+          {userData.plan === 'pro_annual'
+            ? tUI('planAnnual', lang)
+            : tUI('planMonthly', lang)}
+          <span className="ml-4">
+            {tUI('validUntil', lang)}: {new Date(userData.subscription_end).toLocaleDateString(lang)}
+          </span>
+          <button
+            onClick={() => router.push('/paymentsUsers')}
+            className="ml-4 underline text-white hover:text-blue-300 transition"
+          >
+            {tUI('manageSubscription', lang)}
+          </button>
+        </p>
+      ) : userData?.plan ? (
+        <p className="text-xs text-yellow-400">
+          ⚠️ {tUI('expiredSubscription', lang)}
+          <button
+            onClick={() => router.push('/paymentsUsers')}
+            className="ml-4 underline text-white hover:text-blue-300 transition"
+          >
+            {tUI('renewSubscription', lang)}
+          </button>
+        </p>
       ) : (
         <p className="text-xs text-yellow-400">
           ⚠️ {tUI('noActiveSubscription', lang)}
           <button
-            onClick={() => router.push('/payments')}
+            onClick={() => router.push('/paymentsUsers')}
             className="ml-4 underline text-white hover:text-blue-300 transition"
           >
             {tUI('buySubscription', lang)}
           </button>
         </p>
       )}
-      </div>
+    </div>
     )}
   </div>
 
@@ -605,6 +621,7 @@ return (
     {tUI('modeUnregistered', lang)}
   </label>
 </div>
+
 
 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
   {/* 🔵 LEWA: Pacjent z kontem DCP */}

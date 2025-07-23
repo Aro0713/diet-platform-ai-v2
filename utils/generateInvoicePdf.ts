@@ -83,8 +83,8 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<Uint8Array>
   const place = data.placeOfIssue || 'Zdzieszowice';
 
   const totalNet = data.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
-  const totalVat = data.items.reduce((sum, item) => sum + (item.unitPrice * item.quantity * item.vatRate / 100), 0);
-  const totalGross = totalNet + totalVat;
+  
+  
 
   // Header
   draw('ALS sp. z o.o.', 50, 800);
@@ -124,35 +124,35 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<Uint8Array>
   draw('VAT', 510, 610);
   draw(t('gross'), 550, 610);
 
-  let y = 590;
-  data.items.forEach((item, i) => {
-    const net = item.unitPrice * item.quantity;
-    const vat = net * (item.vatRate / 100);
-    const gross = net + vat;
+ let y = 590;
+data.items.forEach((item, i) => {
+  const net = item.unitPrice * item.quantity;
+  const gross = net; // Brak VAT => netto = brutto
 
-    draw(`${i + 1}`, 50, y);
-    draw(item.name, 70, y);
-    draw(item.code || '', 220, y);
-    draw(item.quantity.toString(), 270, y);
-    draw(item.unit, 310, y);
-    draw(formatCurrency(item.unitPrice, currency, lang), 350, y);
-    draw(`${item.vatRate}%`, 410, y);
-    draw(formatCurrency(net, currency, lang), 460, y);
-    draw(formatCurrency(vat, currency, lang), 510, y);
-    draw(formatCurrency(gross, currency, lang), 550, y);
-    y -= 18;
-  });
+  draw(`${i + 1}`, 50, y);
+  draw(item.name, 70, y);
+  draw(item.code || '', 220, y);
+  draw(item.quantity.toString(), 270, y);
+  draw(item.unit, 310, y);
+  draw(formatCurrency(item.unitPrice, currency, lang), 350, y);
+  draw('zw', 410, y); // VAT %
+  draw(formatCurrency(net, currency, lang), 460, y);
+  draw('zw', 510, y); // VAT kwota
+  draw(formatCurrency(gross, currency, lang), 550, y);
+  y -= 18;
+});
 
-  draw(`${t('total')}:`, 400, y);
-  draw(formatCurrency(totalNet, currency, lang), 460, y);
-  draw(formatCurrency(totalVat, currency, lang), 510, y);
-  draw(formatCurrency(totalGross, currency, lang), 550, y);
-  y -= 30;
+// Podsumowanie z "zw" zamiast totalVat
+draw(`${t('total')}:`, 400, y);
+draw(formatCurrency(totalNet, currency, lang), 460, y);
+draw('zw', 510, y);
 
-  draw(`${t('totalDue')}: ${formatCurrency(totalGross, currency, lang)}`, 50, y, 12);
-  y -= 20;
-  draw(`${t('inWords')}: ${numberToWords(totalGross, currency, lang)}`, 50, y);
-  y -= 40;
+y -= 30;
+
+// 🔽 Dodano podstawę prawną zwolnienia
+draw(t('vatNoteExempt'), 50, y);
+y -= 20;
+
 
   draw(`${t('issuedBy')}: ${data.issuedBy || 'DCP system'}`, 50, y);
   draw(`${t('receivedBy')}: __________________________`, 300, y);

@@ -5625,6 +5625,45 @@ modeUnregistered: {
   ar: 'مريض غير مسجل في DCP',
   hi: 'DCP में बिना पंजीकरण के मरीज़',
   he: 'מטופל ללא רישום ב-DCP'
+},
+dietitianUnlimited: {
+  pl: 'Nielimitowany dostęp do generowania planów dietetycznych dla pacjentów. Idealny dla lekarzy i dietetyków pracujących z wieloma osobami.',
+  en: 'Unlimited access to generate dietary plans for patients. Ideal for doctors and dietitians working with many clients.',
+  de: 'Unbegrenzter Zugriff zur Erstellung von Diätplänen für Patienten. Ideal für Ärzte und Ernährungsberater mit vielen Klienten.',
+  fr: 'Accès illimité pour générer des plans alimentaires pour les patients. Idéal pour les médecins et les diététiciens travaillant avec de nombreux clients.',
+  es: 'Acceso ilimitado para generar planes dietéticos para pacientes. Ideal para médicos y dietistas que trabajan con muchos pacientes.',
+  ua: 'Необмежений доступ до генерації планів харчування для пацієнтів. Ідеально підходить для лікарів та дієтологів, які працюють з багатьма людьми.',
+  ru: 'Неограниченный доступ к созданию диетических планов для пациентов. Идеально подходит для врачей и диетологов, работающих с большим количеством клиентов.',
+  zh: '无限制生成患者饮食计划的权限。非常适合与多位客户合作的医生和营养师。',
+  ar: 'وصول غير محدود لإنشاء خطط غذائية للمرضى. مثالي للأطباء وأخصائيي التغذية الذين يعملون مع العديد من المرضى.',
+  hi: 'मरीज़ों के लिए आहार योजनाएँ बनाने की असीमित सुविधा। उन डॉक्टरों और डाइटीशियन के लिए आदर्श जो कई लोगों के साथ काम करते हैं।',
+  he: 'גישה בלתי מוגבלת ליצירת תוכניות תזונה למטופלים. אידיאלי לרופאים ודיאטנים המטפלים במספר רב של מטופלים.'
+},
+validUntil: {
+  pl: 'Ważny do',
+  en: 'Valid until',
+  de: 'Gültig bis',
+  fr: 'Valide jusqu’au',
+  es: 'Válido hasta',
+  ua: 'Діє до',
+  ru: 'Действителен до',
+  zh: '有效期至',
+  ar: 'صالح حتى',
+  hi: 'मान्य है',
+  he: 'בתוקף עד'
+},
+vatNoteExempt: {
+  pl: 'Sprzedaż zwolniona z VAT na podstawie art. 43 ust. 1 pkt 19 ustawy o podatku od towarów i usług (Dz.U. 2004 nr 54 poz. 535 z późn. zm.), PKD 96.04.Z',
+  en: 'VAT-exempt sale under Art. 43 sec. 1 pt. 19 of the VAT Act (Journal of Laws 2004 No. 54, item 535 as amended) and PKD 96.04.Z',
+  de: 'Umsatz von der Mehrwertsteuer befreit gemäß Art. 43 Abs. 1 Nr. 19 des Umsatzsteuergesetzes und PKD 96.04.Z',
+  fr: 'Vente exonérée de TVA en vertu de l’art. 43 al. 1 pt. 19 de la loi sur la TVA (Journal Officiel 2004 n°54 pos. 535) et PKD 96.04.Z',
+  es: 'Venta exenta de IVA según el art. 43.1.19 de la Ley del IVA y PKD 96.04.Z',
+  ua: 'Продаж звільнений від ПДВ відповідно до ст. 43 ч. 1 п. 19 Закону про ПДВ (Dz.U. 2004 № 54 поз. 535) та PKD 96.04.Z',
+  ru: 'Продажа освобождена от НДС на основании ст. 43 ч. 1 п. 19 Закона о НДС (Dz.U. 2004 № 54 поз. 535) и PKD 96.04.Z',
+  zh: '根据增值税法第43条第1款第19项（2004年第54号法律）和PKD 96.04.Z规定，销售免征增值税',
+  ar: 'البيع معفى من ضريبة القيمة المضافة بموجب المادة 43، الفقرة 1، البند 19 من قانون ضريبة القيمة المضافة و PKD 96.04.Z',
+  hi: 'धारा 43(1)(19) और PKD 96.04.Z के तहत बिक्री VAT से मुक्त है',
+  he: 'מכירה הפטורה ממע״מ לפי סעיף 43(1)(19) לחוק המע״מ ו-PKD 96.04.Z'
 }
 
 };
