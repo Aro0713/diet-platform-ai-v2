@@ -102,18 +102,19 @@ export default function PaymentsUsersPage() {
     setIsLoading(false);
   };
 
-  const planOptions: { id: PlanKey; title: string; description: string }[] = [
-    {
-      id: '30d',
-      title: tUI('plan30d', lang),
-      description: tUI('dietitianUnlimited', lang)
-    },
-    {
-      id: '365d',
-      title: tUI('plan365d', lang),
-      description: tUI('dietitianUnlimited', lang)
-    }
-  ];
+const planOptions: { id: PlanKey; title: string; description: string }[] = [
+  {
+    id: '30d',
+    title: tUI('plan30d', lang),
+    description: tUI('planDoctorFeatures', lang)
+  },
+  {
+    id: '365d',
+    title: tUI('plan365d', lang),
+    description: tUI('planDoctorFeatures', lang)
+  }
+];
+
 
   const displayPrice = (planId: PlanKey) => {
     const base = planPrices[planId];
@@ -172,7 +173,7 @@ export default function PaymentsUsersPage() {
             >
               <h2 className="text-xl font-bold mb-1">{plan.title}</h2>
               <p className="text-sm text-emerald-300 mb-2">
-                {displayPrice(plan.id)} <span className="text-xs text-white/60">({tUI('vatIncluded', lang)})</span>
+                {displayPrice(plan.id)} <span className="text-xs text-white/60">({tUI('vatExemptNote', lang)})</span>
               </p>
               <p className="text-sm whitespace-pre-line">{plan.description}</p>
             </div>

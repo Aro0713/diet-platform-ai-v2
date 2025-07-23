@@ -187,8 +187,8 @@ type PlanKey = keyof typeof planPrices;
             >
               <h2 className="text-xl font-bold mb-1">{plan.title}</h2>
               <p className="text-sm text-emerald-300 mb-2">
-                {displayPrice(plan.id)} <span className="text-xs text-white/60">({tUI('vatIncluded', lang)})</span>
-              </p>
+            {displayPrice(plan.id)} <span className="text-xs text-white/60">({tUI('vatExemptNote', lang)})</span>
+            </p>
               <p className="text-sm whitespace-pre-line">{plan.description}</p>
             </div>
           ))}
