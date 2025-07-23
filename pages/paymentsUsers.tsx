@@ -106,12 +106,12 @@ const planOptions: { id: PlanKey; title: string; description: string }[] = [
   {
     id: '30d',
     title: tUI('plan30d', lang),
-    description: tUI('planDoctorFeatures', lang)
+    description: `${tUI('dietitianUnlimited', lang)}\n${tUI('planDoctorFeatures', lang)}`
   },
   {
     id: '365d',
     title: tUI('plan365d', lang),
-    description: tUI('planDoctorFeatures', lang)
+    description: `${tUI('dietitianUnlimited', lang)}\n${tUI('planDoctorFeatures', lang)}`
   }
 ];
 
