@@ -157,33 +157,6 @@ const {
   useEffect(() => {
     console.log('📘 Opis wywiadu zapisany:', interviewNarrative);
   }, [interviewNarrative]);
-  useEffect(() => {
-  const fetchUserData = async () => {
-    const {
-  data: { user }
-  } = await supabase.auth.getUser();
-  const userId = user?.id;
-
-    if (!userId) return;
-
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    if (error) {
-      console.error('❌ Błąd pobierania danych użytkownika:', error.message);
-      return;
-    }
-
-    if (data) {
-      setUserData(data); // 🔥 teraz userData.name i userData.role będą działać
-    }
-  };
-
-  fetchUserData();
-}, []);
 
   useEffect(() => {
     const fetchDraftDiets = async () => {
