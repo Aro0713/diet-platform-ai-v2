@@ -463,7 +463,7 @@ content.push({ text: tUI('weeklyNutritionSummaryTitle', lang), style: 'subheader
 
 content.push({
 table: {
-  widths: ['*', 'auto', 'auto', 'auto', 'auto'],
+widths: ['*', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'],
   body: [
 [
   tUI('week', lang),
