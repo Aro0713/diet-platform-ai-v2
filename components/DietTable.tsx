@@ -32,17 +32,19 @@ const getFallbackMeal = (): Meal => ({
 });
 
 const sumDailyMacros = (meals: Meal[]) => {
-  return meals.reduce(
-    (acc, meal) => {
-      acc.protein += meal.macros?.protein ?? 0;
-      acc.fat += meal.macros?.fat ?? 0;
-      acc.carbs += meal.macros?.carbs ?? 0;
-      acc.fiber += meal.macros?.fiber ?? 0;
-      acc.potassium += meal.macros?.potassium ?? 0;
-      return acc;
-    },
-    { protein: 0, fat: 0, carbs: 0, fiber: 0, potassium: 0 }
-  );
+return meals.reduce(
+  (acc, meal) => {
+    acc.protein += meal.macros?.protein ?? 0;
+    acc.fat += meal.macros?.fat ?? 0;
+    acc.carbs += meal.macros?.carbs ?? 0;
+    acc.fiber += meal.macros?.fiber ?? 0;
+    acc.potassium += meal.macros?.potassium ?? 0;
+    acc.sodium += meal.macros?.sodium ?? 0;
+    return acc;
+  },
+  { protein: 0, fat: 0, carbs: 0, fiber: 0, potassium: 0, sodium: 0 }
+);
+
 };
 
 const sumWeeklyMacros = (diet: Record<string, Meal[]>) => {
@@ -157,13 +159,15 @@ const DietTable: React.FC<DietTableProps> = ({
                       <div className="text-xs text-gray-400">
                         Kalorie: {meal.calories > 0 ? `${meal.calories} kcal` : '–'} | IG: {meal.glycemicIndex > 0 ? meal.glycemicIndex : '–'}
                       </div>
-                      {meal.macros && (
-                        <div className="text-xs text-gray-500">
-                          B: {meal.macros.protein ?? '–'}g, T: {meal.macros.fat ?? '–'}g, W: {meal.macros.carbs ?? '–'}g
-                          {typeof meal.macros.fiber === 'number' && meal.macros.fiber > 0 && `, błonnik: ${meal.macros.fiber}g`}
-                          {typeof meal.macros.potassium === 'number' && meal.macros.potassium > 0 && `, K: ${meal.macros.potassium}mg`}
-                        </div>
-                      )}
+                     {meal.macros && (
+                          <div className="text-xs text-gray-500 leading-tight">
+                            B: {meal.macros.protein ?? '–'}g, T: {meal.macros.fat ?? '–'}g, W: {meal.macros.carbs ?? '–'}g
+                            <br />
+                            {typeof meal.macros.fiber === 'number' && `🌿 Błonnik: ${meal.macros.fiber}g`}
+                            {typeof meal.macros.potassium === 'number' && ` | 🥔 Potas: ${meal.macros.potassium}mg`}
+                            {typeof meal.macros.sodium === 'number' && ` | 🧂 Sód: ${meal.macros.sodium}mg`}
+                          </div>
+                        )}
                     </div>
                   </td>
                 );
@@ -179,34 +183,37 @@ const DietTable: React.FC<DietTableProps> = ({
                   B: {macros.protein}g<br />
                   T: {macros.fat}g<br />
                   W: {macros.carbs}g<br />
-                  {macros.fiber > 0 && <>błonnik: {macros.fiber}g<br /></>}
-                  {macros.potassium > 0 && <>K: {macros.potassium}mg</>}
+                  {macros.fiber > 0 && <>🌿 Błonnik: {macros.fiber}g<br /></>}
+                  {macros.potassium > 0 && <>🥔 Potas: {macros.potassium}mg<br /></>}
+                  {macros.sodium > 0 && <>🧂 Sód: {macros.sodium}mg</>}
                 </td>
               );
             })}
           </tr>
 
-          <tr className="bg-[#1f2a3c] font-semibold text-sm text-white">
-            {(() => {
-              const weekly = sumWeeklyMacros(editableDiet);
-              return dayKeys.map((_, idx) => (
-                <td
-                  key={`week_sum_${idx}`}
-                  className="border border-gray-600 px-2 py-1 text-xs text-gray-300"
-                >
-                  {idx === 0 ? (
-                    <>
-                      B: {weekly.protein}g<br />
-                      T: {weekly.fat}g<br />
-                      W: {weekly.carbs}g<br />
-                      {weekly.fiber > 0 && <>błonnik: {weekly.fiber}g<br /></>}
-                      {weekly.potassium > 0 && <>K: {weekly.potassium}mg</>}
-                    </>
-                  ) : null}
-                </td>
-              ));
-            })()}
-          </tr>
+   <tr className="bg-[#1f2a3c] font-semibold text-sm text-white">
+  {(() => {
+    const weekly = sumWeeklyMacros(editableDiet);
+    return dayKeys.map((_, idx) => (
+      <td
+        key={`week_sum_${idx}`}
+        className="border border-gray-600 px-2 py-1 text-xs text-gray-300"
+      >
+        {idx === 0 ? (
+          <>
+            B: {weekly.protein}g<br />
+            T: {weekly.fat}g<br />
+            W: {weekly.carbs}g<br />
+            {weekly.fiber > 0 && <>🌿 Błonnik: {weekly.fiber}g<br /></>}
+            {weekly.potassium > 0 && <>🥔 Potas: {weekly.potassium}mg<br /></>}
+            {weekly.sodium > 0 && <>🧂 Sód: {weekly.sodium}mg</>}
+          </>
+        ) : null}
+      </td>
+    ));
+  })()}
+</tr>
+
 
           <tr>
             {dayKeys.map((day) => (
