@@ -88,53 +88,64 @@ Here is the plan:
 ${JSON.stringify(enrichedPlan, null, 2)}
 `;
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: "You are a clinical diet quality controller for structured JSON plans."
-        },
-        { role: "user", content: prompt }
-      ],
-      temperature: 0.4
-    });
+const completion = await openai.chat.completions.create({
+  model: "gpt-4o",
+  messages: [
+    {
+      role: "system",
+      content: "You are a clinical diet quality controller for structured JSON plans."
+    },
+    { role: "user", content: prompt }
+  ],
+  temperature: 0.4
+});
 
-    const text = completion.choices[0].message.content ?? "";
-    const clean = text.replace(/```json|```/g, "").trim();
+const text = completion.choices[0].message.content ?? "";
+const clean = text.replace(/```json|```/g, "").trim();
 
-    // 🔎 Spróbuj sparsować poprawiony plan
-    if (clean.includes("CORRECTED_JSON")) {
-      const startIndex = clean.indexOf("{");
-      const correctedJson = clean.slice(startIndex).trim();
+// 🔎 Spróbuj sparsować poprawiony plan
+if (clean.includes("CORRECTED_JSON")) {
+  const startIndex = clean.indexOf("{");
+  const correctedJson = clean.slice(startIndex).trim();
 
-      try {
-        const parsed = JSON.parse(correctedJson);
-        const correctedStructured = parsed?.dietPlan as Record<string, Record<string, Meal>>;
-        if (!correctedStructured) throw new Error("Brak dietPlan");
+  try {
+    const parsed = JSON.parse(correctedJson);
+    const correctedStructured = parsed?.dietPlan as Record<string, Record<string, Meal>>;
+    if (!correctedStructured) throw new Error("Brak dietPlan");
 
-        const originalMeals: Meal[] = Object.values(enrichedPlan).flatMap(day => Object.values(day));
-        const correctedMeals: Meal[] = Object.values(correctedStructured).flatMap(day => Object.values(day));
-
-        const issuesOriginal = validateDietWithModel(originalMeals, model);
-        const issuesCorrected = validateDietWithModel(correctedMeals, model);
-
-        if (issuesCorrected.length < issuesOriginal.length) {
-          console.log("✅ Ulepszony plan wybrany przez dqAgent:", issuesCorrected);
-          return {
-            type: "dietPlan",
-            plan: convertStructuredToFlatPlan(correctedStructured)
-          };
+    // ✅ Uzupełnij brakujące makroskładniki również w poprawionym planie
+    for (const day of Object.keys(correctedStructured)) {
+      const meals = correctedStructured[day];
+      for (const mealKey of Object.keys(meals)) {
+        const meal = meals[mealKey];
+        if (!meal.macros || Object.keys(meal.macros).length === 0) {
+          meal.macros = calculateMealMacros(meal.ingredients);
         }
-      } catch (e) {
-        console.warn("❌ Nie udało się sparsować JSON:", e);
       }
     }
 
-    // Jeśli nie było poprawki lub poprawka gorsza → zwróć oryginał
-    return {
-      type: "dietPlan",
-      plan: convertStructuredToFlatPlan(enrichedPlan)
-    };
+    const originalMeals: Meal[] = Object.values(enrichedPlan).flatMap(day => Object.values(day));
+    const correctedMeals: Meal[] = Object.values(correctedStructured).flatMap(day => Object.values(day));
+
+    const issuesOriginal = validateDietWithModel(originalMeals, model);
+    const issuesCorrected = validateDietWithModel(correctedMeals, model);
+
+    if (issuesCorrected.length < issuesOriginal.length) {
+      console.log("✅ Ulepszony plan wybrany przez dqAgent:", issuesCorrected);
+      return {
+        type: "dietPlan",
+        plan: convertStructuredToFlatPlan(correctedStructured)
+      };
+    }
+  } catch (e) {
+    console.warn("❌ Nie udało się sparsować JSON:", e);
+  }
+}
+
+// Jeśli nie było poprawki lub poprawka gorsza → zwróć oryginał
+return {
+  type: "dietPlan",
+  plan: convertStructuredToFlatPlan(enrichedPlan)
+};
   }
 };

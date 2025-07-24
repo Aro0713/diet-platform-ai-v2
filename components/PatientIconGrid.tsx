@@ -83,13 +83,16 @@ export const PatientIconGrid: React.FC<PatientIconGridProps> = ({ lang, onSelect
         const isDisabled = !hasPaid && id !== 'data' && id !== 'status';
 
         return (
-          <button
+      <button
             key={id}
             disabled={isDisabled}
             onClick={() => {
               if (isDisabled) return;
               if (id === 'scanner') {
-                document.getElementById('look-assistant')?.scrollIntoView({ behavior: 'smooth' });
+                onSelect('scanner'); // ✅ przełącza sekcję
+                setTimeout(() => {
+                  document.getElementById('look-assistant')?.scrollIntoView({ behavior: 'smooth' });
+                }, 100); // ⏳ pozwala komponentowi się zamontować
               } else if (id !== 'status') {
                 onSelect(id);
                 window.scrollTo({ top: 0, behavior: 'smooth' });

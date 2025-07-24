@@ -357,6 +357,17 @@ ${jsonFormatPreview}
   } catch (err) {
     console.warn("⚠️ dqAgent błąd:", err);
   }
+  // 🔁 Uzupełnij brakujące makroskładniki jeśli nie ma ich z GPT
+  const { calculateMealMacros } = await import("@/utils/nutrition/calculateMealMacros");
+
+  for (const day of Object.keys(parsed.dietPlan)) {
+    const meals = parsed.dietPlan[day];
+    for (const meal of meals) {
+      if (!meal.macros || Object.keys(meal.macros).length === 0) {
+        meal.macros = calculateMealMacros(meal.ingredients);
+      }
+    }
+  }
 
   // ✅ Zwróć poprawioną lub oryginalną wersję
   return {

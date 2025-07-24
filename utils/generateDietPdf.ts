@@ -309,36 +309,48 @@ if (recipes && Object.keys(recipes).length > 0) {
   });
 
   for (const [day, meals] of Object.entries(recipes)) {
-    content.push({ text: day, style: 'subheader', margin: [0, 10, 0, 6] });
+    if (!meals || Object.keys(meals).length === 0) continue;
+
+    content.push({
+      text: day,
+      style: 'subheader',
+      margin: [0, 10, 0, 6]
+    });
 
     for (const [mealName, recipe] of Object.entries(meals)) {
+      if (!recipe || !recipe.dish) continue;
+
       content.push(
-      { text: `${tUI(mealName.toLowerCase(), lang)}: ${recipe.dish}`, style: 'boldCell' },
-      { text: recipe.description, italics: true, fontSize: 10, margin: [0, 2, 0, 4] },
-      { text: `${tUI('ingredients', lang)}:`, style: 'smallCell' },
-      {
-      ul: Array.isArray(recipe.ingredients)
-        ? recipe.ingredients
-            .filter(ing => ing?.product && ing?.weight && ing?.unit)
-            .map(ing => `${ing.product} – ${ing.weight} ${ing.unit}`)
-        : [],
-      margin: [0, 2, 0, 4]
-    },
-      { text: `${tUI('steps', lang)}:`, style: 'smallCell' },
-      {
-      ol: Array.isArray(recipe.steps)
-        ? recipe.steps.filter(step => typeof step === 'string')
-        : [],
-      margin: [0, 2, 0, 6]
-    },
-      ...(recipe.time
-        ? [{
-            text: `⏱️ ${tUI('time', lang)}: ${recipe.time}`,
-            style: 'smallCell',
-            margin: [0, 0, 0, 10]
-          }]
-        : [])
-    );
+        { text: `${tUI(mealName.toLowerCase(), lang)}: ${recipe.dish}`, style: 'boldCell' },
+
+        ...(recipe.description ? [
+          { text: recipe.description, italics: true, fontSize: 10, margin: [0, 2, 0, 4] }
+        ] : []),
+
+        { text: `${tUI('ingredients', lang)}:`, style: 'smallCell' },
+        {
+          ul: Array.isArray(recipe.ingredients)
+            ? recipe.ingredients
+                .filter(ing => ing?.product && ing?.weight && ing?.unit)
+                .map(ing => `${ing.product} – ${ing.weight} ${ing.unit}`)
+            : [],
+          margin: [0, 2, 0, 4]
+        },
+
+        { text: `${tUI('steps', lang)}:`, style: 'smallCell' },
+        {
+          ol: Array.isArray(recipe.steps)
+            ? recipe.steps.filter(step => typeof step === 'string')
+            : [],
+          margin: [0, 2, 0, 6]
+        },
+
+        ...(recipe.time ? [{
+          text: `⏱️ ${tUI('time', lang)}: ${recipe.time}`,
+          style: 'smallCell',
+          margin: [0, 0, 0, 10]
+        }] : [])
+      );
     }
   }
 }

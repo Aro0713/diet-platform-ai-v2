@@ -2486,6 +2486,32 @@ potassium: {
   ar: "البوتاسيوم",
   he: "אשלגן"
 },
+sodium: {
+  pl: "Sód",
+  en: "Sodium",
+  de: "Natrium",
+  fr: "Sodium",
+  es: "Sodio",
+  ru: "Натрий",
+  ua: "Натрій",
+  zh: "钠",
+  hi: "सोडियम",
+  ar: "صوديوم",
+  he: "נתרן"
+},
+dailyNutritionSummaryTitle: {
+  pl: "📊 Dzienne podsumowanie makroskładników",
+  en: "📊 Daily Nutrition Summary",
+  de: "📊 Tägliche Makronährstoff-Zusammenfassung",
+  fr: "📊 Bilan nutritionnel quotidien",
+  es: "📊 Resumen diario de nutrientes",
+  ru: "📊 Суточная сводка макронутриентов",
+  ua: "📊 Денне підсумкове харчування",
+  zh: "📊 每日营养汇总",
+  hi: "📊 दैनिक पोषण सारांश",
+  ar: "📊 ملخص التغذية اليومي",
+  he: "📊 סיכום תזונה יומי"
+},
 missingData: {
   pl: "Brak danych",
   en: "Missing data",
@@ -5767,32 +5793,7 @@ planDoctorFeatures: {
 → ייצוא ל-PDF
 → ייצוא ישיר לחשבון המטופל (אם קיים במערכת)`
 },
-sodium: {
-  pl: "Sód",
-  en: "Sodium",
-  de: "Natrium",
-  fr: "Sodium",
-  es: "Sodio",
-  ru: "Натрий",
-  ua: "Натрій",
-  zh: "钠",
-  hi: "सोडियम",
-  ar: "صوديوم",
-  he: "נתרן"
-},
-dailyNutritionSummaryTitle: {
-  pl: "📊 Dzienne podsumowanie makroskładników",
-  en: "📊 Daily Nutrition Summary",
-  de: "📊 Tägliche Makronährstoff-Zusammenfassung",
-  fr: "📊 Bilan nutritionnel quotidien",
-  es: "📊 Resumen diario de nutrientes",
-  ru: "📊 Суточная сводка макронутриентов",
-  ua: "📊 Денне підсумкове харчування",
-  zh: "📊 每日营养汇总",
-  hi: "📊 दैनिक पोषण सारांश",
-  ar: "📊 ملخص التغذية اليومي",
-  he: "📊 סיכום תזונה יומי"
-},
+
 
 
 };
