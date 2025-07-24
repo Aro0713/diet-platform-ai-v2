@@ -11,22 +11,22 @@ export const config = {
 };
 
 const cuisineContextMap: Record<string, string> = {
-  "Polska": "Polish culinary traditions: soups, fermented foods, root vegetables",
-  "Włoska": "Italian style: pasta, olive oil, tomatoes, basil, Mediterranean balance",
-  "Japońska": "Japanese cuisine: rice, miso, seaweed, tofu, umami minimalism",
-  "Chińska": "Chinese culinary principles: stir-fry, ginger, garlic, soy-based sauces",
-  "Tajska": "Thai cuisine: coconut milk, chili, lemongrass, coriander",
-  "Wietnamska": "Vietnamese: fresh herbs, rice noodles, fish sauce, light soups",
-  "Indyjska": "Indian: rich spices, lentils, curries, turmeric, ghee",
-  "Koreańska": "Korean: fermented vegetables, gochujang, rice dishes, barbecue",
-  "Bliskowschodnia": "Middle Eastern: legumes, olive oil, tahini, flatbreads, spices",
-  "Francuska": "French: sauces, butter, herbs de Provence, refined technique",
-  "Hiszpańska": "Spanish: olive oil, garlic, paprika, tapas, seafood",
-  "Skandynawska": "Scandinavian: rye, fish, root vegetables, dairy",
-  "Północnoamerykańska": "North American: diverse, fusion, whole grains, lean proteins",
-  "Brazylijska": "Brazilian: rice and beans, tropical fruits, cassava",
-  "Afrykańska": "African: grains like millet, legumes, stews, bold spices",
-  "Dieta arktyczna / syberyjska": "Arctic/Siberian: fish, berries, root vegetables, minimal spices"
+  "Polska": "Polish cuisine: soups, fermented vegetables, root vegetables, pork, rye bread",
+  "Włoska": "Italian cuisine: pasta, olive oil, tomatoes, basil, cheeses like mozzarella and parmesan",
+  "Japońska": "Japanese cuisine: rice, miso, seaweed, tofu, sushi, umami-rich dishes",
+  "Chińska": "Chinese cuisine: stir-fried dishes, ginger, garlic, soy sauce, rice, noodles",
+  "Tajska": "Thai cuisine: coconut milk, chili, lemongrass, coriander, sweet and spicy balance",
+  "Wietnamska": "Vietnamese cuisine: fresh herbs, rice noodles, fish sauce, light broths",
+  "Indyjska": "Indian cuisine: rich spices, curries, lentils, turmeric, ghee",
+  "Koreańska": "Korean cuisine: fermented vegetables, gochujang, rice, grilled meats",
+  "Bliskowschodnia": "Middle Eastern cuisine: legumes, olive oil, tahini, spices, flatbreads",
+  "Francuska": "French cuisine: sauces, butter, herbs de Provence, regional meats",
+  "Hiszpańska": "Spanish cuisine: olive oil, paprika, garlic, seafood, tapas",
+  "Skandynawska": "Scandinavian cuisine: rye, fish, dairy, root vegetables",
+  "Północnoamerykańska": "North American cuisine: diverse fusion, whole grains, grilled dishes",
+  "Brazylijska": "Brazilian cuisine: rice, beans, cassava, tropical fruits",
+  "Afrykańska": "African cuisine: millet, legumes, peanut stew, bold spices",
+  "Dieta arktyczna / syberyjska": "Arctic/Siberian cuisine: fish, berries, root vegetables, animal fat"
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -39,21 +39,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'Invalid or missing dietPlan' });
     }
 
-    const cuisineNote = cuisineContextMap[cuisine] || "general dietary style";
+    const cuisineNote = cuisineContextMap[cuisine] || "general culinary tradition";
 
     const prompt = `
 You are a culinary assistant AI specialized in healthy and clinical diets.
 Generate full culinary recipes for each meal in the diet plan below.
 Each meal has a dish name and a list of ingredients.
-
-For each meal, generate:
-- dish name (preserve as is),
-- description (1–2 sentences),
-- ingredients (from the plan),
-- 3–6 numbered preparation steps,
-- total preparation time.
-
-All recipes should reflect the regional cooking style and culinary ingredients typical of: ${cuisineNote}.
 
 Each recipe should include:
 - Dish name (as in the plan)
@@ -63,6 +54,10 @@ Each recipe should include:
 - Ingredients: name, weight in grams, unit
 - Step-by-step preparation instructions (numbered)
 - Estimated cooking time
+
+All recipes must strictly follow the authentic culinary traditions and ingredient profile of: ${cuisineNote}.
+Do not adapt or localize the recipes to the patient's country or culture.
+Translate everything into: ${lang}. Use natural expressions in this language.
 
 Format strictly as JSON:
 {
@@ -84,11 +79,8 @@ Format strictly as JSON:
           "Podawaj ciepłe."
         ],
         "time": "10 min"
-      },
-      "Obiad": { ... },
-      ...
-    },
-    ...
+      }
+    }
   }
 }
 
@@ -112,6 +104,17 @@ ${JSON.stringify(dietPlan, null, 2)}
 
     try {
       const parsed = JSON.parse(text);
+
+      if (
+        !parsed ||
+        typeof parsed !== 'object' ||
+        !parsed.recipes ||
+        Object.keys(parsed.recipes).length === 0
+      ) {
+        console.warn("⚠️ RecipeAgent returned empty or invalid structure");
+        return res.status(200).json({ recipes: {} });
+      }
+
       res.status(200).json(parsed);
     } catch (err) {
       console.error("❌ Nieprawidłowy JSON z OpenAI:", err);

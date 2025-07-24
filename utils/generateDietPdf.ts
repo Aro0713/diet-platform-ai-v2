@@ -168,13 +168,34 @@ ${tUI('region', lang)}: ${patient.region ? await getTranslation(patient.region, 
 
     content.push({ text: finalNarrative || '⚠️ Brak opisu narracyjnego', margin: [0, 0, 0, 6] });
   }
+// przed groupedByDay
+const localizedDays = [
+  tUI("monday", lang),
+  tUI("tuesday", lang),
+  tUI("wednesday", lang),
+  tUI("thursday", lang),
+  tUI("friday", lang),
+  tUI("saturday", lang),
+  tUI("sunday", lang)
+];
 
-  const groupedByDay: Record<string, Meal[]> = {};
-  diet.forEach((meal) => {
-    const day = (meal as any).day || 'Inne';
-    if (!groupedByDay[day]) groupedByDay[day] = [];
-    groupedByDay[day].push(meal);
-  });
+const normalizedDiet = diet.map((meal, idx) => {
+  if (!meal.day || meal.day === "Inne") {
+    meal.day = localizedDays[idx % 7]; // przypisz cyklicznie lub jak chcesz
+  }
+  return meal;
+});
+
+ const groupedByDay: Record<string, Meal[]> = {};
+
+normalizedDiet.forEach((meal, idx) => {
+  const fallbackDay = `Dzień ${idx + 1}`;
+  const day: string = meal.day ?? fallbackDay;
+
+  if (!groupedByDay[day]) groupedByDay[day] = [];
+  groupedByDay[day].push(meal);
+});
+
 
   for (const [day, meals] of Object.entries(groupedByDay)) {
     content.push({ text: `🗓️ ${day}`, style: 'subheader', margin: [0, 10, 0, 4] });

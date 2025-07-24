@@ -20,6 +20,11 @@ export async function interviewNarrativeAgent({
 
   const selectedLang = languageMap[lang] || 'polski';
 
+const isMale = interviewData?.sex === 'male';
+const genderNote = isMale
+  ? "⚠️ Patient is male. Do NOT include anything about menstruation, pregnancy, PCOS, menopause or HTZ. Use masculine grammatical forms only."
+  : "Patient is female. Analyze section 8 (menstruation, pregnancy, PCOS, menopause, HTZ). Use feminine grammatical forms.";
+  
 const prompt = `
 Language: ${selectedLang}
 
