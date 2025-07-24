@@ -1,5 +1,7 @@
 import { Agent, tool } from "@openai/agents";
 import OpenAI from "openai";
+import { interviewNarrativeAgent } from "@/agents/interviewNarrativeAgent";
+import { medicalLabAgent } from "@/agents/medicalLabAgent";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -145,10 +147,65 @@ const dietModelMap: Record<string, {
     ]
   }
 };
+const modelMap: Record<string, string> = {
+  "Dieta w insulinooporności": "insulin resistance",
+  "Dieta cukrzycowa": "diabetes",
+  "Dieta DASH": "hypertension",
+  "Dieta bezglutenowa": "gluten free",
+  "Dieta FODMAP (przy IBS)": "fodmap",
+  "Dieta wegańska": "vegan",
+  "Dieta wegetariańska": "vegetarian",
+  "Dieta ketogeniczna": "ketogenic",
+  "Dieta śródziemnomorska": "mediterranean",
+  "Dieta paleolityczna": "paleo",
+  "Dieta niskowęglowodanowa": "low carb",
+  "Dieta wysokobiałkowa": "high protein",
+  "Dieta nerkowa": "renal",
+  "Dieta wątrobowa": "liver",
+  "Dieta przeciwzapalna": "anti-inflammatory",
+  "Dieta autoimmunologiczna": "autoimmune",
+  "Post przerywany": "intermittent fasting",
+  "Dieta niskotłuszczowa": "low fat",
+  "Dieta niskocukrowa": "low sugar",
+  "Dieta niskosodowa": "low sodium",
+  "Dieta MIND (dla mózgu)": "mind",
+  "Dieta eliminacyjna": "elimination",
+  "Dieta przy insulinooporności i PCOS": "pcos",
+  "Dieta lekkostrawna": "easily digestible"
+};
+
+const goalMap: Record<string, string> = {
+  "Odchudzające (redukujące)": "weight loss",
+  "Na masę": "muscle gain",
+  "Stabilizujące wagę": "weight maintenance",
+  "Detoksykacyjne / oczyszczające": "detox",
+  "Regeneracyjne": "regeneration",
+  "Poprawa pracy wątroby": "liver support",
+  "Poprawa pracy nerek": "kidney support"
+};
+
+const cuisineMap: Record<string, string> = {
+  "Polska": "Polish",
+  "Włoska": "Italian",
+  "Japońska": "Japanese",
+  "Chińska": "Chinese",
+  "Tajska": "Thai",
+  "Wietnamska": "Vietnamese",
+  "Indyjska": "Indian",
+  "Koreańska": "Korean",
+  "Bliskowschodnia": "Middle Eastern",
+  "Francuska": "French",
+  "Hiszpańska": "Spanish",
+  "Skandynawska": "Scandinavian",
+  "Północnoamerykańska": "North American",
+  "Brazylijska": "Brazilian",
+  "Afrykańska": "African",
+  "Dieta arktyczna / syberyjska": "Arctic/Siberian"
+};
 
 export const generateDietTool = tool({
   name: "generate_diet_plan",
-  description: "Generates a 7-day clinical diet plan based on patient data.",
+  description: "Generates a 7-day clinical diet plan based on patient data and AI-driven insights.",
   strict: false,
   parameters: {
     type: "object",
@@ -163,14 +220,21 @@ export const generateDietTool = tool({
   } as const,
   async execute(input: any) {
     const { input: nested } = input;
-    const { form, interviewData, lang = "pl", goalExplanation = "", recommendation = "", medical } = nested;
-    if ((form?.model?.toLowerCase() === "dieta eliminacyjna") && (!interviewData || Object.keys(interviewData).length === 0)) {
-     throw new Error("Interview data is required to generate an elimination diet.");
-    }
+    const {
+      form,
+      interviewData,
+      testResults,
+      medicalDescription,
+      lang = "pl"
+    } = nested;
+
+    const modelKey = modelMap[form.model] || form.model?.toLowerCase();
+    const goalExplanation = goalMap[interviewData.goal] || interviewData.goal;
+    const cuisine = cuisineMap[interviewData.cuisine] || "global";
+    const cuisineContext = cuisineContextMap[interviewData.cuisine] || "general healthy cooking style";
+    const selectedLang = languageMap[lang] || "polski";
     const daysInLang = dayNames[lang] || dayNames['pl'];
     const daysList = daysInLang.map(d => `- ${d}`).join('\n');
-
-    const selectedLang = languageMap[lang] || "polski";
 
     const bmi = form.bmi ?? (form.weight && form.height
       ? parseFloat((form.weight / ((form.height / 100) ** 2)).toFixed(1))
@@ -179,10 +243,12 @@ export const generateDietTool = tool({
     const pal = form.pal ?? 1.6;
     const cpm = form.cpm ?? (form.weight && pal ? Math.round(form.weight * 24 * pal) : null);
     const mealsPerDay = interviewData.mealsPerDay ?? "not provided";
-    const modelDiet = form.model?.toLowerCase();
-    const cuisine = interviewData.cuisine?.toLowerCase() || "global";
-    const cuisineContext = cuisineContextMap[interviewData.cuisine] || "general healthy cooking style";
-    const modelDefinition = dietModelMap[modelDiet || ""] || {};
+
+    // 🔗 Pobranie danych z agentów wspierających
+    const narrative = await interviewNarrativeAgent({ interviewData, goal: interviewData.goal, recommendation: interviewData.recommendation, lang });
+    const medical = await medicalLabAgent({ testResults, description: medicalDescription, lang });
+
+    const modelDefinition = dietModelMap[modelKey || ""] || {};
     const modelMacroStr = modelDefinition.macros
       ? Object.entries(modelDefinition.macros).map(([k, v]) => `- ${k}: ${v}`).join('\n')
       : "No macronutrient guidance found for this model.";
@@ -190,121 +256,61 @@ export const generateDietTool = tool({
     const modelNotes = modelDefinition.notes?.join('\n') || "";
 
     const modelDetails = `
-    ⚙️ Diet Model Requirements (${modelDiet || "N/A"}):
+    ⚙️ Diet Model Requirements (${modelKey || "N/A"}):
     ${modelMacroStr}
     ${modelNotes ? `\n📌 Notes:\n${modelNotes}` : ""}
     `;
 
-    const jsonFormatPreview = daysInLang.map(day => `    "${day}": { ... }`).join(',\n');
+    const jsonFormatPreview = daysInLang.map(day => `    \"${day}\": { ... }`).join(',\n');
 
-    const patientData = {
-      ...form,
-      ...interviewData,
-      bmi,
-      pal,
-      cpm,
-      goalExplanation,
-      recommendation,
-      language: selectedLang,
-      mealsPerDay,
-      medical
-    };
-
-  const prompt = `
+    const prompt = `
 You are a clinical dietitian AI.
 
 ${modelDetails}
 
 Generate a complete 7-day diet plan. DO NOT stop after 1 or 2 days.
 
-YOU MUST include:
+You MUST include:
 - All 7 days in the target language (${lang}):
 ${daysList}
 - The number of meals per day must be:
   - If mealsPerDay is provided: use exactly that number → ${mealsPerDay}
-  - If not provided: intelligently determine the best number of meals (between 2–6) based on medical condition, BMI, PAL, stress, activity level, and goal
+  - If not provided: intelligently determine the best number of meals (between 2–6)
 
-- Use meal names localized to language "${lang}". 
-  For example:
-  - pl: Śniadanie, Drugie śniadanie, Obiad, Kolacja, Podwieczorek
-  - en: Breakfast, Lunch, Dinner, Supper, Snack
-  - es: Desayuno, Almuerzo, Comida, Cena, Merienda
-  (Adapt accordingly to the selected language.)
+- Use meal names localized to language "${lang}".
+- Full macro & micronutrient data
 
-- Full ingredient and macro data for each meal
-- Do not use phrases like "continue similarly", "example", or "partial"
+Base the plan on:
+✔ Patient profile from interview:
+${narrative}
 
-This is a production plan. Not a draft. Do not omit any day.
+✔ Clinical risks and suggestions:
+${medical}
 
-The plan must:
-
-✔ Be customized based on:
-- Patient interview, test results, medical history
-- Diet model: ${modelDiet}, Cuisine: ${cuisine}
-- Cultural style: ${cuisineContext}
-- Energy targets (CPM: ${cpm}), BMI: ${bmi}, PAL: ${pal}
-- Number of meals: ${mealsPerDay}, Goal: ${goalExplanation}
-- Doctor's notes: ${recommendation}
-- Allergies to avoid: ${form.allergies || "none"}
-
-✔ Take into account lifestyle:
-- Stress level: ${interviewData.stressLevel}
-- Sleep quality: ${interviewData.sleepQuality}
-- Physical activity: ${interviewData.physicalActivity}
-
-✔ Take into account clinical risks and recommendations:
-${JSON.stringify(medical, null, 2)}
-
-✔ For EACH meal include:
-- Use culturally appropriate meal names in the target language (${lang}), e.g. in Polish: Śniadanie, Obiad, Kolacja
-- Time (e.g., 07:30)
-- Dish name (menu)
-- Ingredients list (product, weight in grams, unit) – include **ALL components necessary for preparation and flavor**, including:
-
-  - Spices and seasonings: use a **wide variety**, not just salt and pepper. Include spices that match the **dish type**, **cuisine**, and **cooking method** (e.g. garlic, paprika, turmeric, cumin, coriander, chili, ginger, cinnamon, etc.)
-  
-  - Herbs: both fresh and dried, appropriate to the cuisine (e.g. dill, thyme, oregano, basil, rosemary, cilantro, parsley)
-  
-  - Oils and fats: olive oil, butter, ghee, coconut oil, etc.
-  
-  - Sauces and condiments: if used (e.g. soy sauce, tomato paste, mustard, tahini, vinegar, lemon juice)
-
-- Detailed cooking method (preparation)
-- Nutritional values calculated from ALL ingredients:
-  - kcal, protein, fat, carbs, fiber, sodium, potassium, calcium, magnesium, vitamin C, D, B12
-
-🚨 Do not omit seasoning or oil. They impact calories, fats, sodium and micronutrients.
-
-
-**Nutrients must reflect real food values based on actual ingredient weights. Use reliable scientific food composition sources (USDA, Open Food Facts, Polish IŻŻ). Do not estimate or round randomly.**
-
-✔ For EACH day:
-- Total nutritional summary for the day (JSON object)
-
-✔ For WHOLE week:
-- Table of all meals (day × meal)
-- Summary of total intake
-- Ingredient shopping list
+✔ Diet model: ${modelKey}, Cuisine: ${cuisine}
+✔ CPM: ${cpm}, BMI: ${bmi}, PAL: ${pal}
+✔ Goal: ${goalExplanation}
+✔ Doctor's recommendation: ${interviewData.recommendation}
+✔ Allergies: ${form.allergies || "none"}
 
 Use ONLY trusted sources:
 ${dataSources}
 
-Return ONLY valid JSON. Do not include markdown, comments, explanations or raw weekdays.
-
-Your response MUST have this format:
-
+Return JSON:
 {
   "dietPlan": {
 ${jsonFormatPreview}
   },
   "weeklyOverview": { ... },
-  "shoppingList": [ ... ]
+  "shoppingList": [ ... ],
+  "nutritionalSummary": {
+    "macros": { "protein": ..., "fat": ..., "carbs": ... },
+    "micros": { "sodium": ..., "magnesium": ..., "vitamin D": ... }
+  }
 }
-
-Do not return top-level "Monday", "Tuesday" etc. — use localized day names in dietPlan.
 `;
 
-try {
+   try {
   const completion = await openai.chat.completions.create({
     model: "gpt-4o",
     messages: [
@@ -318,17 +324,53 @@ try {
   const content = completion.choices?.[0]?.message?.content;
   if (!content) throw new Error("Brak odpowiedzi od modelu");
 
-  return {
-    type: "text",
-    content
-  };
-  } catch (error: any) {
+  // 🔍 Spróbuj sparsować JSON z odpowiedzi
+  let parsed;
+  try {
+    const cleanContent = content.replace(/```json|```/g, "").trim();
+    parsed = JSON.parse(cleanContent);
+  } catch (err) {
     return {
       type: "text",
-      content: `❌ Błąd generowania diety: ${error.message || "Nieznany błąd"}`
+      content: "❌ GPT zwrócił niepoprawny JSON — nie można sparsować."
     };
   }
-}  
+
+  const rawDietPlan = parsed?.dietPlan;
+  if (!rawDietPlan) {
+    return {
+      type: "text",
+      content: "❌ JSON nie zawiera pola 'dietPlan'."
+    };
+  }
+
+  // 🧠 Walidacja i poprawa przez dqAgent
+  try {
+    const { type, plan } = await import("@/agents/dqAgent").then(m => m.dqAgent.run({
+      dietPlan: rawDietPlan,
+      model: modelKey,
+      goal: goalExplanation,
+      cpm,
+      weightKg: form.weight ?? null
+    }));
+    parsed.dietPlan = plan;
+  } catch (err) {
+    console.warn("⚠️ dqAgent błąd:", err);
+  }
+
+  // ✅ Zwróć poprawioną lub oryginalną wersję
+  return {
+    type: "text",
+    content: JSON.stringify(parsed, null, 2)
+  };
+
+} catch (error: any) {
+  return {
+    type: "text",
+    content: `❌ Błąd generowania diety: ${error.message || "Nieznany błąd"}`
+  };
+}
+}
 });
 
 export const dietAgent = new Agent({
@@ -336,4 +378,3 @@ export const dietAgent = new Agent({
   instructions: "You are a helpful clinical nutritionist generating structured 7-day diets in JSON.",
   tools: [generateDietTool]
 });
-

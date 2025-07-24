@@ -20,37 +20,76 @@ export async function interviewNarrativeAgent({
 
   const selectedLang = languageMap[lang] || 'polski';
 
-  const prompt = `
+const prompt = `
 Language: ${selectedLang}
 
 You are a clinical AI assistant.
 
-Convert the following structured patient interview into:
-A. A short paragraph (human-readable, suitable for a medical PDF)
-B. A structured JSON block summarizing key dietary hints, patient priorities, and clinical concerns.
+Your task is to analyze the entire structured patient interview and generate two outputs:
 
-Input data:
-${JSON.stringify(interviewData, null, 2).slice(0, 2500)}
+---
 
-Goal: ${goal}
-Recommendation: ${recommendation}
+1. **Narrative Summary (in ${selectedLang})**
 
-Output:
-1. One short paragraph (language: ${selectedLang})
-2. Then a JSON block like:
+- Mention data from each section:
+  - Goal of diet
+  - Dietary history
+  - Health conditions (chronic, hormonal, digestive, medications)
+  - Stress, sleep, activity, job type
+  - Addictions (smoking, alcohol, energy drinks)
+  - Eating habits (snacks, sweets, breakfast, meat, vegetables, fiber, processed food)
+  - Meal frequency and specific times (e.g., 07:00, 10:00...)
+  - Motivation, barriers, time and budget for cooking
 
-\`\`\`json
+- If patient is female, analyze section 8:
+  - Mention menstruation, hormonal disorders (e.g., PCOS), pregnancy, menopause, HTZ
+
+- Use clear, professional tone. Mention explicitly if data is missing.
+
+---
+
+2. **Structured JSON summary** like this:
+
+\\\`\\\`\\\`json
 {
-  "keyFacts": ["insulinooporność", "słaby sen", "niska aktywność"],
+  "keyFacts": [
+    "wysoki poziom stresu",
+    "PCOS",
+    "ciąża",
+    "regularne 4 posiłki dziennie",
+    "godziny posiłków: 07:00, 10:00, 15:00, 19:00"
+  ],
+  "mealTiming": {
+    "mealsPerDay": 4,
+    "preferredHours": ["07:00", "10:00", "15:00", "19:00"]
+  },
   "dietHints": {
-    "avoid": ["cukry proste", "przetworzona żywność"],
-    "recommend": ["warzywa", "produkty pełnoziarniste"]
+    "avoid": ["słodycze", "żywność wysoko przetworzona", "nadmiar soli"],
+    "recommend": ["warzywa", "produkty pełnoziarniste", "dieta niskoglikemiczna", "fitoestrogeny"]
   },
   "dqChecks": {
-    "preferModels": ["low-glycemic", "mediterranean"]
+    "preferModels": ["low glycemic", "pregnancy-safe", "anti-inflammatory"],
+    "avoidModels": []
   }
 }
-\`\`\`
+\\\`\\\`\\\`
+
+---
+
+Patient Interview (JSON):
+${JSON.stringify(interviewData, null, 2).slice(0, 5000)}
+
+Dietary goal: ${goal}
+Doctor's recommendation: ${recommendation || 'None'}
+
+---
+
+Rules:
+- Be 100% precise.
+- Do not skip any section.
+- Include even partial or ambiguous answers.
+- Output starts with paragraph (in ${selectedLang}), then JSON block.
+- Output must be copyable into medical PDF or exported as JSON.
 `;
 
   const response = await openai.chat.completions.create({

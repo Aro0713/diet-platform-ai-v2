@@ -3,59 +3,16 @@ import { Meal } from "@/types";
 import { calculateMealMacros } from "@/utils/nutrition/calculateMealMacros";
 import { validateDietWithModel } from "@/utils/validateDiet";
 
-const dietModelMap: Record<string, {
-  macros: { protein: string; fat: string; carbs: string };
-  notes?: string[];
-}> = {
-  "ketogenic": {
-    macros: { protein: "15–25%", fat: "70–80%", carbs: "5–10%" }
-  },
-  "high protein": {
-    macros: { protein: "25–35%", fat: "25–35%", carbs: "30–45%" }
-  },
-  "vegan": {
-    macros: { protein: "15–20%", fat: "25–35%", carbs: "45–60%" }
-  },
-  "low carb": {
-    macros: { protein: "25–35%", fat: "40–60%", carbs: "10–30%" }
-  },
-  "mediterranean": {
-    macros: { protein: "15–20%", fat: "30–40%", carbs: "40–55%" }
-  },
-  "gluten free": {
-    macros: { protein: "15–20%", fat: "30–40%", carbs: "40–55%" }
-  },
-  "fodmap": {
-    macros: { protein: "20–25%", fat: "30–35%", carbs: "40–50%" },
-    notes: ["Use only Low FODMAP ingredients"]
-  },
-  "renal": {
-    macros: { protein: "10–12%", fat: "30–35%", carbs: "50–60%" }
-  },
-  "liver": {
-    macros: { protein: "15–20%", fat: "20–30%", carbs: "50–60%" }
-  },
-  "anti-inflammatory": {
-    macros: { protein: "15–25%", fat: "30–40%", carbs: "35–50%" }
-  },
-  "low fat": {
-    macros: { protein: "15–25%", fat: "15–25%", carbs: "50–65%" }
-  },
-  "low sugar": {
-    macros: { protein: "20–30%", fat: "30–40%", carbs: "35–50%" }
-  },
-  "diabetes": {
-    macros: { protein: "15–20%", fat: "25–35%", carbs: "40–50%" },
-    notes: ["Use low glycemic index"]
-  },
-  "insulin resistance": {
-    macros: { protein: "20–30%", fat: "30–40%", carbs: "30–40%" }
-  },
-  "hypertension": {
-    macros: { protein: "15–20%", fat: "25–35%", carbs: "45–55%" }
+// Uproszczony helper do konwersji struktury
+function convertStructuredToFlatPlan(
+  structuredPlan: Record<string, Record<string, Meal>>
+): Record<string, Meal[]> {
+  const flat: Record<string, Meal[]> = {};
+  for (const day in structuredPlan) {
+    flat[day] = Object.values(structuredPlan[day]);
   }
-  // możesz uzupełnić więcej modeli w razie potrzeby
-};
+  return flat;
+}
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -67,7 +24,7 @@ export const dqAgent = {
     cpm,
     weightKg
   }: {
-    dietPlan: Record<string, Record<string, Meal>>; // ✅ poprawiony typ
+    dietPlan: Record<string, Record<string, Meal>>;
     model: string;
     goal?: string;
     cpm?: number | null;
@@ -75,43 +32,9 @@ export const dqAgent = {
   }) => {
     const safeCpm = cpm ?? undefined;
     const safeWeight = weightKg ?? undefined;
-    const modelKey = model?.toLowerCase()?.trim() || "";
-      const modelDefinition = dietModelMap[modelKey];
-      const macroInfo = modelDefinition?.macros
-        ? Object.entries(modelDefinition.macros)
-            .map(([k, v]) => `- ${k}: ${v}`).join('\n')
-        : "No macro data available.";
-
-      const notesInfo = modelDefinition?.notes?.join('\n') || "";
-      const modelDetails = `
-
-      📊 Diet Model Expected Structure (${model}):
-      ${macroInfo}
-      ${notesInfo ? `\n📝 Notes:\n${notesInfo}` : ""}
-      `;
-      // 🔒 Walidacja diety eliminacyjnej bez wywiadu
-if (modelKey === 'dieta eliminacyjna') {
-  const totalMeals = Object.values(dietPlan).flatMap(day => Object.values(day));
-  const riskyIngredients = ["nabiał", "jaja", "gluten", "soja", "orzech", "migdał", "krewetki", "łosoś", "tuńczyk", "owoc morza"];
-
-  const hasPotentialAllergens = totalMeals.some(meal =>
-    meal.ingredients?.some(ing =>
-      riskyIngredients.some(allergen =>
-        ing.product.toLowerCase().includes(allergen)
-      )
-    )
-  );
-
-  if (hasPotentialAllergens) {
-    return {
-      type: "text",
-      content: "⚠️ Cannot validate elimination diet: potential allergens detected and no interview data provided."
-    };
-  }
-}
 
     // 🔁 Uzupełnij brakujące makroskładniki
-    const enrichedPlan: Record<string, Record<string, Meal>> = JSON.parse(JSON.stringify(dietPlan)); // deep clone
+    const enrichedPlan: Record<string, Record<string, Meal>> = JSON.parse(JSON.stringify(dietPlan));
     for (const day of Object.keys(enrichedPlan)) {
       const meals = enrichedPlan[day];
       for (const mealKey of Object.keys(meals)) {
@@ -122,7 +45,7 @@ if (modelKey === 'dieta eliminacyjna') {
       }
     }
 
-const prompt = `
+    const prompt = `
 You are a clinical AI diet quality controller.
 
 Your task is to validate and optionally fix a 7-day meal plan based on the following:
@@ -132,8 +55,6 @@ Your task is to validate and optionally fix a 7-day meal plan based on the follo
 - Target energy requirement (CPM): ${safeCpm} kcal
 - Patient weight: ${safeWeight} kg
 
-${modelDetails}
-
 Analyze the plan by:
 1. Checking total daily and weekly kcal vs CPM (±10% acceptable)
 2. Verifying macronutrient structure per model
@@ -141,23 +62,19 @@ Analyze the plan by:
 4. Checking consistent number of meals per day
 
 Return one of the following:
-...
-
 
 ✅ VALID — if all rules are met
 
 ⚠️ Issues found:
-- List of specific problems (e.g. "Tuesday exceeds carbs limit for keto")
+- List of specific problems
 
 📋 CORRECTED_JSON:
-- Return ONLY valid JSON, strictly wrapped in a "dietPlan" field, like:
-
 {
   "dietPlan": {
     "Monday": {
-      "Śniadanie": {
+      "Breakfast": {
         "time": "07:30",
-        "menu": "Owsianka z jabłkiem",
+        "menu": "Oatmeal with apple",
         "kcal": 400,
         "ingredients": [ { "product": "...", "weight": 100 } ],
         "macros": { "protein": 20, "fat": 10, "carbs": 40 }
@@ -166,15 +83,8 @@ Return one of the following:
   }
 }
 
-🚫 DO NOT include:
-- markdown (e.g. \`\`\`json)
-- ellipsis (...), comments (//), or Note:
-- any explanation, continuation hints, or formatting outside the JSON object
-
-⚠️ Return ONLY the JSON object.
-⚠️ If unsure, omit uncertain values instead of guessing.
-
-Here is the plan to analyze:
+⚠️ Return ONLY the JSON object without markdown or comments.
+Here is the plan:
 ${JSON.stringify(enrichedPlan, null, 2)}
 `;
 
@@ -193,40 +103,38 @@ ${JSON.stringify(enrichedPlan, null, 2)}
     const text = completion.choices[0].message.content ?? "";
     const clean = text.replace(/```json|```/g, "").trim();
 
+    // 🔎 Spróbuj sparsować poprawiony plan
     if (clean.includes("CORRECTED_JSON")) {
       const startIndex = clean.indexOf("{");
       const correctedJson = clean.slice(startIndex).trim();
 
       try {
         const parsed = JSON.parse(correctedJson);
-        const correctedPlan = parsed?.dietPlan as Record<string, Record<string, Meal>>;
-        if (!correctedPlan) throw new Error("Brak dietPlan");
+        const correctedStructured = parsed?.dietPlan as Record<string, Record<string, Meal>>;
+        if (!correctedStructured) throw new Error("Brak dietPlan");
 
-        // 🔍 Porównaj jakość
         const originalMeals: Meal[] = Object.values(enrichedPlan).flatMap(day => Object.values(day));
-        const correctedMeals: Meal[] = Object.values(correctedPlan).flatMap(day => Object.values(day));
+        const correctedMeals: Meal[] = Object.values(correctedStructured).flatMap(day => Object.values(day));
 
         const issuesOriginal = validateDietWithModel(originalMeals, model);
         const issuesCorrected = validateDietWithModel(correctedMeals, model);
 
         if (issuesCorrected.length < issuesOriginal.length) {
-          console.log("✅ Zwrot poprawionej diety (mniej błędów):", issuesCorrected);
+          console.log("✅ Ulepszony plan wybrany przez dqAgent:", issuesCorrected);
           return {
-            type: "text",
-            content: correctedJson
+            type: "dietPlan",
+            plan: convertStructuredToFlatPlan(correctedStructured)
           };
-        } else {
-          console.log("ℹ️ Poprawiona dieta nie jest lepsza – zwracam oryginał.");
         }
       } catch (e) {
-        console.warn("❌ Nie udało się sparsować poprawionego planu:", e);
+        console.warn("❌ Nie udało się sparsować JSON:", e);
       }
     }
 
-    // Jeśli nie rozpoznano JSON lub dieta nie była lepsza → zwróć oryginał
+    // Jeśli nie było poprawki lub poprawka gorsza → zwróć oryginał
     return {
-      type: "text",
-      content: JSON.stringify({ dietPlan: enrichedPlan }, null, 2)
+      type: "dietPlan",
+      plan: convertStructuredToFlatPlan(enrichedPlan)
     };
   }
 };

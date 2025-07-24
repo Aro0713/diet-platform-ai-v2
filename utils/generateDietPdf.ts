@@ -378,18 +378,32 @@ function summarizeNutritionByDay(diet: Meal[]) {
   fat: number;
   carbs: number;
   fiber: number;
+  potassium: number;
+  sodium: number;
 }> = {};
 
   diet.forEach(meal => {
     const day = (meal as any).day || 'Inne';
     if (!byDay[day]) {
-      byDay[day] = { kcal: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, };
-    }
+  byDay[day] = {
+    kcal: 0,
+    protein: 0,
+    fat: 0,
+    carbs: 0,
+    fiber: 0,
+    potassium: 0,
+    sodium: 0
+  };
+}
+
     byDay[day].kcal += meal.calories || 0;
     byDay[day].protein += meal.macros?.protein || 0;
     byDay[day].fat += meal.macros?.fat || 0;
     byDay[day].carbs += meal.macros?.carbs || 0;
     byDay[day].fiber += meal.macros?.fiber || 0;
+    byDay[day].potassium += meal.macros?.potassium || 0;
+    byDay[day].sodium += meal.macros?.sodium || 0;
+
   });
   return byDay;
 }
@@ -398,23 +412,27 @@ content.push({ text: tUI('dailyNutritionSummaryTitle', lang), style: 'subheader'
 
 content.push({
   table: {
-    widths: ['*', 'auto', 'auto', 'auto', 'auto'],
-    body: [
-      [
-        tUI('day', lang),
-        'kcal',
-        tUI('protein', lang),
-        tUI('fat', lang),
-        tUI('carbs', lang)
-      ],
-      ...Object.entries(dailySummary).map(([day, values]) => [
-        day,
-        Math.round(values.kcal),
-        `${Math.round(values.protein)} g`,
-        `${Math.round(values.fat)} g`,
-        `${Math.round(values.carbs)} g`
-      ])
-    ]
+        widths: ['*', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'],
+body: [
+  [
+    tUI('day', lang),
+    'kcal',
+    tUI('protein', lang),
+    tUI('fat', lang),
+    tUI('carbs', lang),
+    tUI('fiber', lang),
+    tUI('potassium', lang) + ' / ' + tUI('sodium', lang)
+  ],
+  ...Object.entries(dailySummary).map(([day, values]) => [
+    day, // ❗ brakowało też tego
+    Math.round(values.kcal),
+    `${Math.round(values.protein)} g`,
+    `${Math.round(values.fat)} g`,
+    `${Math.round(values.carbs)} g`,
+    `${Math.round(values.fiber)} g`,
+    `${Math.round(values.potassium)} mg / ${Math.round(values.sodium)} mg`
+  ])
+]
   },
   layout: 'lightHorizontalLines',
   margin: [0, 0, 0, 10]
@@ -427,9 +445,18 @@ const weekly = Object.values(dailySummary).reduce(
     fat: a.fat + b.fat,
     carbs: a.carbs + b.carbs,
     fiber: a.fiber + b.fiber,
-  
+    potassium: a.potassium + b.potassium,
+    sodium: a.sodium + b.sodium
   }),
-  { kcal: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, }
+  {
+    kcal: 0,
+    protein: 0,
+    fat: 0,
+    carbs: 0,
+    fiber: 0,
+    potassium: 0, // ✅ dodane
+    sodium: 0     // ✅ dodane
+  }
 );
 
 content.push({ text: tUI('weeklyNutritionSummaryTitle', lang), style: 'subheader', margin: [0, 10, 0, 6] });
@@ -438,20 +465,25 @@ content.push({
 table: {
   widths: ['*', 'auto', 'auto', 'auto', 'auto'],
   body: [
-    [
-      tUI('week', lang),
-      'kcal',
-      tUI('protein', lang),
-      tUI('fat', lang),
-      tUI('carbs', lang)
-    ],
-    [
-      tUI('total', lang),
-      Math.round(weekly.kcal),
-      `${Math.round(weekly.protein)} g`,
-      `${Math.round(weekly.fat)} g`,
-      `${Math.round(weekly.carbs)} g`
-    ]
+[
+  tUI('week', lang),
+  'kcal',
+  tUI('protein', lang),
+  tUI('fat', lang),
+  tUI('carbs', lang),
+  tUI('fiber', lang),
+  tUI('potassium', lang) + ' / ' + tUI('sodium', lang)
+],
+[
+  tUI('total', lang),
+  Math.round(weekly.kcal),
+  `${Math.round(weekly.protein)} g`,
+  `${Math.round(weekly.fat)} g`,
+  `${Math.round(weekly.carbs)} g`,
+  `${Math.round(weekly.fiber)} g`,
+  `${Math.round(weekly.potassium)} mg / ${Math.round(weekly.sodium)} mg`
+]
+
   ]
 },
   layout: 'lightHorizontalLines',

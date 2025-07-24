@@ -11,7 +11,8 @@ export async function medicalLabAgent({
   description: string;
   lang: string;
 }): Promise<string> {
-  const prompt = `
+  
+ const prompt = `
 You are a professional medical lab assistant AI.
 
 Patient has submitted:
@@ -20,20 +21,53 @@ Patient has submitted:
 - Language of output: ${lang}
 
 Your tasks:
-1. Detect abnormalities.
-2. Summarize clinical risks.
-3. Suggest dietary/lifestyle recommendations.
-4. Output human-readable summary followed by a JSON block:
+1. Analyze the lab test results and clinical description.
+2. Detect abnormalities (too high/low values).
+3. Identify risks (e.g. cardiovascular, renal, metabolic).
+4. Based on findings, generate precise dietary and supplement guidance:
 
+Return 2 parts:
+
+---
+
+**A. Clinical summary** (in ${lang})
+- Write clearly what is out of range and why it matters.
+- Mention what dietary changes are needed and why (e.g. lower sodium due to hypertension risk).
+
+---
+
+**B. JSON block** (used by diet engine)
+
+\`\`\`json
 {
-  "risks": [...],
-  "warnings": [...],
-  "dietHints": { "avoid": [...], "recommend": [...] },
-  "dqChecks": { "avoidIngredients": [...], "preferModels": [...] }
+  "risks": ["hyperlipidemia", "elevated LDL", "low vitamin D"],
+  "warnings": ["risk of cardiovascular disease", "risk of metabolic syndrome"],
+  "dietHints": {
+    "avoid": ["trans fats", "added sugar", "red meat"],
+    "recommend": ["fiber", "omega-3", "leafy greens"]
+  },
+  "dqChecks": {
+    "avoidIngredients": ["salt", "sugar", "butter"],
+    "preferModels": ["low fat", "anti-inflammatory"],
+    "recommendMacros": ["high fiber", "moderate protein"],
+    "avoidMacros": ["high saturated fat", "high sodium"],
+    "recommendMicros": ["magnesium", "vitamin D", "potassium"],
+    "avoidMicros": ["sodium", "cholesterol"]
+  }
 }
+\`\`\`
 
-Output in language: ${lang}
+---
+
+Instructions:
+- Always return both paragraph + JSON.
+- Use clinical terminology.
+- Return only evidence-based advice.
+- Output must be structured and consistent.
+
+Language of output: ${lang}
 `;
+
 
   const completion = await openai.chat.completions.create({
     model: 'gpt-4o',

@@ -229,6 +229,22 @@ const DietTable: React.FC<DietTableProps> = ({
           </tr>
         </tbody>
       </table>
+
+      {isEditable && (
+        <div className="mt-4 text-center">
+          <button
+            onClick={handleSave}
+            className="bg-green-600 text-white px-4 py-2 rounded-md font-medium hover:bg-green-700"
+          >
+            Zatwierdź dietę
+          </button>
+          {saveMessage && (
+            <p className="mt-2 text-sm text-green-500 dark:text-green-400 font-medium">
+              {saveMessage}
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 };

@@ -7,8 +7,8 @@ export type Ingredient = {
 export interface Meal {
   name: string;
   time: string;
-  date?: string; // 🆕 do PDF
-  day?: string;  // ✅ DODAJ TO POLE
+  date?: string;
+  day?: string;
   menu: string;
   description?: string;
   ingredients: Ingredient[];
@@ -19,12 +19,12 @@ export interface Meal {
     carbs?: number;
     fat?: number;
     sodium?: number;
-    fiber?: number;     // 🆕 do PDF
-    potassium?: number; // 🆕 do PDF
+    fiber?: number;
+    potassium?: number;
   };
-  imageUrl?: string; 
+  micros?: Record<string, number>; // 🧬 mikroskładniki – DODAJ TO
+  imageUrl?: string;
 }
-
 
 export type TestResult = {
   name: string;
