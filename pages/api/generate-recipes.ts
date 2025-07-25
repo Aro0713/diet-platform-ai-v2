@@ -51,7 +51,7 @@ Each recipe should include:
 - Day and meal (e.g. Monday - Śniadanie)
 - Short description (1–2 sentences)
 - Number of servings (assume 1 unless stated otherwise)
-- Ingredients: name, weight in grams, unit
+- Ingredients: product (string), weight (number), unit (string)
 - Step-by-step preparation instructions (numbered)
 - Estimated cooking time
 - Nutrient summary: protein, fat, carbs, fiber, sodium, and all key micronutrients if available
@@ -71,7 +71,11 @@ Format strictly as JSON:
         "dish": "Owsianka z malinami",
         "description": "A warm oatmeal breakfast with fresh raspberries and flax seeds.",
         "servings": 1,
-        "ingredients": [...],
+        "ingredients": [
+          { "product": "Płatki owsiane", "weight": 60, "unit": "g" },
+          { "product": "Mleko", "weight": 200, "unit": "ml" },
+          { "product": "Maliny", "weight": 50, "unit": "g" }
+        ],
         "steps": [...],
         "time": "10 min",
         "nutrientSummary": {

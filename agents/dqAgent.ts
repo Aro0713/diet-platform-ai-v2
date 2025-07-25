@@ -90,16 +90,15 @@ export const dqAgent = {
     const safeCpm = cpm ?? undefined;
     const safeWeight = weightKg ?? undefined;
 
-    const enrichedPlan: Record<string, Record<string, Meal>> = JSON.parse(JSON.stringify(dietPlan));
-    for (const day of Object.keys(enrichedPlan)) {
-      const meals = enrichedPlan[day];
-      for (const mealKey of Object.keys(meals)) {
-        const meal = meals[mealKey];
-        if (!meal.macros || Object.keys(meal.macros).length === 0) {
-          meal.macros = calculateMealMacros(meal.ingredients);
-        }
-      }
-    }
+const enrichedPlan: Record<string, Record<string, Meal>> = JSON.parse(JSON.stringify(dietPlan));
+for (const day of Object.keys(enrichedPlan)) {
+  const meals = enrichedPlan[day];
+  for (const mealKey of Object.keys(meals)) {
+    const meal = meals[mealKey];
+    const calculated = calculateMealMacros(meal.ingredients);
+    meal.macros = { ...calculated, ...(meal.macros || {}) };
+  }
+}
 
     // 🔍 Walidacja zakresów z uwzględnieniem modelu i chorób
     const mergedRequirements = mergeRequirements([
@@ -136,9 +135,16 @@ Your task is to validate and optionally fix a 7-day meal plan based on the follo
 
 Analyze the plan by:
 1. Checking total daily and weekly kcal vs CPM (±10% acceptable)
-2. Verifying macronutrient structure per model
+2. Verifying macronutrient and micronutrient structure based on ranges
 3. Detecting unrealistic nutrient gaps or excess
 4. Checking consistent number of meals per day
+
+Additional context:
+- Average daily nutrients (all): ${JSON.stringify(avg, null, 2)}
+- Nutrient range violations: ${violations.join("; ") || "None"}
+- Target nutrient ranges (merged from model + conditions):
+${JSON.stringify(mergedRequirements, null, 2)}
+
 
 Return one of the following:
 ✅ VALID — if all rules are met
