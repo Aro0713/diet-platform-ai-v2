@@ -102,8 +102,8 @@ if (!finalNarrative) {
 
   // ✅ Strona tytułowa
   content.push(
-  { text: `${tUI('fullName', lang)}: ${patient.name}`, style: 'header', alignment: 'center', fontSize: 22, margin: [0, 60, 0, 4] },
-  { text: `${tUI('assignedDoctor', lang)}: ${dietitianSignature}`, alignment: 'center', fontSize: 12, margin: [0, 0, 0, 6] },
+  { text: `${tUI('fullName', lang)}: ${patient.name}`, style: 'header', alignment: 'center', fontSize: 22, margin: [0, 30, 0, 4] },
+  { text: `${tUI('assignedDoctor', lang)}: ${dietitianSignature || tUI('missingData', lang)}`, alignment: 'center', fontSize: 12, margin: [0, 0, 0, 6] },
   { text: `${startDate} – ${endDate}`, alignment: 'center', fontSize: 14, margin: [0, 0, 0, 20] },
   { text: `${tUI('dietitianSignature', lang)}: ${dietitianSignature}`, alignment: 'center', fontSize: 12 },
   {
@@ -234,14 +234,15 @@ normalizedDiet.forEach((meal, idx) => {
               columns: [
                 {
                   width: '*',
-                  text:
-`🔥 ${meal.calories} kcal
-💉 IG: ${meal.glycemicIndex}
-🥩 ${tUI('protein', lang)}: ${meal.macros?.protein ?? 0} g
-🧈 ${tUI('fat', lang)}: ${meal.macros?.fat ?? 0} g
-🍞 ${tUI('carbs', lang)}: ${meal.macros?.carbs ?? 0} g
-🌿 ${tUI('fiber', lang)}: ${meal.macros?.fiber ?? 0} g`,
-                  fontSize: 9
+                  text: [
+                  `🔥 ${meal.calories} kcal`,
+                  meal.glycemicIndex ? `💉 IG: ${meal.glycemicIndex}` : '',
+                  meal.macros?.protein ? `🥩 ${tUI('protein', lang)}: ${meal.macros.protein} g` : '',
+                  meal.macros?.fat ? `🧈 ${tUI('fat', lang)}: ${meal.macros.fat} g` : '',
+                  meal.macros?.carbs ? `🍞 ${tUI('carbs', lang)}: ${meal.macros.carbs} g` : '',
+                  meal.macros?.fiber ? `🌿 ${tUI('fiber', lang)}: ${meal.macros.fiber} g` : ''
+                ].filter(Boolean).join('\n'),
+                 fontSize: 9
                 },
                 image ? (
                   image.startsWith('data:image') ? {
@@ -300,61 +301,6 @@ normalizedDiet.forEach((meal, idx) => {
   layout: 'lightHorizontalLines',
   margin: [0, 0, 0, 10]
 });
-
-// 📖 Sekcja: Przepisy kulinarne
-if (recipes && Object.keys(recipes).length > 0) {
-  content.push({
-    text: tUI('recipesTitle', lang),
-    style: 'header',
-    margin: [0, 20, 0, 10]
-  });
-
-  for (const [day, meals] of Object.entries(recipes)) {
-    if (!meals || Object.keys(meals).length === 0) continue;
-
-    content.push({
-      text: day,
-      style: 'subheader',
-      margin: [0, 10, 0, 6]
-    });
-
-    for (const [mealName, recipe] of Object.entries(meals)) {
-      if (!recipe || !recipe.dish) continue;
-
-      content.push(
-        { text: `${tUI(mealName.toLowerCase(), lang)}: ${recipe.dish}`, style: 'boldCell' },
-
-        ...(recipe.description ? [
-          { text: recipe.description, italics: true, fontSize: 10, margin: [0, 2, 0, 4] }
-        ] : []),
-
-        { text: `${tUI('ingredients', lang)}:`, style: 'smallCell' },
-        {
-          ul: Array.isArray(recipe.ingredients)
-            ? recipe.ingredients
-                .filter(ing => ing?.product && ing?.weight && ing?.unit)
-                .map(ing => `${ing.product} – ${ing.weight} ${ing.unit}`)
-            : [],
-          margin: [0, 2, 0, 4]
-        },
-
-        { text: `${tUI('steps', lang)}:`, style: 'smallCell' },
-        {
-          ol: Array.isArray(recipe.steps)
-            ? recipe.steps.filter(step => typeof step === 'string')
-            : [],
-          margin: [0, 2, 0, 6]
-        },
-
-        ...(recipe.time ? [{
-          text: `⏱️ ${tUI('time', lang)}: ${recipe.time}`,
-          style: 'smallCell',
-          margin: [0, 0, 0, 10]
-        }] : [])
-      );
-    }
-  }
-}
 
   }
   // ➕ Lista zakupów z podziałem na kategorie
@@ -443,38 +389,73 @@ function summarizeNutritionByDay(diet: Meal[]) {
 
   return byDay;
 }
-
-
+const format = (value: number, unit: string) => value > 0 ? `${Math.round(value)}${unit}` : '';
 const dailySummary = summarizeNutritionByDay(diet);
-content.push({ text: tUI('dailyNutritionSummaryTitle', lang), style: 'subheader', margin: [0, 10, 0, 6] });
+content.push({
+  text: tUI('dailyNutritionSummaryTitle', lang),
+  style: 'subheader',
+  margin: [0, 10, 0, 6]
+});
 
 content.push({
-  table: {
-        widths: ['*', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'],
-body: [
-  [
-    tUI('day', lang),
-    'kcal',
-    tUI('protein', lang),
-    tUI('fat', lang),
-    tUI('carbs', lang),
-    tUI('fiber', lang),
-    tUI('potassium', lang) + ' / ' + tUI('sodium', lang)
-  ],
-  ...Object.entries(dailySummary).map(([day, values]) => [
-    day, // ❗ brakowało też tego
-    Math.round(values.kcal),
-    `${Math.round(values.protein)} g`,
-    `${Math.round(values.fat)} g`,
-    `${Math.round(values.carbs)} g`,
-    `${Math.round(values.fiber)} g`,
-    `${Math.round(values.potassium)} mg / ${Math.round(values.sodium)} mg`
-  ])
-]
-  },
+  table: buildNutritionTable(dailySummary, tUI('day', lang), lang),
   layout: 'lightHorizontalLines',
   margin: [0, 0, 0, 10]
 });
+// 📖 Sekcja: Przepisy kulinarne
+if (recipes && Object.keys(recipes).length > 0) {
+  content.push({
+    text: tUI('recipesTitle', lang),
+    style: 'header',
+    margin: [0, 20, 0, 10]
+  });
+
+  for (const [day, meals] of Object.entries(recipes)) {
+    if (!meals || Object.keys(meals).length === 0) continue;
+
+    content.push({
+      text: day,
+      style: 'subheader',
+      margin: [0, 10, 0, 6]
+    });
+
+    for (const [mealName, recipe] of Object.entries(meals)) {
+      if (!recipe || !recipe.dish) continue;
+
+      content.push(
+        { text: `${tUI(mealName.toLowerCase(), lang)}: ${recipe.dish}`, style: 'boldCell' },
+
+        ...(recipe.description ? [
+          { text: recipe.description, italics: true, fontSize: 10, margin: [0, 2, 0, 4] }
+        ] : []),
+
+        { text: `${tUI('ingredients', lang)}:`, style: 'smallCell' },
+        {
+          ul: Array.isArray(recipe.ingredients)
+            ? recipe.ingredients
+                .filter(ing => ing?.product && ing?.weight && ing?.unit)
+                .map(ing => `${ing.product} – ${ing.weight} ${ing.unit}`)
+            : [],
+          margin: [0, 2, 0, 4]
+        },
+
+        { text: `${tUI('steps', lang)}:`, style: 'smallCell' },
+        {
+          ol: Array.isArray(recipe.steps)
+            ? recipe.steps.filter(step => typeof step === 'string')
+            : [],
+          margin: [0, 2, 0, 6]
+        },
+
+        ...(recipe.time ? [{
+          text: `⏱️ ${tUI('time', lang)}: ${recipe.time}`,
+          style: 'smallCell',
+          margin: [0, 0, 0, 10]
+        }] : [])
+      );
+    }
+  }
+}
 
 const weekly = Object.values(dailySummary).reduce((acc, day) => {
   for (const key of Object.keys(day)) {
@@ -501,77 +482,75 @@ const weekly = Object.values(dailySummary).reduce((acc, day) => {
   vitaminK: 0
 });
 
-content.push({ text: tUI('dailyNutritionSummaryTitle', lang), style: 'subheader', margin: [0, 10, 0, 6] });
+function buildNutritionTable(
+  rows: Record<string, Record<string, number>>,
+  label: string,
+  lang: LangKey
+) {
+  const keys = Object.keys(Object.values(rows)[0] || {});
+  const totals: Record<string, number> = {};
 
-content.push({
-  table: {
-    widths: ['*', ...Array(17).fill('auto')],
-    body: [
-      [
-        tUI('day', lang), 'kcal', 'B', 'T', 'W', '🌿', '🥔', '🧂', '🦴', '🧬', '🩸', '🧪',
-        '☀️ D', '🧠 B12', '🍊 C', '👁️ A', '🧈 E', '💉 K'
-      ],
-      ...Object.entries(dailySummary).map(([day, values]) => [
-        day,
-        Math.round(values.kcal),
-        `${Math.round(values.protein)}g`,
-        `${Math.round(values.fat)}g`,
-        `${Math.round(values.carbs)}g`,
-        `${Math.round(values.fiber)}g`,
-        `${Math.round(values.potassium)}mg`,
-        `${Math.round(values.sodium)}mg`,
-        `${Math.round(values.calcium)}mg`,
-        `${Math.round(values.magnesium)}mg`,
-        `${Math.round(values.iron)}mg`,
-        `${Math.round(values.zinc)}mg`,
-        `${Math.round(values.vitaminD)}µg`,
-        `${Math.round(values.vitaminB12)}µg`,
-        `${Math.round(values.vitaminC)}mg`,
-        `${Math.round(values.vitaminA)}µg`,
-        `${Math.round(values.vitaminE)}mg`,
-        `${Math.round(values.vitaminK)}µg`
-      ])
-    ]
-  },
-  layout: 'lightHorizontalLines',
-  margin: [0, 0, 0, 10]
-});
-content.push({ text: tUI('weeklyNutritionSummaryTitle', lang), style: 'subheader', margin: [0, 10, 0, 6] });
+  for (const row of Object.values(rows)) {
+    for (const key of keys) {
+      totals[key] = (totals[key] || 0) + (row[key] || 0);
+    }
+  }
 
-content.push({
-  table: {
-    widths: ['*', ...Array(17).fill('auto')],
-    body: [
-      [
-        tUI('week', lang), 'kcal', 'B', 'T', 'W', '🌿', '🥔', '🧂', '🦴', '🧬', '🩸', '🧪',
-        '☀️ D', '🧠 B12', '🍊 C', '👁️ A', '🧈 E', '💉 K'
-      ],
-      [
-        tUI('total', lang),
-        Math.round(weekly.kcal),
-        `${Math.round(weekly.protein)}g`,
-        `${Math.round(weekly.fat)}g`,
-        `${Math.round(weekly.carbs)}g`,
-        `${Math.round(weekly.fiber)}g`,
-        `${Math.round(weekly.potassium)}mg`,
-        `${Math.round(weekly.sodium)}mg`,
-        `${Math.round(weekly.calcium)}mg`,
-        `${Math.round(weekly.magnesium)}mg`,
-        `${Math.round(weekly.iron)}mg`,
-        `${Math.round(weekly.zinc)}mg`,
-        `${Math.round(weekly.vitaminD)}µg`,
-        `${Math.round(weekly.vitaminB12)}µg`,
-        `${Math.round(weekly.vitaminC)}mg`,
-        `${Math.round(weekly.vitaminA)}µg`,
-        `${Math.round(weekly.vitaminE)}mg`,
-        `${Math.round(weekly.vitaminK)}µg`
-      ]
-    ]
-  },
-  layout: 'lightHorizontalLines',
-  margin: [0, 0, 0, 10]
-});
+  const shownKeys = keys.filter((key) => totals[key] > 0);
 
+  const labels: Record<string, string> = {
+    kcal: 'kcal',
+    protein: 'B',
+    fat: 'T',
+    carbs: 'W',
+    fiber: '🌿',
+    sodium: '🧂',
+    potassium: '🥔',
+    calcium: '🦴',
+    magnesium: '🧬',
+    iron: '🩸',
+    zinc: '🧪',
+    vitaminD: '☀️ D',
+    vitaminB12: '🧠 B12',
+    vitaminC: '🍊 C',
+    vitaminA: '👁️ A',
+    vitaminE: '🧈 E',
+    vitaminK: '💉 K'
+  };
+
+  const units: Record<string, string> = {
+    kcal: '',
+    protein: 'g', fat: 'g', carbs: 'g', fiber: 'g',
+    sodium: 'mg', potassium: 'mg', calcium: 'mg', magnesium: 'mg',
+    iron: 'mg', zinc: 'mg',
+    vitaminD: 'µg', vitaminB12: 'µg', vitaminC: 'mg',
+    vitaminA: 'µg', vitaminE: 'mg', vitaminK: 'µg'
+  };
+
+  const header = [
+    label,
+    ...shownKeys.map((k) => labels[k] || k)
+  ];
+
+  const body = Object.entries(rows).map(([day, values]) => ([
+    day,
+    ...shownKeys.map((k) =>
+      values[k] > 0 ? `${Math.round(values[k])}${units[k] || ''}` : ''
+    )
+  ]));
+
+  const totalRow = [
+    tUI('total', lang),
+    ...shownKeys.map((k) =>
+      totals[k] > 0 ? `${Math.round(totals[k])}${units[k] || ''}` : ''
+    )
+  ];
+
+  return {
+    widths: ['*', ...Array(shownKeys.length).fill('auto')],
+    body: [header, ...body, totalRow]
+  };
+}
 
   const qrBase64 = await QRCode.toDataURL('https://www.dcp.care');
   const formattedDate = new Date().toISOString().slice(0, 10);
@@ -618,7 +597,7 @@ content.push({
 
     footer: function (currentPage: number, pageCount: number) {
       return {
-        text: `© Diet Care Platform — ${dietitianSignature} | Strona ${currentPage} z ${pageCount}`,
+        text: `© Diet Care Platform — ${dietitianSignature || tUI('missingData', lang)} | Strona ${currentPage} z ${pageCount}`,
         style: 'footer'
       };
     }
