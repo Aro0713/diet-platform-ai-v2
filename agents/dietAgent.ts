@@ -2,6 +2,7 @@ import { Agent, tool } from "@openai/agents";
 import OpenAI from "openai";
 import { interviewNarrativeAgent } from "@/agents/interviewNarrativeAgent";
 import { medicalLabAgent } from "@/agents/medicalLabAgent";
+import { nutrientRequirementsMap, type NutrientRequirements } from "@/utils/nutrientRequirementsMap";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -235,6 +236,12 @@ export const generateDietTool = tool({
     const selectedLang = languageMap[lang] || "polski";
     const daysInLang = dayNames[lang] || dayNames['pl'];
     const daysList = daysInLang.map(d => `- ${d}`).join('\n');
+    
+    function getNutrientRequirements(form: any): NutrientRequirements | null {
+      const primary = nutrientRequirementsMap[form.model] || null;
+      // Możesz tu później dodać logiczne łączenie z chorobami
+      return primary;
+    }
 
     const bmi = form.bmi ?? (form.weight && form.height
       ? parseFloat((form.weight / ((form.height / 100) ** 2)).toFixed(1))
@@ -260,6 +267,12 @@ export const generateDietTool = tool({
     ${modelMacroStr}
     ${modelNotes ? `\n📌 Notes:\n${modelNotes}` : ""}
     `;
+    const nutrientRequirements = getNutrientRequirements(form);
+    const nutrientRequirementsText = nutrientRequirements
+      ? Object.entries(nutrientRequirements)
+          .map(([k, v]) => `- ${k}: ${v.min} – ${v.max}`)
+          .join('\n')
+      : "⚠️ No specific micronutrient ranges found for this model.";
 
     const jsonFormatPreview = daysInLang.map(day => `    \"${day}\": { ... }`).join(',\n');
 
@@ -283,6 +296,9 @@ ${daysList}
 Base the plan on:
 ✔ Patient profile from interview:
 ${narrative}
+
+✔ Required nutrient ranges:
+${nutrientRequirementsText}
 
 ✔ Clinical risks and suggestions:
 ${medical}

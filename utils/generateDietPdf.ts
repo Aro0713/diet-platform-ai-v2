@@ -102,7 +102,8 @@ if (!finalNarrative) {
 
   // ✅ Strona tytułowa
   content.push(
-  { text: patient.name, style: 'header', alignment: 'center', fontSize: 26, margin: [0, 60, 0, 10] },
+  { text: `${tUI('fullName', lang)}: ${patient.name}`, style: 'header', alignment: 'center', fontSize: 22, margin: [0, 60, 0, 4] },
+  { text: `${tUI('assignedDoctor', lang)}: ${dietitianSignature}`, alignment: 'center', fontSize: 12, margin: [0, 0, 0, 6] },
   { text: `${startDate} – ${endDate}`, alignment: 'center', fontSize: 14, margin: [0, 0, 0, 20] },
   { text: `${tUI('dietitianSignature', lang)}: ${dietitianSignature}`, alignment: 'center', fontSize: 12 },
   {
@@ -405,41 +406,45 @@ if (recipes && Object.keys(recipes).length > 0) {
   }
 
 function summarizeNutritionByDay(diet: Meal[]) {
- const byDay: Record<string, {
-  kcal: number;
-  protein: number;
-  fat: number;
-  carbs: number;
-  fiber: number;
-  potassium: number;
-  sodium: number;
-}> = {};
+  const byDay: Record<string, Record<string, number>> = {};
 
   diet.forEach(meal => {
     const day = (meal as any).day || 'Inne';
     if (!byDay[day]) {
-  byDay[day] = {
-    kcal: 0,
-    protein: 0,
-    fat: 0,
-    carbs: 0,
-    fiber: 0,
-    potassium: 0,
-    sodium: 0
-  };
-}
+      byDay[day] = {
+        kcal: 0,
+        protein: 0,
+        fat: 0,
+        carbs: 0,
+        fiber: 0,
+        sodium: 0,
+        potassium: 0,
+        calcium: 0,
+        magnesium: 0,
+        iron: 0,
+        zinc: 0,
+        vitaminD: 0,
+        vitaminB12: 0,
+        vitaminC: 0,
+        vitaminA: 0,
+        vitaminE: 0,
+        vitaminK: 0
+      };
+    }
 
     byDay[day].kcal += meal.calories || 0;
-    byDay[day].protein += meal.macros?.protein || 0;
-    byDay[day].fat += meal.macros?.fat || 0;
-    byDay[day].carbs += meal.macros?.carbs || 0;
-    byDay[day].fiber += meal.macros?.fiber || 0;
-    byDay[day].potassium += meal.macros?.potassium || 0;
-    byDay[day].sodium += meal.macros?.sodium || 0;
 
+    for (const key of Object.keys(byDay[day])) {
+      if (key !== 'kcal') {
+        byDay[day][key] += meal.macros?.[key] || 0;
+      }
+    }
   });
+
   return byDay;
 }
+
+
 const dailySummary = summarizeNutritionByDay(diet);
 content.push({ text: tUI('dailyNutritionSummaryTitle', lang), style: 'subheader', margin: [0, 10, 0, 6] });
 
@@ -471,57 +476,102 @@ body: [
   margin: [0, 0, 0, 10]
 });
 
-const weekly = Object.values(dailySummary).reduce(
-  (a, b) => ({
-    kcal: a.kcal + b.kcal,
-    protein: a.protein + b.protein,
-    fat: a.fat + b.fat,
-    carbs: a.carbs + b.carbs,
-    fiber: a.fiber + b.fiber,
-    potassium: a.potassium + b.potassium,
-    sodium: a.sodium + b.sodium
-  }),
-  {
-    kcal: 0,
-    protein: 0,
-    fat: 0,
-    carbs: 0,
-    fiber: 0,
-    potassium: 0, // ✅ dodane
-    sodium: 0     // ✅ dodane
+const weekly = Object.values(dailySummary).reduce((acc, day) => {
+  for (const key of Object.keys(day)) {
+    acc[key] = (acc[key] || 0) + day[key];
   }
-);
+  return acc;
+}, {
+  kcal: 0,
+  protein: 0,
+  fat: 0,
+  carbs: 0,
+  fiber: 0,
+  sodium: 0,
+  potassium: 0,
+  calcium: 0,
+  magnesium: 0,
+  iron: 0,
+  zinc: 0,
+  vitaminD: 0,
+  vitaminB12: 0,
+  vitaminC: 0,
+  vitaminA: 0,
+  vitaminE: 0,
+  vitaminK: 0
+});
 
-content.push({ text: tUI('weeklyNutritionSummaryTitle', lang), style: 'subheader', margin: [0, 10, 0, 6] });
+content.push({ text: tUI('dailyNutritionSummaryTitle', lang), style: 'subheader', margin: [0, 10, 0, 6] });
 
 content.push({
-table: {
-widths: ['*', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'],
-  body: [
-[
-  tUI('week', lang),
-  'kcal',
-  tUI('protein', lang),
-  tUI('fat', lang),
-  tUI('carbs', lang),
-  tUI('fiber', lang),
-  tUI('potassium', lang) + ' / ' + tUI('sodium', lang)
-],
-[
-  tUI('total', lang),
-  Math.round(weekly.kcal),
-  `${Math.round(weekly.protein)} g`,
-  `${Math.round(weekly.fat)} g`,
-  `${Math.round(weekly.carbs)} g`,
-  `${Math.round(weekly.fiber)} g`,
-  `${Math.round(weekly.potassium)} mg / ${Math.round(weekly.sodium)} mg`
-]
-
-  ]
-},
+  table: {
+    widths: ['*', ...Array(17).fill('auto')],
+    body: [
+      [
+        tUI('day', lang), 'kcal', 'B', 'T', 'W', '🌿', '🥔', '🧂', '🦴', '🧬', '🩸', '🧪',
+        '☀️ D', '🧠 B12', '🍊 C', '👁️ A', '🧈 E', '💉 K'
+      ],
+      ...Object.entries(dailySummary).map(([day, values]) => [
+        day,
+        Math.round(values.kcal),
+        `${Math.round(values.protein)}g`,
+        `${Math.round(values.fat)}g`,
+        `${Math.round(values.carbs)}g`,
+        `${Math.round(values.fiber)}g`,
+        `${Math.round(values.potassium)}mg`,
+        `${Math.round(values.sodium)}mg`,
+        `${Math.round(values.calcium)}mg`,
+        `${Math.round(values.magnesium)}mg`,
+        `${Math.round(values.iron)}mg`,
+        `${Math.round(values.zinc)}mg`,
+        `${Math.round(values.vitaminD)}µg`,
+        `${Math.round(values.vitaminB12)}µg`,
+        `${Math.round(values.vitaminC)}mg`,
+        `${Math.round(values.vitaminA)}µg`,
+        `${Math.round(values.vitaminE)}mg`,
+        `${Math.round(values.vitaminK)}µg`
+      ])
+    ]
+  },
   layout: 'lightHorizontalLines',
   margin: [0, 0, 0, 10]
 });
+content.push({ text: tUI('weeklyNutritionSummaryTitle', lang), style: 'subheader', margin: [0, 10, 0, 6] });
+
+content.push({
+  table: {
+    widths: ['*', ...Array(17).fill('auto')],
+    body: [
+      [
+        tUI('week', lang), 'kcal', 'B', 'T', 'W', '🌿', '🥔', '🧂', '🦴', '🧬', '🩸', '🧪',
+        '☀️ D', '🧠 B12', '🍊 C', '👁️ A', '🧈 E', '💉 K'
+      ],
+      [
+        tUI('total', lang),
+        Math.round(weekly.kcal),
+        `${Math.round(weekly.protein)}g`,
+        `${Math.round(weekly.fat)}g`,
+        `${Math.round(weekly.carbs)}g`,
+        `${Math.round(weekly.fiber)}g`,
+        `${Math.round(weekly.potassium)}mg`,
+        `${Math.round(weekly.sodium)}mg`,
+        `${Math.round(weekly.calcium)}mg`,
+        `${Math.round(weekly.magnesium)}mg`,
+        `${Math.round(weekly.iron)}mg`,
+        `${Math.round(weekly.zinc)}mg`,
+        `${Math.round(weekly.vitaminD)}µg`,
+        `${Math.round(weekly.vitaminB12)}µg`,
+        `${Math.round(weekly.vitaminC)}mg`,
+        `${Math.round(weekly.vitaminA)}µg`,
+        `${Math.round(weekly.vitaminE)}mg`,
+        `${Math.round(weekly.vitaminK)}µg`
+      ]
+    ]
+  },
+  layout: 'lightHorizontalLines',
+  margin: [0, 0, 0, 10]
+});
+
 
   const qrBase64 = await QRCode.toDataURL('https://www.dcp.care');
   const formattedDate = new Date().toISOString().slice(0, 10);

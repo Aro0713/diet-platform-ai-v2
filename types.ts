@@ -14,14 +14,26 @@ export interface Meal {
   ingredients: Ingredient[];
   calories: number;
   glycemicIndex: number;
-  macros?: {
-    protein?: number;
-    carbs?: number;
-    fat?: number;
-    sodium?: number;
-    fiber?: number;
-    potassium?: number;
-  };
+macros?: {
+  protein?: number;
+  fat?: number;
+  carbs?: number;
+  fiber?: number;
+  sodium?: number;
+  potassium?: number;
+  calcium?: number;
+  magnesium?: number;
+  iron?: number;
+  zinc?: number;
+  vitaminD?: number;
+  vitaminB12?: number;
+  vitaminC?: number;
+  vitaminA?: number;
+  vitaminE?: number;
+  vitaminK?: number;
+  [key: string]: number | undefined; // 👈 DODAJ TO NA KOŃCU
+};
+
   micros?: Record<string, number>; // 🧬 mikroskładniki – DODAJ TO
   imageUrl?: string;
 }

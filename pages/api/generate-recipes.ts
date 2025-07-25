@@ -33,7 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
 
   try {
-    const { dietPlan, lang = "pl", cuisine = "Polska" } = req.body;
+    const { dietPlan, lang = "pl", cuisine = "Polska", nutrientFocus = [] } = req.body;
 
     if (!dietPlan || typeof dietPlan !== 'object') {
       return res.status(400).json({ error: 'Invalid or missing dietPlan' });
@@ -54,6 +54,10 @@ Each recipe should include:
 - Ingredients: name, weight in grams, unit
 - Step-by-step preparation instructions (numbered)
 - Estimated cooking time
+- Nutrient summary: protein, fat, carbs, fiber, sodium, and all key micronutrients if available
+
+Focus on these nutrients: ${nutrientFocus.join(', ') || 'none'}
+Prefer ingredients that naturally support or increase these nutrients.
 
 All recipes must strictly follow the authentic culinary traditions and ingredient profile of: ${cuisineNote}.
 Do not adapt or localize the recipes to the patient's country or culture.
@@ -67,18 +71,18 @@ Format strictly as JSON:
         "dish": "Owsianka z malinami",
         "description": "A warm oatmeal breakfast with fresh raspberries and flax seeds.",
         "servings": 1,
-        "ingredients": [
-          { "product": "Płatki owsiane", "weight": 60, "unit": "g" },
-          { "product": "Mleko", "weight": 200, "unit": "ml" },
-          { "product": "Maliny", "weight": 50, "unit": "g" }
-        ],
-        "steps": [
-          "Podgrzej mleko w rondelku.",
-          "Dodaj płatki owsiane i gotuj 5 minut.",
-          "Dodaj maliny i gotuj kolejne 2 minuty.",
-          "Podawaj ciepłe."
-        ],
-        "time": "10 min"
+        "ingredients": [...],
+        "steps": [...],
+        "time": "10 min",
+        "nutrientSummary": {
+          "protein": 18,
+          "fat": 6,
+          "carbs": 45,
+          "fiber": 4,
+          "sodium": 210,
+          "vitaminC": 15,
+          "iron": 1.2
+        }
       }
     }
   }
@@ -105,12 +109,7 @@ ${JSON.stringify(dietPlan, null, 2)}
     try {
       const parsed = JSON.parse(text);
 
-      if (
-        !parsed ||
-        typeof parsed !== 'object' ||
-        !parsed.recipes ||
-        Object.keys(parsed.recipes).length === 0
-      ) {
+      if (!parsed || typeof parsed !== 'object' || !parsed.recipes || Object.keys(parsed.recipes).length === 0) {
         console.warn("⚠️ RecipeAgent returned empty or invalid structure");
         return res.status(200).json({ recipes: {} });
       }
