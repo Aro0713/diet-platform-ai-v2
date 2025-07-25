@@ -25,7 +25,7 @@ type Ingredient = {
   weight: number;
 };
 
-// Przykładowa baza składników - do zastąpienia danymi z bazy (Open Food Facts / IŻŻ)
+// Przykładowa baza składników – rozwijana sukcesywnie
 const ingredientNutrients: Record<string, NutrientData> = {
   "Jajka": {
     kcal: 143, protein: 13, fat: 10, carbs: 1.1, fiber: 0,

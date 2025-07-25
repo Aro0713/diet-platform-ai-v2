@@ -402,6 +402,8 @@ content.push({
   layout: 'lightHorizontalLines',
   margin: [0, 0, 0, 10]
 });
+content.push({ text: tUI('nutritionLegend', lang), style: 'smallCell', margin: [0, 4, 0, 10] });
+
 // 📖 Sekcja: Przepisy kulinarne
 if (recipes && Object.keys(recipes).length > 0) {
   content.push({
