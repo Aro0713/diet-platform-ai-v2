@@ -194,46 +194,40 @@ const DietTable: React.FC<DietTableProps> = ({
               })}
             </tr>
           ))}
-
-          <tr className="bg-[#222c3f] font-semibold text-sm text-white">
+          <tr className="bg-[#222c3f] font-semibold text-[11px] text-white leading-tight">
             {dayKeys.map((day) => {
               const macros = sumDailyMacros(editableDiet[day] || []);
               return (
-                <td key={day + '_sum'} className="border border-gray-600 px-2 py-1 text-xs text-gray-300">
-                  B: {macros.protein}g<br />
-                  T: {macros.fat}g<br />
-                  W: {macros.carbs}g<br />
-                  {macros.fiber > 0 && <>🌿 Błonnik: {macros.fiber}g<br /></>}
-                  {macros.potassium > 0 && <>🥔 Potas: {macros.potassium}mg<br /></>}
-                  {macros.sodium > 0 && <>🧂 Sód: {macros.sodium}mg</>}
+                <td key={day + '_sum'} className="border border-gray-600 px-2 py-1 text-left text-gray-300 whitespace-pre-wrap align-top">
+                  B: {macros.protein}g, T: {macros.fat}g, W: {macros.carbs}g<br />
+                  🌿 Błonnik: {macros.fiber}g | 🧂 Sód: {macros.sodium}mg | 🥔 Potas: {macros.potassium}mg<br />
+                  🦴 Wapń: {macros.calcium}mg | 🧬 Magnez: {macros.magnesium}mg | 🩸 Żelazo: {macros.iron}mg | 🧪 Cynk: {macros.zinc}mg<br />
+                  ☀️ Wit. D: {macros.vitaminD}µg | 🧠 B12: {macros.vitaminB12}µg | 🍊 C: {macros.vitaminC}mg<br />
+                  👁️ A: {macros.vitaminA}µg | 🧈 E: {macros.vitaminE}mg | 💉 K: {macros.vitaminK}µg
                 </td>
               );
             })}
           </tr>
-
         <tr className="bg-[#1f2a3c] font-semibold text-xs text-white whitespace-pre-wrap">
-          {(() => {
-            const weekly = sumWeeklyMacros(editableDiet);
-            return dayKeys.map((_, idx) => (
-              <td
-                key={`week_sum_${idx}`}
-                className="border border-gray-600 px-2 py-1 text-left text-gray-300 align-top"
-              >
-                {idx === 0 ? (
-                  <>
-                    <strong>7 dni razem:</strong><br />
-                    B: {weekly.protein}g, T: {weekly.fat}g, W: {weekly.carbs}g<br />
-                    🌿 Błonnik: {weekly.fiber}g | 🧂 Sód: {weekly.sodium}mg | 🥔 Potas: {weekly.potassium}mg<br />
-                    🦴 Wapń: {weekly.calcium}mg | 🧬 Magnez: {weekly.magnesium}mg | 🩸 Żelazo: {weekly.iron}mg | 🧪 Cynk: {weekly.zinc}mg<br />
-                    ☀️ Wit. D: {weekly.vitaminD}µg | 🧠 B12: {weekly.vitaminB12}µg | 🍊 C: {weekly.vitaminC}mg<br />
-                    👁️ A: {weekly.vitaminA}µg | 🧈 E: {weekly.vitaminE}mg | 💉 K: {weekly.vitaminK}µg
-                  </>
-                ) : null}
-              </td>
-            ));
-          })()}
+          <td
+            colSpan={dayKeys.length}
+            className="border border-gray-600 px-2 py-2 text-left text-gray-300 align-top"
+          >
+            {(() => {
+              const weekly = sumWeeklyMacros(editableDiet);
+              return (
+                <>
+                  <div dangerouslySetInnerHTML={{ __html: translationsUI.weeklyTotal?.[lang] || '7 dni razem:' }} />
+                  B: {weekly.protein}g, T: {weekly.fat}g, W: {weekly.carbs}g<br />
+                  🌿 Błonnik: {weekly.fiber}g | 🧂 Sód: {weekly.sodium}mg | 🥔 Potas: {weekly.potassium}mg<br />
+                  🦴 Wapń: {weekly.calcium}mg | 🧬 Magnez: {weekly.magnesium}mg | 🩸 Żelazo: {weekly.iron}mg | 🧪 Cynk: {weekly.zinc}mg<br />
+                  ☀️ Wit. D: {weekly.vitaminD}µg | 🧠 B12: {weekly.vitaminB12}µg | 🍊 C: {weekly.vitaminC}mg<br />
+                  👁️ A: {weekly.vitaminA}µg | 🧈 E: {weekly.vitaminE}mg | 💉 K: {weekly.vitaminK}µg
+                </>
+              );
+            })()}
+          </td>
         </tr>
-
           <tr>
             {dayKeys.map((day) => (
               <td key={day + '_note'} className="border border-gray-600 px-2 py-1 bg-[#0d1117] text-white align-top">

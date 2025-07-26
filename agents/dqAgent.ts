@@ -90,15 +90,15 @@ export const dqAgent = {
     const safeCpm = cpm ?? undefined;
     const safeWeight = weightKg ?? undefined;
 
-const enrichedPlan: Record<string, Record<string, Meal>> = JSON.parse(JSON.stringify(dietPlan));
-for (const day of Object.keys(enrichedPlan)) {
-  const meals = enrichedPlan[day];
-  for (const mealKey of Object.keys(meals)) {
-    const meal = meals[mealKey];
-    const calculated = calculateMealMacros(meal.ingredients);
-    meal.macros = { ...calculated, ...(meal.macros || {}) };
-  }
-}
+    const enrichedPlan: Record<string, Record<string, Meal>> = JSON.parse(JSON.stringify(dietPlan));
+    for (const day of Object.keys(enrichedPlan)) {
+      const meals = enrichedPlan[day];
+      for (const mealKey of Object.keys(meals)) {
+        const meal = meals[mealKey];
+        const calculated = await calculateMealMacros(meal.ingredients);
+        meal.macros = { ...calculated, ...(meal.macros || {}) };
+      }
+    }
 
     // 🔍 Walidacja zakresów z uwzględnieniem modelu i chorób
     const mergedRequirements = mergeRequirements([
@@ -200,7 +200,7 @@ ${JSON.stringify(enrichedPlan, null, 2)}
           for (const mealKey of Object.keys(meals)) {
             const meal = meals[mealKey];
             if (!meal.macros || Object.keys(meal.macros).length === 0) {
-              meal.macros = calculateMealMacros(meal.ingredients);
+              meal.macros = await calculateMealMacros(meal.ingredients);
             }
           }
         }
