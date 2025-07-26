@@ -397,7 +397,11 @@ ${jsonFormatPreview}
           continue;
         }
 
-        meal.macros = calculated;
+        delete meal.macros; // 🔒 upewniamy się, że GPT nie wstrzyknął nic wcześniej
+        meal.macros = {
+          ...calculated
+        };
+        meal.calories = calculated.kcal ?? 0;
       }
     }
   // ✅ Zwróć poprawioną lub oryginalną wersję
