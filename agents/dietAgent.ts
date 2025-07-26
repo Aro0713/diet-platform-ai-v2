@@ -386,10 +386,11 @@ ${jsonFormatPreview}
           product: i.product.replace(/\(.*?\)/g, "").trim()
         }));
 
+        delete meal.macros; // ❌ usuń to, co GPT wpisał
         const calculated = await calculateMealMacros(cleanedIngredients);
-        const allZero = Object.values(calculated).every(v => v === 0);
+        console.log(`📊 Makroskładniki dla ${meal.name} (${day}):`, calculated);
 
-        // ❗️ Jeśli nie udało się przeliczyć — oznacz posiłek jako błędny i pomiń
+        const allZero = Object.values(calculated).every(v => v === 0);
         if (allZero) {
           console.warn(`⚠️ Wszystkie składniki 0 dla posiłku: "${meal.name}" w dniu: ${day}`);
           meal.macros = undefined;
@@ -397,10 +398,9 @@ ${jsonFormatPreview}
           continue;
         }
 
-        delete meal.macros; // 🔒 upewniamy się, że GPT nie wstrzyknął nic wcześniej
-        meal.macros = {
-          ...calculated
-        };
+        meal.macros = { ...calculated };
+        meal.calories = calculated.kcal ?? 0;
+
         meal.calories = calculated.kcal ?? 0;
         console.log(`📊 Makroskładniki dla ${meal.name} (${day}):`, calculated);
       }    
