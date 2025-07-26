@@ -3,6 +3,7 @@ import OpenAI from "openai";
 import { interviewNarrativeAgent } from "@/agents/interviewNarrativeAgent";
 import { medicalLabAgent } from "@/agents/medicalLabAgent";
 import { nutrientRequirementsMap, type NutrientRequirements } from "@/utils/nutrientRequirementsMap";
+import type { Ingredient } from "@/utils/nutrition/calculateMealMacros";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -375,16 +376,24 @@ ${jsonFormatPreview}
   }
   // 🔁 Uzupełnij brakujące makroskładniki jeśli nie ma ich z GPT
   const { calculateMealMacros } = await import("@/utils/nutrition/calculateMealMacros");
+    for (const day of Object.keys(parsed.dietPlan)) {
+      const meals = parsed.dietPlan[day];
+      for (const meal of meals) {
+        const cleanedIngredients = meal.ingredients.map((i: Ingredient) => ({
+          ...i,
+          product: i.product.replace(/\(.*?\)/g, "").trim()
+        }));
 
-  for (const day of Object.keys(parsed.dietPlan)) {
-    const meals = parsed.dietPlan[day];
-    for (const meal of meals) {
-      if (!meal.macros || Object.keys(meal.macros).length === 0) {
-        meal.macros = calculateMealMacros(meal.ingredients);
+        const calculated = await calculateMealMacros(cleanedIngredients);
+        const allZero = Object.values(calculated).every(v => v === 0);
+
+        if (allZero) {
+          console.warn(`⚠️ Wszystkie składniki 0 dla posiłku: "${meal.name}" w dniu: ${day}`);
+        }
+
+        meal.macros = calculated;
       }
     }
-  }
-
   // ✅ Zwróć poprawioną lub oryginalną wersję
   return {
     type: "text",
