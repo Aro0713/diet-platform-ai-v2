@@ -45,6 +45,7 @@ export async function calculateMealMacros(ingredients: Ingredient[]): Promise<Nu
       }
     }
   }
+console.log("🧪 calculateMealMacros → wynik:", totals);
 
   return totals;
 }

@@ -402,7 +402,8 @@ ${jsonFormatPreview}
           ...calculated
         };
         meal.calories = calculated.kcal ?? 0;
-      }
+        console.log(`📊 Makroskładniki dla ${meal.name} (${day}):`, calculated);
+      }    
     }
   // ✅ Zwróć poprawioną lub oryginalną wersję
   return {
