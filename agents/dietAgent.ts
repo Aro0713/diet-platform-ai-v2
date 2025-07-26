@@ -292,7 +292,9 @@ ${daysList}
   - If not provided: intelligently determine the best number of meals (between 2–6)
 
 - Use meal names localized to language "${lang}".
-- Full macro & micronutrient data
+- DO NOT estimate macro or micronutrients yourself.
+- Just provide full list of ingredients with exact weights (in grams) for each meal.
+- The system will calculate all macros and micros automatically.
 
 Base the plan on:
 ✔ Patient profile from interview:
@@ -389,6 +391,11 @@ ${jsonFormatPreview}
 
         if (allZero) {
           console.warn(`⚠️ Wszystkie składniki 0 dla posiłku: "${meal.name}" w dniu: ${day}`);
+        }
+        if (allZero) {
+          meal.macros = undefined; // lub pusta mapa
+          meal.ingredients = []; // oznacz jako niezaliczony
+          meal.notes = "⚠️ Składniki niemożliwe do przeliczenia. Popraw recepturę.";
         }
 
         meal.macros = calculated;
