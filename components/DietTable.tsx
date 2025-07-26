@@ -179,15 +179,20 @@ const DietTable: React.FC<DietTableProps> = ({
                       <div className="text-xs text-gray-400">
                         Kalorie: {meal.calories > 0 ? `${meal.calories} kcal` : '–'} | IG: {meal.glycemicIndex > 0 ? meal.glycemicIndex : '–'}
                       </div>
-                     {meal.macros && (
-                          <div className="text-xs text-gray-500 leading-tight">
-                            B: {meal.macros.protein ?? '–'}g, T: {meal.macros.fat ?? '–'}g, W: {meal.macros.carbs ?? '–'}g
-                            <br />
-                            {typeof meal.macros.fiber === 'number' && `🌿 Błonnik: ${meal.macros.fiber}g`}
-                            {typeof meal.macros.potassium === 'number' && ` | 🥔 Potas: ${meal.macros.potassium}mg`}
-                            {typeof meal.macros.sodium === 'number' && ` | 🧂 Sód: ${meal.macros.sodium}mg`}
-                          </div>
-                        )}
+                       {meal.macros && (
+                        <div className="text-xs text-gray-500 leading-tight whitespace-pre-wrap">
+                          B: {meal.macros.protein ?? 0}g, T: {meal.macros.fat ?? 0}g, W: {meal.macros.carbs ?? 0}g
+                          <br />
+                          🌿 Błonnik: {meal.macros.fiber ?? 0}g | 🧂 Sód: {meal.macros.sodium ?? 0}mg | 🥔 Potas: {meal.macros.potassium ?? 0}mg
+                          <br />
+                          🦴 Wapń: {meal.macros.calcium ?? 0}mg | 🧬 Magnez: {meal.macros.magnesium ?? 0}mg | 🩸 Żelazo: {meal.macros.iron ?? 0}mg | 🧪 Cynk: {meal.macros.zinc ?? 0}mg
+                          <br />
+                          ☀️ Wit. D: {meal.macros.vitaminD ?? 0}µg | 🧠 B12: {meal.macros.vitaminB12 ?? 0}µg | 🍊 C: {meal.macros.vitaminC ?? 0}mg
+                          <br />
+                          👁️ A: {meal.macros.vitaminA ?? 0}µg | 🧈 E: {meal.macros.vitaminE ?? 0}mg | 💉 K: {meal.macros.vitaminK ?? 0}µg
+                        </div>
+                      )}
+
                     </div>
                   </td>
                 );
