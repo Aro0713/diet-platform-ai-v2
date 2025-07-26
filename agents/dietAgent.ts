@@ -381,7 +381,7 @@ ${jsonFormatPreview}
     for (const day of Object.keys(parsed.dietPlan)) {
       const meals = parsed.dietPlan[day];
       for (const meal of meals) {
-        const cleanedIngredients = meal.ingredients.map((i: Ingredient) => ({
+      const cleanedIngredients = meal.ingredients.map((i: Ingredient) => ({
           ...i,
           product: i.product.replace(/\(.*?\)/g, "").trim()
         }));
@@ -389,13 +389,12 @@ ${jsonFormatPreview}
         const calculated = await calculateMealMacros(cleanedIngredients);
         const allZero = Object.values(calculated).every(v => v === 0);
 
+        // ❗️ Jeśli nie udało się przeliczyć — oznacz posiłek jako błędny i pomiń
         if (allZero) {
           console.warn(`⚠️ Wszystkie składniki 0 dla posiłku: "${meal.name}" w dniu: ${day}`);
-        }
-        if (allZero) {
-          meal.macros = undefined; // lub pusta mapa
-          meal.ingredients = []; // oznacz jako niezaliczony
-          meal.notes = "⚠️ Składniki niemożliwe do przeliczenia. Popraw recepturę.";
+          meal.macros = undefined;
+          meal.notes = "⚠️ Nie udało się przeliczyć wartości odżywczych.";
+          continue;
         }
 
         meal.macros = calculated;
