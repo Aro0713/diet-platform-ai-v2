@@ -106,11 +106,7 @@ export const dqAgent = {
     const enrichedPlan: Record<string, Record<string, Meal>> = JSON.parse(JSON.stringify(dietPlan));
     await applyMacrosToPlan(enrichedPlan);
 
-    const mergedRequirements = mergeRequirements([
-      model,
-      ...(conditions ?? [])
-    ]);
-
+    const mergedRequirements = mergeRequirements([model, ...(conditions ?? [])]);
     const avg = calculateAverages(enrichedPlan);
     const violations: string[] = [];
 
@@ -128,60 +124,12 @@ export const dqAgent = {
       console.warn("📛 Naruszenia składników:", violations);
     }
 
-    const prompt = `
-You are a clinical AI diet quality controller.
-
-Your task is to validate and optionally fix a 7-day meal plan based on the following:
-
-- Diet model: "${model}"
-- Goal: "${goal}"
-- Target energy requirement (CPM): ${safeCpm} kcal
-- Patient weight: ${safeWeight} kg
-
-Analyze the plan by:
-1. Checking total daily and weekly kcal vs CPM (±10% acceptable)
-2. Verifying macronutrient and micronutrient structure based on ranges
-3. Detecting unrealistic nutrient gaps or excess
-4. Checking consistent number of meals per day
-
-Additional context:
-- Average daily nutrients (all): ${JSON.stringify(avg, null, 2)}
-- Nutrient range violations: ${violations.join("; ") || "None"}
-- Target nutrient ranges (merged from model + conditions):
-${JSON.stringify(mergedRequirements, null, 2)}
-
-Return one of the following:
-✅ VALID — if all rules are met
-⚠️ Issues found:
-- List of specific problems
-
-📋 CORRECTED_JSON:
-{
-  "dietPlan": {
-    "Monday": {
-      "Breakfast": {
-        "time": "07:30",
-        "menu": "Oatmeal with apple",
-        "kcal": 400,
-        "ingredients": [ { "product": "...", "weight": 100 } ],
-        "macros": { "protein": 20, "fat": 10, "carbs": 40 }
-      }
-    }
-  }
-}
-
-⚠️ Return ONLY the JSON object without markdown or comments.
-Here is the plan:
-${JSON.stringify(enrichedPlan, null, 2)}
-`;
+    const prompt = `You are a clinical AI diet quality controller.\n\nAnalyze the following 7-day diet plan and return a corrected JSON if issues are found.\n\nPlan:\n${JSON.stringify(enrichedPlan, null, 2)}`;
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
-        {
-          role: "system",
-          content: "You are a clinical diet quality controller for structured JSON plans."
-        },
+        { role: "system", content: "You are a clinical diet quality controller for structured JSON plans." },
         { role: "user", content: prompt }
       ],
       temperature: 0.4
@@ -190,53 +138,51 @@ ${JSON.stringify(enrichedPlan, null, 2)}
     const text = completion.choices[0].message.content ?? "";
     const clean = text.replace(/```json|```/g, "").trim();
 
-   if (clean.includes("CORRECTED_JSON")) {
-  const startIndex = clean.indexOf("{");
-  const correctedJson = clean.slice(startIndex).trim();
+    if (clean.includes("CORRECTED_JSON")) {
+      const startIndex = clean.indexOf("{");
+      const correctedJson = clean.slice(startIndex).trim();
 
-  try {
-    const parsed = JSON.parse(correctedJson);
-    const correctedStructured = parsed?.dietPlan as Record<string, Record<string, Meal>>;
-    if (!correctedStructured) throw new Error("Brak dietPlan");
+      try {
+        const parsed = JSON.parse(correctedJson);
+        const correctedStructured = parsed?.dietPlan as Record<string, Record<string, Meal>>;
+        if (!correctedStructured) throw new Error("Brak dietPlan");
 
-    for (const day of Object.keys(correctedStructured)) {
-      const meals = correctedStructured[day];
-      for (const mealKey of Object.keys(meals)) {
-        const meal = meals[mealKey];
-        if (!meal.macros || Object.keys(meal.macros).length === 0) {
-          meal.macros = await calculateMealMacros(meal.ingredients);
+        for (const day of Object.keys(correctedStructured)) {
+          const meals = correctedStructured[day];
+          for (const mealKey of Object.keys(meals)) {
+            const meal = meals[mealKey];
+            if (!meal.macros || Object.keys(meal.macros).length === 0) {
+              meal.macros = await calculateMealMacros(meal.ingredients);
+            }
+          }
         }
+
+        const originalMeals: Meal[] = Object.values(enrichedPlan)
+          .flatMap((dayObj: Record<string, Meal>) => Object.values(dayObj));
+
+        const correctedMeals: Meal[] = Object.values(correctedStructured)
+          .flatMap((dayObj: Record<string, Meal>) => Object.values(dayObj));
+
+        const issuesOriginal = validateDietWithModel(originalMeals, model);
+        const issuesCorrected = validateDietWithModel(correctedMeals, model);
+
+        if (issuesCorrected.length < issuesOriginal.length) {
+          console.log("✅ Ulepszony plan wybrany przez dqAgent:", issuesCorrected);
+          return {
+            type: "dietPlan",
+            plan: convertStructuredToFlatPlan(correctedStructured),
+            violations
+          };
+        }
+      } catch (e) {
+        console.warn("❌ Nie udało się sparsować poprawionego JSON od GPT:", e);
       }
     }
 
-    const originalMeals: Meal[] = Object.values(enrichedPlan)
-        .flatMap((dayObj: Record<string, Meal>) => Object.values(dayObj));
-
-    const correctedMeals: Meal[] = Object.values(correctedStructured)
-        .flatMap((dayObj: Record<string, Meal>) => Object.values(dayObj));
-
-    const issuesOriginal = validateDietWithModel(originalMeals, model);
-    const issuesCorrected = validateDietWithModel(correctedMeals, model);
-
-    if (issuesCorrected.length < issuesOriginal.length) {
-      console.log("✅ Ulepszony plan wybrany przez dqAgent:", issuesCorrected);
-      return {
-        type: "dietPlan",
-        plan: convertStructuredToFlatPlan(correctedStructured),
-        violations
-      };
-    }
-  } catch (e) {
-    console.warn("❌ Nie udało się sparsować poprawionego JSON od GPT:", e);
-  }
-}
-
-// fallback – zwróć pierwotny plan jeśli GPT nie poprawił
-return {
-  type: "dietPlan",
-  plan: convertStructuredToFlatPlan(enrichedPlan),
-  violations
-};
-
+    return {
+      type: "dietPlan",
+      plan: convertStructuredToFlatPlan(enrichedPlan),
+      violations
+    };
   }
 };
