@@ -557,13 +557,22 @@ ${jsonFormatPreview}
 
   // 🧠 Walidacja i poprawa przez dqAgent
   try {
-    const { type, plan } = await import("@/agents/dqAgent").then(m => m.dqAgent.run({
-      dietPlan: rawDietPlan,
-      model: modelKey,
-      goal: goalExplanation,
-      cpm,
-      weightKg: form.weight ?? null
-    }));
+ // 🚨 Walidacja struktury przed dqAgent
+for (const [day, meals] of Object.entries(rawDietPlan || {})) {
+  if (!Array.isArray(meals)) {
+    console.warn(`❌ Błędna struktura planu diety – ${day} nie jest tablicą:`, meals);
+    throw new Error(`Błędny format dietPlan – dzień "${day}" nie zawiera listy posiłków`);
+  }
+}
+
+const { type, plan } = await import("@/agents/dqAgent").then(m => m.dqAgent.run({
+  dietPlan: rawDietPlan,
+  model: modelKey,
+  goal: goalExplanation,
+  cpm,
+  weightKg: form.weight ?? null
+}));
+
     parsed.dietPlan = plan;
   } catch (err) {
     console.warn("⚠️ dqAgent błąd:", err);
