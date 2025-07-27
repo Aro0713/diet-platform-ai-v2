@@ -343,29 +343,56 @@ ${jsonFormatPreview}
     console.warn("⚠️ dqAgent błąd:", err);
   }
 
-  const { calculateMealMacros } = await import("@/utils/nutrition/calculateMealMacros");
-  for (const day of Object.keys(parsed.dietPlan)) {
-    const meals = parsed.dietPlan[day];
-    for (const meal of meals) {
-      const cleanedIngredients = meal.ingredients.map((i: Ingredient) => ({
+const { calculateMealMacros } = await import("@/utils/nutrition/calculateMealMacros");
+
+for (const day of Object.keys(parsed.dietPlan)) {
+  const meals = parsed.dietPlan[day];
+  for (const meal of meals) {
+    const invalidIngredients = meal.ingredients.filter(
+      (i: Ingredient) =>
+        !i?.product || typeof i.product !== "string" || i.product.trim() === "" || i.product === "undefined"
+    );
+
+    if (invalidIngredients.length > 0) {
+      console.warn(`⚠️ GPT wygenerował błędne składniki w posiłku "${meal.name}" (${day}):`, invalidIngredients);
+    }
+
+    const cleanedIngredients = meal.ingredients
+      .filter(
+        (i: Ingredient) =>
+          i?.product &&
+          typeof i.product === "string" &&
+          i.product.trim() !== "" &&
+          i.product !== "undefined"
+      )
+      .map((i: Ingredient) => ({
         ...i,
         product: i.product.replace(/\(.*?\)/g, "").trim()
       }));
 
-      delete meal.macros;
-      const calculated = await calculateMealMacros(cleanedIngredients);
-
-      const allZero = Object.values(calculated).every(v => v === 0);
-      if (allZero) {
-        meal.macros = undefined;
-        meal.notes = "⚠️ Nie udało się przeliczyć wartości odżywczych.";
-        continue;
-      }
-
-      meal.macros = { ...calculated };
-      meal.calories = calculated.kcal ?? 0;
+    if (cleanedIngredients.length === 0) {
+      console.warn(`⚠️ Brak poprawnych składników do przeliczenia w "${meal.name}" (${day})`);
+      meal.macros = undefined;
+      meal.notes = "⚠️ Brak poprawnych składników — nie przeliczono wartości.";
+      continue;
     }
+
+    const calculated = await calculateMealMacros(cleanedIngredients);
+    console.log(`🧪 Składniki (${day} / ${meal.name}):`, cleanedIngredients);
+    console.log(`📊 Wynik calculateMealMacros (${day} / ${meal.name}):`, calculated);
+
+    const allZero = Object.values(calculated).every(v => v === 0 || Number.isNaN(v));
+    if (allZero) {
+      console.warn(`⚠️ Wszystkie składniki 0/NaN dla posiłku: "${meal.name}" w dniu: ${day}`);
+      meal.macros = undefined;
+      meal.notes = "⚠️ Nie udało się przeliczyć wartości odżywczych.";
+      continue;
+    }
+
+    meal.macros = { ...calculated };
+    meal.calories = calculated.kcal ?? 0;
   }
+}
 
   return parsed;
 }
