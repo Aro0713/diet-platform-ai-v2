@@ -29,15 +29,19 @@ function parseRawDietPlan(raw: any): Record<string, Meal[]> {
           )
         : [];
 
+      const isValidDishName = dishName && dishName !== "0" && dishName !== "undefined";
+      const finalName = isValidDishName ? dishName : mealName;
+
       mealsForDay.push({
-        name: dishName || mealName,
+        name: finalName,
         time: "",
-        menu: dishName || mealName,
+        menu: finalName,
         ingredients,
         macros: {},
         calories: 0,
         glycemicIndex: 0
       });
+
     }
 
     parsed[day] = mealsForDay;
