@@ -1,5 +1,3 @@
-// utils/nutrition/calculateMealMacros.ts
-
 import { fetchNutritionFromOpenFoodFacts } from './fetchFromOFF';
 
 export type NutrientData = {
@@ -27,6 +25,11 @@ export type Ingredient = {
   weight: number;
 };
 
+// Pomocnicze zaokrąglanie
+function round(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
 export async function calculateMealMacros(ingredients: Ingredient[]): Promise<NutrientData> {
   const totals: NutrientData = {
     kcal: 0, protein: 0, fat: 0, carbs: 0, fiber: 0,
@@ -45,7 +48,12 @@ export async function calculateMealMacros(ingredients: Ingredient[]): Promise<Nu
       }
     }
   }
-console.log("🧪 calculateMealMacros → wynik:", totals);
 
-  return totals;
+  const rounded: NutrientData = {} as NutrientData;
+  for (const key of Object.keys(totals) as (keyof NutrientData)[]) {
+    rounded[key] = round(totals[key]);
+  }
+
+  console.log("🧪 calculateMealMacros → wynik:", rounded);
+  return rounded;
 }
