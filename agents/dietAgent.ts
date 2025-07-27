@@ -16,42 +16,50 @@ function parseRawDietPlan(raw: any): Record<string, Meal[]> {
     const meals = mealsRaw as Record<string, any>;
     const mealsForDay: Meal[] = [];
 
-    for (const [mealName, ingredientsBlock] of Object.entries(meals)) {
-      let dishName = "";
-      let rawIngredients: any[] = [];
+    for (const [mealTime, value] of Object.entries(meals)) {
+      // 🧠 Obsługa nowej struktury GPT (z "mealName" i "ingredients")
+      if (
+        typeof value === "object" &&
+        value.mealName &&
+        Array.isArray(value.ingredients)
+      ) {
+        const ingredients = value.ingredients.map((i: any) => ({
+          product: i.name || i.product || "Składnik",
+          weight: i.quantity || i.weight || 0
+        }));
 
-      // 🟢 Format 1: { "Danie": [ {...}, {...} ] }
-      const blockEntries = Object.entries(ingredientsBlock || {});
-      if (blockEntries.length === 1 && Array.isArray(blockEntries[0][1])) {
-        dishName = blockEntries[0][0];
-        rawIngredients = blockEntries[0][1];
-      }
-
-      // 🟢 Format 2: { "Śniadanie": [ {...}, {...} ] }
-      else if (Array.isArray(ingredientsBlock)) {
-        dishName = mealName;
-        rawIngredients = ingredientsBlock;
-      } else {
-        console.warn(`⚠️ Nieznana struktura składników: ${mealName}`, ingredientsBlock);
+        mealsForDay.push({
+          name: value.mealName,
+          time: mealTime,
+          menu: value.mealName,
+          ingredients,
+          macros: {},
+          calories: 0,
+          glycemicIndex: 0
+        });
         continue;
       }
 
-      const ingredients = rawIngredients.map((entry: any) => {
-        const [product, weightRaw] = Object.entries(entry || {})[0] ?? [];
-        const weight = typeof weightRaw === "number" ? weightRaw : Number(weightRaw) || 0;
-        return { product, weight };
-      }).filter((i: Ingredient) =>
-        i?.product && typeof i.product === "string" &&
-        i.product.trim() !== "" &&
-        !["undefined", "null", "0"].includes(i.product.toLowerCase())
-      );
+      // 🧠 Obsługa starego formatu (danie: [{ produkt: waga }])
+      const [dishName, rawIngredients] = Object.entries(value || {})[0] ?? [];
+      const ingredients = Array.isArray(rawIngredients)
+        ? rawIngredients.map((entry: any) => {
+            const [product, weightRaw] = Object.entries(entry || {})[0] ?? [];
+            const weight =
+              typeof weightRaw === "number"
+                ? weightRaw
+                : Number(weightRaw) || 0;
+            return { product, weight };
+          })
+        : [];
 
-      const isValidDishName = dishName && !["0", "undefined", "null", ""].includes(dishName.toLowerCase());
-      const finalName = isValidDishName ? dishName : mealName;
+      const isValidDishName =
+        dishName && dishName !== "0" && dishName !== "undefined";
+      const finalName = isValidDishName ? dishName : mealTime;
 
       mealsForDay.push({
         name: finalName,
-        time: "",
+        time: mealTime,
         menu: finalName,
         ingredients,
         macros: {},
