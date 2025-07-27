@@ -383,47 +383,47 @@ ${jsonFormatPreview}
       throw new Error("❌ GPT zwrócił niepoprawny JSON — nie można sparsować.");
     }
 
-      const rawDietPlan = parsed?.dietPlan;
-      if (!rawDietPlan) throw new Error("❌ JSON nie zawiera pola 'dietPlan'.");
+const rawDietPlan = parsed?.dietPlan;
+if (!rawDietPlan) {
+  throw new Error("❌ JSON nie zawiera pola 'dietPlan'.");
+}
 
-      const parsedDietPlan = parseRawDietPlan(rawDietPlan);
+const parsedDietPlan = parseRawDietPlan(rawDietPlan);
 
-  try {
- const structuredPlan = convertFlatToStructuredPlan(rawDietPlan);
+// ✅ zabezpieczenie: przekazujemy TYLKO sparsowaną strukturę
+const structuredPlan = convertFlatToStructuredPlan(parsedDietPlan);
 
-const { type, plan } = await import("@/agents/dqAgent").then(m => m.dqAgent.run({
-  dietPlan: structuredPlan,
-
-
+try {
+  const { type, plan } = await import("@/agents/dqAgent").then(m =>
+    m.dqAgent.run({
+      dietPlan: structuredPlan,
       model: modelKey,
       goal: goalExplanation,
       cpm,
       weightKg: form.weight ?? null
-    }));
-    parsed.dietPlan = plan;
-  } catch (err) {
-    console.warn("⚠️ dqAgent błąd:", err);
-  }
+    })
+  );
+  parsed.dietPlan = plan;
+} catch (err) {
+  console.warn("⚠️ dqAgent błąd:", err);
+}
 
+// 🔁 Przelicz makroskładniki
 const { calculateMealMacros } = await import("@/utils/nutrition/calculateMealMacros");
 for (const day of Object.keys(parsed.dietPlan)) {
   const meals = parsed.dietPlan[day];
+  if (!Array.isArray(meals)) {
+    console.warn(`❌ Niepoprawna struktura posiłków w dniu "${day}" — oczekiwano tablicy`, meals);
+    continue;
+  }
+
   for (const meal of meals) {
-    const invalidIngredients = meal.ingredients.filter(
-      (i: Ingredient) =>
-        !i?.product || typeof i.product !== "string" || i.product.trim() === "" || i.product === "undefined"
-    );
-
-    if (invalidIngredients.length > 0) {
-      console.warn(`⚠️ GPT wygenerował błędne składniki w posiłku "${meal.name}" (${day}):`, invalidIngredients);
-    }
-
-  const cleanedIngredients = meal.ingredients
-  .filter((i: any) => i?.name && typeof i.name === "string" && i.name !== "undefined")
-  .map((i: any) => ({
-    product: i.name.replace(/\(.*?\)/g, "").trim(),
-    weight: i.quantity || i.weight || 0
-  }));
+    const cleanedIngredients = meal.ingredients
+      .filter((i: any) => i?.product && typeof i.product === "string" && i.product !== "undefined")
+      .map((i: any) => ({
+        product: i.product.replace(/\(.*?\)/g, "").trim(),
+        weight: i.quantity || i.weight || 0
+      }));
 
     if (cleanedIngredients.length === 0) {
       console.warn(`⚠️ Brak poprawnych składników do przeliczenia w "${meal.name}" (${day})`);
@@ -433,8 +433,6 @@ for (const day of Object.keys(parsed.dietPlan)) {
     }
 
     const calculated = await calculateMealMacros(cleanedIngredients);
-    console.log(`🧪 Składniki (${day} / ${meal.name}):`, cleanedIngredients);
-    console.log(`📊 Wynik calculateMealMacros (${day} / ${meal.name}):`, calculated);
 
     const allZero = Object.values(calculated).every(v => v === 0 || Number.isNaN(v));
     if (allZero) {
@@ -449,7 +447,9 @@ for (const day of Object.keys(parsed.dietPlan)) {
   }
 }
 
-  return parsed;
+// ✅ Zwróć poprawiony plan
+return parsed;
+
 }
 
 export const generateDietTool = tool({

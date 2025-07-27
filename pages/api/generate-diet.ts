@@ -4,6 +4,10 @@ import { generateDiet } from "@/agents/dietAgent";
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
 
+  if (!req.body?.form || !req.body?.interviewData) {
+    return res.status(400).send("Brakuje wymaganych danych wejściowych.");
+  }
+
   try {
     const result = await generateDiet(req.body);
     res.status(200).json(result);
