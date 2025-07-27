@@ -69,6 +69,19 @@ function mergeRequirements(models: string[]): NutrientRequirements | null {
   return result as NutrientRequirements;
 }
 
+async function applyMacrosToPlan(plan: Record<string, Record<string, Meal>>): Promise<void> {
+  for (const day of Object.keys(plan)) {
+    const meals = plan[day];
+    for (const mealKey of Object.keys(meals)) {
+      const meal = meals[mealKey];
+      const validIngredients = Array.isArray(meal.ingredients)
+        ? meal.ingredients.filter((i: any) => typeof i.product === 'string' && typeof i.weight === 'number')
+        : [];
+      meal.macros = await calculateMealMacros(validIngredients);
+    }
+  }
+}
+
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export const dqAgent = {
@@ -91,18 +104,7 @@ export const dqAgent = {
     const safeWeight = weightKg ?? undefined;
 
     const enrichedPlan: Record<string, Record<string, Meal>> = JSON.parse(JSON.stringify(dietPlan));
-    for (const day of Object.keys(enrichedPlan)) {
-      const meals = enrichedPlan[day];
-      for (const mealKey of Object.keys(meals)) {
-        const meal = meals[mealKey];
-        if (meal.ingredients && Array.isArray(meal.ingredients)) {
-          const validIngredients = meal.ingredients.filter((i: any) => typeof i.product === 'string' && typeof i.weight === 'number');
-          meal.macros = await calculateMealMacros(validIngredients);
-        } else {
-          meal.macros = await calculateMealMacros([]);
-        }
-      }
-    }
+    await applyMacrosToPlan(enrichedPlan);
 
     const mergedRequirements = mergeRequirements([
       model,
@@ -188,48 +190,50 @@ ${JSON.stringify(enrichedPlan, null, 2)}
     const text = completion.choices[0].message.content ?? "";
     const clean = text.replace(/```json|```/g, "").trim();
 
-    if (clean.includes("CORRECTED_JSON")) {
-      const startIndex = clean.indexOf("{");
-      const correctedJson = clean.slice(startIndex).trim();
+   if (clean.includes("CORRECTED_JSON")) {
+  const startIndex = clean.indexOf("{");
+  const correctedJson = clean.slice(startIndex).trim();
 
-      try {
-        const parsed = JSON.parse(correctedJson);
-        const correctedStructured = parsed?.dietPlan as Record<string, Record<string, Meal>>;
-        if (!correctedStructured) throw new Error("Brak dietPlan");
+  try {
+    const parsed = JSON.parse(correctedJson);
+    const correctedStructured = parsed?.dietPlan as Record<string, Record<string, Meal>>;
+    if (!correctedStructured) throw new Error("Brak dietPlan");
 
-        for (const day of Object.keys(correctedStructured)) {
-          const meals = correctedStructured[day];
-          for (const mealKey of Object.keys(meals)) {
-            const meal = meals[mealKey];
-            if (!meal.macros || Object.keys(meal.macros).length === 0) {
-              meal.macros = await calculateMealMacros(meal.ingredients);
-            }
-          }
+    for (const day of Object.keys(correctedStructured)) {
+      const meals = correctedStructured[day];
+      for (const mealKey of Object.keys(meals)) {
+        const meal = meals[mealKey];
+        if (!meal.macros || Object.keys(meal.macros).length === 0) {
+          meal.macros = await calculateMealMacros(meal.ingredients);
         }
-
-        const originalMeals: Meal[] = Object.values(enrichedPlan).flatMap(day => Object.values(day));
-        const correctedMeals: Meal[] = Object.values(correctedStructured).flatMap(day => Object.values(day));
-
-        const issuesOriginal = validateDietWithModel(originalMeals, model);
-        const issuesCorrected = validateDietWithModel(correctedMeals, model);
-
-        if (issuesCorrected.length < issuesOriginal.length) {
-          console.log("✅ Ulepszony plan wybrany przez dqAgent:", issuesCorrected);
-          return {
-            type: "dietPlan",
-            plan: convertStructuredToFlatPlan(correctedStructured),
-            violations
-          };
-        }
-      } catch (e) {
-        console.warn("❌ Nie udało się sparsować JSON:", e);
       }
     }
 
-    return {
-      type: "dietPlan",
-      plan: convertStructuredToFlatPlan(enrichedPlan),
-      violations
-    };
+    const originalMeals: Meal[] = Object.values(enrichedPlan).flatMap(day => Object.values(day));
+    const correctedMeals: Meal[] = Object.values(correctedStructured).flatMap(day => Object.values(day));
+
+    const issuesOriginal = validateDietWithModel(originalMeals, model);
+    const issuesCorrected = validateDietWithModel(correctedMeals, model);
+
+    if (issuesCorrected.length < issuesOriginal.length) {
+      console.log("✅ Ulepszony plan wybrany przez dqAgent:", issuesCorrected);
+      return {
+        type: "dietPlan",
+        plan: convertStructuredToFlatPlan(correctedStructured),
+        violations
+      };
+    }
+  } catch (e) {
+    console.warn("❌ Nie udało się sparsować poprawionego JSON od GPT:", e);
+  }
+}
+
+// fallback – zwróć pierwotny plan jeśli GPT nie poprawił
+return {
+  type: "dietPlan",
+  plan: convertStructuredToFlatPlan(enrichedPlan),
+  violations
+};
+
   }
 };

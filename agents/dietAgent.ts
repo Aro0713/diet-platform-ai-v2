@@ -5,8 +5,46 @@ import { medicalLabAgent } from "@/agents/medicalLabAgent";
 import { nutrientRequirementsMap, type NutrientRequirements } from "@/utils/nutrientRequirementsMap";
 import type { Ingredient } from "@/utils/nutrition/calculateMealMacros";
 import { calculateMealMacros } from '@/utils/nutrition/calculateMealMacros'
+import type { Meal } from "@/types";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+function parseRawDietPlan(raw: any): Record<string, Meal[]> {
+  const parsed: Record<string, Meal[]> = {};
+
+  for (const [day, mealsRaw] of Object.entries(raw || {})) {
+    const meals = mealsRaw as Record<string, any>;
+    const mealsForDay: Meal[] = [];
+
+    for (const [mealName, ingredientsBlock] of Object.entries(meals)) {
+      const [dishName, rawIngredients] = Object.entries(ingredientsBlock || {})[0] ?? [];
+
+      const ingredients = Array.isArray(rawIngredients)
+        ? rawIngredients.map((entry: any) => {
+            const [product, weightRaw] = Object.entries(entry || {})[0] ?? [];
+            const weight = typeof weightRaw === "number" ? weightRaw : Number(weightRaw) || 0;
+            return { product, weight };
+          }).filter((i: Ingredient) =>
+            i?.product && typeof i.product === "string" && i.product.trim() !== "" && !["undefined", "null"].includes(i.product.toLowerCase())
+          )
+        : [];
+
+      mealsForDay.push({
+        name: dishName || mealName,
+        time: "",
+        menu: dishName || mealName,
+        ingredients,
+        macros: {},
+        calories: 0,
+        glycemicIndex: 0
+      });
+    }
+
+    parsed[day] = mealsForDay;
+  }
+
+  return parsed;
+}
 
 const languageMap: Record<string, string> = {
   pl: "polski", en: "English", es: "español", fr: "français", de: "Deutsch",
@@ -205,6 +243,22 @@ const cuisineMap: Record<string, string> = {
   "Afrykańska": "African",
   "Dieta arktyczna / syberyjska": "Arctic/Siberian"
 };
+function convertFlatToStructuredPlan(flat: Record<string, Meal[]>): Record<string, Record<string, Meal>> {
+  const structured: Record<string, Record<string, Meal>> = {};
+
+  for (const day of Object.keys(flat)) {
+    const mealsArray = flat[day];
+    structured[day] = {};
+
+    mealsArray.forEach((meal, idx) => {
+      const key = meal.name || `meal${idx + 1}`;
+      structured[day][key] = meal;
+    });
+  }
+
+  return structured;
+}
+
 export async function generateDiet(input: any): Promise<any> {
   const {
     form,
@@ -321,7 +375,6 @@ ${jsonFormatPreview}
 
     let parsed;
     try {
-      console.error("📦 RAW response from GPT:\n", content);
       const start = content.indexOf('{');
       const end = content.lastIndexOf('}') + 1;
       const cleanContent = content.slice(start, end).trim();
@@ -330,12 +383,18 @@ ${jsonFormatPreview}
       throw new Error("❌ GPT zwrócił niepoprawny JSON — nie można sparsować.");
     }
 
-  const rawDietPlan = parsed?.dietPlan;
-  if (!rawDietPlan) throw new Error("❌ JSON nie zawiera pola 'dietPlan'.");
+      const rawDietPlan = parsed?.dietPlan;
+      if (!rawDietPlan) throw new Error("❌ JSON nie zawiera pola 'dietPlan'.");
+
+      const parsedDietPlan = parseRawDietPlan(rawDietPlan);
 
   try {
-    const { type, plan } = await import("@/agents/dqAgent").then(m => m.dqAgent.run({
-      dietPlan: rawDietPlan,
+ const structuredPlan = convertFlatToStructuredPlan(rawDietPlan);
+
+const { type, plan } = await import("@/agents/dqAgent").then(m => m.dqAgent.run({
+  dietPlan: structuredPlan,
+
+
       model: modelKey,
       goal: goalExplanation,
       cpm,
@@ -347,7 +406,6 @@ ${jsonFormatPreview}
   }
 
 const { calculateMealMacros } = await import("@/utils/nutrition/calculateMealMacros");
-
 for (const day of Object.keys(parsed.dietPlan)) {
   const meals = parsed.dietPlan[day];
   for (const meal of meals) {
@@ -419,7 +477,7 @@ export const generateDietTool = tool({
       lang = "pl"
     } = nested;
 
-    const modelKey = modelMap[form.model] || form.model?.toLowerCase();
+    const modelKey = modelMap[form.model] || (typeof form.model === "string" ? form.model.toLowerCase() : "");
     const goalExplanation = goalMap[interviewData.goal] || interviewData.goal;
     const cuisine = cuisineMap[interviewData.cuisine] || "global";
     const cuisineContext = cuisineContextMap[interviewData.cuisine] || "general healthy cooking style";
@@ -464,7 +522,7 @@ export const generateDietTool = tool({
           .join('\n')
       : "⚠️ No specific micronutrient ranges found for this model.";
 
-    const jsonFormatPreview = daysInLang.map(day => `    \"${day}\": { ... }`).join(',\n');
+  const jsonFormatPreview = `"Monday": { "breakfast": { ... }, ... }, ...`;
 
     const prompt = `
 You are a clinical dietitian AI.
@@ -544,13 +602,16 @@ ${jsonFormatPreview}
     };
   }
 
-  const rawDietPlan = parsed?.dietPlan;
-  if (!rawDietPlan) {
-    return {
-      type: "text",
-      content: "❌ JSON nie zawiera pola 'dietPlan'."
-    };
-  }
+const rawDietPlan = parsed?.dietPlan;
+if (!rawDietPlan) {
+  return {
+    type: "text",
+    content: "❌ JSON nie zawiera pola 'dietPlan'."
+  };
+}
+
+const parsedDietPlan = parseRawDietPlan(rawDietPlan);
+
 
   // 🧠 Walidacja i poprawa przez dqAgent
   try {
@@ -574,37 +635,7 @@ const { type, plan } = await import("@/agents/dqAgent").then(m => m.dqAgent.run(
   } catch (err) {
     console.warn("⚠️ dqAgent błąd:", err);
   }
-  // 🔁 Uzupełnij brakujące makroskładniki jeśli nie ma ich z GPT
-  const { calculateMealMacros } = await import("@/utils/nutrition/calculateMealMacros");
-    for (const day of Object.keys(parsed.dietPlan)) {
-      const meals = parsed.dietPlan[day];
-      for (const meal of meals) {
-      const cleanedIngredients = meal.ingredients.map((i: Ingredient) => ({
-          ...i,
-          product: i.product.replace(/\(.*?\)/g, "").trim()
-        }));
 
-        delete meal.macros; // ❌ usuń to, co GPT wpisał
-        const calculated = await calculateMealMacros(cleanedIngredients);
-        console.log(`📊 Makroskładniki dla ${meal.name} (${day}):`, calculated);
-        console.log(`🧪 Składniki (${day} / ${meal.name}):`, cleanedIngredients);
-        console.log(`📊 Wynik calculateMealMacros (${day} / ${meal.name}):`, calculated);
-
-        const allZero = Object.values(calculated).every(v => v === 0);
-        if (allZero) {
-          console.warn(`⚠️ Wszystkie składniki 0 dla posiłku: "${meal.name}" w dniu: ${day}`);
-          meal.macros = undefined;
-          meal.notes = "⚠️ Nie udało się przeliczyć wartości odżywczych.";
-          continue;
-        }
-
-        meal.macros = { ...calculated };
-        meal.calories = calculated.kcal ?? 0;
-
-        meal.calories = calculated.kcal ?? 0;
-        console.log(`📊 Makroskładniki dla ${meal.name} (${day}):`, calculated);
-      }    
-    }
   // ✅ Zwróć poprawioną lub oryginalną wersję
   return {
     type: "text",
