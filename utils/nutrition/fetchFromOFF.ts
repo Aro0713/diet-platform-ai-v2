@@ -1,9 +1,12 @@
-// utils/nutrition/fetchFromOFF.ts
-
 import type { NutrientData } from './calculateMealMacros';
+import { translatorAgent } from '@/agents/translationAgent';
 
 export async function fetchNutritionFromOpenFoodFacts(productName: string): Promise<NutrientData | null> {
-  const query = encodeURIComponent(productName);
+  const translations = await translatorAgent.run({ text: productName });
+  const translated = translations.en || productName;
+
+  console.log(`🌍 Przetłumaczono "${productName}" → "${translated}"`);
+  const query = encodeURIComponent(translated);
   const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${query}&search_simple=1&action=process&json=1&page_size=1`;
 
   try {
@@ -20,7 +23,7 @@ export async function fetchNutritionFromOpenFoodFacts(productName: string): Prom
       fat: n['fat_100g'] ?? 0,
       carbs: n['carbohydrates_100g'] ?? 0,
       fiber: n['fiber_100g'] ?? 0,
-      sodium: n['sodium_100g'] ? n['sodium_100g'] * 1000 : 0, // g → mg
+      sodium: n['sodium_100g'] ? n['sodium_100g'] * 1000 : 0,
       potassium: n['potassium_100g'] ?? 0,
       calcium: n['calcium_100g'] ?? 0,
       magnesium: n['magnesium_100g'] ?? 0,
@@ -40,3 +43,5 @@ export async function fetchNutritionFromOpenFoodFacts(productName: string): Prom
     return null;
   }
 }
+
+
