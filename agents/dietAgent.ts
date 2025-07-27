@@ -9,57 +9,62 @@ import type { Meal } from "@/types";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-function parseRawDietPlan(raw: any): Record<string, Meal[]> {
+export function parseRawDietPlan(raw: any): Record<string, Meal[]> {
   const parsed: Record<string, Meal[]> = {};
 
   for (const [day, mealsRaw] of Object.entries(raw || {})) {
     const meals = mealsRaw as Record<string, any>;
     const mealsForDay: Meal[] = [];
 
-    for (const [mealTime, value] of Object.entries(meals)) {
-      // 🧠 Obsługa nowej struktury GPT (z "mealName" i "ingredients")
+    for (const [time, block] of Object.entries(meals)) {
+      // nowa struktura GPT
       if (
-        typeof value === "object" &&
-        value.mealName &&
-        Array.isArray(value.ingredients)
+        typeof block === "object" &&
+        "mealName" in block &&
+        Array.isArray(block.ingredients)
       ) {
-        const ingredients = value.ingredients.map((i: any) => ({
-          product: i.name || i.product || "Składnik",
-          weight: i.quantity || i.weight || 0
-        }));
+        const mealName = block.mealName || "Danie";
+        const ingredients: Ingredient[] = block.ingredients.map((i: any) => ({
+          product: i.name ?? "",
+          weight: typeof i.quantity === "number" ? i.quantity : Number(i.quantity) || 0
+        })).filter((i: Ingredient) =>
+          i.product && typeof i.product === "string" && !["undefined", "null", "name"].includes(i.product.toLowerCase())
+        );
 
         mealsForDay.push({
-          name: value.mealName,
-          time: mealTime,
-          menu: value.mealName,
+          name: mealName,
+          time,
+          menu: mealName,
           ingredients,
           macros: {},
           calories: 0,
           glycemicIndex: 0
         });
+
         continue;
       }
 
-      // 🧠 Obsługa starego formatu (danie: [{ produkt: waga }])
-      const [dishName, rawIngredients] = Object.entries(value || {})[0] ?? [];
-      const ingredients = Array.isArray(rawIngredients)
-        ? rawIngredients.map((entry: any) => {
-            const [product, weightRaw] = Object.entries(entry || {})[0] ?? [];
-            const weight =
-              typeof weightRaw === "number"
-                ? weightRaw
-                : Number(weightRaw) || 0;
-            return { product, weight };
-          })
-        : [];
+      // stara struktura GPT
+      const [dishName, rawIngredients] = Object.entries(block || {})[0] ?? [];
 
-      const isValidDishName =
-        dishName && dishName !== "0" && dishName !== "undefined";
-      const finalName = isValidDishName ? dishName : mealTime;
+      const ingredients = Array.isArray(rawIngredients)
+      ? rawIngredients.map((entry: any) => {
+          const [product, weightRaw] = Object.entries(entry || {})[0] ?? [];
+          return {
+            product,
+            weight: typeof weightRaw === "number" ? weightRaw : Number(weightRaw) || 0
+          };
+        }).filter((i: Ingredient) =>
+          i.product && typeof i.product === "string" && !["undefined", "null", "name"].includes(i.product.toLowerCase())
+        )
+      : [];
+
+      const isValidDishName = dishName && dishName !== "0" && dishName !== "undefined" && dishName !== "name";
+      const finalName = isValidDishName ? dishName : time;
 
       mealsForDay.push({
         name: finalName,
-        time: mealTime,
+        time,
         menu: finalName,
         ingredients,
         macros: {},
@@ -73,7 +78,6 @@ function parseRawDietPlan(raw: any): Record<string, Meal[]> {
 
   return parsed;
 }
-
 const languageMap: Record<string, string> = {
   pl: "polski", en: "English", es: "español", fr: "français", de: "Deutsch",
   ua: "українська", ru: "русский", zh: "中文", hi: "हिन्दी", ar: "العربية", he: "עברית"
