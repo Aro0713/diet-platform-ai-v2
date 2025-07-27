@@ -4,6 +4,7 @@ import { interviewNarrativeAgent } from "@/agents/interviewNarrativeAgent";
 import { medicalLabAgent } from "@/agents/medicalLabAgent";
 import { nutrientRequirementsMap, type NutrientRequirements } from "@/utils/nutrientRequirementsMap";
 import type { Ingredient } from "@/utils/nutrition/calculateMealMacros";
+import { calculateMealMacros } from '@/utils/nutrition/calculateMealMacros'
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -389,6 +390,8 @@ ${jsonFormatPreview}
         delete meal.macros; // ❌ usuń to, co GPT wpisał
         const calculated = await calculateMealMacros(cleanedIngredients);
         console.log(`📊 Makroskładniki dla ${meal.name} (${day}):`, calculated);
+        console.log(`🧪 Składniki (${day} / ${meal.name}):`, cleanedIngredients);
+        console.log(`📊 Wynik calculateMealMacros (${day} / ${meal.name}):`, calculated);
 
         const allZero = Object.values(calculated).every(v => v === 0);
         if (allZero) {
