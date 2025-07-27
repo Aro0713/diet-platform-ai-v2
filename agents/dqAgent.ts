@@ -209,8 +209,11 @@ ${JSON.stringify(enrichedPlan, null, 2)}
       }
     }
 
-    const originalMeals: Meal[] = Object.values(enrichedPlan).flatMap(day => Object.values(day));
-    const correctedMeals: Meal[] = Object.values(correctedStructured).flatMap(day => Object.values(day));
+    const originalMeals: Meal[] = Object.values(enrichedPlan)
+        .flatMap((dayObj: Record<string, Meal>) => Object.values(dayObj));
+
+    const correctedMeals: Meal[] = Object.values(correctedStructured)
+        .flatMap((dayObj: Record<string, Meal>) => Object.values(dayObj));
 
     const issuesOriginal = validateDietWithModel(originalMeals, model);
     const issuesCorrected = validateDietWithModel(correctedMeals, model);
