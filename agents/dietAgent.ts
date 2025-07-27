@@ -78,6 +78,27 @@ export function parseRawDietPlan(raw: any): Record<string, Meal[]> {
 
   return parsed;
 }
+
+function normalizeIngredients(ingredients: any[]): Ingredient[] {
+  return ingredients
+    .map((i) => {
+      const product = i.name ?? i.product ?? "";
+      const weight = typeof i.quantity === "number"
+        ? i.quantity
+        : typeof i.weight === "number"
+        ? i.weight
+        : Number(i.quantity ?? i.weight) || 0;
+
+      return { product, weight };
+    })
+    .filter(
+      (i) =>
+        typeof i.product === "string" &&
+        i.product.trim() !== "" &&
+        !["undefined", "null", "name"].includes(i.product.toLowerCase())
+    );
+}
+
 const languageMap: Record<string, string> = {
   pl: "polski", en: "English", es: "español", fr: "français", de: "Deutsch",
   ua: "українська", ru: "русский", zh: "中文", hi: "हिन्दी", ar: "العربية", he: "עברית"
@@ -450,12 +471,7 @@ for (const day of Object.keys(parsed.dietPlan)) {
   }
 
   for (const meal of meals) {
-    const cleanedIngredients = meal.ingredients
-      .filter((i: any) => i?.product && typeof i.product === "string" && i.product !== "undefined")
-      .map((i: any) => ({
-        product: i.product.replace(/\(.*?\)/g, "").trim(),
-        weight: i.quantity || i.weight || 0
-      }));
+    const cleanedIngredients = normalizeIngredients(meal.ingredients);
 
     if (cleanedIngredients.length === 0) {
       console.warn(`⚠️ Brak poprawnych składników do przeliczenia w "${meal.name}" (${day})`);
