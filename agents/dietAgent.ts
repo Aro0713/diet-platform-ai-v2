@@ -205,6 +205,170 @@ const cuisineMap: Record<string, string> = {
   "Afrykańska": "African",
   "Dieta arktyczna / syberyjska": "Arctic/Siberian"
 };
+export async function generateDiet(input: any): Promise<any> {
+  const {
+    form,
+    interviewData,
+    testResults,
+    medicalDescription,
+    lang = "pl"
+  } = input;
+
+  const modelKey = modelMap[form.model] || form.model?.toLowerCase();
+  const goalExplanation = goalMap[interviewData.goal] || interviewData.goal;
+  const cuisine = cuisineMap[interviewData.cuisine] || "global";
+  const cuisineContext = cuisineContextMap[interviewData.cuisine] || "general healthy cooking style";
+  const selectedLang = languageMap[lang] || "polski";
+  const daysInLang = dayNames[lang] || dayNames['pl'];
+  const daysList = daysInLang.map(d => `- ${d}`).join('\n');
+
+  const bmi = form.bmi ?? (form.weight && form.height
+    ? parseFloat((form.weight / ((form.height / 100) ** 2)).toFixed(1))
+    : null);
+  const pal = form.pal ?? 1.6;
+  const cpm = form.cpm ?? (form.weight && pal ? Math.round(form.weight * 24 * pal) : null);
+  const mealsPerDay = interviewData.mealsPerDay ?? "not provided";
+
+  const narrative = await interviewNarrativeAgent({ interviewData, goal: interviewData.goal, recommendation: interviewData.recommendation, lang });
+  const medical = await medicalLabAgent({ testResults, description: medicalDescription, lang });
+
+  const modelDefinition = dietModelMap[modelKey || ""] || {};
+  const modelMacroStr = modelDefinition.macros
+    ? Object.entries(modelDefinition.macros).map(([k, v]) => `- ${k}: ${v}`).join('\n')
+    : "No macronutrient guidance found for this model.";
+
+  const modelNotes = modelDefinition.notes?.join('\n') || "";
+
+  const modelDetails = `
+⚙️ Diet Model Requirements (${modelKey || "N/A"}):
+${modelMacroStr}
+${modelNotes ? `\n📌 Notes:\n${modelNotes}` : ""}
+`;
+
+  const nutrientRequirements = nutrientRequirementsMap[form.model] || null;
+  const nutrientRequirementsText = nutrientRequirements
+    ? Object.entries(nutrientRequirements)
+        .map(([k, v]) => `- ${k}: ${v.min} – ${v.max}`)
+        .join('\n')
+    : "⚠️ No specific micronutrient ranges found for this model.";
+
+  const jsonFormatPreview = daysInLang.map(day => `    \"${day}\": { ... }`).join(',\n');
+
+  const prompt = `
+You are a clinical dietitian AI.
+
+${modelDetails}
+
+Generate a complete 7-day diet plan. DO NOT stop after 1 or 2 days.
+
+You MUST include:
+- All 7 days in the target language (${lang}):
+${daysList}
+- The number of meals per day must be:
+  - If mealsPerDay is provided: use exactly that number → ${mealsPerDay}
+  - If not provided: intelligently determine the best number of meals (between 2–6)
+
+- Use meal names localized to language "${lang}".
+- DO NOT estimate macro or micronutrients yourself.
+- Just provide full list of ingredients with exact weights (in grams) for each meal.
+- The system will calculate all macros and micros automatically.
+
+Base the plan on:
+✔ Patient profile from interview:
+${narrative}
+
+✔ Required nutrient ranges:
+${nutrientRequirementsText}
+
+✔ Clinical risks and suggestions:
+${medical}
+
+✔ Diet model: ${modelKey}, Cuisine: ${cuisine}
+✔ CPM: ${cpm}, BMI: ${bmi}, PAL: ${pal}
+✔ Goal: ${goalExplanation}
+✔ Doctor's recommendation: ${interviewData.recommendation}
+✔ Allergies: ${form.allergies || "none"}
+
+Use ONLY trusted sources:
+${dataSources}
+
+Return JSON:
+{
+  "dietPlan": {
+${jsonFormatPreview}
+  },
+  "weeklyOverview": { ... },
+  "shoppingList": [ ... ],
+  "nutritionalSummary": {
+    "macros": { "protein": ..., "fat": ..., "carbs": ... },
+    "micros": { "sodium": ..., "magnesium": ..., "vitamin D": ... }
+  }
+}
+`;
+
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [
+      { role: "system", content: "You are a clinical dietitian AI." },
+      { role: "user", content: prompt }
+    ],
+    temperature: 0.7,
+    stream: false
+  });
+
+  const content = completion.choices?.[0]?.message?.content;
+  if (!content) throw new Error("Brak odpowiedzi od modelu");
+
+  let parsed;
+  try {
+    const cleanContent = content.replace(/```json|```/g, "").trim();
+    parsed = JSON.parse(cleanContent);
+  } catch (err) {
+    throw new Error("❌ GPT zwrócił niepoprawny JSON — nie można sparsować.");
+  }
+
+  const rawDietPlan = parsed?.dietPlan;
+  if (!rawDietPlan) throw new Error("❌ JSON nie zawiera pola 'dietPlan'.");
+
+  try {
+    const { type, plan } = await import("@/agents/dqAgent").then(m => m.dqAgent.run({
+      dietPlan: rawDietPlan,
+      model: modelKey,
+      goal: goalExplanation,
+      cpm,
+      weightKg: form.weight ?? null
+    }));
+    parsed.dietPlan = plan;
+  } catch (err) {
+    console.warn("⚠️ dqAgent błąd:", err);
+  }
+
+  const { calculateMealMacros } = await import("@/utils/nutrition/calculateMealMacros");
+  for (const day of Object.keys(parsed.dietPlan)) {
+    const meals = parsed.dietPlan[day];
+    for (const meal of meals) {
+      const cleanedIngredients = meal.ingredients.map((i: Ingredient) => ({
+        ...i,
+        product: i.product.replace(/\(.*?\)/g, "").trim()
+      }));
+
+      delete meal.macros;
+      const calculated = await calculateMealMacros(cleanedIngredients);
+
+      const allZero = Object.values(calculated).every(v => v === 0);
+      if (allZero) {
+        meal.macros = undefined;
+        meal.notes = "⚠️ Nie udało się przeliczyć wartości odżywczych.";
+        continue;
+      }
+
+      meal.macros = { ...calculated };
+      meal.calories = calculated.kcal ?? 0;
+    }
+  }
+
+  return parsed;
+}
 
 export const generateDietTool = tool({
   name: "generate_diet_plan",
