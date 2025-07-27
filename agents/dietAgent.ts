@@ -319,13 +319,16 @@ ${jsonFormatPreview}
   const content = completion.choices?.[0]?.message?.content;
   if (!content) throw new Error("Brak odpowiedzi od modelu");
 
-  let parsed;
-  try {
-    const cleanContent = content.replace(/```json|```/g, "").trim();
-    parsed = JSON.parse(cleanContent);
-  } catch (err) {
-    throw new Error("❌ GPT zwrócił niepoprawny JSON — nie można sparsować.");
-  }
+    let parsed;
+    try {
+      console.error("📦 RAW response from GPT:\n", content);
+      const start = content.indexOf('{');
+      const end = content.lastIndexOf('}') + 1;
+      const cleanContent = content.slice(start, end).trim();
+      parsed = JSON.parse(cleanContent);
+    } catch (err) {
+      throw new Error("❌ GPT zwrócił niepoprawny JSON — nie można sparsować.");
+    }
 
   const rawDietPlan = parsed?.dietPlan;
   if (!rawDietPlan) throw new Error("❌ JSON nie zawiera pola 'dietPlan'.");
