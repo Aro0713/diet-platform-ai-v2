@@ -360,18 +360,12 @@ for (const day of Object.keys(parsed.dietPlan)) {
       console.warn(`⚠️ GPT wygenerował błędne składniki w posiłku "${meal.name}" (${day}):`, invalidIngredients);
     }
 
-    const cleanedIngredients = meal.ingredients
-      .filter(
-        (i: Ingredient) =>
-          i?.product &&
-          typeof i.product === "string" &&
-          i.product.trim() !== "" &&
-          i.product !== "undefined"
-      )
-      .map((i: Ingredient) => ({
-        ...i,
-        product: i.product.replace(/\(.*?\)/g, "").trim()
-      }));
+  const cleanedIngredients = meal.ingredients
+  .filter((i: any) => i?.name && typeof i.name === "string" && i.name !== "undefined")
+  .map((i: any) => ({
+    product: i.name.replace(/\(.*?\)/g, "").trim(),
+    weight: i.quantity || i.weight || 0
+  }));
 
     if (cleanedIngredients.length === 0) {
       console.warn(`⚠️ Brak poprawnych składników do przeliczenia w "${meal.name}" (${day})`);
