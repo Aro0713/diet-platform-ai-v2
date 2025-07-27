@@ -17,19 +17,36 @@ function parseRawDietPlan(raw: any): Record<string, Meal[]> {
     const mealsForDay: Meal[] = [];
 
     for (const [mealName, ingredientsBlock] of Object.entries(meals)) {
-      const [dishName, rawIngredients] = Object.entries(ingredientsBlock || {})[0] ?? [];
+      let dishName = "";
+      let rawIngredients: any[] = [];
 
-      const ingredients = Array.isArray(rawIngredients)
-        ? rawIngredients.map((entry: any) => {
-            const [product, weightRaw] = Object.entries(entry || {})[0] ?? [];
-            const weight = typeof weightRaw === "number" ? weightRaw : Number(weightRaw) || 0;
-            return { product, weight };
-          }).filter((i: Ingredient) =>
-            i?.product && typeof i.product === "string" && i.product.trim() !== "" && !["undefined", "null"].includes(i.product.toLowerCase())
-          )
-        : [];
+      // 🟢 Format 1: { "Danie": [ {...}, {...} ] }
+      const blockEntries = Object.entries(ingredientsBlock || {});
+      if (blockEntries.length === 1 && Array.isArray(blockEntries[0][1])) {
+        dishName = blockEntries[0][0];
+        rawIngredients = blockEntries[0][1];
+      }
 
-      const isValidDishName = dishName && dishName !== "0" && dishName !== "undefined";
+      // 🟢 Format 2: { "Śniadanie": [ {...}, {...} ] }
+      else if (Array.isArray(ingredientsBlock)) {
+        dishName = mealName;
+        rawIngredients = ingredientsBlock;
+      } else {
+        console.warn(`⚠️ Nieznana struktura składników: ${mealName}`, ingredientsBlock);
+        continue;
+      }
+
+      const ingredients = rawIngredients.map((entry: any) => {
+        const [product, weightRaw] = Object.entries(entry || {})[0] ?? [];
+        const weight = typeof weightRaw === "number" ? weightRaw : Number(weightRaw) || 0;
+        return { product, weight };
+      }).filter((i: Ingredient) =>
+        i?.product && typeof i.product === "string" &&
+        i.product.trim() !== "" &&
+        !["undefined", "null", "0"].includes(i.product.toLowerCase())
+      );
+
+      const isValidDishName = dishName && !["0", "undefined", "null", ""].includes(dishName.toLowerCase());
       const finalName = isValidDishName ? dishName : mealName;
 
       mealsForDay.push({
@@ -41,7 +58,6 @@ function parseRawDietPlan(raw: any): Record<string, Meal[]> {
         calories: 0,
         glycemicIndex: 0
       });
-
     }
 
     parsed[day] = mealsForDay;
