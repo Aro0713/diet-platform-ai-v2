@@ -95,12 +95,15 @@ export const dqAgent = {
       const meals = enrichedPlan[day];
       for (const mealKey of Object.keys(meals)) {
         const meal = meals[mealKey];
-        const calculated = await calculateMealMacros(meal.ingredients);
-        meal.macros = { ...calculated, ...(meal.macros || {}) };
+        if (meal.ingredients && Array.isArray(meal.ingredients)) {
+          const validIngredients = meal.ingredients.filter((i: any) => typeof i.product === 'string' && typeof i.weight === 'number');
+          meal.macros = await calculateMealMacros(validIngredients);
+        } else {
+          meal.macros = await calculateMealMacros([]);
+        }
       }
     }
 
-    // 🔍 Walidacja zakresów z uwzględnieniem modelu i chorób
     const mergedRequirements = mergeRequirements([
       model,
       ...(conditions ?? [])
@@ -144,7 +147,6 @@ Additional context:
 - Nutrient range violations: ${violations.join("; ") || "None"}
 - Target nutrient ranges (merged from model + conditions):
 ${JSON.stringify(mergedRequirements, null, 2)}
-
 
 Return one of the following:
 ✅ VALID — if all rules are met
