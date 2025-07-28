@@ -65,11 +65,12 @@ export async function fetchNutritionFromUSDA(product: string): Promise<NutrientD
       }
     }
 
+    // 🔍 Log do debugowania (możesz usunąć w prod)
     console.log("🧪 USDA nutrients raw:", (reportJson.foodNutrients || []).map((n: any) => ({
-  id: n.nutrient?.id,
-  name: n.nutrient?.name,
-  amount: n.amount
-})));
+      id: n.nutrient?.id,
+      name: n.nutrient?.name,
+      amount: n.amount
+    })));
 
     return nutrients;
   } catch (err) {
