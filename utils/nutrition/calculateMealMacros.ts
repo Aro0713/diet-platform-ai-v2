@@ -1,7 +1,7 @@
 // utils/nutrition/calculateMealMacros.ts
 
 import { getTranslation } from "../translations/useTranslationAgent";
-import { fetchNutritionFromUSDA } from "./fetchFromUSDA";
+import { fetchNutrition } from './fetchNutrition';
 
 export type NutrientData = {
   kcal: number;
@@ -45,7 +45,7 @@ export async function calculateMealMacros(ingredients: Ingredient[]): Promise<Nu
       const translated = await getTranslation(product, "en");
       console.log(`🌍 Translacja produktu "${product}" → "${translated}"`);
 
-      const data = await fetchNutritionFromUSDA(translated);
+      const data = await fetchNutrition(translated);
       const factor = weight / 100;
 
       if (data) {
@@ -53,7 +53,7 @@ export async function calculateMealMacros(ingredients: Ingredient[]): Promise<Nu
           totals[key] += (data[key] || 0) * factor;
         }
       } else {
-        console.warn(`⚠️ Brak danych USDA dla składnika: ${translated}`);
+        console.warn(`⚠️ Brak danych dla składnika: ${translated}`);
       }
     } catch (err) {
       console.error(`❌ Błąd przetwarzania składnika "${product}":`, err);
