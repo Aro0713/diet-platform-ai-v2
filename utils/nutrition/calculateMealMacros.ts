@@ -33,36 +33,50 @@ function round(n: number): number {
 }
 
 export async function calculateMealMacros(ingredients: Ingredient[]): Promise<NutrientData> {
-  const totals: NutrientData = {
+  const empty: NutrientData = {
     kcal: 0, protein: 0, fat: 0, carbs: 0, fiber: 0,
     sodium: 0, potassium: 0, calcium: 0, magnesium: 0,
     iron: 0, zinc: 0, vitaminD: 0, vitaminB12: 0,
     vitaminC: 0, vitaminA: 0, vitaminE: 0, vitaminK: 0
   };
 
-  for (const { product, weight } of ingredients) {
-    try {
-      const translated = await getTranslation(product, "en");
-      console.log(`🌍 Translacja produktu "${product}" → "${translated}"`);
+  const results = await Promise.all(
+    ingredients.map(async ({ product, weight }) => {
+      try {
+        const translated = await getTranslation(product, "en");
+        console.log(`🌍 Translacja produktu "${product}" → "${translated}"`);
 
-      const data = await fetchNutrition(translated);
-      const factor = weight / 100;
-
-      if (data) {
-        for (const key of Object.keys(totals) as (keyof NutrientData)[]) {
-          totals[key] += (data[key] || 0) * factor;
+        const data = await fetchNutrition(translated);
+        if (!data) {
+          console.warn(`⚠️ Brak danych dla składnika: ${translated}`);
+          return empty;
         }
-      } else {
-        console.warn(`⚠️ Brak danych dla składnika: ${translated}`);
+
+        const factor = weight / 100;
+        const partial: NutrientData = {} as NutrientData;
+
+        for (const key of Object.keys(empty) as (keyof NutrientData)[]) {
+          partial[key] = (data[key] || 0) * factor;
+        }
+
+        return partial;
+      } catch (err) {
+        console.error(`❌ Błąd składnika "${product}":`, err);
+        return empty;
       }
-    } catch (err) {
-      console.error(`❌ Błąd przetwarzania składnika "${product}":`, err);
+    })
+  );
+
+  const totals: NutrientData = { ...empty };
+  for (const partial of results) {
+    for (const key of Object.keys(empty) as (keyof NutrientData)[]) {
+      totals[key] += partial[key];
     }
   }
 
   const rounded: NutrientData = {} as NutrientData;
-  for (const key of Object.keys(totals) as (keyof NutrientData)[]) {
-    rounded[key] = round(totals[key]);
+  for (const key of Object.keys(empty) as (keyof NutrientData)[]) {
+    rounded[key] = Math.round(totals[key] * 100) / 100;
   }
 
   console.log("🧪 calculateMealMacros → wynik:", rounded);
