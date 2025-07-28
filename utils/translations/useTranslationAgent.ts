@@ -1,4 +1,5 @@
 import { LangKey } from "@/utils/i18n";
+import { translatorAgent } from "@/agents/translationAgent"; // fallback do użycia OpenAI na backendzie
 
 const translationCache: Record<string, Record<LangKey, string>> = {};
 
@@ -6,19 +7,31 @@ export async function getTranslations(text: string): Promise<Record<LangKey, str
   if (translationCache[text]) return translationCache[text];
 
   try {
-    const res = await fetch("/api/translate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text })
-    });
+    const isBrowser = typeof window !== "undefined";
 
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (isBrowser) {
+      const base = process.env.NEXT_PUBLIC_BASE_URL || "";
+      const url = `${base}/api/translate`;
 
-    const json = await res.json();
-    translationCache[text] = json;
-    return json;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text })
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const json = await res.json();
+      translationCache[text] = json;
+      return json;
+    } else {
+      // Backend: bez fetchowania — bezpiecznie użyj bezpośrednio agenta
+      const result = await translatorAgent.run({ text });
+      translationCache[text] = result as Record<LangKey, string>;
+      return result;
+    }
   } catch (err) {
-    console.error("Translation fetch error:", err);
+    console.error("Translation error (fallback):", err);
     return {
       pl: text, en: text, es: text, fr: text, de: text,
       ua: text, ru: text, zh: text, hi: text, ar: text, he: text
