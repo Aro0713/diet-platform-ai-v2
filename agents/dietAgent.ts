@@ -442,6 +442,7 @@ if (!rawDietPlan) {
 }
 
 const parsedDietPlan = parseRawDietPlan(rawDietPlan);
+console.log("📦 parsedDietPlan →", JSON.stringify(parsedDietPlan, null, 2));
 
 // ✅ zabezpieczenie: przekazujemy TYLKO sparsowaną strukturę
 const structuredPlan = convertFlatToStructuredPlan(parsedDietPlan);
