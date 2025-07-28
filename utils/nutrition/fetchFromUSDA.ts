@@ -59,11 +59,17 @@ export async function fetchNutritionFromUSDA(product: string): Promise<NutrientD
     };
 
     for (const item of reportJson.foodNutrients || []) {
-      const key = nutrientMap[item.nutrient?.number];
+      const key = nutrientMap[item.nutrient?.id];
       if (key && typeof item.amount === "number") {
         nutrients[key] += item.amount;
       }
     }
+
+    console.log("🧪 USDA nutrients raw:", (reportJson.foodNutrients || []).map((n: any) => ({
+  id: n.nutrient?.id,
+  name: n.nutrient?.name,
+  amount: n.amount
+})));
 
     return nutrients;
   } catch (err) {
