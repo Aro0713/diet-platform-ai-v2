@@ -1,7 +1,6 @@
-// utils/nutrition/calculateMealMacros.ts
-
 import { getTranslation } from "../translations/useTranslationAgent";
-import { fetchNutrition } from './fetchNutrition';
+import { fetchNutrition } from "./fetchNutrition";
+import pLimit from "p-limit";
 
 export type NutrientData = {
   kcal: number;
@@ -32,39 +31,42 @@ function round(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
+const empty: NutrientData = {
+  kcal: 0, protein: 0, fat: 0, carbs: 0, fiber: 0,
+  sodium: 0, potassium: 0, calcium: 0, magnesium: 0,
+  iron: 0, zinc: 0, vitaminD: 0, vitaminB12: 0,
+  vitaminC: 0, vitaminA: 0, vitaminE: 0, vitaminK: 0
+};
+
 export async function calculateMealMacros(ingredients: Ingredient[]): Promise<NutrientData> {
-  const empty: NutrientData = {
-    kcal: 0, protein: 0, fat: 0, carbs: 0, fiber: 0,
-    sodium: 0, potassium: 0, calcium: 0, magnesium: 0,
-    iron: 0, zinc: 0, vitaminD: 0, vitaminB12: 0,
-    vitaminC: 0, vitaminA: 0, vitaminE: 0, vitaminK: 0
-  };
+  const limit = pLimit(3); // ⚠️ Limit 3 równoległych zapytań
 
   const results = await Promise.all(
-    ingredients.map(async ({ product, weight }) => {
-      try {
-        const translated = await getTranslation(product, "en");
-        console.log(`🌍 Translacja produktu "${product}" → "${translated}"`);
+    ingredients.map(({ product, weight }) =>
+      limit(async () => {
+        try {
+          const translated = await getTranslation(product, "en");
+          console.log(`🌍 Translacja produktu "${product}" → "${translated}"`);
 
-        const data = await fetchNutrition(translated);
-        if (!data) {
-          console.warn(`⚠️ Brak danych dla składnika: ${translated}`);
+          const data = await fetchNutrition(translated);
+          if (!data) {
+            console.warn(`⚠️ Brak danych dla składnika: ${translated}`);
+            return empty;
+          }
+
+          const factor = weight / 100;
+          const partial: NutrientData = { ...empty };
+          for (const key of Object.keys(empty) as (keyof NutrientData)[]) {
+            partial[key] = (data[key] || 0) * factor;
+          }
+
+          return partial;
+        } catch (err) {
+          console.error(`❌ Błąd składnika "${product}":`, err);
           return empty;
         }
-
-        const factor = weight / 100;
-        const partial: NutrientData = {} as NutrientData;
-
-        for (const key of Object.keys(empty) as (keyof NutrientData)[]) {
-          partial[key] = (data[key] || 0) * factor;
-        }
-
-        return partial;
-      } catch (err) {
-        console.error(`❌ Błąd składnika "${product}":`, err);
-        return empty;
-      }
-    })
+      })
+    )
   );
 
   const totals: NutrientData = { ...empty };
@@ -76,7 +78,7 @@ export async function calculateMealMacros(ingredients: Ingredient[]): Promise<Nu
 
   const rounded: NutrientData = {} as NutrientData;
   for (const key of Object.keys(empty) as (keyof NutrientData)[]) {
-    rounded[key] = Math.round(totals[key] * 100) / 100;
+    rounded[key] = round(totals[key]);
   }
 
   console.log("🧪 calculateMealMacros → wynik:", rounded);
