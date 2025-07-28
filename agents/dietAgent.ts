@@ -589,7 +589,25 @@ ${daysList}
 
 - Use meal names localized to language "${lang}".
 - DO NOT estimate macro or micronutrients yourself.
-- Just provide full list of ingredients with exact weights (in grams) for each meal.
+- For each meal, include:
+  - "mealName": string
+  - "time": string (e.g. "07:00")
+  - "ingredients": array of objects → each with:
+      - "name": string (e.g. "Egg")
+      - "quantity": number (in grams)
+
+Example:
+{
+  "mealName": "Jajecznica z pomidorami",
+  "time": "07:00",
+  "ingredients": [
+    { "name": "Jajko", "quantity": 120 },
+    { "name": "Pomidor", "quantity": 100 },
+    { "name": "Olej rzepakowy", "quantity": 5 }
+  ]
+}
+⚠️ Do not omit ingredients. Each meal must include at least 2–6 ingredients with exact gram values.
+
 - The system will calculate all macros and micros automatically.
 
 Base the plan on:
