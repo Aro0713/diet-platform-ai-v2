@@ -12,30 +12,26 @@ export interface Meal {
   menu: string;
   description?: string;
   ingredients: Ingredient[];
-  calories: number;
   glycemicIndex: number;
-macros?: {
-  protein?: number;
-  fat?: number;
-  carbs?: number;
-  fiber?: number;
-  sodium?: number;
-  potassium?: number;
-  calcium?: number;
-  magnesium?: number;
-  iron?: number;
-  zinc?: number;
-  vitaminD?: number;
-  vitaminB12?: number;
-  vitaminC?: number;
-  vitaminA?: number;
-  vitaminE?: number;
-  vitaminK?: number;
-  [key: string]: number | undefined; // 👈 DODAJ TO NA KOŃCU
-};
-
-  micros?: Record<string, number>; // 🧬 mikroskładniki – DODAJ TO
-  imageUrl?: string;
+  macros: {
+    kcal: number;
+    protein: number;
+    fat: number;
+    carbs: number;
+    fiber: number;
+    sodium: number;
+    potassium: number;
+    calcium: number;
+    magnesium: number;
+    iron: number;
+    zinc: number;
+    vitaminD: number;
+    vitaminB12: number;
+    vitaminC: number;
+    vitaminA: number;
+    vitaminE: number;
+    vitaminK: number;
+  };
 }
 
 export type TestResult = {

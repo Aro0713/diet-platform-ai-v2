@@ -9,10 +9,23 @@ type RawMeal = {
   glycemicIndex?: number;
   ingredients?: { product: string; weight: number }[];
   macros?: {
+    kcal?: number;
     protein?: number;
     carbs?: number;
     fat?: number;
+    fiber?: number;
     sodium?: number;
+    potassium?: number;
+    calcium?: number;
+    magnesium?: number;
+    iron?: number;
+    zinc?: number;
+    vitaminD?: number;
+    vitaminB12?: number;
+    vitaminC?: number;
+    vitaminA?: number;
+    vitaminE?: number;
+    vitaminK?: number;
   };
 };
 
@@ -94,13 +107,25 @@ export function transformDietPlanToEditableFormat(
         description: mealData?.menu ?? '',
         time: mealData?.time ?? '',
         ingredients: mealData?.ingredients ?? [],
-        calories: mealData?.kcal ?? 0,
         glycemicIndex: mealData?.glycemicIndex ?? 0,
         macros: {
+          kcal: mealData?.macros?.kcal ?? mealData?.kcal ?? 0,
           protein: mealData?.macros?.protein ?? 0,
           carbs: mealData?.macros?.carbs ?? 0,
           fat: mealData?.macros?.fat ?? 0,
-          sodium: mealData?.macros?.sodium ?? 0
+          fiber: mealData?.macros?.fiber ?? 0,
+          sodium: mealData?.macros?.sodium ?? 0,
+          potassium: mealData?.macros?.potassium ?? 0,
+          calcium: mealData?.macros?.calcium ?? 0,
+          magnesium: mealData?.macros?.magnesium ?? 0,
+          iron: mealData?.macros?.iron ?? 0,
+          zinc: mealData?.macros?.zinc ?? 0,
+          vitaminD: mealData?.macros?.vitaminD ?? 0,
+          vitaminB12: mealData?.macros?.vitaminB12 ?? 0,
+          vitaminC: mealData?.macros?.vitaminC ?? 0,
+          vitaminA: mealData?.macros?.vitaminA ?? 0,
+          vitaminE: mealData?.macros?.vitaminE ?? 0,
+          vitaminK: mealData?.macros?.vitaminK ?? 0
         }
       });
 

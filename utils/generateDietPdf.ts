@@ -96,9 +96,9 @@ if (!finalNarrative) {
 
   const content: any[] = [];
   const allergyList: string[] = [];
-
-  const startDate = diet[0]?.date || new Date().toISOString().slice(0, 10);
-  const endDate = diet[diet.length - 1]?.date || new Date().toISOString().slice(0, 10);
+  const sorted = [...diet].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+  const startDate = sorted[0]?.date || new Date().toISOString().slice(0, 10);
+  const endDate = sorted[sorted.length - 1]?.date || new Date().toISOString().slice(0, 10);
 
   // ✅ Strona tytułowa
   content.push(
@@ -212,10 +212,7 @@ normalizedDiet.forEach((meal, idx) => {
 
 
     const rows = await Promise.all(meals.map(async (meal) => {
-  const image = meal.imageUrl 
-    ? meal.imageUrl 
-    : await getMealImageBase64(meal.menu || meal.name);
-
+  const image = await getMealImageBase64(meal.menu || meal.name || "posiłek");
   const tags = getMealTags(meal);
   const tagLabels = await Promise.all(tags.map(tag => getTranslation(`specialLabel${capitalize(tag)}`, lang)));
 
@@ -232,36 +229,36 @@ normalizedDiet.forEach((meal, idx) => {
             meal.description ? { text: meal.description, italics: true, fontSize: 10, margin: [0, 4, 0, 6] } : null,
             {
               columns: [
-                {
-                  width: '*',
-                  text: [
-                  `🔥 ${meal.calories} kcal`,
-                  meal.glycemicIndex ? `💉 IG: ${meal.glycemicIndex}` : '',
-                  meal.macros?.protein ? `🥩 ${tUI('protein', lang)}: ${meal.macros.protein} g` : '',
-                  meal.macros?.fat ? `🧈 ${tUI('fat', lang)}: ${meal.macros.fat} g` : '',
-                  meal.macros?.carbs ? `🍞 ${tUI('carbs', lang)}: ${meal.macros.carbs} g` : '',
-                  meal.macros?.fiber ? `🌿 ${tUI('fiber', lang)}: ${meal.macros.fiber} g` : ''
-                ].filter(Boolean).join('\n'),
-                 fontSize: 9
-                },
-                image ? (
-                  image.startsWith('data:image') ? {
-                    width: 120,
-                    image,
-                    margin: [10, 0, 0, 6]
-                  } : {
-                    image: await toBase64Image(image), // pobrany URL → base64
-                    width: 120,
-                    margin: [10, 0, 0, 6]
-                  }
-                ) : {
-                  text: tUI('noImageAvailable', lang),
-                  alignment: 'center',
-                  color: 'gray',
-                  fontSize: 9
-                }
+            {
+              width: '*',
+              text: [
+                `🔥 ${meal.macros?.kcal ?? 0} kcal`,
+                meal.glycemicIndex ? `💉 IG: ${meal.glycemicIndex}` : '',
+                meal.macros?.protein ? `🥩 ${tUI('protein', lang)}: ${meal.macros.protein} g` : '',
+                meal.macros?.fat ? `🧈 ${tUI('fat', lang)}: ${meal.macros.fat} g` : '',
+                meal.macros?.carbs ? `🍞 ${tUI('carbs', lang)}: ${meal.macros.carbs} g` : '',
+                meal.macros?.fiber ? `🌿 ${tUI('fiber', lang)}: ${meal.macros.fiber} g` : ''
+              ].filter(Boolean).join('\n'),
+              fontSize: 9
+            },
+            image ? (
+              image.startsWith('data:image') ? {
+                width: 120,
+                image,
+                margin: [10, 0, 0, 6]
+              } : {
+                image: await toBase64Image(image),
+                width: 120,
+                margin: [10, 0, 0, 6]
+              }
+            ) : {
+              text: tUI('noImageAvailable', lang),
+              alignment: 'center',
+              color: 'gray',
+              fontSize: 9
+            }
+          ]
 
-              ]
             },
             tagLabels.length > 0 ? {
               text: tagLabels.join(' • '),
@@ -354,41 +351,29 @@ normalizedDiet.forEach((meal, idx) => {
 function summarizeNutritionByDay(diet: Meal[]) {
   const byDay: Record<string, Record<string, number>> = {};
 
+  const nutrientKeys = [
+    'kcal', 'protein', 'fat', 'carbs', 'fiber',
+    'sodium', 'potassium', 'calcium', 'magnesium',
+    'iron', 'zinc', 'vitaminD', 'vitaminB12',
+    'vitaminC', 'vitaminA', 'vitaminE', 'vitaminK'
+  ] as const;
+
   diet.forEach(meal => {
     const day = (meal as any).day || 'Inne';
     if (!byDay[day]) {
-      byDay[day] = {
-        kcal: 0,
-        protein: 0,
-        fat: 0,
-        carbs: 0,
-        fiber: 0,
-        sodium: 0,
-        potassium: 0,
-        calcium: 0,
-        magnesium: 0,
-        iron: 0,
-        zinc: 0,
-        vitaminD: 0,
-        vitaminB12: 0,
-        vitaminC: 0,
-        vitaminA: 0,
-        vitaminE: 0,
-        vitaminK: 0
-      };
+      byDay[day] = Object.fromEntries(
+        nutrientKeys.map(k => [k, 0])
+      ) as Record<string, number>;
     }
 
-    byDay[day].kcal += meal.calories || 0;
-
-    for (const key of Object.keys(byDay[day])) {
-      if (key !== 'kcal') {
-        byDay[day][key] += meal.macros?.[key] || 0;
-      }
+    for (const key of nutrientKeys) {
+      byDay[day][key] += meal.macros?.[key] || 0;
     }
   });
 
   return byDay;
 }
+
 const format = (value: number, unit: string) => value > 0 ? `${Math.round(value)}${unit}` : '';
 const dailySummary = summarizeNutritionByDay(diet);
 content.push({

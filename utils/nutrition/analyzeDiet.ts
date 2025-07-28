@@ -25,14 +25,14 @@ export function calculateMacroPercentagesFromPlan(dietPlan: Record<string, Meal[
   };
 }
 
-// 💊 Mikroskładniki – dla DietTable (array)
-export function calculateMicroSumsFromPlan(dietPlan: Record<string, Meal[]>) {
+// 💊 Suma mikro i makro – dla DietTable (array)
+export function calculateMacroMicroSumsFromPlan(dietPlan: Record<string, Meal[]>) {
   const sums: Record<string, number> = {};
 
   for (const meals of Object.values(dietPlan)) {
     for (const meal of meals) {
-      const micros = meal.micros || {};
-      for (const [key, value] of Object.entries(micros)) {
+      const all = meal.macros || {};
+      for (const [key, value] of Object.entries(all)) {
         const parsed = typeof value === "number" ? value : parseFloat(value as string);
         if (!isNaN(parsed)) {
           sums[key] = (sums[key] || 0) + parsed;
@@ -46,14 +46,14 @@ export function calculateMicroSumsFromPlan(dietPlan: Record<string, Meal[]>) {
   );
 }
 
-// 💊 Mikroskładniki – dla dqAgent (structured)
-export function calculateMicroSumsFromStructuredPlan(dietPlan: Record<string, Record<string, Meal>>) {
+// 💊 Suma mikro i makro – dla dqAgent (structured)
+export function calculateMacroMicroSumsFromStructuredPlan(dietPlan: Record<string, Record<string, Meal>>) {
   const sums: Record<string, number> = {};
 
   for (const day of Object.values(dietPlan)) {
     for (const meal of Object.values(day)) {
-      const micros = meal.micros || {};
-      for (const [key, value] of Object.entries(micros)) {
+      const all = meal.macros || {};
+      for (const [key, value] of Object.entries(all)) {
         const parsed = typeof value === "number" ? value : parseFloat(value as string);
         if (!isNaN(parsed)) {
           sums[key] = (sums[key] || 0) + parsed;

@@ -4,7 +4,6 @@ import { interviewNarrativeAgent } from "@/agents/interviewNarrativeAgent";
 import { medicalLabAgent } from "@/agents/medicalLabAgent";
 import { nutrientRequirementsMap, type NutrientRequirements } from "@/utils/nutrientRequirementsMap";
 import type { Ingredient } from "@/utils/nutrition/calculateMealMacros";
-import { calculateMealMacros } from '@/utils/nutrition/calculateMealMacros'
 import type { Meal } from "@/types";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -19,30 +18,48 @@ export function parseRawDietPlan(raw: any): Record<string, Meal[]> {
     for (const [time, block] of Object.entries(meals)) {
       // nowa struktura GPT
       if (
-        typeof block === "object" &&
-        "mealName" in block &&
-        Array.isArray(block.ingredients)
-      ) {
-        const mealName = block.mealName || "Danie";
-        const ingredients: Ingredient[] = block.ingredients.map((i: any) => ({
-          product: i.name ?? "",
-          weight: typeof i.quantity === "number" ? i.quantity : Number(i.quantity) || 0
-        })).filter((i: Ingredient) =>
-          i.product && typeof i.product === "string" && !["undefined", "null", "name"].includes(i.product.toLowerCase())
-        );
+      typeof block === "object" &&
+      "mealName" in block &&
+      Array.isArray(block.ingredients)
+    ) {
+      const mealName = block.mealName || "Danie";
+      const ingredients: Ingredient[] = block.ingredients.map((i: any) => ({
+        product: i.name ?? "",
+        weight: typeof i.quantity === "number" ? i.quantity : Number(i.quantity) || 0
+      })).filter((i: Ingredient) =>
+        i.product && typeof i.product === "string" &&
+        !["undefined", "null", "name"].includes(i.product.toLowerCase())
+      );
 
-        mealsForDay.push({
-          name: mealName,
-          time,
-          menu: mealName,
-          ingredients,
-          macros: {},
-          calories: 0,
-          glycemicIndex: 0
-        });
+      mealsForDay.push({
+        name: mealName,
+        time,
+        menu: mealName,
+        ingredients,
+        macros: {
+          kcal: 0,
+          protein: 0,
+          fat: 0,
+          carbs: 0,
+          fiber: 0,
+          sodium: 0,
+          potassium: 0,
+          calcium: 0,
+          magnesium: 0,
+          iron: 0,
+          zinc: 0,
+          vitaminD: 0,
+          vitaminB12: 0,
+          vitaminC: 0,
+          vitaminA: 0,
+          vitaminE: 0,
+          vitaminK: 0
+        },
+        glycemicIndex: 0
+      });
 
-        continue;
-      }
+      continue;
+    }
 
       // stara struktura GPT
       const [dishName, rawIngredients] = Object.entries(block || {})[0] ?? [];
@@ -62,41 +79,39 @@ export function parseRawDietPlan(raw: any): Record<string, Meal[]> {
       const isValidDishName = dishName && dishName !== "0" && dishName !== "undefined" && dishName !== "name";
       const finalName = isValidDishName ? dishName : time;
 
-      mealsForDay.push({
-        name: finalName,
-        time,
-        menu: finalName,
-        ingredients,
-        macros: {},
-        calories: 0,
-        glycemicIndex: 0
-      });
+  mealsForDay.push({
+  name: finalName,
+  time,
+  menu: finalName,
+  ingredients,
+  macros: {
+    kcal: 0,
+    protein: 0,
+    fat: 0,
+    carbs: 0,
+    fiber: 0,
+    sodium: 0,
+    potassium: 0,
+    calcium: 0,
+    magnesium: 0,
+    iron: 0,
+    zinc: 0,
+    vitaminD: 0,
+    vitaminB12: 0,
+    vitaminC: 0,
+    vitaminA: 0,
+    vitaminE: 0,
+    vitaminK: 0
+  },
+  glycemicIndex: 0
+});
+
     }
 
     parsed[day] = mealsForDay;
   }
 
   return parsed;
-}
-
-function normalizeIngredients(ingredients: any[]): Ingredient[] {
-  return ingredients
-    .map((i) => {
-      const product = i.name ?? i.product ?? "";
-      const weight = typeof i.quantity === "number"
-        ? i.quantity
-        : typeof i.weight === "number"
-        ? i.weight
-        : Number(i.quantity ?? i.weight) || 0;
-
-      return { product, weight };
-    })
-    .filter(
-      (i) =>
-        typeof i.product === "string" &&
-        i.product.trim() !== "" &&
-        !["undefined", "null", "name"].includes(i.product.toLowerCase())
-    );
 }
 
 const languageMap: Record<string, string> = {
@@ -299,14 +314,13 @@ const cuisineMap: Record<string, string> = {
 function convertFlatToStructuredPlan(flat: Record<string, Meal[]>): Record<string, Record<string, Meal>> {
   const structured: Record<string, Record<string, Meal>> = {};
 
-  for (const day of Object.keys(flat)) {
-    const mealsArray = flat[day];
+  for (const [day, meals] of Object.entries(flat)) {
     structured[day] = {};
-
-    mealsArray.forEach((meal, idx) => {
-      const key = meal.name || `meal${idx + 1}`;
-      structured[day][key] = meal;
-    });
+    for (const meal of meals) {
+      const fallbackTime = `0${Object.keys(structured[day]).length + 1}:00`;
+      const time = meal.time && !(meal.time in structured[day]) ? meal.time : fallbackTime;
+      structured[day][time] = meal;
+    }
   }
 
   return structured;
@@ -376,22 +390,36 @@ ${daysList}
   - If not provided: intelligently determine the best number of meals (between 2–6)
 
 - Use meal names localized to language "${lang}".
-- DO NOT estimate macro or micronutrients yourself.
-- ⚠️ Each meal MUST include:
+- You MUST include full nutritional data for every meal.
+- Each meal must include:
 
-  {
-    "mealName": "Jajecznica z pomidorami",
-    "time": "07:00",
-    "ingredients": [
-      { "name": "Jajko", "quantity": 120 },
-      { "name": "Pomidor", "quantity": 80 },
-      { "name": "Olej rzepakowy", "quantity": 5 }
-    ]
-  }
+  - "mealName": string
+  - "time": string (e.g. "07:00")
+  - "ingredients": array of:
+      { "name": "string", "quantity": number in grams }
 
-- Ingredients must be in "ingredients" array, with "name" and "quantity" (in grams).
-- DO NOT skip ingredients. DO NOT use only meal names or placeholders.
-- The system will calculate all macros and micros automatically.
+  - "macros": {
+      "kcal": number,
+      "protein": number,
+      "fat": number,
+      "carbs": number,
+      "fiber": number,
+      "sodium": number,
+      "potassium": number,
+      "calcium": number,
+      "magnesium": number,
+      "iron": number,
+      "zinc": number,
+      "vitaminD": number,
+      "vitaminB12": number,
+      "vitaminC": number,
+      "vitaminA": number,
+      "vitaminE": number,
+      "vitaminK": number
+    }
+
+⚠️ All numeric values must be per whole meal, not per 100g. Use realistic values and round to 1 decimal point.
+
 
 Base the plan on:
 ✔ Patient profile from interview:
@@ -455,6 +483,7 @@ if (!rawDietPlan) {
 }
 
 const parsedDietPlan = parseRawDietPlan(rawDietPlan);
+parsed.dietPlan = parsedDietPlan;
 console.log("📦 parsedDietPlan →", JSON.stringify(parsedDietPlan, null, 2));
 
 // ✅ zabezpieczenie: przekazujemy TYLKO sparsowaną strukturę
@@ -473,40 +502,6 @@ try {
   parsed.dietPlan = plan;
 } catch (err) {
   console.warn("⚠️ dqAgent błąd:", err);
-}
-
-// 🔁 Przelicz makroskładniki
-const { calculateMealMacros } = await import("@/utils/nutrition/calculateMealMacros");
-for (const day of Object.keys(parsed.dietPlan)) {
-  const meals = parsed.dietPlan[day];
-  if (!Array.isArray(meals)) {
-    console.warn(`❌ Niepoprawna struktura posiłków w dniu "${day}" — oczekiwano tablicy`, meals);
-    continue;
-  }
-
-  for (const meal of meals) {
-    const cleanedIngredients = normalizeIngredients(meal.ingredients);
-
-    if (cleanedIngredients.length === 0) {
-      console.warn(`⚠️ Brak poprawnych składników do przeliczenia w "${meal.name}" (${day})`);
-      meal.macros = undefined;
-      meal.notes = "⚠️ Brak poprawnych składników — nie przeliczono wartości.";
-      continue;
-    }
-
-    const calculated = await calculateMealMacros(cleanedIngredients);
-
-    const allZero = Object.values(calculated).every(v => v === 0 || Number.isNaN(v));
-    if (allZero) {
-      console.warn(`⚠️ Wszystkie składniki 0/NaN dla posiłku: "${meal.name}" w dniu: ${day}`);
-      meal.macros = undefined;
-      meal.notes = "⚠️ Nie udało się przeliczyć wartości odżywczych.";
-      continue;
-    }
-
-    meal.macros = { ...calculated };
-    meal.calories = calculated.kcal ?? 0;
-  }
 }
 
 // ✅ Zwróć poprawiony plan
@@ -601,13 +596,33 @@ ${daysList}
   - If not provided: intelligently determine the best number of meals (between 2–6)
 
 - Use meal names localized to language "${lang}".
-- DO NOT estimate macro or micronutrients yourself.
-- For each meal, include:
-  - "mealName": string
-  - "time": string (e.g. "07:00")
-  - "ingredients": array of objects → each with:
-      - "name": string (e.g. "Egg")
-      - "quantity": number (in grams)
+
+⚠️ Each meal must include:
+- "mealName": string
+- "time": string (e.g. "07:00")
+- "ingredients": array of:
+    { "name": string, "quantity": number in grams }
+
+- "macros": object with:
+    {
+      "kcal": number,
+      "protein": number,
+      "fat": number,
+      "carbs": number,
+      "fiber": number,
+      "sodium": number,
+      "potassium": number,
+      "calcium": number,
+      "magnesium": number,
+      "iron": number,
+      "zinc": number,
+      "vitaminD": number,
+      "vitaminB12": number,
+      "vitaminC": number,
+      "vitaminA": number,
+      "vitaminE": number,
+      "vitaminK": number
+    }
 
 Example:
 {
@@ -617,11 +632,30 @@ Example:
     { "name": "Jajko", "quantity": 120 },
     { "name": "Pomidor", "quantity": 100 },
     { "name": "Olej rzepakowy", "quantity": 5 }
-  ]
+  ],
+  "macros": {
+    "kcal": 320,
+    "protein": 18.5,
+    "fat": 25.2,
+    "carbs": 6.1,
+    "fiber": 1.1,
+    "sodium": 420,
+    "potassium": 440,
+    "calcium": 65,
+    "magnesium": 22,
+    "iron": 1.2,
+    "zinc": 0.9,
+    "vitaminD": 2.1,
+    "vitaminB12": 0.6,
+    "vitaminC": 3.8,
+    "vitaminA": 210,
+    "vitaminE": 3.2,
+    "vitaminK": 32
+  }
 }
-⚠️ Do not omit ingredients. Each meal must include at least 2–6 ingredients with exact gram values.
 
-- The system will calculate all macros and micros automatically.
+⚠️ All numeric values must be per entire meal (not per 100g) and must be rounded to 1 decimal place.
+⚠️ Do NOT skip any field — all fields above must be filled with realistic values.
 
 Base the plan on:
 ✔ Patient profile from interview:
@@ -651,7 +685,7 @@ ${jsonFormatPreview}
   "shoppingList": [ ... ],
   "nutritionalSummary": {
     "macros": { "protein": ..., "fat": ..., "carbs": ... },
-    "micros": { "sodium": ..., "magnesium": ..., "vitamin D": ... }
+    "micros": { "sodium": ..., "magnesium": ..., "vitaminD": ... }
   }
 }
 `;

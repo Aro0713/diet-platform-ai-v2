@@ -24,7 +24,7 @@ export function validateDiet(diet: Meal[]): Record<number, string[]> {
       });
     }
 
-    if (!meal.calories || meal.calories < 100) {
+    if (meal.macros?.kcal && meal.macros.kcal > 0 && meal.macros.kcal < 400) {
       currentErrors.push('Zbyt niska kaloryczność (<100 kcal)');
     }
 
@@ -107,12 +107,12 @@ export function validateDietWithModel(diet: Meal[] & { weightKg?: number }, mode
   }
 
   if (meta.requiresFat) {
-    const totalFat = diet.reduce((sum, meal) => sum + (meal.macros?.fat || 0), 0);
-    const totalCalories = diet.reduce((sum, meal) => sum + (meal.calories || 0), 0);
-    if (totalFat < 0.3 * totalCalories / 9) {
-      issues.push(`Za mało tłuszczu: ${totalFat}g vs wymagane min. 30% energii z tłuszczu`);
-    }
+  const totalFat = diet.reduce((sum, meal) => sum + (meal.macros?.fat || 0), 0);
+  const totalCalories = diet.reduce((sum, meal) => sum + (meal.macros?.kcal || 0), 0);
+  if (totalFat < 0.3 * totalCalories / 9) {
+    issues.push(`Za mało tłuszczu: ${totalFat}g vs wymagane min. 30% energii z tłuszczu`);
   }
+}
 
   const parseRange = (str: string): [number, number] => {
     const [min, max] = str.replace('%', '').split(/[–-]/).map(s => parseFloat(s.trim()));
@@ -127,7 +127,7 @@ export function validateDietWithModel(diet: Meal[] & { weightKg?: number }, mode
     }
   };
 
-  const totalCalories = diet.reduce((sum, meal) => sum + (meal.calories || 0), 0);
+  const totalCalories = diet.reduce((sum, meal) => sum + (meal.macros?.kcal || 0), 0);
   const totalProtein = diet.reduce((sum, meal) => sum + (meal.macros?.protein || 0), 0);
   const totalFat = diet.reduce((sum, meal) => sum + (meal.macros?.fat || 0), 0);
   const totalCarbs = diet.reduce((sum, meal) => sum + (meal.macros?.carbs || 0), 0);

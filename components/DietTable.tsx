@@ -17,11 +17,11 @@ const getFallbackMeal = (): Meal => ({
   name: '',
   menu: '',
   time: '',
-  calories: 0,
   glycemicIndex: 0,
   day: '',
   ingredients: [],
   macros: {
+    kcal: 0,
     protein: 0,
     fat: 0,
     carbs: 0,
@@ -40,6 +40,7 @@ const getFallbackMeal = (): Meal => ({
     vitaminK: 0
   },
 });
+
 type MacroKey =
   | 'protein' | 'fat' | 'carbs' | 'fiber' | 'sodium' | 'potassium'
   | 'calcium' | 'magnesium' | 'iron' | 'zinc'
@@ -96,9 +97,9 @@ const DietTable: React.FC<DietTableProps> = ({
     const updatedDayMeals = [...(editableDiet[day] || [])];
     const meal = updatedDayMeals[mealIndex] ? { ...updatedDayMeals[mealIndex] } : getFallbackMeal();
 
-    if (field === 'calories' || field === 'glycemicIndex') {
-      (meal as any)[field] = Number(value);
-    } else if (field === 'ingredients') {
+    if (field === 'glycemicIndex') {
+  meal.glycemicIndex = Number(value);
+} else if (field === 'ingredients') {
       meal.ingredients = value
         .split(',')
         .map((item) => {
@@ -178,7 +179,7 @@ return (
                       </ul>
                     )}
                     <div className="text-xs text-gray-400">
-                      Kalorie: {meal.calories > 0 ? `${meal.calories} kcal` : '–'} | IG: {meal.glycemicIndex > 0 ? meal.glycemicIndex : '–'}
+                      Kalorie: {meal.macros?.kcal && meal.macros.kcal > 0 ? `${round(meal.macros.kcal)} kcal` : '–'} | IG: {meal.glycemicIndex > 0 ? meal.glycemicIndex : '–'}
                     </div>
                     {meal.macros && (
                       <div className="text-xs text-gray-500 leading-tight whitespace-pre-wrap">

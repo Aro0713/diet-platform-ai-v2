@@ -31,10 +31,10 @@ function calculateAverages(diet: Record<string, Record<string, Meal>>) {
     }
   }
 
-  const avg: Record<string, number> = {};
-  for (const [key, value] of Object.entries(total)) {
-    avg[key] = typeof value === 'number' ? parseFloat((value / 7).toFixed(1)) : 0;
-  }
+ const avg: Record<string, number> = {};
+for (const [key, value] of Object.entries(total)) {
+  avg[key] = parseFloat((value / 7).toFixed(1));
+}
 
   return avg;
 }
@@ -56,12 +56,12 @@ function mergeRequirements(models: string[]): NutrientRequirements | null {
       }
     }
   }
+const allKeys = [
+  "kcal", "protein", "fat", "carbs", "fiber", "sodium", "potassium", "magnesium",
+  "iron", "zinc", "calcium", "vitaminD", "vitaminB12", "vitaminC",
+  "vitaminA", "vitaminE", "vitaminK"
+];
 
-  const allKeys = [
-    "protein", "fat", "carbs", "fiber", "sodium", "potassium", "magnesium",
-    "iron", "zinc", "calcium", "vitaminD", "vitaminB12", "vitaminC",
-    "vitaminA", "vitaminE", "vitaminK"
-  ];
   const result = Object.fromEntries(
     allKeys.map(k => [k, merged[k as keyof NutrientRequirements] ?? { min: 0, max: 999999 }])
   );
