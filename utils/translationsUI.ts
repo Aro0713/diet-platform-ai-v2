@@ -5819,4 +5819,17 @@ assignedDoctor: {
   ar: "الطبيب المعالج",
   he: "הרופא המטפל"
 },
+subscriptionRequiredInfo: {
+  pl: "Aby uzyskać dostęp do tego planu diety, wymagana jest aktywna subskrypcja.",
+  en: "An active subscription is required to access this diet plan.",
+  es: "Se requiere una suscripción activa para acceder a este plan de dieta.",
+  fr: "Un abonnement actif est requis pour accéder à ce plan de régime.",
+  de: "Ein aktives Abonnement ist erforderlich, um auf diesen Diätplan zuzugreifen.",
+  ua: "Для доступу до цього плану харчування потрібна активна підписка.",
+  ru: "Для доступа к этому плану питания требуется активная подписка.",
+  zh: "需要有效订阅才能访问此饮食计划。",
+  hi: "इस डाइट प्लान का उपयोग करने के लिए सक्रिय सब्सक्रिप्शन आवश्यक है।",
+  ar: "يتطلب الوصول إلى خطة النظام الغذائي هذه اشتراكًا نشطًا.",
+  he: "נדרש מנוי פעיל כדי לגשת לתוכנית התזונה הזו."
+},
 };

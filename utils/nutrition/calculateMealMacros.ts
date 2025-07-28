@@ -1,7 +1,7 @@
-import { getTranslation } from "@/utils/translations/useTranslationAgent";
-import { fetchNutritionFromOpenFoodFacts } from "./fetchFromOFF";
-import { fetchNutritionFromUSDA } from "./fetchFromUSDA"; // nowy plik
-import type { LangKey } from "@/utils/i18n";
+// utils/nutrition/calculateMealMacros.ts
+
+import { getTranslation } from "../translations/useTranslationAgent";
+import { fetchNutritionFromUSDA } from "./fetchFromUSDA";
 
 export type NutrientData = {
   kcal: number;
@@ -28,7 +28,6 @@ export type Ingredient = {
   weight: number;
 };
 
-// Pomocnicze zaokrąglanie
 function round(n: number): number {
   return Math.round(n * 100) / 100;
 }
@@ -43,13 +42,10 @@ export async function calculateMealMacros(ingredients: Ingredient[]): Promise<Nu
 
   for (const { product, weight } of ingredients) {
     try {
-      const translated = await getTranslation(product, "en" as LangKey);
+      const translated = await getTranslation(product, "en");
       console.log(`🌍 Translacja produktu "${product}" → "${translated}"`);
 
-      const data =
-        (await fetchNutritionFromOpenFoodFacts(translated)) ??
-        (await fetchNutritionFromUSDA(translated));
-
+      const data = await fetchNutritionFromUSDA(translated);
       const factor = weight / 100;
 
       if (data) {
@@ -57,7 +53,7 @@ export async function calculateMealMacros(ingredients: Ingredient[]): Promise<Nu
           totals[key] += (data[key] || 0) * factor;
         }
       } else {
-        console.warn(`⚠️ Brak danych dla składnika: ${translated} (oryg.: ${product})`);
+        console.warn(`⚠️ Brak danych USDA dla składnika: ${translated}`);
       }
     } catch (err) {
       console.error(`❌ Błąd przetwarzania składnika "${product}":`, err);
