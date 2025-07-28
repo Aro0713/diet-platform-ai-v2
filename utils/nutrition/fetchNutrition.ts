@@ -1,8 +1,5 @@
-// utils/nutrition/fetchNutrition.ts
-
 import type { NutrientData } from "./calculateMealMacros";
 import { getTranslation } from "../translations/useTranslationAgent";
-import { fetchNutritionFromOpenFoodFacts } from "./fetchFromOFF";
 import { fetchNutritionFromUSDA } from "./fetchFromUSDA";
 
 export async function fetchNutrition(product: string): Promise<NutrientData | null> {
@@ -10,21 +7,13 @@ export async function fetchNutrition(product: string): Promise<NutrientData | nu
     const translated = await getTranslation(product, "en");
     console.log(`🌍 Translacja produktu "${product}" → "${translated}"`);
 
-    // 🥇 Spróbuj najpierw z Open Food Facts
-    const offData = await fetchNutritionFromOpenFoodFacts(translated);
-    if (offData) {
-      console.log(`✅ Dane z OFF dla: ${translated}`);
-      return offData;
-    }
-
-    // 🥈 Fallback: USDA
     const usdaData = await fetchNutritionFromUSDA(translated);
     if (usdaData) {
       console.log(`✅ Dane z USDA dla: ${translated}`);
       return usdaData;
     }
 
-    console.warn(`⚠️ Brak danych OFF i USDA dla: ${translated}`);
+    console.warn(`⚠️ Brak danych z USDA dla: ${translated}`);
     return null;
   } catch (err) {
     console.error(`❌ Błąd pobierania danych odżywczych dla "${product}":`, err);
