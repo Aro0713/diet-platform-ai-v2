@@ -1,4 +1,6 @@
 import { fetchNutritionFromOpenFoodFacts } from './fetchFromOFF';
+import { getTranslation } from '../translations/useTranslationAgent';
+
 
 export type NutrientData = {
   kcal: number;
@@ -39,13 +41,23 @@ export async function calculateMealMacros(ingredients: Ingredient[]): Promise<Nu
   };
 
   for (const { product, weight } of ingredients) {
-    const data = await fetchNutritionFromOpenFoodFacts(product);
-    const factor = weight / 100;
+    try {
+      // 🧠 Tłumaczenie produktu do angielskiego
+      const translated = await getTranslation(product, 'en');
+      console.log(`🌍 Translacja produktu "${product}" → "${translated}"`);
 
-    if (data) {
-      for (const key of Object.keys(totals) as (keyof NutrientData)[]) {
-        totals[key] += (data[key] || 0) * factor;
+      const data = await fetchNutritionFromOpenFoodFacts(translated);
+      const factor = weight / 100;
+
+      if (data) {
+        for (const key of Object.keys(totals) as (keyof NutrientData)[]) {
+          totals[key] += (data[key] || 0) * factor;
+        }
+      } else {
+        console.warn(`⚠️ Brak danych dla składnika: ${translated} (oryg.: ${product})`);
       }
+    } catch (err) {
+      console.error(`❌ Błąd przetwarzania składnika "${product}":`, err);
     }
   }
 

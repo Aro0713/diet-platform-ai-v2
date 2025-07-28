@@ -35,6 +35,18 @@ const dayMap: Record<string, string> = {
   sunday: 'Niedziela'
 };
 
+// 🕒 Przypisz nazwę posiłku na podstawie godziny
+function getMealNameByTime(time: string): string {
+  const hour = parseInt(time.split(':')[0]);
+  if (hour >= 5 && hour < 9) return 'Śniadanie';
+  if (hour >= 9 && hour < 12) return 'Drugie śniadanie';
+  if (hour >= 12 && hour < 15) return 'Obiad';
+  if (hour >= 15 && hour < 18) return 'Podwieczorek';
+  if (hour >= 18 && hour < 21) return 'Kolacja';
+  if (hour >= 21 && hour <= 23) return 'Późna kolacja';
+  return 'Posiłek';
+}
+
 export function transformDietPlanToEditableFormat(
   dietPlan: Record<string, Record<string, RawMeal>>,
   lang: LangKey
@@ -53,25 +65,27 @@ export function transformDietPlanToEditableFormat(
 
     for (const rawKey in mealsForDay) {
       const rawMealName = rawKey.trim().toLowerCase();
+      const mealData = mealsForDay[rawKey];
 
-      // 🧠 Dodano inteligentny fallback dla kluczy liczbowych
+      if (!mealData || typeof mealData !== 'object') {
+        console.warn(`⛔ Posiłek "${rawKey}" nie ma poprawnej struktury`);
+        continue;
+      }
+
+      // 🧠 Fallback z godziny lub indeksu
       const index = parseInt(rawKey);
       const isIndex = !isNaN(index);
-      const fallbackName =
-        isIndex && standardOrder[index]
-          ? standardOrder[index]
-          : `Posiłek ${index + 1}`;
+      let fallbackName = `Posiłek ${index + 1}`;
+      if (mealData.time) {
+        fallbackName = getMealNameByTime(mealData.time);
+      } else if (isIndex && standardOrder[index]) {
+        fallbackName = standardOrder[index];
+      }
 
       const mappedMealName = translationMap[rawMealName] || fallbackName;
 
       if (!standardOrder.includes(mappedMealName)) {
         console.warn(`⚠️ Nierozpoznana nazwa posiłku: "${rawKey}" → "${mappedMealName}" (lang: ${lang})`);
-      }
-
-      const mealData = mealsForDay[rawKey];
-      if (!mealData || typeof mealData !== 'object') {
-        console.warn(`⛔ Posiłek "${rawKey}" nie ma poprawnej struktury`);
-        continue;
       }
 
       normalizedDay.push({
@@ -93,7 +107,6 @@ export function transformDietPlanToEditableFormat(
       console.log(`✅ Dodano posiłek: ${mappedDay} → ${mappedMealName}`);
     }
 
-    // 🧹 Posortuj wg standardowego porządku
     normalizedDay.sort((a, b) => {
       const indexA = standardOrder.indexOf(a.name);
       const indexB = standardOrder.indexOf(b.name);
