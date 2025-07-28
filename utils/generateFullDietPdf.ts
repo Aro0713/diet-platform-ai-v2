@@ -106,7 +106,8 @@ export async function generateFullDietPdf(
         },
         meal.time || '–',
         {
-          text: `🔥 ${meal.calories} kcal\n💉 IG: ${meal.glycemicIndex}\n🥩 ${tUI('protein', lang)}: ${meal.macros?.protein ?? 0} g\n🧈 ${tUI('fat', lang)}: ${meal.macros?.fat ?? 0} g\n🍞 ${tUI('carbs', lang)}: ${meal.macros?.carbs ?? 0} g\n🌿 ${tUI('fiber', lang)}: ${meal.macros?.fiber ?? 0} g\n🧪 ${tUI('potassium', lang)}: ${meal.macros?.potassium ?? 0} mg`,
+         text: `🔥 ${meal.macros?.kcal ?? 0} kcal\n💉 IG: ${meal.glycemicIndex}\n🥩 ${tUI('protein', lang)}: ${meal.macros?.protein ?? 0} g\n🧈 ${tUI('fat', lang)}: ${meal.macros?.fat ?? 0} g\n🍞 ${tUI('carbs', lang)}: ${meal.macros?.carbs ?? 0} g\n🌿 ${tUI('fiber', lang)}: ${meal.macros?.fiber ?? 0} g\n🧪 ${tUI('potassium', lang)}: ${meal.macros?.potassium ?? 0} mg`,
+
           fontSize: 9
         },
         {
