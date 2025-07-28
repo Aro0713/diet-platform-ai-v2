@@ -1,5 +1,7 @@
-import { fetchNutritionFromOpenFoodFacts } from './fetchFromOFF';
-import { getTranslation } from '../translations/useTranslationAgent';
+import { getTranslation } from "@/utils/translations/useTranslationAgent";
+import { fetchNutritionFromOpenFoodFacts } from "./fetchFromOFF";
+import { fetchNutritionFromUSDA } from "./fetchFromUSDA"; // nowy plik
+import type { LangKey } from "@/utils/i18n";
 
 export type NutrientData = {
   kcal: number;
@@ -31,10 +33,6 @@ function round(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
-// Cache lokalny
-const translationCache: Record<string, string> = {};
-const nutritionCache: Record<string, NutrientData> = {};
-
 export async function calculateMealMacros(ingredients: Ingredient[]): Promise<NutrientData> {
   const totals: NutrientData = {
     kcal: 0, protein: 0, fat: 0, carbs: 0, fiber: 0,
@@ -43,48 +41,28 @@ export async function calculateMealMacros(ingredients: Ingredient[]): Promise<Nu
     vitaminC: 0, vitaminA: 0, vitaminE: 0, vitaminK: 0
   };
 
-  // 🔁 Tłumaczenia w batchu
-  const translatedIngredients = await Promise.all(
-    ingredients.map(async ({ product, weight }) => {
-      try {
-        const cached = translationCache[product];
-        const translated = cached || await getTranslation(product, 'en');
-        if (!cached) translationCache[product] = translated;
-        console.log(`🌍 Translacja produktu "${product}" → "${translated}"`);
-        return { product: translated, weight, original: product };
-      } catch (err) {
-        console.error(`❌ Błąd tłumaczenia "${product}":`, err);
-        return { product: 'unknown', weight, original: product };
-      }
-    })
-  );
+  for (const { product, weight } of ingredients) {
+    try {
+      const translated = await getTranslation(product, "en" as LangKey);
+      console.log(`🌍 Translacja produktu "${product}" → "${translated}"`);
 
-          // 🔁 Pobranie danych odżywczych
-          await Promise.all(
-            translatedIngredients.map(async ({ product, weight, original }) => {
-              try {
-                if (!product || product === 'unknown') return;
+      const data =
+        (await fetchNutritionFromOpenFoodFacts(translated)) ??
+        (await fetchNutritionFromUSDA(translated));
 
-                let data = nutritionCache[product];
-        if (!data) {
-          const fetched = await fetchNutritionFromOpenFoodFacts(product);
-          if (!fetched) {
-            console.warn(`⚠️ Brak danych dla składnika: ${product} (oryg.: ${original})`);
-            return;
-          }
-          nutritionCache[product] = fetched;
-          data = fetched;
-        }
+      const factor = weight / 100;
 
-        const factor = weight / 100;
+      if (data) {
         for (const key of Object.keys(totals) as (keyof NutrientData)[]) {
           totals[key] += (data[key] || 0) * factor;
         }
-      } catch (err) {
-        console.error(`❌ Błąd przetwarzania składnika "${product}":`, err);
+      } else {
+        console.warn(`⚠️ Brak danych dla składnika: ${translated} (oryg.: ${product})`);
       }
-    })
-  );
+    } catch (err) {
+      console.error(`❌ Błąd przetwarzania składnika "${product}":`, err);
+    }
+  }
 
   const rounded: NutrientData = {} as NutrientData;
   for (const key of Object.keys(totals) as (keyof NutrientData)[]) {
