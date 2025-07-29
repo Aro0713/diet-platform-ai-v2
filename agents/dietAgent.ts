@@ -16,25 +16,70 @@ export function parseRawDietPlan(raw: any): Record<string, Meal[]> {
     const mealsForDay: Meal[] = [];
 
     for (const [time, block] of Object.entries(meals)) {
-      // nowa struktura GPT
       if (
-      typeof block === "object" &&
-      "mealName" in block &&
-      Array.isArray(block.ingredients)
-    ) {
-      const mealName = block.mealName || "Danie";
-      const ingredients: Ingredient[] = block.ingredients.map((i: any) => ({
-        product: i.name ?? "",
-        weight: typeof i.quantity === "number" ? i.quantity : Number(i.quantity) || 0
-      })).filter((i: Ingredient) =>
-        i.product && typeof i.product === "string" &&
-        !["undefined", "null", "name"].includes(i.product.toLowerCase())
-      );
+        typeof block === "object" &&
+        "mealName" in block &&
+        Array.isArray(block.ingredients)
+      ) {
+        const mealName = block.mealName || "Danie";
+        const ingredients: Ingredient[] = block.ingredients.map((i: any) => ({
+          product: i.name ?? "",
+          weight: typeof i.quantity === "number" ? i.quantity : Number(i.quantity) || 0
+        })).filter((i: Ingredient) =>
+          i.product && typeof i.product === "string" &&
+          !["undefined", "null", "name"].includes(i.product.toLowerCase())
+        );
+
+        mealsForDay.push({
+          name: mealName,
+          time,
+          menu: mealName,
+          ingredients,
+          macros: block.macros || {
+            kcal: 0,
+            protein: 0,
+            fat: 0,
+            carbs: 0,
+            fiber: 0,
+            sodium: 0,
+            potassium: 0,
+            calcium: 0,
+            magnesium: 0,
+            iron: 0,
+            zinc: 0,
+            vitaminD: 0,
+            vitaminB12: 0,
+            vitaminC: 0,
+            vitaminA: 0,
+            vitaminE: 0,
+            vitaminK: 0
+          },
+          glycemicIndex: block.glycemicIndex ?? 0
+        });
+        continue;
+      }
+
+      const [dishName, rawIngredients] = Object.entries(block || {})[0] ?? [];
+      const ingredients = Array.isArray(rawIngredients)
+        ? rawIngredients.map((entry: any) => {
+            const [product, weightRaw] = Object.entries(entry || {})[0] ?? [];
+            return {
+              product,
+              weight: typeof weightRaw === "number" ? weightRaw : Number(weightRaw) || 0
+            };
+          }).filter((i: Ingredient) =>
+            i.product && typeof i.product === "string" &&
+            !["undefined", "null", "name"].includes(i.product.toLowerCase())
+          )
+        : [];
+
+      const isValidDishName = dishName && dishName !== "0" && dishName !== "undefined" && dishName !== "name";
+      const finalName = isValidDishName ? dishName : time;
 
       mealsForDay.push({
-        name: mealName,
+        name: finalName,
         time,
-        menu: mealName,
+        menu: finalName,
         ingredients,
         macros: {
           kcal: 0,
@@ -57,55 +102,6 @@ export function parseRawDietPlan(raw: any): Record<string, Meal[]> {
         },
         glycemicIndex: 0
       });
-
-      continue;
-    }
-
-      // stara struktura GPT
-      const [dishName, rawIngredients] = Object.entries(block || {})[0] ?? [];
-
-      const ingredients = Array.isArray(rawIngredients)
-      ? rawIngredients.map((entry: any) => {
-          const [product, weightRaw] = Object.entries(entry || {})[0] ?? [];
-          return {
-            product,
-            weight: typeof weightRaw === "number" ? weightRaw : Number(weightRaw) || 0
-          };
-        }).filter((i: Ingredient) =>
-          i.product && typeof i.product === "string" && !["undefined", "null", "name"].includes(i.product.toLowerCase())
-        )
-      : [];
-
-      const isValidDishName = dishName && dishName !== "0" && dishName !== "undefined" && dishName !== "name";
-      const finalName = isValidDishName ? dishName : time;
-
-  mealsForDay.push({
-  name: finalName,
-  time,
-  menu: finalName,
-  ingredients,
-  macros: {
-    kcal: 0,
-    protein: 0,
-    fat: 0,
-    carbs: 0,
-    fiber: 0,
-    sodium: 0,
-    potassium: 0,
-    calcium: 0,
-    magnesium: 0,
-    iron: 0,
-    zinc: 0,
-    vitaminD: 0,
-    vitaminB12: 0,
-    vitaminC: 0,
-    vitaminA: 0,
-    vitaminE: 0,
-    vitaminK: 0
-  },
-  glycemicIndex: 0
-});
-
     }
 
     parsed[day] = mealsForDay;
