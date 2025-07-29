@@ -60,17 +60,25 @@ export const dqAgent = {
     conditions?: string[];
   }) => {
     const mergedRequirements = mergeRequirements([model, ...(conditions ?? [])]);
-    const prompt = `You are a clinical dietitian AI and diet quality controller.
+ const prompt = `You are a clinical dietitian AI and diet quality controller.
 
-Evaluate the following 7-day diet plan.
+Evaluate the following 7-day diet plan for a patient with the following clinical conditions:
+${conditions?.join(", ") || "no medical conditions"}
+
+Their goal is: ${goal || "not specified"}.
+Their CPM is: ${cpm || "not specified"}.
+Their weight is: ${weightKg || "not specified"}.
+
+You must respect clinical constraints from the following merged requirements:
+${JSON.stringify(mergedRequirements, null, 2)}
 
 You already know the nutritional value of standard foods (e.g. chicken, broccoli, oats, olive oil, etc.). You do NOT need to ask any database.
 
 Your task:
 - Check if the diet is realistic and nutritionally balanced
 - Ensure macro and micronutrients (including vitamins) are present for every meal
-- If \"macros\" object is missing or contains only zeros, recalculate and insert accurate values
-- Each \"macros\" field (e.g., kcal, protein, vitaminD) must reflect the known nutrition of ingredients and their weights
+- If "macros" object is missing or contains only zeros, recalculate and insert accurate values
+- Each "macros" field (e.g., kcal, protein, vitaminD) must reflect the known nutrition of ingredients and their weights
 
 DO NOT explain anything. Return only:
 - Original JSON if valid

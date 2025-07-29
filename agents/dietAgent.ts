@@ -330,7 +330,8 @@ export async function generateDiet(input: any): Promise<any> {
     medicalDescription,
     lang = "pl"
   } = input;
-
+  
+  const hasMedicalData = Boolean(testResults || medicalDescription);
   const modelKey = modelMap[form.model] || form.model?.toLowerCase();
   const goalExplanation = goalMap[interviewData.goal] || interviewData.goal;
   const cuisine = cuisineMap[interviewData.cuisine] || "global";
@@ -424,8 +425,8 @@ ${narrative}
 ✔ Required nutrient ranges:
 ${nutrientRequirementsText}
 
-✔ Clinical risks and suggestions:
-${medical}
+${hasMedicalData ? `✔ Clinical risks and suggestions:\n${medical}` : "ℹ️ No clinical risks provided."}
+${hasMedicalData ? `✔ Adjust for patient diseases: ${form.conditions?.join(", ") || "unknown"}` : ""}
 
 ✔ Diet model: ${modelKey}, Cuisine: ${cuisine}
 ✔ CPM: ${cpm}, BMI: ${bmi}, PAL: ${pal}
@@ -545,7 +546,8 @@ export const generateDietTool = tool({
     const selectedLang = languageMap[lang] || "polski";
     const daysInLang = dayNames[lang] || dayNames['pl'];
     const daysList = daysInLang.map(d => `- ${d}`).join('\n');
-    
+    const hasMedicalData = Boolean(testResults || medicalDescription);
+
     function getNutrientRequirements(form: any): NutrientRequirements | null {
       const primary = nutrientRequirementsMap[form.model] || null;
       // Możesz tu później dodać logiczne łączenie z chorobami
@@ -748,13 +750,13 @@ for (const [day, meals] of Object.entries(rawDietPlan || {})) {
     throw new Error(`Błędny format dietPlan – dzień "${day}" nie zawiera listy posiłków`);
   }
 }
-
 const { type, plan } = await import("@/agents/dqAgent").then(m => m.dqAgent.run({
   dietPlan: rawDietPlan,
   model: modelKey,
   goal: goalExplanation,
   cpm,
-  weightKg: form.weight ?? null
+  weightKg: form.weight ?? null,
+  conditions: hasMedicalData ? form.conditions ?? [] : []
 }));
 
     parsed.dietPlan = plan;
