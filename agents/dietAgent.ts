@@ -719,7 +719,7 @@ try {
     if (delta) fullContent += delta;
   }
 
-  // 🔍 Spróbuj sparsować JSON z odpowiedzi
+  // 🔍 Spróbuj sparsować JSON z odpowiedzi GPT
   let parsed;
   try {
     const cleanContent = fullContent.replace(/```json|```/g, "").trim();
@@ -727,6 +727,9 @@ try {
     const end = cleanContent.lastIndexOf("}") + 1;
     const jsonString = cleanContent.slice(start, end);
     parsed = JSON.parse(jsonString);
+    if (typeof parsed === "string") {
+      parsed = JSON.parse(parsed);
+    }
   } catch (err) {
     console.error("❌ Nie można sparsować JSON ze streamu:\n", fullContent);
     return {
@@ -735,45 +738,63 @@ try {
     };
   }
 
-let rawDietPlan =
-  parsed?.dietPlan ||
-  parsed?.CORRECTED_JSON?.dietPlan ||
-  parsed?.CORRECTED_JSON;
+  // ✅ Wybór najlepszego dietPlan
+  let rawDietPlan = null;
+  if (parsed?.CORRECTED_JSON?.dietPlan) {
+    rawDietPlan = parsed.CORRECTED_JSON.dietPlan;
+  } else if (
+    parsed?.CORRECTED_JSON &&
+    typeof parsed.CORRECTED_JSON === "object"
+  ) {
+    rawDietPlan = parsed.CORRECTED_JSON;
+  } else if (
+    parsed?.dietPlan &&
+    typeof parsed.dietPlan === "object"
+  ) {
+    rawDietPlan = parsed.dietPlan;
+  }
 
-if (
-  !rawDietPlan ||
-  typeof rawDietPlan !== "object" ||
-  Object.keys(rawDietPlan).length === 0 ||
-  Object.values(rawDietPlan).every(v => !v || typeof v !== "object")
-) {
-  console.error("❌ Nie znaleziono prawidłowego dietPlan:", parsed);
-  return {
-    type: "text",
-    content: "❌ JSON nie zawiera pola 'dietPlan'."
-  };
-}
-const parsedDietPlan = parseRawDietPlan(rawDietPlan);
+  if (
+    !rawDietPlan ||
+    typeof rawDietPlan !== "object" ||
+    Object.keys(rawDietPlan).length === 0 ||
+    Object.values(rawDietPlan).every(v => !v || typeof v !== "object")
+  ) {
+    console.error("❌ Nie znaleziono prawidłowego dietPlan:", parsed);
+    return {
+      type: "text",
+      content: "❌ JSON nie zawiera pola 'dietPlan'."
+    };
+  }
 
+  // ✅ Parsowanie do ustandaryzowanej struktury
+  const parsedDietPlan = parseRawDietPlan(rawDietPlan);
+  parsed.dietPlan = parsedDietPlan;
 
   // 🧠 Walidacja i poprawa przez dqAgent
   try {
- // 🚨 Walidacja struktury przed dqAgent
-for (const [day, meals] of Object.entries(rawDietPlan || {})) {
-  if (!Array.isArray(meals)) {
-    console.warn(`❌ Błędna struktura planu diety – ${day} nie jest tablicą:`, meals);
-    throw new Error(`Błędny format dietPlan – dzień "${day}" nie zawiera listy posiłków`);
-  }
-}
-const { type, plan } = await import("@/agents/dqAgent").then(m => m.dqAgent.run({
-  dietPlan: rawDietPlan,
-  model: modelKey,
-  goal: goalExplanation,
-  cpm,
-  weightKg: form.weight ?? null,
-  conditions: hasMedicalData ? form.conditions ?? [] : []
-}));
+    // 🚨 Walidacja struktury przed dqAgent
+    for (const [day, meals] of Object.entries(parsedDietPlan || {})) {
+      if (!Array.isArray(meals)) {
+        console.warn(`❌ Błędna struktura planu diety – ${day} nie jest tablicą:`, meals);
+        throw new Error(`Błędny format dietPlan – dzień "${day}" nie zawiera listy posiłków`);
+      }
+    }
 
-    parsed.dietPlan = plan;
+        const { type, plan } = await import("@/agents/dqAgent").then(m =>
+        m.dqAgent.run({
+        dietPlan: convertFlatToStructuredPlan(parsedDietPlan),
+        model: modelKey,
+        goal: goalExplanation,
+        cpm,
+        weightKg: form.weight ?? null,
+        conditions: hasMedicalData ? form.conditions ?? [] : []
+      })
+    );
+
+    if (plan) {
+      parsed.dietPlan = plan;
+    }
   } catch (err) {
     console.warn("⚠️ dqAgent błąd:", err);
   }
@@ -790,6 +811,7 @@ const { type, plan } = await import("@/agents/dqAgent").then(m => m.dqAgent.run(
     content: `❌ Błąd generowania diety: ${error.message || "Nieznany błąd"}`
   };
 }
+
 }
 });
 
