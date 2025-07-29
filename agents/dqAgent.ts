@@ -92,52 +92,63 @@ ${JSON.stringify(dietPlan, null, 2)}`;
     const clean = text.replace(/```json|```/g, "").trim();
     console.warn("📥 GPT response (raw):", clean);
 
-    if (clean.includes("CORRECTED_JSON")) {
-      const startIndex = clean.indexOf("{");
-      const correctedJson = clean.slice(startIndex).trim();
-      try {
-        const parsed = JSON.parse(correctedJson);
-        const correctedStructured: Record<string, Record<string, Meal>> =
-          parsed?.dietPlan ||
-          parsed?.CORRECTED_JSON?.dietPlan ||
-          parsed?.CORRECTED_JSON ||
-          null;
+if (clean.includes("CORRECTED_JSON")) {
+  const startIndex = clean.indexOf("{");
+  const correctedJson = clean.slice(startIndex).trim();
+  try {
+    const parsed = JSON.parse(correctedJson);
 
-        if (!correctedStructured || typeof correctedStructured !== 'object') {
-          console.warn("❌ GPT odpowiedź nie zawiera dietPlan:", parsed);
-          throw new Error("Brak dietPlan");
-        }
+    let correctedStructured: Record<string, Record<string, Meal>> | null = null;
 
-        const hasAnyMacros = Object.values(correctedStructured)
-          .flatMap(day => Object.values(day))
-          .some(meal =>
-            meal.macros &&
-            Object.values(meal.macros).some(v => typeof v === 'number' && v > 0)
-          );
-
-        if (!hasAnyMacros) {
-          console.warn("❌ GPT zwrócił dietę bez wartości odżywczych (macros all 0)");
-          throw new Error("Poprawiona dieta nie zawiera makroskładników");
-        }
-
-        const originalMeals: Meal[] = Object.values(dietPlan).flatMap(day => Object.values(day));
-        const correctedMeals: Meal[] = Object.values(correctedStructured).flatMap(day => Object.values(day));
-
-        const issuesOriginal = validateDietWithModel(originalMeals, model);
-        const issuesCorrected = validateDietWithModel(correctedMeals, model);
-
-        if (issuesCorrected.length < issuesOriginal.length) {
-          console.log("✅ Ulepszony plan wybrany przez dqAgent:", issuesCorrected);
-          return {
-            type: "dietPlan",
-            plan: convertStructuredToFlatPlan(correctedStructured),
-            violations: []
-          };
-        }
-      } catch (e) {
-        console.warn("❌ Nie udało się sparsować poprawionego JSON od GPT:", e);
-      }
+    if (parsed?.dietPlan) {
+      correctedStructured = parsed.dietPlan;
+    } else if (parsed?.CORRECTED_JSON?.dietPlan) {
+      correctedStructured = parsed.CORRECTED_JSON.dietPlan;
+    } else if (parsed?.CORRECTED_JSON) {
+      correctedStructured = parsed.CORRECTED_JSON;
+    } else if (
+      parsed &&
+      Object.keys(parsed).some(day => typeof parsed[day] === 'object')
+    ) {
+      correctedStructured = parsed as Record<string, Record<string, Meal>>;
     }
+
+    if (!correctedStructured || typeof correctedStructured !== 'object') {
+      console.warn("❌ GPT odpowiedź nie zawiera dietPlan:", parsed);
+      throw new Error("Brak dietPlan");
+    }
+
+    const hasAnyMacros = Object.values(correctedStructured)
+      .flatMap(day => Object.values(day))
+      .some(meal =>
+        meal.macros &&
+        Object.values(meal.macros).some(v => typeof v === 'number' && v > 0)
+      );
+
+    if (!hasAnyMacros) {
+      console.warn("❌ GPT zwrócił dietę bez wartości odżywczych (macros all 0)");
+      throw new Error("Poprawiona dieta nie zawiera makroskładników");
+    }
+
+    const originalMeals: Meal[] = Object.values(dietPlan).flatMap(day => Object.values(day));
+    const correctedMeals: Meal[] = Object.values(correctedStructured).flatMap(day => Object.values(day));
+
+    const issuesOriginal = validateDietWithModel(originalMeals, model);
+    const issuesCorrected = validateDietWithModel(correctedMeals, model);
+
+    if (issuesCorrected.length < issuesOriginal.length) {
+      console.log("✅ Ulepszony plan wybrany przez dqAgent:", issuesCorrected);
+      return {
+        type: "dietPlan",
+        plan: convertStructuredToFlatPlan(correctedStructured),
+        violations: []
+      };
+    }
+
+  } catch (e) {
+    console.warn("❌ Nie udało się sparsować poprawionego JSON od GPT:", e);
+  }
+}
 
     return {
       type: "dietPlan",
