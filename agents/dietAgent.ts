@@ -471,11 +471,13 @@ for await (const chunk of completion) {
 // 🔍 Parsowanie JSON
 let parsed;
 try {
-  const clean = fullContent.trim().replace(/^```json|```$/g, "");
-  const start = clean.indexOf("{");
-  const end = clean.lastIndexOf("}") + 1;
-  const cleanContent = clean.slice(start, end);
-  parsed = JSON.parse(cleanContent);
+const match = fullContent.match(/({[\s\S]+})/);
+if (!match) {
+  console.error("❌ Nie znaleziono poprawnego JSON-a w odpowiedzi GPT:", fullContent);
+  throw new Error("GPT zwrócił nieczytelny wynik — brak JSON-a.");
+}
+parsed = JSON.parse(match[1]);
+
   // 🔁 Obsługa podwójnego JSON-a (GPT czasem zwraca string jako JSON)
 if (typeof parsed === "string") {
   try {
