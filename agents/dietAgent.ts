@@ -481,9 +481,17 @@ try {
   throw new Error("❌ GPT zwrócił niepoprawny JSON — nie można sparsować.");
 }
 
-// ✅ Sprawdzenie obecności dietPlan
-const rawDietPlan = parsed?.dietPlan;
-if (!rawDietPlan) {
+let rawDietPlan =
+  parsed?.dietPlan ||
+  parsed?.CORRECTED_JSON?.dietPlan ||
+  parsed?.CORRECTED_JSON;
+
+if (
+  !rawDietPlan ||
+  typeof rawDietPlan !== "object" ||
+  Object.keys(rawDietPlan).length === 0
+) {
+  console.error("❌ Błąd: brak dietPlan w odpowiedzi GPT:", parsed);
   throw new Error("❌ JSON nie zawiera pola 'dietPlan'.");
 }
 
