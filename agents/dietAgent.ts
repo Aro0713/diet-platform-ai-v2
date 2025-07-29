@@ -11,97 +11,72 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 export function parseRawDietPlan(raw: any): Record<string, Meal[]> {
   const parsed: Record<string, Meal[]> = {};
 
-  for (const [day, mealsRaw] of Object.entries(raw || {})) {
-    const meals = mealsRaw as Record<string, any>;
+  for (const [day, dayData] of Object.entries(raw || {})) {
     const mealsForDay: Meal[] = [];
 
-    for (const [time, block] of Object.entries(meals)) {
-      if (
-        typeof block === "object" &&
-        "mealName" in block &&
-        Array.isArray(block.ingredients)
-      ) {
-        const mealName = block.mealName || "Danie";
-        const ingredients: Ingredient[] = block.ingredients.map((i: any) => ({
-          product: i.name ?? "",
-          weight: typeof i.quantity === "number" ? i.quantity : Number(i.quantity) || 0
+    // 🔁 Format A: tablica posiłków (Meal[])
+    if (Array.isArray(dayData)) {
+      for (const meal of dayData) {
+        if (!meal || typeof meal !== "object") continue;
+
+        const name = meal.name || meal.menu || meal.mealName || "Posiłek";
+        const time = meal.time || "00:00";
+        const ingredients = (meal.ingredients || []).map((i: any) => ({
+          product: i.product || i.name || "",
+          weight: typeof i.weight === "number" ? i.weight : Number(i.weight) || 0
         })).filter((i: Ingredient) =>
           i.product && typeof i.product === "string" &&
           !["undefined", "null", "name"].includes(i.product.toLowerCase())
         );
 
         mealsForDay.push({
-          name: mealName,
+          name,
           time,
-          menu: mealName,
+          menu: name,
           ingredients,
-          macros: block.macros || {
-            kcal: 0,
-            protein: 0,
-            fat: 0,
-            carbs: 0,
-            fiber: 0,
-            sodium: 0,
-            potassium: 0,
-            calcium: 0,
-            magnesium: 0,
-            iron: 0,
-            zinc: 0,
-            vitaminD: 0,
-            vitaminB12: 0,
-            vitaminC: 0,
-            vitaminA: 0,
-            vitaminE: 0,
-            vitaminK: 0
+          macros: meal.macros || {
+            kcal: 0, protein: 0, fat: 0, carbs: 0,
+            fiber: 0, sodium: 0, potassium: 0, calcium: 0, magnesium: 0,
+            iron: 0, zinc: 0, vitaminD: 0, vitaminB12: 0, vitaminC: 0,
+            vitaminA: 0, vitaminE: 0, vitaminK: 0
           },
-          glycemicIndex: block.glycemicIndex ?? 0
+          glycemicIndex: meal.glycemicIndex ?? 0
         });
-        continue;
       }
+    }
 
-      const [dishName, rawIngredients] = Object.entries(block || {})[0] ?? [];
-      const ingredients = Array.isArray(rawIngredients)
-        ? rawIngredients.map((entry: any) => {
-            const [product, weightRaw] = Object.entries(entry || {})[0] ?? [];
-            return {
-              product,
-              weight: typeof weightRaw === "number" ? weightRaw : Number(weightRaw) || 0
-            };
-          }).filter((i: Ingredient) =>
+    // 🔁 Format B: stare GPT (Record<string, { mealName, ingredients }>)
+    else if (typeof dayData === "object" && dayData !== null) {
+      for (const [time, block] of Object.entries(dayData)) {
+        if (typeof block !== "object" || !block) continue;
+
+        if ("mealName" in block && Array.isArray(block.ingredients)) {
+          const name = block.mealName || "Posiłek";
+          const ingredients = block.ingredients.map((i: any) => ({
+            product: i.name ?? i.product ?? "",
+            weight: typeof i.quantity === "number" ? i.quantity : Number(i.quantity) || 0
+          })).filter((i: Ingredient) =>
             i.product && typeof i.product === "string" &&
             !["undefined", "null", "name"].includes(i.product.toLowerCase())
-          )
-        : [];
+          );
 
-      const isValidDishName = dishName && dishName !== "0" && dishName !== "undefined" && dishName !== "name";
-      const finalName = isValidDishName ? dishName : time;
-
-      mealsForDay.push({
-        name: finalName,
-        time,
-        menu: finalName,
-        ingredients,
-        macros: {
-          kcal: 0,
-          protein: 0,
-          fat: 0,
-          carbs: 0,
-          fiber: 0,
-          sodium: 0,
-          potassium: 0,
-          calcium: 0,
-          magnesium: 0,
-          iron: 0,
-          zinc: 0,
-          vitaminD: 0,
-          vitaminB12: 0,
-          vitaminC: 0,
-          vitaminA: 0,
-          vitaminE: 0,
-          vitaminK: 0
-        },
-        glycemicIndex: 0
-      });
+          mealsForDay.push({
+            name,
+            time,
+            menu: name,
+            ingredients,
+            macros: block.macros || {
+              kcal: 0, protein: 0, fat: 0, carbs: 0,
+              fiber: 0, sodium: 0, potassium: 0, calcium: 0, magnesium: 0,
+              iron: 0, zinc: 0, vitaminD: 0, vitaminB12: 0, vitaminC: 0,
+              vitaminA: 0, vitaminE: 0, vitaminK: 0
+            },
+            glycemicIndex: block.glycemicIndex ?? 0
+          });
+        }
+      }
+    } else {
+      console.warn(`⚠️ Nieznany format danych dla dnia: ${day}`, dayData);
     }
 
     parsed[day] = mealsForDay;
