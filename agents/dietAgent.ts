@@ -467,10 +467,15 @@ if (typeof parsed === "string") {
   throw new Error("❌ GPT zwrócił niepoprawny JSON — nie można sparsować.");
 }
 
-let rawDietPlan =
-  parsed?.dietPlan ||
-  parsed?.CORRECTED_JSON?.dietPlan ||
-  parsed?.CORRECTED_JSON;
+let rawDietPlan = null;
+
+if (parsed?.CORRECTED_JSON?.dietPlan) {
+  rawDietPlan = parsed.CORRECTED_JSON.dietPlan;
+} else if (parsed?.CORRECTED_JSON && !parsed?.dietPlan) {
+  rawDietPlan = parsed.CORRECTED_JSON;
+} else if (parsed?.dietPlan) {
+  rawDietPlan = parsed.dietPlan;
+}
 
 if (
   !rawDietPlan ||
