@@ -730,14 +730,23 @@ try {
     };
   }
 
-const rawDietPlan = parsed?.dietPlan;
-if (!rawDietPlan) {
+let rawDietPlan =
+  parsed?.dietPlan ||
+  parsed?.CORRECTED_JSON?.dietPlan ||
+  parsed?.CORRECTED_JSON;
+
+if (
+  !rawDietPlan ||
+  typeof rawDietPlan !== "object" ||
+  Object.keys(rawDietPlan).length === 0 ||
+  Object.values(rawDietPlan).every(v => !v || typeof v !== "object")
+) {
+  console.error("❌ Nie znaleziono prawidłowego dietPlan:", parsed);
   return {
     type: "text",
     content: "❌ JSON nie zawiera pola 'dietPlan'."
   };
 }
-
 const parsedDietPlan = parseRawDietPlan(rawDietPlan);
 
 
