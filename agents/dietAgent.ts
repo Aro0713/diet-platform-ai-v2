@@ -501,17 +501,15 @@ try {
       model: modelKey,
       goal: goalExplanation,
       cpm,
-      weightKg: form.weight ?? null
+      weightKg: form.weight ?? null,
+      conditions: form.conditions ?? [],
+      dqChecks: form?.medical_data?.dqChecks ?? {}
     })
   );
   parsed.dietPlan = plan;
 } catch (err) {
   console.warn("⚠️ dqAgent błąd:", err);
 }
-
-// ✅ Zwróć poprawiony plan
-return parsed;
-
 }
 
 export const generateDietTool = tool({

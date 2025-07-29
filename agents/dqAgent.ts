@@ -50,7 +50,8 @@ export const dqAgent = {
     goal,
     cpm,
     weightKg,
-    conditions
+    conditions,
+    dqChecks
   }: {
     dietPlan: Record<string, Record<string, Meal>>;
     model: string;
@@ -58,7 +59,16 @@ export const dqAgent = {
     cpm?: number | null;
     weightKg?: number | null;
     conditions?: string[];
+    dqChecks?: {
+      avoidMacros?: string[];
+      avoidMicros?: string[];
+      avoidIngredients?: string[];
+      recommendMicros?: string[];
+      recommendMacros?: string[];
+      preferModels?: string[];
+    };
   }) => {
+
     const mergedRequirements = mergeRequirements([model, ...(conditions ?? [])]);
  const prompt = `You are a clinical dietitian AI and diet quality controller.
 
@@ -71,6 +81,12 @@ Their weight is: ${weightKg || "not specified"}.
 
 You must respect clinical constraints from the following merged requirements:
 ${JSON.stringify(mergedRequirements, null, 2)}
+
+${dqChecks?.avoidMacros?.length ? `Avoid these macronutrient profiles: ${dqChecks.avoidMacros.join(", ")}` : ""}
+${dqChecks?.avoidMicros?.length ? `Avoid these micronutrients: ${dqChecks.avoidMicros.join(", ")}` : ""}
+${dqChecks?.recommendMicros?.length ? `Prefer these micronutrients: ${dqChecks.recommendMicros.join(", ")}` : ""}
+${dqChecks?.recommendMacros?.length ? `Prefer macronutrient profiles: ${dqChecks.recommendMacros.join(", ")}` : ""}
+${dqChecks?.avoidIngredients?.length ? `Strictly avoid the following ingredients: ${dqChecks.avoidIngredients.join(", ")}` : ""}
 
 You already know the nutritional value of standard foods (e.g. chicken, broccoli, oats, olive oil, etc.). You do NOT need to ask any database.
 
