@@ -476,6 +476,15 @@ try {
   const end = clean.lastIndexOf("}") + 1;
   const cleanContent = clean.slice(start, end);
   parsed = JSON.parse(cleanContent);
+  // 🔁 Obsługa podwójnego JSON-a (GPT czasem zwraca string jako JSON)
+if (typeof parsed === "string") {
+  try {
+    parsed = JSON.parse(parsed);
+  } catch (err) {
+    console.warn("⚠️ Podwójne parsowanie nie powiodło się – kontynuuję z pojedynczym");
+  }
+}
+
 } catch (err) {
   console.error("❌ Błąd parsowania JSON ze streamu:", fullContent);
   throw new Error("❌ GPT zwrócił niepoprawny JSON — nie można sparsować.");
@@ -489,9 +498,10 @@ let rawDietPlan =
 if (
   !rawDietPlan ||
   typeof rawDietPlan !== "object" ||
-  Object.keys(rawDietPlan).length === 0
+  Object.keys(rawDietPlan).length === 0 ||
+  Object.values(rawDietPlan).every(v => !v || typeof v !== "object")
 ) {
-  console.error("❌ Błąd: brak dietPlan w odpowiedzi GPT:", parsed);
+  console.error("❌ Nie znaleziono prawidłowego dietPlan:", parsed);
   throw new Error("❌ JSON nie zawiera pola 'dietPlan'.");
 }
 
