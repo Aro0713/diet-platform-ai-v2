@@ -513,7 +513,7 @@ console.log("📦 parsedDietPlan →", JSON.stringify(parsedDietPlan, null, 2));
 const structuredPlan = convertFlatToStructuredPlan(parsedDietPlan);
 
 try {
-  const { type, plan } = await import("@/agents/dqAgent").then(m =>
+  const result = await import("@/agents/dqAgent").then(m =>
     m.dqAgent.run({
       dietPlan: structuredPlan,
       model: modelKey,
@@ -524,10 +524,17 @@ try {
       dqChecks: form?.medical_data?.dqChecks ?? {}
     })
   );
-  parsed.dietPlan = plan;
+
+  if (!result || !result.plan) {
+    console.error("❌ dqAgent.run zwrócił pusty wynik:", result);
+    throw new Error("Brak poprawionej diety z dqAgent.");
+  }
+
+  parsed.dietPlan = result.plan;
 } catch (err) {
   console.warn("⚠️ dqAgent błąd:", err);
 }
+
 }
 
 export const generateDietTool = tool({
