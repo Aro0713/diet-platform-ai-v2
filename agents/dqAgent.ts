@@ -68,10 +68,9 @@ You already know the nutritional value of standard foods (e.g. chicken, broccoli
 
 Your task:
 - Check if the diet is realistic and nutritionally balanced
-- Ensure macro and micronutrients (including vitamins) are within healthy ranges
-- If any part is unrealistic, nutritionally incorrect, or missing macros – correct the plan and return updated JSON
-- Always fill in the "macros" object for each meal with realistic, scientifically accurate values based on known nutritional content
-- All values must be calculated based on ingredient weight and known composition (do not guess or invent values)
+- Ensure macro and micronutrients (including vitamins) are present for every meal
+- If \"macros\" object is missing or contains only zeros, recalculate and insert accurate values
+- Each \"macros\" field (e.g., kcal, protein, vitaminD) must reflect the known nutrition of ingredients and their weights
 
 DO NOT explain anything. Return only:
 - Original JSON if valid
@@ -91,14 +90,35 @@ ${JSON.stringify(dietPlan, null, 2)}`;
 
     const text = completion.choices[0].message.content ?? "";
     const clean = text.replace(/```json|```/g, "").trim();
+    console.warn("📥 GPT response (raw):", clean);
 
     if (clean.includes("CORRECTED_JSON")) {
       const startIndex = clean.indexOf("{");
       const correctedJson = clean.slice(startIndex).trim();
       try {
         const parsed = JSON.parse(correctedJson);
-        const correctedStructured = parsed?.dietPlan as Record<string, Record<string, Meal>>;
-        if (!correctedStructured) throw new Error("Brak dietPlan");
+        const correctedStructured: Record<string, Record<string, Meal>> =
+          parsed?.dietPlan ||
+          parsed?.CORRECTED_JSON?.dietPlan ||
+          parsed?.CORRECTED_JSON ||
+          null;
+
+        if (!correctedStructured || typeof correctedStructured !== 'object') {
+          console.warn("❌ GPT odpowiedź nie zawiera dietPlan:", parsed);
+          throw new Error("Brak dietPlan");
+        }
+
+        const hasAnyMacros = Object.values(correctedStructured)
+          .flatMap(day => Object.values(day))
+          .some(meal =>
+            meal.macros &&
+            Object.values(meal.macros).some(v => typeof v === 'number' && v > 0)
+          );
+
+        if (!hasAnyMacros) {
+          console.warn("❌ GPT zwrócił dietę bez wartości odżywczych (macros all 0)");
+          throw new Error("Poprawiona dieta nie zawiera makroskładników");
+        }
 
         const originalMeals: Meal[] = Object.values(dietPlan).flatMap(day => Object.values(day));
         const correctedMeals: Meal[] = Object.values(correctedStructured).flatMap(day => Object.values(day));
