@@ -419,7 +419,7 @@ ${daysList}
     }
 
 ⚠️ All numeric values must be per whole meal, not per 100g. Use realistic values and round to 1 decimal point.
-
+⚠️ Do not skip any nutrient field. All macros, micros and vitamins must be present and realistic.
 
 Base the plan on:
 ✔ Patient profile from interview:
@@ -454,29 +454,37 @@ ${jsonFormatPreview}
 }
 `;
 
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o",
-    messages: [
-      { role: "system", content: "You are a clinical dietitian AI." },
-      { role: "user", content: prompt }
-    ],
-    temperature: 0.7,
-    stream: false
-  });
+const completion = await openai.chat.completions.create({
+  model: "gpt-4o",
+  messages: [
+    { role: "system", content: "You are a clinical dietitian AI." },
+    { role: "user", content: prompt }
+  ],
+  temperature: 0.7,
+  stream: true
+});
 
-  const content = completion.choices?.[0]?.message?.content;
-  if (!content) throw new Error("Brak odpowiedzi od modelu");
+// 📥 Zbieranie treści z chunków
+let fullContent = "";
+for await (const chunk of completion) {
+  const delta = chunk.choices[0]?.delta?.content;
+  if (delta) fullContent += delta;
+}
 
-    let parsed;
-    try {
-      const start = content.indexOf('{');
-      const end = content.lastIndexOf('}') + 1;
-      const cleanContent = content.slice(start, end).trim();
-      parsed = JSON.parse(cleanContent);
-    } catch (err) {
-      throw new Error("❌ GPT zwrócił niepoprawny JSON — nie można sparsować.");
-    }
+// 🔍 Parsowanie JSON
+let parsed;
+try {
+  const clean = fullContent.trim().replace(/^```json|```$/g, "");
+  const start = clean.indexOf("{");
+  const end = clean.lastIndexOf("}") + 1;
+  const cleanContent = clean.slice(start, end);
+  parsed = JSON.parse(cleanContent);
+} catch (err) {
+  console.error("❌ Błąd parsowania JSON ze streamu:", fullContent);
+  throw new Error("❌ GPT zwrócił niepoprawny JSON — nie można sparsować.");
+}
 
+// ✅ Sprawdzenie obecności dietPlan
 const rawDietPlan = parsed?.dietPlan;
 if (!rawDietPlan) {
   throw new Error("❌ JSON nie zawiera pola 'dietPlan'.");
@@ -690,26 +698,34 @@ ${jsonFormatPreview}
 }
 `;
 
-   try {
-  const completion = await openai.chat.completions.create({
+try {
+  const stream = await openai.chat.completions.create({
     model: "gpt-4o",
     messages: [
       { role: "system", content: "You are a clinical dietitian AI." },
       { role: "user", content: prompt }
     ],
     temperature: 0.7,
-    stream: false
+    stream: true
   });
 
-  const content = completion.choices?.[0]?.message?.content;
-  if (!content) throw new Error("Brak odpowiedzi od modelu");
+  // 📥 Zbieranie treści z chunków
+  let fullContent = "";
+  for await (const chunk of stream) {
+    const delta = chunk.choices?.[0]?.delta?.content;
+    if (delta) fullContent += delta;
+  }
 
   // 🔍 Spróbuj sparsować JSON z odpowiedzi
   let parsed;
   try {
-    const cleanContent = content.replace(/```json|```/g, "").trim();
-    parsed = JSON.parse(cleanContent);
+    const cleanContent = fullContent.replace(/```json|```/g, "").trim();
+    const start = cleanContent.indexOf("{");
+    const end = cleanContent.lastIndexOf("}") + 1;
+    const jsonString = cleanContent.slice(start, end);
+    parsed = JSON.parse(jsonString);
   } catch (err) {
+    console.error("❌ Nie można sparsować JSON ze streamu:\n", fullContent);
     return {
       type: "text",
       content: "❌ GPT zwrócił niepoprawny JSON — nie można sparsować."
