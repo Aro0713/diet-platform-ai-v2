@@ -719,24 +719,42 @@ try {
     if (delta) fullContent += delta;
   }
 
-  // 🔍 Spróbuj sparsować JSON z odpowiedzi GPT
-  let parsed;
-  try {
-    const cleanContent = fullContent.replace(/```json|```/g, "").trim();
-    const start = cleanContent.indexOf("{");
-    const end = cleanContent.lastIndexOf("}") + 1;
-    const jsonString = cleanContent.slice(start, end);
-    parsed = JSON.parse(jsonString);
-    if (typeof parsed === "string") {
-      parsed = JSON.parse(parsed);
-    }
-  } catch (err) {
-    console.error("❌ Nie można sparsować JSON ze streamu:\n", fullContent);
-    return {
-      type: "text",
-      content: "❌ GPT zwrócił niepoprawny JSON — nie można sparsować."
-    };
+ // 🔍 Spróbuj sparsować JSON z odpowiedzi GPT
+let parsed;
+try {
+  const cleanContent = fullContent
+    .replace(/```json/g, "")
+    .replace(/```/g, "")
+    .trim();
+
+  const firstBrace = cleanContent.indexOf("{");
+  const lastBrace = cleanContent.lastIndexOf("}") + 1;
+
+  if (firstBrace === -1 || lastBrace === -1) {
+    throw new Error("Nie znaleziono nawiasów JSON.");
   }
+
+  const jsonString = cleanContent.slice(firstBrace, lastBrace);
+
+  parsed = JSON.parse(jsonString);
+
+  // 🧪 Dodatkowe zabezpieczenie dla stringified JSON
+  if (typeof parsed === "string") {
+    try {
+      parsed = JSON.parse(parsed);
+    } catch {
+      console.warn("⚠️ Podwójne parsowanie nie powiodło się – kontynuuję z pojedynczym.");
+    }
+  }
+
+} catch (err) {
+  console.error("❌ Nie można sparsować JSON ze streamu:\n", fullContent);
+  return {
+    type: "text",
+    content: "❌ GPT zwrócił niepoprawny JSON — nie można sparsować."
+  };
+}
+
 
   // ✅ Wybór najlepszego dietPlan
   let rawDietPlan = null;
