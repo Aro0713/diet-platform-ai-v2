@@ -755,22 +755,24 @@ try {
   };
 }
 
-
   // ✅ Wybór najlepszego dietPlan
-  let rawDietPlan = null;
-  if (parsed?.CORRECTED_JSON?.dietPlan) {
-    rawDietPlan = parsed.CORRECTED_JSON.dietPlan;
-  } else if (
-    parsed?.CORRECTED_JSON &&
-    typeof parsed.CORRECTED_JSON === "object"
-  ) {
-    rawDietPlan = parsed.CORRECTED_JSON;
-  } else if (
-    parsed?.dietPlan &&
-    typeof parsed.dietPlan === "object"
-  ) {
-    rawDietPlan = parsed.dietPlan;
-  }
+ function isValidDietPlan(obj: any): boolean {
+  if (!obj || typeof obj !== "object") return false;
+  const days = Object.keys(obj);
+  return days.length >= 5 && Object.values(obj).every(
+    v => typeof v === "object" && v !== null
+  );
+}
+
+let rawDietPlan = null;
+
+if (isValidDietPlan(parsed?.dietPlan)) {
+  rawDietPlan = parsed.dietPlan;
+} else if (isValidDietPlan(parsed?.CORRECTED_JSON?.dietPlan)) {
+  rawDietPlan = parsed.CORRECTED_JSON.dietPlan;
+} else if (isValidDietPlan(parsed?.CORRECTED_JSON)) {
+  rawDietPlan = parsed.CORRECTED_JSON;
+}
 
   if (
     !rawDietPlan ||
