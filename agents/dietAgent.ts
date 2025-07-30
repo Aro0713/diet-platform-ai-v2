@@ -369,7 +369,8 @@ try {
 }
 
 
-let rawDietPlan = null;
+let rawDietPlan: Record<string, Record<string, Meal>> = {};
+
 
 if (parsed?.CORRECTED_JSON?.dietPlan) {
   rawDietPlan = parsed.CORRECTED_JSON.dietPlan;
@@ -660,7 +661,7 @@ try {
   );
 }
 
-let rawDietPlan = null;
+let rawDietPlan: Record<string, Record<string, Meal>> | null = null;
 
 if (isValidDietPlan(parsed?.dietPlan)) {
   rawDietPlan = parsed.dietPlan;
@@ -670,23 +671,43 @@ if (isValidDietPlan(parsed?.dietPlan)) {
   rawDietPlan = parsed.CORRECTED_JSON;
 }
 
-  if (
-    !rawDietPlan ||
-    typeof rawDietPlan !== "object" ||
-    Object.keys(rawDietPlan).length === 0 ||
-    Object.values(rawDietPlan).every(v => !v || typeof v !== "object")
-  ) {
-    console.error("❌ Nie znaleziono prawidłowego dietPlan:", parsed);
-    return {
-      type: "text",
-      content: "❌ JSON nie zawiera pola 'dietPlan'."
-    };
-  }
+if (
+  !rawDietPlan ||
+  typeof rawDietPlan !== "object" ||
+  Object.keys(rawDietPlan).length === 0 ||
+  Object.values(rawDietPlan).every(v => !v || typeof v !== "object")
+) {
+  console.error("❌ Nie znaleziono prawidłowego dietPlan:", parsed);
+  return {
+    type: "text",
+    content: "❌ JSON nie zawiera pola 'dietPlan'."
+  };
+}
+
+if (!rawDietPlan) {
+  throw new Error("❌ rawDietPlan is null – cannot pass to dqAgent");
+}
+
+// ✅ TS teraz wie: confirmedPlan nie może być null
+const confirmedPlan: Record<string, Record<string, Meal>> = rawDietPlan;
+
+const result = await import("@/agents/dqAgent").then(m =>
+  m.dqAgent.run({
+    dietPlan: confirmedPlan,
+    model: modelKey,
+    goal: goalExplanation,
+    cpm,
+    weightKg: form.weight ?? null,
+    conditions: form.conditions ?? [],
+    dqChecks: form?.medical_data?.dqChecks ?? {}
+  })
+);
+
 // 🧠 Walidacja i poprawa przez dqAgent – bez parsowania
 try {
   const { plan } = await import("@/agents/dqAgent").then(m =>
     m.dqAgent.run({
-      dietPlan: rawDietPlan,
+      dietPlan: confirmedPlan,
       model: modelKey,
       goal: goalExplanation,
       cpm,
