@@ -1052,7 +1052,7 @@ const handleShowDoctors = async () => {
     {/* Tabela diety */}
    {editableDiet && Object.keys(editableDiet).length > 0 && (
       <DietTable
-        editableDiet={parseRawDietPlan(editableDiet)} 
+        editableDiet={editableDiet} 
         setEditableDiet={setEditableDiet}
         setConfirmedDiet={() => {}}
         isEditable={false}
