@@ -25,7 +25,6 @@ import ConfirmationModal from '@/components/ConfirmationModal';
 // 🧠 AI i utils
 import { convertInterviewAnswers, extractMappedInterview } from '@/utils/interviewHelpers';
 import { tryParseJSON } from '@/utils/tryParseJSON';
-import { transformDietPlanToEditableFormat } from '@/utils/transformDietPlan';
 import { generateDietPdf } from '@/utils/generateDietPdf';
 import { validateDiet } from '@/utils/validateDiet';
 
@@ -41,6 +40,49 @@ import { usePatientSubmitData } from '@/hooks/usePatientSubmitData';
 
 // 📊 Typy
 import type { Meal } from '@/types';
+
+function parseRawDietPlan(raw: any): Record<string, Meal[]> {
+  const parsed: Record<string, Meal[]> = {};
+
+  for (const [day, dayData] of Object.entries(raw || {})) {
+    const mealsForDay: Meal[] = [];
+
+    if (Array.isArray(dayData)) {
+      for (const meal of dayData) {
+        if (!meal || typeof meal !== 'object') continue;
+
+        const name = meal.name || meal.menu || meal.mealName || 'Posiłek';
+        const time = meal.time || '00:00';
+        const ingredients = (meal.ingredients || []).map((i: any) => ({
+          product: i.product || i.name || '',
+          weight: typeof i.weight === 'number' ? i.weight : Number(i.weight) || 0,
+        })).filter((i: any) =>
+          i.product && typeof i.product === 'string' &&
+          !['undefined', 'null', 'name'].includes(i.product.toLowerCase())
+        );
+
+        mealsForDay.push({
+          name,
+          time,
+          menu: name,
+          ingredients,
+          macros: meal.macros || {
+            kcal: 0, protein: 0, fat: 0, carbs: 0,
+            fiber: 0, sodium: 0, potassium: 0, calcium: 0, magnesium: 0,
+            iron: 0, zinc: 0, vitaminD: 0, vitaminB12: 0, vitaminC: 0,
+            vitaminA: 0, vitaminE: 0, vitaminK: 0,
+          },
+          glycemicIndex: meal.glycemicIndex ?? 0,
+          day
+        });
+      }
+    }
+
+    parsed[day] = mealsForDay;
+  }
+
+  return parsed;
+}
 
 type PatientFormData = {
   name?: string;
@@ -281,18 +323,17 @@ const {
       Sunday: 'Niedziela'
     };
 
-    if (parsed.dietPlan && typeof parsed.dietPlan === 'object') {
-  const transformed = transformDietPlanToEditableFormat(parsed.dietPlan, lang);
-
-  if (Object.keys(transformed).length === 0) {
+if (parsed.dietPlan && typeof parsed.dietPlan === 'object') {
+  const parsedDiet = parseRawDietPlan(parsed.dietPlan || parsed.correctedDietPlan);
+  if (Object.keys(parsedDiet).length === 0) {
     console.warn('⚠️ Brak danych w dietPlan – nie zapisano.');
     return;
   }
 
-  setMealPlan(transformed);
-  setDiet(transformed);
-  setEditableDiet(transformed);
-  await saveDietPlan(transformed);
+  setMealPlan(parsedDiet);
+  setDiet(parsedDiet);
+  setEditableDiet(parsedDiet);
+  await saveDietPlan(parsedDiet);
   return;
 }
 

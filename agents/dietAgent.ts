@@ -8,82 +8,7 @@ import type { Meal } from "@/types";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-export function parseRawDietPlan(raw: any): Record<string, Meal[]> {
-  const parsed: Record<string, Meal[]> = {};
 
-  for (const [day, dayData] of Object.entries(raw || {})) {
-    const mealsForDay: Meal[] = [];
-
-    // 🔁 Format A: tablica posiłków (Meal[])
-    if (Array.isArray(dayData)) {
-      for (const meal of dayData) {
-        if (!meal || typeof meal !== "object") continue;
-
-        const name = meal.name || meal.menu || meal.mealName || "Posiłek";
-        const time = meal.time || "00:00";
-        const ingredients = (meal.ingredients || []).map((i: any) => ({
-          product: i.product || i.name || "",
-          weight: typeof i.weight === "number" ? i.weight : Number(i.weight) || 0
-        })).filter((i: Ingredient) =>
-          i.product && typeof i.product === "string" &&
-          !["undefined", "null", "name"].includes(i.product.toLowerCase())
-        );
-
-        mealsForDay.push({
-          name,
-          time,
-          menu: name,
-          ingredients,
-          macros: meal.macros || {
-            kcal: 0, protein: 0, fat: 0, carbs: 0,
-            fiber: 0, sodium: 0, potassium: 0, calcium: 0, magnesium: 0,
-            iron: 0, zinc: 0, vitaminD: 0, vitaminB12: 0, vitaminC: 0,
-            vitaminA: 0, vitaminE: 0, vitaminK: 0
-          },
-          glycemicIndex: meal.glycemicIndex ?? 0
-        });
-      }
-    }
-
-    // 🔁 Format B: stare GPT (Record<string, { mealName, ingredients }>)
-    else if (typeof dayData === "object" && dayData !== null) {
-      for (const [time, block] of Object.entries(dayData)) {
-        if (typeof block !== "object" || !block) continue;
-
-        if ("mealName" in block && Array.isArray(block.ingredients)) {
-          const name = block.mealName || "Posiłek";
-          const ingredients = block.ingredients.map((i: any) => ({
-            product: i.name ?? i.product ?? "",
-            weight: typeof i.quantity === "number" ? i.quantity : Number(i.quantity) || 0
-          })).filter((i: Ingredient) =>
-            i.product && typeof i.product === "string" &&
-            !["undefined", "null", "name"].includes(i.product.toLowerCase())
-          );
-
-          mealsForDay.push({
-            name,
-            time,
-            menu: name,
-            ingredients,
-            macros: block.macros || {
-              kcal: 0, protein: 0, fat: 0, carbs: 0,
-              fiber: 0, sodium: 0, potassium: 0, calcium: 0, magnesium: 0,
-              iron: 0, zinc: 0, vitaminD: 0, vitaminB12: 0, vitaminC: 0,
-              vitaminA: 0, vitaminE: 0, vitaminK: 0
-            },
-            glycemicIndex: block.glycemicIndex ?? 0
-          });
-        }
-      }
-    } else {
-      console.warn(`⚠️ Nieznany format danych dla dnia: ${day}`, dayData);
-    }
-
-    parsed[day] = mealsForDay;
-  }
-
-  return parsed;
-}
 
 const languageMap: Record<string, string> = {
   pl: "polski", en: "English", es: "español", fr: "français", de: "Deutsch",
@@ -282,20 +207,6 @@ const cuisineMap: Record<string, string> = {
   "Afrykańska": "African",
   "Dieta arktyczna / syberyjska": "Arctic/Siberian"
 };
-function convertFlatToStructuredPlan(flat: Record<string, Meal[]>): Record<string, Record<string, Meal>> {
-  const structured: Record<string, Record<string, Meal>> = {};
-
-  for (const [day, meals] of Object.entries(flat)) {
-    structured[day] = {};
-    for (const meal of meals) {
-      const fallbackTime = `0${Object.keys(structured[day]).length + 1}:00`;
-      const time = meal.time && !(meal.time in structured[day]) ? meal.time : fallbackTime;
-      structured[day][time] = meal;
-    }
-  }
-
-  return structured;
-}
 
 export async function generateDiet(input: any): Promise<any> {
   const {
@@ -443,29 +354,20 @@ for await (const chunk of completion) {
   if (delta) fullContent += delta;
 }
 
-// 🔍 Parsowanie JSON
 let parsed;
 try {
-const match = fullContent.match(/({[\s\S]+})/);
-if (!match) {
-  console.error("❌ Nie znaleziono poprawnego JSON-a w odpowiedzi GPT:", fullContent);
-  throw new Error("GPT zwrócił nieczytelny wynik — brak JSON-a.");
-}
-parsed = JSON.parse(match[1]);
+  const match = fullContent.match(/({[\s\S]+})/);
+  if (!match) throw new Error("Brak JSON w odpowiedzi GPT.");
+  parsed = JSON.parse(match[1]);
 
-  // 🔁 Obsługa podwójnego JSON-a (GPT czasem zwraca string jako JSON)
-if (typeof parsed === "string") {
-  try {
-    parsed = JSON.parse(parsed);
-  } catch (err) {
-    console.warn("⚠️ Podwójne parsowanie nie powiodło się – kontynuuję z pojedynczym");
+  if (typeof parsed === "string") {
+    parsed = JSON.parse(parsed); // optional double-parse
   }
+} catch (err) {
+  console.error("❌ JSON parse error →", fullContent);
+  throw new Error("GPT response is not valid JSON.");
 }
 
-} catch (err) {
-  console.error("❌ Błąd parsowania JSON ze streamu:", fullContent);
-  throw new Error("❌ GPT zwrócił niepoprawny JSON — nie można sparsować.");
-}
 
 let rawDietPlan = null;
 
@@ -487,17 +389,11 @@ if (
   throw new Error("❌ JSON nie zawiera pola 'dietPlan'.");
 }
 
-const parsedDietPlan = parseRawDietPlan(rawDietPlan);
-parsed.dietPlan = parsedDietPlan;
-console.log("📦 parsedDietPlan →", JSON.stringify(parsedDietPlan, null, 2));
-
-// ✅ zabezpieczenie: przekazujemy TYLKO sparsowaną strukturę
-const structuredPlan = convertFlatToStructuredPlan(parsedDietPlan);
 
 try {
   const result = await import("@/agents/dqAgent").then(m =>
     m.dqAgent.run({
-      dietPlan: structuredPlan,
+      dietPlan: rawDietPlan,
       model: modelKey,
       goal: goalExplanation,
       cpm,
@@ -512,7 +408,7 @@ try {
     throw new Error("Brak poprawionej diety z dqAgent.");
   }
 
-  parsed.dietPlan = result.plan;
+  parsed.correctedDietPlan = result.plan;
 } catch (err) {
   console.warn("⚠️ dqAgent błąd:", err);
 }
@@ -786,44 +682,32 @@ if (isValidDietPlan(parsed?.dietPlan)) {
       content: "❌ JSON nie zawiera pola 'dietPlan'."
     };
   }
+// 🧠 Walidacja i poprawa przez dqAgent – bez parsowania
+try {
+  const { plan } = await import("@/agents/dqAgent").then(m =>
+    m.dqAgent.run({
+      dietPlan: rawDietPlan,
+      model: modelKey,
+      goal: goalExplanation,
+      cpm,
+      weightKg: form.weight ?? null,
+      conditions: hasMedicalData ? form.conditions ?? [] : []
+    })
+  );
 
-  // ✅ Parsowanie do ustandaryzowanej struktury
-  const parsedDietPlan = parseRawDietPlan(rawDietPlan);
-  parsed.dietPlan = parsedDietPlan;
-
-  // 🧠 Walidacja i poprawa przez dqAgent
-  try {
-    // 🚨 Walidacja struktury przed dqAgent
-    for (const [day, meals] of Object.entries(parsedDietPlan || {})) {
-      if (!Array.isArray(meals)) {
-        console.warn(`❌ Błędna struktura planu diety – ${day} nie jest tablicą:`, meals);
-        throw new Error(`Błędny format dietPlan – dzień "${day}" nie zawiera listy posiłków`);
-      }
-    }
-
-        const { type, plan } = await import("@/agents/dqAgent").then(m =>
-        m.dqAgent.run({
-        dietPlan: convertFlatToStructuredPlan(parsedDietPlan),
-        model: modelKey,
-        goal: goalExplanation,
-        cpm,
-        weightKg: form.weight ?? null,
-        conditions: hasMedicalData ? form.conditions ?? [] : []
-      })
-    );
-
-    if (plan) {
-      parsed.dietPlan = plan;
-    }
-  } catch (err) {
-    console.warn("⚠️ dqAgent błąd:", err);
+  if (plan) {
+    parsed.correctedDietPlan = plan;
   }
+} catch (err) {
+  console.warn("⚠️ dqAgent błąd:", err);
+}
+
 
   // ✅ Zwróć poprawioną lub oryginalną wersję
-  return {
-    type: "text",
-    content: JSON.stringify(parsed, null, 2)
-  };
+return {
+  type: "json",
+  content: parsed
+};
 
 } catch (error: any) {
   return {
