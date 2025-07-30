@@ -24,7 +24,7 @@ function normalizeDietData(input: any): Record<string, Meal[]> {
           glycemicIndex: meal.glycemicIndex ?? 0,
           ingredients: (meal.ingredients || []).map((i: any) => ({
             product: i.product || i.name || '',
-            weight: i.weight || i.quantity || 0
+            weight: typeof i.weight === 'number' ? i.weight : Number(i.quantity) || 0
           })),
           macros: {
             kcal: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0,
@@ -50,7 +50,7 @@ function normalizeDietData(input: any): Record<string, Meal[]> {
           glycemicIndex: meal.glycemicIndex ?? 0,
           ingredients: (meal.ingredients || []).map((i: any) => ({
             product: i.product || i.name || '',
-            weight: i.weight || i.quantity || 0
+            weight: typeof i.weight === 'number' ? i.weight : Number(i.quantity) || 0
           })),
           macros: {
             kcal: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0,
