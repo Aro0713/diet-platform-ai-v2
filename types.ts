@@ -1,8 +1,10 @@
 export type Ingredient = {
   product: string;
   weight: number;
-  unit?: string; // np. "g", "ml", "szt", "łyżka"
+  unit?: string;
+  quantity?: number; // ← DODAJ TO
 };
+
 
 export interface Meal {
   name: string;

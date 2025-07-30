@@ -211,27 +211,35 @@ const DietTable: React.FC<DietTableProps> = ({
   const maxMealCount = Math.max(...Object.values(safeDiet).map((meals) => meals.length));
 
   const handleInputChange = (day: string, mealIndex: number, field: keyof Meal, value: string) => {
-    const updatedDayMeals = [...(editableDiet[day] || [])];
-    const meal = updatedDayMeals[mealIndex] ? { ...updatedDayMeals[mealIndex] } : getFallbackMeal();
+  const updatedDayMeals = [...(editableDiet[day] || [])];
+  const meal = updatedDayMeals[mealIndex] ? { ...updatedDayMeals[mealIndex] } : getFallbackMeal();
 
-    if (field === 'glycemicIndex') {
-  meal.glycemicIndex = Number(value);
-} else if (field === 'ingredients') {
-      meal.ingredients = value
-        .split(',')
-        .map((item) => {
-          const match = item.trim().match(/(.+?)\s*\((\d+)g\)/);
-          return match
-            ? { product: match[1], weight: parseInt(match[2]) }
-            : { product: item.trim(), weight: 0 };
-        });
-    } else {
-      (meal as any)[field] = value;
-    }
+  if (field === 'glycemicIndex') {
+    meal.glycemicIndex = Number(value);
+  } else if (field === 'ingredients') {
+    meal.ingredients = value
+      .split(',')
+      .map((item) => {
+        const match = item.trim().match(/(.+?)\s*\((\d+)g\)/);
+        return match
+          ? { product: match[1], weight: parseInt(match[2]) }
+          : { product: item.trim(), weight: 0 };
+      });
+  } else {
+    (meal as any)[field] = value;
+  }
 
-    updatedDayMeals[mealIndex] = meal;
-    setEditableDiet({ ...editableDiet, [day]: updatedDayMeals });
-  };
+  // ✅ Normalizacja składników
+  meal.ingredients = meal.ingredients.map((i: any) => ({
+    product: i.product || i.name || '',
+    weight: i.weight ?? i.quantity ?? 0,
+  }));
+
+  updatedDayMeals[mealIndex] = meal;
+
+  // ⬇️ TO DODAJ:
+  setEditableDiet({ ...editableDiet, [day]: updatedDayMeals });
+};
 
   const validateDiet = () => {
     for (const day of dayKeys) {
@@ -288,11 +296,14 @@ return (
                     )}
                     {meal.ingredients?.length > 0 && (
                       <ul className="text-sm list-inside space-y-1">
-                        {meal.ingredients.map((i, idx) => (
+                        {meal.ingredients.map((i, idx) => {
+                        const weight = i.weight ?? i.quantity ?? 0;
+                        return (
                           <li key={idx} className="flex items-center gap-2">
-                            <span>{i.product} ({i.weight}g)</span>
+                            <span>{i.product} ({weight}g)</span>
                           </li>
-                        ))}
+                        );
+                      })}
                       </ul>
                     )}
                     <div className="text-xs text-gray-400">
@@ -392,4 +403,3 @@ return (
 );
 }
 export default React.memo(DietTable);
-
