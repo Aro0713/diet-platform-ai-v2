@@ -1050,9 +1050,9 @@ const handleShowDoctors = async () => {
 
 </div>
     {/* Tabela diety */}
-    {editableDiet && Object.keys(editableDiet).length > 0 && (
+   {editableDiet && Object.keys(editableDiet).length > 0 && (
       <DietTable
-        editableDiet={editableDiet}
+        editableDiet={parseRawDietPlan(editableDiet)} 
         setEditableDiet={setEditableDiet}
         setConfirmedDiet={() => {}}
         isEditable={false}
@@ -1061,8 +1061,8 @@ const handleShowDoctors = async () => {
         setNotes={setNotes}
       />
     )}
-  </div>
-)}
+   </div>
+    )}
 
 {/* 📖 Wyświetlenie przepisów */}
 {selectedSection === 'diet' && recipes && Object.keys(recipes).length > 0 && (

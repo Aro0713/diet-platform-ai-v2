@@ -390,7 +390,6 @@ if (
   throw new Error("❌ JSON nie zawiera pola 'dietPlan'.");
 }
 
-
 try {
   const result = await import("@/agents/dqAgent").then(m =>
     m.dqAgent.run({
@@ -404,13 +403,22 @@ try {
     })
   );
 
-  if (!result || !result.plan) {
-    console.error("❌ dqAgent.run zwrócił pusty wynik:", result);
-    throw new Error("Brak poprawionej diety z dqAgent.");
-  }
+if (!result || !result.plan) {
+  console.error("❌ dqAgent.run zwrócił pusty wynik:", result);
+  throw new Error("Brak poprawionej diety z dqAgent.");
+}
 
-  parsed.correctedDietPlan = result.plan;
-} catch (err) {
+parsed.correctedDietPlan = result.plan;
+
+// ✅ ZWROT poprawionej lub oryginalnej diety:
+return {
+  dietPlan: parsed.correctedDietPlan || rawDietPlan,
+  notes: {},
+  translatedNarrative: narrative,
+  translatedRecommendation: interviewData.recommendation
+};
+}
+catch (err) {
   console.warn("⚠️ dqAgent błąd:", err);
 }
 
