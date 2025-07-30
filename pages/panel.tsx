@@ -53,14 +53,18 @@ function parseRawDietPlan(raw: any): Record<string, Meal[]> {
 
         const name = meal.name || meal.menu || meal.mealName || 'Posiłek';
         const time = meal.time || '00:00';
-        const ingredients = (meal.ingredients || []).map((i: any) => ({
-          product: i.product || i.name || '',
-          weight: typeof i.weight === 'number' ? i.weight : Number(i.weight) || 0,
-        })).filter((i: any) =>
-          i.product && typeof i.product === 'string' &&
-          !['undefined', 'null', 'name'].includes(i.product.toLowerCase())
-        );
-
+       const ingredients = (meal.ingredients || []).map((i: any) => ({
+        product: i.product || i.name || '',
+        weight:
+          typeof i.weight === 'number'
+            ? i.weight
+            : typeof i.quantity === 'number'
+            ? i.quantity
+            : Number(i.weight) || Number(i.quantity) || 0
+      })).filter((i: any) =>
+        i.product && typeof i.product === 'string' &&
+        !['undefined', 'null', 'name'].includes(i.product.toLowerCase())
+      );
         mealsForDay.push({
           name,
           time,
