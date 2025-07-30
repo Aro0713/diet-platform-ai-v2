@@ -295,16 +295,16 @@ return (
                       <div className="text-xs text-gray-400">🕒 {meal.time}</div>
                     )}
                     {meal.ingredients?.length > 0 && (
-                      <ul className="text-sm list-inside space-y-1">
-                        {meal.ingredients.map((i, idx) => {
-                        const weight = i.weight ?? i.quantity ?? 0;
+                     <ul className="text-sm list-inside space-y-1">
+                      {meal.ingredients.map((i, idx) => {
+                        const weight = i.weight ?? (i as any).quantity ?? 0;
                         return (
                           <li key={idx} className="flex items-center gap-2">
                             <span>{i.product} ({weight}g)</span>
                           </li>
                         );
                       })}
-                      </ul>
+                    </ul>
                     )}
                     <div className="text-xs text-gray-400">
                       Kalorie: {meal.macros?.kcal && meal.macros.kcal > 0 ? `${round(meal.macros.kcal)} kcal` : '–'} | IG: {meal.glycemicIndex > 0 ? meal.glycemicIndex : '–'}
