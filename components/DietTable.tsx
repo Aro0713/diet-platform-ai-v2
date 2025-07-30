@@ -3,6 +3,72 @@ import { Meal } from '@/types';
 import { LangKey } from '@/utils/i18n';
 import { translationsUI } from '@/utils/translationsUI';
 
+
+function normalizeDietData(input: any): Record<string, Meal[]> {
+  const result: Record<string, Meal[]> = {};
+  if (!input || typeof input !== 'object') return result;
+
+  for (const [day, rawDayData] of Object.entries(input)) {
+    const meals: Meal[] = [];
+
+    // Obsługa GPT (Record<string, Meal>)
+    if (rawDayData && typeof rawDayData === 'object' && !Array.isArray(rawDayData)) {
+      for (const [key, meal] of Object.entries(rawDayData)) {
+        if (!meal || typeof meal !== 'object') continue;
+
+        meals.push({
+          name: meal.name || meal.mealName || key || 'Posiłek',
+          menu: meal.menu || meal.name || 'Posiłek',
+          time: meal.time || key || '00:00',
+          day,
+          glycemicIndex: meal.glycemicIndex ?? 0,
+          ingredients: (meal.ingredients || []).map((i: any) => ({
+            product: i.product || i.name || '',
+            weight: i.weight || i.quantity || 0
+          })),
+          macros: {
+            kcal: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0,
+            potassium: 0, calcium: 0, magnesium: 0, iron: 0, zinc: 0,
+            vitaminD: 0, vitaminB12: 0, vitaminC: 0,
+            vitaminA: 0, vitaminE: 0, vitaminK: 0,
+            ...(meal.macros || {})
+          }
+        });
+      }
+    }
+
+    // Obsługa poprawnego Meal[]
+    if (Array.isArray(rawDayData)) {
+      for (const meal of rawDayData) {
+        if (!meal || typeof meal !== 'object') continue;
+
+        meals.push({
+          name: meal.name || meal.mealName || 'Posiłek',
+          menu: meal.menu || meal.name || 'Posiłek',
+          time: meal.time || '00:00',
+          day,
+          glycemicIndex: meal.glycemicIndex ?? 0,
+          ingredients: (meal.ingredients || []).map((i: any) => ({
+            product: i.product || i.name || '',
+            weight: i.weight || i.quantity || 0
+          })),
+          macros: {
+            kcal: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0,
+            potassium: 0, calcium: 0, magnesium: 0, iron: 0, zinc: 0,
+            vitaminD: 0, vitaminB12: 0, vitaminC: 0,
+            vitaminA: 0, vitaminE: 0, vitaminK: 0,
+            ...(meal.macros || {})
+          }
+        });
+      }
+    }
+
+    result[day] = meals;
+  }
+
+  return result;
+}
+
 function parseRawDietPlan(raw: any): Record<string, Meal[]> {
   const parsed: Record<string, Meal[]> = {};
 
@@ -126,13 +192,13 @@ const DietTable: React.FC<DietTableProps> = ({
   setNotes,
 }) => {
   const [saveMessage, setSaveMessage] = useState('');
-
-  const dayKeys = Object.keys(editableDiet);
+  const safeDiet = normalizeDietData(editableDiet);
+  const dayKeys = Object.keys(safeDiet);
   const translatedDays = dayKeys.map((dayKey) =>
     translationsUI[dayKey.toLowerCase()]?.[lang] || dayKey || '???'
   );
 
-  const maxMealCount = Math.max(...Object.values(editableDiet).map((meals) => meals.length));
+  const maxMealCount = Math.max(...Object.values(safeDiet).map((meals) => meals.length));
 
   const handleInputChange = (day: string, mealIndex: number, field: keyof Meal, value: string) => {
     const updatedDayMeals = [...(editableDiet[day] || [])];
@@ -200,7 +266,7 @@ return (
         {Array.from({ length: maxMealCount }).map((_, mealIndex) => (
           <tr key={mealIndex}>
             {dayKeys.map((day) => {
-              const meal = editableDiet[day]?.[mealIndex] ?? getFallbackMeal();
+              const meal = safeDiet[day]?.[mealIndex] ?? getFallbackMeal();
               return (
                 <td key={day + mealIndex} className="border border-gray-600 bg-[#0d1117] px-3 py-2 align-top text-white">
                   <div className="space-y-2">
@@ -243,7 +309,7 @@ return (
         ))}
         <tr className="bg-[#222c3f] font-semibold text-[11px] text-white leading-tight">
           {dayKeys.map((day) => {
-            const macros = sumDailyMacros(editableDiet[day] || []);
+            const macros = sumDailyMacros(safeDiet[day] || []);
             return (
               <td key={day + '_sum'} className="border border-gray-600 px-2 py-1 text-left text-gray-300 whitespace-pre-wrap align-top">
                 B: {round(macros.protein)}g, T: {round(macros.fat)}g, W: {round(macros.carbs)}g<br />
@@ -261,7 +327,7 @@ return (
             className="border border-gray-600 px-2 py-2 text-left text-gray-300 align-top"
           >
             {(() => {
-              const weekly = sumWeeklyMacros(editableDiet);
+              const weekly = sumWeeklyMacros(safeDiet);
               return (
                 <>
                   <div dangerouslySetInnerHTML={{ __html: translationsUI.weeklyTotal?.[lang] || '7 dni razem:' }} />
