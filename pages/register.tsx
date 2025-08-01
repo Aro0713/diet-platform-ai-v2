@@ -462,6 +462,16 @@ const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
   }
 
   alert('📩 Link aktywacyjny został wysłany na e-mail.');
+
+// 🔁 Google Ads – konwersja rejestracji
+if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+  window.gtag('event', 'conversion', {
+    send_to: 'AW-1739542813/abc123xyz456', // ← wklej swój kod!
+    value: 1.0,
+    currency: 'PLN'
+  });
+}
+
 };
 if (!langReady || !router.isReady || !userType) {
   return (
