@@ -296,14 +296,17 @@ return (
                     )}
                     {meal.ingredients?.length > 0 && (
                      <ul className="text-sm list-inside space-y-1">
-                      {meal.ingredients.map((i, idx) => {
-                        const weight = i.weight ?? (i as any).quantity ?? 0;
-                        return (
-                          <li key={idx} className="flex items-center gap-2">
-                            <span>{i.product} ({weight}g)</span>
-                          </li>
-                        );
-                      })}
+                    {meal.ingredients.map((i, idx) => {
+                      const weight = i.weight ?? (i as any).quantity ?? null;
+                      return (
+                        <li key={idx} className="flex items-center gap-2">
+                          <span>
+                            {i.product}
+                            {Number.isFinite(weight) && (weight as number) > 0 ? ` (${weight}g)` : ""}
+                          </span>
+                        </li>
+                      );
+                    })}
                     </ul>
                     )}
                     <div className="text-xs text-gray-400">
