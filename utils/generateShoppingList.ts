@@ -12,13 +12,16 @@ export function generateShoppingList(diet: Meal[]): ShoppingListItem[] {
 
   for (const meal of diet) {
     for (const ing of meal.ingredients) {
+      // ✅ zapewniamy, że waga to zawsze liczba
+      const weight = ing.weight ?? 0;
       const key = `${ing.product}|${ing.unit || "g"}`;
+
       if (!itemMap.has(key)) {
-        itemMap.set(key, { weight: ing.weight, unit: ing.unit || "g", count: 1 });
+        itemMap.set(key, { weight, unit: ing.unit || "g", count: 1 });
       } else {
         const current = itemMap.get(key)!;
         itemMap.set(key, {
-          weight: current.weight + ing.weight,
+          weight: current.weight + weight,
           unit: current.unit,
           count: current.count + 1
         });
