@@ -695,6 +695,29 @@ if (
 if (!rawDietPlan) {
   throw new Error("❌ rawDietPlan is null – cannot pass to dqAgent");
 }
+// 🔹 Normalizacja formatu składników w całym planie diety
+function normalizeIngredients(ingredients: any[]) {
+  return (ingredients || []).map(i => ({
+    product: i.product ?? i.name ?? "",
+    weight: i.weight ?? i.quantity ?? null, // zamiana quantity → weight, jeśli trzeba
+    unit: i.unit || "g"
+  }));
+}
+
+for (const day of Object.keys(rawDietPlan)) {
+  const mealsForDay = rawDietPlan[day];
+  const normalizedMeals: Record<string, Meal> = {};
+
+  for (const mealKey of Object.keys(mealsForDay)) {
+    const meal = mealsForDay[mealKey];
+    normalizedMeals[mealKey] = {
+      ...meal,
+      ingredients: normalizeIngredients(meal.ingredients)
+    };
+  }
+
+  rawDietPlan[day] = normalizedMeals;
+}
 
 // ✅ TS teraz wie: confirmedPlan nie może być null
 const confirmedPlan: Record<string, Record<string, Meal>> = rawDietPlan;

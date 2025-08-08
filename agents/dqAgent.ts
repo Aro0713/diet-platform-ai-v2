@@ -141,6 +141,25 @@ if (clean.includes("CORRECTED_JSON")) {
       console.warn("❌ GPT odpowiedź nie zawiera dietPlan:", parsed);
       throw new Error("Brak dietPlan");
     }
+    // 🔹 Normalizacja składników — quantity → weight, name → product
+    function normalizeIngredients(ingredients: any[]) {
+      return (ingredients || []).map(i => ({
+        product: i.product ?? i.name ?? "",
+        weight: i.weight ?? i.quantity ?? null,
+        unit: i.unit || "g"
+      }));
+    }
+
+    for (const day of Object.keys(correctedStructured)) {
+      const mealsForDay = correctedStructured[day];
+      for (const mealKey of Object.keys(mealsForDay)) {
+        const meal = mealsForDay[mealKey];
+        mealsForDay[mealKey] = {
+          ...meal,
+          ingredients: normalizeIngredients(meal.ingredients)
+        };
+      }
+    }
 
     const hasAnyMacros = Object.values(correctedStructured)
       .flatMap(day => Object.values(day))
