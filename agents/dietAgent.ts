@@ -234,8 +234,12 @@ export async function generateDiet(input: any): Promise<any> {
   const mealsPerDay = interviewData.mealsPerDay ?? "not provided";
 
   const narrative = await interviewNarrativeAgent({ interviewData, goal: interviewData.goal, recommendation: interviewData.recommendation, lang });
-  const medical = await medicalLabAgent({ testResults, description: medicalDescription, lang });
-
+  const medical = await medicalLabAgent({
+  testResults,
+  description: medicalDescription,
+  lang,
+  selectedConditions: form.conditions ?? []
+});
   const modelDefinition = dietModelMap[modelKey || ""] || {};
   const modelMacroStr = modelDefinition.macros
     ? Object.entries(modelDefinition.macros).map(([k, v]) => `- ${k}: ${v}`).join('\n')
@@ -474,7 +478,12 @@ export const generateDietTool = tool({
 
     // 🔗 Pobranie danych z agentów wspierających
     const narrative = await interviewNarrativeAgent({ interviewData, goal: interviewData.goal, recommendation: interviewData.recommendation, lang });
-    const medical = await medicalLabAgent({ testResults, description: medicalDescription, lang });
+    const medical = await medicalLabAgent({
+      testResults,
+      description: medicalDescription,
+      lang,
+      selectedConditions: form.conditions ?? []
+    });
 
     const modelDefinition = dietModelMap[modelKey || ""] || {};
     const modelMacroStr = modelDefinition.macros

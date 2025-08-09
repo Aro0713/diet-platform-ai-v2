@@ -587,7 +587,228 @@ export const conditionLabels: Record<string, Record<LangKey, string>> = {
   ar: "اضطراب نهم الطعام",
   he: "הפרעת אכילה כפייתית"
 },
-
+// 🆕 Nowe choroby – tłumaczenia w 11 językach
+"Padaczka": {
+  pl: "Padaczka",
+  en: "Epilepsy",
+  ua: "Епілепсія",
+  es: "Epilepsia",
+  fr: "Épilepsie",
+  de: "Epilepsie",
+  ru: "Эпилепсия",
+  zh: "癫痫",
+  hi: "मिर्गी",
+  ar: "الصرع",
+  he: "אפילפסיה"
+},
+"Stwardnienie rozsiane (SM)": {
+  pl: "Stwardnienie rozsiane (SM)",
+  en: "Multiple sclerosis (MS)",
+  ua: "Розсіяний склероз (РС)",
+  es: "Esclerosis múltiple (EM)",
+  fr: "Sclérose en plaques (SEP)",
+  de: "Multiple Sklerose (MS)",
+  ru: "Рассеянный склероз (РС)",
+  zh: "多发性硬化症",
+  hi: "मल्टीपल स्क्लेरोसिस (एमएस)",
+  ar: "التصلب المتعدد (MS)",
+  he: "טרשת נפוצה (MS)"
+},
+"Choroba Parkinsona": {
+  pl: "Choroba Parkinsona",
+  en: "Parkinson's disease",
+  ua: "Хвороба Паркінсона",
+  es: "Enfermedad de Parkinson",
+  fr: "Maladie de Parkinson",
+  de: "Parkinson-Krankheit",
+  ru: "Болезнь Паркинсона",
+  zh: "帕金森病",
+  hi: "पार्किंसंस रोग",
+  ar: "مرض باركنسون",
+  he: "מחלת פרקינסון"
+},
+"Mukowiscydoza": {
+  pl: "Mukowiscydoza",
+  en: "Cystic fibrosis",
+  ua: "Муковісцидоз",
+  es: "Fibrosis quística",
+  fr: "Mucoviscidose",
+  de: "Mukoviszidose",
+  ru: "Муковисцидоз",
+  zh: "囊性纤维化",
+  hi: "सिस्टिक फाइब्रोसिस",
+  ar: "التليف الكيسي",
+  he: "סיסטיק פיברוזיס"
+},
+"Przewlekła obturacyjna choroba płuc (POChP)": {
+  pl: "Przewlekła obturacyjna choroba płuc (POChP)",
+  en: "Chronic obstructive pulmonary disease (COPD)",
+  ua: "Хронічне обструктивне захворювання легень (ХОЗЛ)",
+  es: "Enfermedad pulmonar obstructiva crónica (EPOC)",
+  fr: "Bronchopneumopathie chronique obstructive (BPCO)",
+  de: "Chronisch obstruktive Lungenerkrankung (COPD)",
+  ru: "Хроническая обструктивная болезнь легких (ХОБЛ)",
+  zh: "慢性阻塞性肺病",
+  hi: "क्रॉनिक ऑब्सट्रक्टिव पल्मोनरी डिजीज (सीओपीडी)",
+  ar: "مرض الانسداد الرئوي المزمن (COPD)",
+  he: "מחלת ריאות חסימתית כרונית (COPD)"
+},
+"Przewlekłe zapalenie trzustki": {
+  pl: "Przewlekłe zapalenie trzustki",
+  en: "Chronic pancreatitis",
+  ua: "Хронічний панкреатит",
+  es: "Pancreatitis crónica",
+  fr: "Pancréatite chronique",
+  de: "Chronische Pankreatitis",
+  ru: "Хронический панкреатит",
+  zh: "慢性胰腺炎",
+  hi: "क्रॉनिक पैंक्रियाटाइटिस",
+  ar: "التهاب البنكرياس المزمن",
+  he: "דלקת לבלב כרונית"
+},
+"Nietolerancja fruktozy": {
+  pl: "Nietolerancja fruktozy",
+  en: "Fructose intolerance",
+  ua: "Непереносимість фруктози",
+  es: "Intolerancia a la fructosa",
+  fr: "Intolérance au fructose",
+  de: "Fruktoseintoleranz",
+  ru: "Непереносимость фруктозы",
+  zh: "果糖不耐症",
+  hi: "फ्रुक्टोज असहिष्णुता",
+  ar: "عدم تحمل الفركتوز",
+  he: "אי סבילות לפרוקטוז"
+},
+"Choroba Leśniowskiego-Crohna": {
+  pl: "Choroba Leśniowskiego-Crohna",
+  en: "Crohn's disease",
+  ua: "Хвороба Крона",
+  es: "Enfermedad de Crohn",
+  fr: "Maladie de Crohn",
+  de: "Morbus Crohn",
+  ru: "Болезнь Крона",
+  zh: "克罗恩病",
+  hi: "क्रोहन रोग",
+  ar: "داء كرون",
+  he: "מחלת קרוהן"
+},
+"Wrzodziejące zapalenie jelita grubego (WZJG)": {
+  pl: "Wrzodziejące zapalenie jelita grubego (WZJG)",
+  en: "Ulcerative colitis (UC)",
+  ua: "Виразковий коліт (ВК)",
+  es: "Colitis ulcerosa (CU)",
+  fr: "Rectocolite hémorragique (RCH)",
+  de: "Colitis ulcerosa",
+  ru: "Язвенный колит",
+  zh: "溃疡性结肠炎",
+  hi: "अल्सरेटिव कोलाइटिस",
+  ar: "التهاب القولون التقرحي",
+  he: "קוליטיס כיבית"
+},
+"Niewydolność serca": {
+  pl: "Niewydolność serca",
+  en: "Heart failure",
+  ua: "Серцева недостатність",
+  es: "Insuficiencia cardíaca",
+  fr: "Insuffisance cardiaque",
+  de: "Herzinsuffizienz",
+  ru: "Сердечная недостаточность",
+  zh: "心力衰竭",
+  hi: "हृदय विफलता",
+  ar: "فشل القلب",
+  he: "אי ספיקת לב"
+},
+"Zaburzenia rytmu serca": {
+  pl: "Zaburzenia rytmu serca",
+  en: "Arrhythmia",
+  ua: "Аритмія",
+  es: "Arritmia",
+  fr: "Arythmie",
+  de: "Herzrhythmusstörung",
+  ru: "Аритмия",
+  zh: "心律不齐",
+  hi: "अतालता",
+  ar: "اضطراب نظم القلب",
+  he: "הפרעת קצב לב"
+},
+"Hipercholesterolemia": {
+  pl: "Hipercholesterolemia",
+  en: "Hypercholesterolemia",
+  ua: "Гіперхолестеринемія",
+  es: "Hipercolesterolemia",
+  fr: "Hypercholestérolémie",
+  de: "Hypercholesterinämie",
+  ru: "Гиперхолестеринемия",
+  zh: "高胆固醇血症",
+  hi: "हाइपरकोलेस्ट्रोलेमिया",
+  ar: "فرط كوليسترول الدم",
+  he: "היפרכולסטרולמיה"
+},
+"Hipoglikemia reaktywna": {
+  pl: "Hipoglikemia reaktywna",
+  en: "Reactive hypoglycemia",
+  ua: "Реактивна гіпоглікемія",
+  es: "Hipoglucemia reactiva",
+  fr: "Hypoglycémie réactionnelle",
+  de: "Reaktive Hypoglykämie",
+  ru: "Реактивная гипогликемия",
+  zh: "反应性低血糖",
+  hi: "रिएक्टिव हाइपोग्लाइसीमिया",
+  ar: "انخفاض سكر الدم التفاعلي",
+  he: "היפוגליקמיה תגובתית"
+},
+"Hipertriglicerydemia": {
+  pl: "Hipertriglicerydemia",
+  en: "Hypertriglyceridemia",
+  ua: "Гіпертригліцеридемія",
+  es: "Hipertrigliceridemia",
+  fr: "Hypertriglycéridémie",
+  de: "Hypertriglyzeridämie",
+  ru: "Гипертриглицеридемия",
+  zh: "高甘油三酯血症",
+  hi: "हाइपरट्राइग्लिसरिडेमिया",
+  ar: "فرط ثلاثي الغليسريد في الدم",
+  he: "היפרטריגליצרידמיה"
+},
+"Zespół Cushinga": {
+  pl: "Zespół Cushinga",
+  en: "Cushing's syndrome",
+  ua: "Синдром Кушинга",
+  es: "Síndrome de Cushing",
+  fr: "Syndrome de Cushing",
+  de: "Cushing-Syndrom",
+  ru: "Синдром Кушинга",
+  zh: "库欣综合征",
+  hi: "कुशिंग सिंड्रोम",
+  ar: "متلازمة كوشينغ",
+  he: "תסמונת קושינג"
+},
+"Fenyloketonuria (PKU)": {
+  pl: "Fenyloketonuria (PKU)",
+  en: "Phenylketonuria (PKU)",
+  ua: "Фенілкетонурія (PKU)",
+  es: "Fenilcetonuria (PKU)",
+  fr: "Phénylcétonurie (PCU)",
+  de: "Phenylketonurie (PKU)",
+  ru: "Фенилкетонурия (PKU)",
+  zh: "苯丙酮尿症",
+  hi: "फेनिलकेटोनुरिया (पीकेयू)",
+  ar: "بيلة الفينيل كيتون (PKU)",
+  he: "פנילקטונוריה (PKU)"
+},
+"Galaktozemia": {
+  pl: "Galaktozemia",
+  en: "Galactosemia",
+  ua: "Галактоземія",
+  es: "Galactosemia",
+  fr: "Galactosémie",
+  de: "Galaktosämie",
+  ru: "Галактоземия",
+  zh: "半乳糖血症",
+  hi: "गैलेक्टोसीमिया",
+  ar: "الجالاكتوسيميا",
+  he: "גלקטוזמיה"
+}
 };
 
 export const testLabels = {
@@ -748,7 +969,20 @@ Object.assign(conditionLabels, {
   hi: "गठिया",
   ar: "النقرس",
   he: "שיגדון"
-}
+},
+"Zespół krótkiego jelita": {
+    pl: "Zespół krótkiego jelita",
+    en: "Short bowel syndrome",
+    ua: "Синдром короткої кишки",
+    es: "Síndrome de intestino corto",
+    fr: "Syndrome de l’intestin court",
+    de: "Kurzdarmsyndrom",
+    ru: "Синдром короткой кишки",
+    zh: "短肠综合征",
+    hi: "लघु आंत्र सिंड्रोम",
+    ar: "متلازمة الأمعاء القصيرة",
+    he: "תסמונת המעי הקצר"
+  }
 });
 
 Object.assign(testLabels, {
@@ -816,6 +1050,58 @@ Object.assign(testLabels, {
     hi: "मैनुअल डिफरेंशियल के साथ सीबीसी",
     ar: "تعداد دم كامل مع تفريق يدوي",
     he: "ספירת דם עם דיפרנציאל ידני"
+  },
+   "Długość czynnego jelita (cm)": {
+    pl: "Długość czynnego jelita (cm)",
+    en: "Functional small bowel length (cm)",
+    ua: "Довжина функціональної тонкої кишки (см)",
+    es: "Longitud funcional del intestino delgado (cm)",
+    fr: "Longueur fonctionnelle de l'intestin grêle (cm)",
+    de: "Funktionale Dünndarmlänge (cm)",
+    ru: "Длина функционирующей тонкой кишки (см)",
+    zh: "小肠功能性长度（厘米）",
+    hi: "कार्यात्मक छोटी आंत की लंबाई (सेमी)",
+    ar: "طول الأمعاء الدقيقة الوظيفي (سم)",
+    he: "אורך מעי דק פונקציונלי (ס\"מ)"
+  },
+  "Resekcja zastawki krętniczo-kątniczej": {
+    pl: "Resekcja zastawki krętniczo-kątniczej",
+    en: "Ileocecal valve resection",
+    ua: "Резекція баугінієвої заслінки",
+    es: "Resección de la válvula ileocecal",
+    fr: "Résection de la valve iléo-cæcale",
+    de: "Resektion der Ileozäkalklappe",
+    ru: "Резекция илеоцекального клапана",
+    zh: "回盲瓣切除",
+    hi: "इलियोसीकल वाल्व रिसेक्शन",
+    ar: "استئصال الصمام اللفائفي الأعوري",
+    he: "כריתת המסתם האילאוצקלי"
+  },
+  "Objętość stolca / doby (ml)": {
+    pl: "Objętość stolca / doby (ml)",
+    en: "Stool output / day (ml)",
+    ua: "Об'єм випорожнень / добу (мл)",
+    es: "Volumen de heces / día (ml)",
+    fr: "Volume des selles / jour (ml)",
+    de: "Stuhlvolumen pro Tag (ml)",
+    ru: "Объем стула в сутки (мл)",
+    zh: "每日排便量（毫升）",
+    hi: "मल का उत्पादन / दिन (मि.ली.)",
+    ar: "حجم البراز / يوم (مل)",
+    he: "נפח צואה ליום (מ\"ל)"
+  },
+  "Nawodnienie – liczba mikcji / doby": {
+    pl: "Nawodnienie – liczba mikcji / doby",
+    en: "Hydration – urinations/day",
+    ua: "Гідратація – кількість сечовипускань/добу",
+    es: "Hidratación – micciones/día",
+    fr: "Hydratation – mictions/jour",
+    de: "Hydratation – Miktionen/Tag",
+    ru: "Гидратация – мочеиспусканий/сутки",
+    zh: "水化情况 – 每日排尿次数",
+    hi: "हाइड्रेशन – मूत्रत्याग/दिन",
+    ar: "الترطيب – عدد مرات التبول/اليوم",
+    he: "הידרציה – מספר השתנות ליום"
   }
 });
 Object.assign(conditionLabels, {

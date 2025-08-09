@@ -45,6 +45,29 @@ export const testsByCondition: { [key: string]: string[] } = {
       "Testy na nietolerancje",
       "Morfologia",
     ],
+    "Zespół krótkiego jelita": [
+      "Opis choroby",
+      "Długość czynnego jelita (cm)",
+      "Resekcja zastawki krętniczo-kątniczej",
+      "Objętość stolca / doby (ml)",
+      "Nawodnienie – liczba mikcji / doby",
+      "Sód (Na)",
+      "Potas (K)",
+      "Magnez (Mg)",
+      "Wapń (Ca)",
+      "Witamina B12",
+      "Witamina D",
+      "Witamina K",
+      "Witamina A",
+      "Witamina E",
+      "Żelazo (Fe) / ferrytyna",
+      "Cynk (Zn)",
+      "Kreatynina",
+      "AlAT",
+      "ASPAT",
+      "Masa ciała / 7 dni (trend)"
+    ],
+
     "Choroba uchyłkowa jelit": [
       "Kolonoskopia",
       "TK jamy brzusznej",
@@ -242,6 +265,170 @@ export const testsByCondition: { [key: string]: string[] } = {
       "Kreatynina",
       "GFR",
       "EKG",
+    ],
+    "Padaczka": [
+      "Opis choroby",
+      "EEG",
+      "MRI mózgu",
+      "Poziom leków przeciwpadaczkowych (wg stosowanego leku)",
+      "Witamina D",
+      "Witamina B12",
+      "Morfologia",
+      "Glukoza"
+    ],
+
+    "Stwardnienie rozsiane (SM)": [
+      "Opis choroby",
+      "MRI mózgu i rdzenia kręgowego",
+      "Poziom witaminy D",
+      "Morfologia",
+      "CRP",
+      "Ferrytyna",
+      "Witamina B12"
+    ],
+
+    "Choroba Parkinsona": [
+      "Opis choroby",
+      "Testy funkcji motorycznych (UPDRS)",
+      "Morfologia",
+      "Witamina D",
+      "Witamina B12",
+      "Homocysteina"
+    ],
+
+    "Mukowiscydoza": [
+      "Opis choroby",
+      "BMI",
+      "Morfologia",
+      "Albumina",
+      "Witamina A",
+      "Witamina D",
+      "Witamina E",
+      "Witamina K",
+      "Glukoza",
+      "CRP",
+      "Posiew plwociny"
+    ],
+
+    "Przewlekła obturacyjna choroba płuc (POChP)": [
+      "Opis choroby",
+      "Spirometria",
+      "Gazometria krwi",
+      "Morfologia",
+      "CRP",
+      "Witamina D"
+    ],
+
+    "Przewlekłe zapalenie trzustki": [
+      "Opis choroby",
+      "Amylaza",
+      "Lipaza",
+      "Elastaza w kale",
+      "Glukoza",
+      "Morfologia",
+      "CRP",
+      "Witamina D",
+      "Witamina B12"
+    ],
+
+    "Nietolerancja fruktozy": [
+      "Opis choroby",
+      "Test wodorowy (fruktoza)",
+      "Glukoza",
+      "Morfologia"
+    ],
+
+    "Choroba Leśniowskiego-Crohna": [
+      "Opis choroby",
+      "Morfologia",
+      "CRP",
+      "OB.",
+      "Albumina",
+      "Kalprotektyna w kale",
+      "Witamina B12",
+      "Witamina D",
+      "Żelazo",
+      "Ferrytyna"
+    ],
+
+    "Wrzodziejące zapalenie jelita grubego (WZJG)": [
+      "Opis choroby",
+      "Morfologia",
+      "CRP",
+      "OB.",
+      "Albumina",
+      "Kalprotektyna w kale",
+      "Witamina D",
+      "Żelazo",
+      "Ferrytyna"
+    ],
+
+    "Niewydolność serca": [
+      "Opis choroby",
+      "NT-proBNP",
+      "Echo serca",
+      "Morfologia",
+      "Sód (Na)",
+      "Potas (K)",
+      "Kreatynina",
+      "eGFR"
+    ],
+
+    "Zaburzenia rytmu serca": [
+      "Opis choroby",
+      "EKG",
+      "Holter EKG",
+      "Morfologia",
+      "Sód (Na)",
+      "Potas (K)",
+      "Magnez (Mg)"
+    ],
+
+    "Hipercholesterolemia": [
+      "Opis choroby",
+      "Lipidogram",
+      "Glukoza",
+      "Morfologia"
+    ],
+
+    "Hipoglikemia reaktywna": [
+      "Opis choroby",
+      "Krzywa cukrowa (OGTT)",
+      "Krzywa insulinowa",
+      "Glukoza",
+      "Insulina"
+    ],
+
+    "Hipertriglicerydemia": [
+      "Opis choroby",
+      "Lipidogram",
+      "Glukoza",
+      "Morfologia"
+    ],
+
+    "Zespół Cushinga": [
+      "Opis choroby",
+      "Kortyzol",
+      "ACTH",
+      "Glukoza",
+      "Morfologia",
+      "Densytometria (DXA)"
+    ],
+
+    "Fenyloketonuria (PKU)": [
+      "Opis choroby",
+      "Fenyloalanina we krwi",
+      "Tyrozyna we krwi",
+      "Morfologia",
+      "Witamina D"
+    ],
+
+    "Galaktozemia": [
+      "Opis choroby",
+      "Galaktoza we krwi",
+      "Aktywność GALT",
+      "Morfologia",
+      "Witamina D"
     ],
     "Choroby pasożytnicze (parazytozy)": [
       "Badanie kału (3-krotne)",
