@@ -130,8 +130,6 @@ useEffect(() => {
   });
 }, [selectedGroups, selectedConditions, testResults]);
 
-
-
 const handleMedicalAnalysis = async () => {
   setLoading(true);
   try {
@@ -139,7 +137,12 @@ const handleMedicalAnalysis = async () => {
     const response = await fetch("/api/analyze-medical", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ testResults, description, lang })
+      body: JSON.stringify({
+        testResults,
+        description,
+        lang,
+        selectedConditions // ⬅️ tu dodane
+      })
     });
 
     const fullResult = await response.text();
