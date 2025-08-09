@@ -22,15 +22,16 @@ function normalizeDietData(input: any): Record<string, Meal[]> {
           time: meal.time || key || '00:00',
           day,
           glycemicIndex: meal.glycemicIndex ?? 0,
-          ingredients: (meal.ingredients || []).map((i: any) => ({
-          product: i.product || i.name || '',
-          weight:
-            typeof i.quantity === 'number'
-              ? i.quantity
-              : typeof i.quantity === 'string'
-              ? parseFloat(i.quantity)
-              : 0
-        })),
+      ingredients: (meal.ingredients || []).map((i: any) => ({
+  product: i.product || i.name || '',
+  weight:
+    typeof i.weight === 'number' ? i.weight :
+    typeof i.quantity === 'number' ? i.quantity :
+    typeof (i.weight ?? i.quantity) === 'string' ? parseFloat(i.weight ?? i.quantity as string) :
+    0,
+  unit: i.unit || (typeof (i.weight ?? i.quantity) !== 'undefined' ? 'g' : undefined),
+})),
+
           macros: {
             kcal: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0,
             potassium: 0, calcium: 0, magnesium: 0, iron: 0, zinc: 0,
@@ -53,15 +54,16 @@ function normalizeDietData(input: any): Record<string, Meal[]> {
           time: meal.time || '00:00',
           day,
           glycemicIndex: meal.glycemicIndex ?? 0,
-         ingredients: (meal.ingredients || []).map((i: any) => ({
-          product: i.product || i.name || '',
-          weight:
-            typeof i.quantity === 'number'
-              ? i.quantity
-              : typeof i.quantity === 'string'
-              ? parseFloat(i.quantity)
-              : 0
-          })),
+        ingredients: (meal.ingredients || []).map((i: any) => ({
+  product: i.product || i.name || '',
+  weight:
+    typeof i.weight === 'number' ? i.weight :
+    typeof i.quantity === 'number' ? i.quantity :
+    typeof (i.weight ?? i.quantity) === 'string' ? parseFloat(i.weight ?? i.quantity as string) :
+    0,
+  unit: i.unit || (typeof (i.weight ?? i.quantity) !== 'undefined' ? 'g' : undefined),
+})),
+
           macros: {
             kcal: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0,
             potassium: 0, calcium: 0, magnesium: 0, iron: 0, zinc: 0,
@@ -79,25 +81,30 @@ function normalizeDietData(input: any): Record<string, Meal[]> {
   return result;
 }
 
-function parseRawDietPlan(raw: any): Record<string, Meal[]> {
-  const parsed: Record<string, Meal[]> = {};
+        function parseRawDietPlan(raw: any): Record<string, Meal[]> {
+          const parsed: Record<string, Meal[]> = {};
 
-  for (const [day, dayData] of Object.entries(raw || {})) {
-    const mealsForDay: Meal[] = [];
+          for (const [day, dayData] of Object.entries(raw || {})) {
+            const mealsForDay: Meal[] = [];
 
-    if (Array.isArray(dayData)) {
-      for (const meal of dayData) {
-        if (!meal || typeof meal !== "object") continue;
+            if (Array.isArray(dayData)) {
+              for (const meal of dayData) {
+                if (!meal || typeof meal !== "object") continue;
 
-        const name = meal.name || meal.menu || meal.mealName || "Posiłek";
-        const time = meal.time || "00:00";
-        const ingredients = (meal.ingredients || []).map((i: any) => ({
-        product: i.product || i.name || '',
-        weight: typeof i.weight === 'number' ? i.weight : Number(i.weight) || 0,
-      })).filter((i: any) =>
-        i.product && typeof i.product === 'string' &&
-        !['undefined', 'null', 'name'].includes(i.product.toLowerCase())
-      );
+                const name = meal.name || meal.menu || meal.mealName || "Posiłek";
+                const time = meal.time || "00:00";
+              const ingredients = (meal.ingredients || []).map((i: any) => ({
+          product: i.product || i.name || '',
+          weight:
+            typeof i.weight === 'number' ? i.weight :
+            typeof i.quantity === 'number' ? i.quantity :
+            Number(i.weight ?? i.quantity) || 0,
+          unit: i.unit || (typeof (i.weight ?? i.quantity) !== 'undefined' ? 'g' : undefined),
+        })).filter((i: any) =>
+
+                i.product && typeof i.product === 'string' &&
+                !['undefined', 'null', 'name'].includes(i.product.toLowerCase())
+               );
 
         mealsForDay.push({
           name,
@@ -302,7 +309,9 @@ return (
                         <li key={idx} className="flex items-center gap-2">
                           <span>
                             {i.product}
-                            {Number.isFinite(weight) && (weight as number) > 0 ? ` (${weight}g)` : ""}
+                            {Number.isFinite(weight) && (weight as number) > 0
+                          ? ` (${round(Number(weight))}${(i as any).unit || 'g'})`
+                          : ""}
                           </span>
                         </li>
                       );
