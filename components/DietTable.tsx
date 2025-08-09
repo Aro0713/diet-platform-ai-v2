@@ -17,20 +17,21 @@ function normalizeDietData(input: any): Record<string, Meal[]> {
         if (!meal || typeof meal !== 'object') continue;
 
         meals.push({
-          name: meal.name || meal.mealName || key || 'Posiłek',
-          menu: meal.menu || meal.name || 'Posiłek',
+          // name = typ posiłku (Śniadanie/Obiad...), menu = nazwa dania
+          name: (key as string) || 'Posiłek',
+          menu: meal.mealName || meal.name || meal.menu || 'Posiłek',
           time: meal.time || key || '00:00',
           day,
           glycemicIndex: meal.glycemicIndex ?? 0,
-      ingredients: (meal.ingredients || []).map((i: any) => ({
-  product: i.product || i.name || '',
-  weight:
-    typeof i.weight === 'number' ? i.weight :
-    typeof i.quantity === 'number' ? i.quantity :
-    typeof (i.weight ?? i.quantity) === 'string' ? parseFloat(i.weight ?? i.quantity as string) :
-    0,
-  unit: i.unit || (typeof (i.weight ?? i.quantity) !== 'undefined' ? 'g' : undefined),
-})),
+          ingredients: (meal.ingredients || []).map((i: any) => ({
+          product: i.product || i.name || '',
+          weight:
+            typeof i.weight === 'number' ? i.weight :
+            typeof i.quantity === 'number' ? i.quantity :
+            typeof (i.weight ?? i.quantity) === 'string' ? parseFloat(i.weight ?? i.quantity as string) :
+            0,
+          unit: i.unit || (typeof (i.weight ?? i.quantity) !== 'undefined' ? 'g' : undefined),
+        })),
 
           macros: {
             kcal: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0,
@@ -295,8 +296,14 @@ return (
               return (
                 <td key={day + mealIndex} className="border border-gray-600 bg-[#0d1117] px-3 py-2 align-top text-white">
                   <div className="space-y-2">
+                    {/* typ posiłku (Śniadanie/Obiad...) */}
+                    <div className="text-[11px] uppercase tracking-wide text-gray-400">
+                      {translationsUI[meal.name?.toLowerCase()]?.[lang] || meal.name || 'Posiłek'}
+                    </div>
+
+                    {/* tytuł dania */}
                     <div className="font-semibold text-base">
-                      {translationsUI[meal.name?.toLowerCase()]?.[lang] || meal.name}
+                      {meal.menu}
                     </div>
                     {meal.time && (
                       <div className="text-xs text-gray-400">🕒 {meal.time}</div>
