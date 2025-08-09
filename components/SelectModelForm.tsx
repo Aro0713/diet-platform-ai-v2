@@ -42,7 +42,7 @@ const models: Record<string, Record<LangKey, string>> = {
     fr: 'Régime résistance à l’insuline',
     de: 'Insulinresistenz-Diät',
     ru: 'Диета при инсулинорезистентности',
-    zh: '胰尘类抵抗饮食',
+    zh: '胰岛素抵抗饮食',
     hi: 'इंसुलिन रेजिस्टेंस आहार',
     ar: 'نظام مقاومة الأنسولين',
     he: 'תפריט לתנגודת אינסולין'
