@@ -5845,4 +5845,137 @@ subscriptionRequiredInfo: {
   ar: "يتطلب الوصول إلى خطة النظام الغذائي هذه اشتراكًا نشطًا.",
   he: "נדרש מנוי פעיל כדי לגשת לתוכנית התזונה הזו."
 },
+  loginBenefit1: {
+    pl: "Zapisz swoje dane i cele — platforma zapamięta Twój profil i historię.",
+    en: "Save your data and goals — the platform will remember your profile and history.",
+    de: "Speichern Sie Ihre Daten und Ziele – die Plattform merkt sich Ihr Profil und Ihre Historie.",
+    fr: "Enregistrez vos données et objectifs — la plateforme se souviendra de votre profil et de votre historique.",
+    es: "Guarda tus datos y objetivos: la plataforma recordará tu perfil e historial.",
+    ua: "Збережіть свої дані та цілі — платформа запам’ятає ваш профіль і історію.",
+    ru: "Сохраните свои данные и цели — платформа запомнит ваш профиль и историю.",
+    zh: "保存您的数据和目标 — 平台将记住您的个人资料和历史记录。",
+    ar: "احفظ بياناتك وأهدافك — ستتذكر المنصة ملفك الشخصي وسجلك.",
+    hi: "अपना डेटा और लक्ष्य सहेजें — प्लेटफ़ॉर्म आपका प्रोफ़ाइल और इतिहास याद रखेगा।",
+    he: "שמור את הנתונים והמטרות שלך — הפלטפורמה תזכור את הפרופיל וההיסטוריה שלך."
+  },
+  loginBenefit2: {
+    pl: "Otrzymaj dietę dopasowaną do Ciebie przez AI i dietetyków.",
+    en: "Get a diet tailored to you by AI and dietitians.",
+    de: "Erhalten Sie eine auf Sie zugeschnittene Ernährung von KI und Ernährungsberatern.",
+    fr: "Recevez un régime personnalisé pour vous par l'IA et les diététiciens.",
+    es: "Obtén una dieta adaptada a ti por IA y dietistas.",
+    ua: "Отримайте дієту, підібрану для вас ШІ та дієтологами.",
+    ru: "Получите диету, подобранную для вас ИИ и диетологами.",
+    zh: "由AI和营养师为您量身定制的饮食计划。",
+    ar: "احصل على نظام غذائي مخصص لك من قبل الذكاء الاصطناعي وأخصائيي التغذية.",
+    hi: "AI और डाइटिशियन द्वारा आपके लिए बनाई गई डाइट प्राप्त करें।",
+    he: "קבל תזונה מותאמת אישית על ידי בינה מלאכותית ודיאטנים."
+  },
+  loginBenefit3: {
+    pl: "Korzystaj z planu wszędzie — pobieraj PDF, listy zakupów i przepisy.",
+    en: "Use your plan anywhere — download PDFs, shopping lists, and recipes.",
+    de: "Nutzen Sie Ihren Plan überall – laden Sie PDFs, Einkaufslisten und Rezepte herunter.",
+    fr: "Utilisez votre plan partout — téléchargez des PDF, listes de courses et recettes.",
+    es: "Usa tu plan en cualquier lugar: descarga PDF, listas de compras y recetas.",
+    ua: "Користуйтеся планом всюди — завантажуйте PDF, списки покупок і рецепти.",
+    ru: "Пользуйтесь планом везде — скачивайте PDF, списки покупок и рецепты.",
+    zh: "随时随地使用您的计划 — 下载PDF、购物清单和食谱。",
+    ar: "استخدم خطتك في أي مكان — نزّل ملفات PDF وقوائم التسوق والوصفات.",
+    hi: "अपनी योजना कहीं भी इस्तेमाल करें — PDF, खरीदारी सूची और रेसिपी डाउनलोड करें।",
+    he: "השתמש בתוכנית שלך בכל מקום — הורד קובצי PDF, רשימות קניות ומתכונים."
+  },
+
+  lookIntroHello: {
+    pl: "Cześć, jestem Look — Twoim asystentem AI w DCP.",
+    en: "Hi, I’m Look — your AI assistant in DCP.",
+    de: "Hallo, ich bin Look — dein KI‑Assistent in DCP.",
+    fr: "Bonjour, je suis Look — votre assistant IA dans DCP.",
+    es: "Hola, soy Look — tu asistente de IA en DCP.",
+    ua: "Привіт, я Look — ваш AI‑асистент у DCP.",
+    ru: "Привет, я Look — ваш AI‑ассистент в DCP.",
+    zh: "你好，我是 Look —— 你的 DCP AI 助手。",
+    ar: "مرحبًا، أنا لوك — مساعدك الذكي في DCP.",
+    hi: "नमस्ते, मैं Look हूँ — DCP में आपका AI सहायक।",
+    he: "היי, אני Look — העוזר ה־AI שלך ב‑DCP."
+  },
+  lookSlide1: {
+    pl: "Zaloguj się, żebym zapamiętał Twoje dane i cele.",
+    en: "Sign in so I can remember your data and goals.",
+    de: "Melde dich an, damit ich deine Daten und Ziele merke.",
+    fr: "Connectez‑vous pour que je mémorise vos données et objectifs.",
+    es: "Inicia sesión para que recuerde tus datos y objetivos.",
+    ua: "Увійдіть, щоб я запам’ятав ваші дані та цілі.",
+    ru: "Войдите, чтобы я запомнил ваши данные и цели.",
+    zh: "登录后我就能记住你的数据和目标。",
+    ar: "سجّل الدخول لأتذكر بياناتك وأهدافك.",
+    hi: "साइन इन करें ताकि मैं आपका डेटा और लक्ष्य याद रख सकूँ।",
+    he: "התחבר/י כדי שאזכור את הנתונים והמטרות שלך."
+  },
+  lookSlide2: {
+    pl: "Razem z dietetykami ułożę dla Ciebie dopasowaną dietę.",
+    en: "With our dietitians, I’ll build a plan tailored to you.",
+    de: "Zusammen mit Ernährungsberater:innen erstelle ich deinen individuellen Plan.",
+    fr: "Avec nos diététiciens, je crée un plan adapté pour vous.",
+    es: "Junto con nuestros dietistas, crearé un plan a tu medida.",
+    ua: "Разом із дієтологами я створю план саме для вас.",
+    ru: "Вместе с диетологами составлю план именно для вас.",
+    zh: "我会与营养师一起为你制定专属饮食计划。",
+    ar: "بالتعاون مع أخصائيي التغذية سأعدّ خطة مخصصة لك.",
+    hi: "डाइटिशियन के साथ मिलकर मैं आपके लिए पर्सनल प्लान बनाऊँगा।",
+    he: "יחד עם הדיאטנים אבנה עבורך תכנית מותאמת."
+  },
+  lookSlide3: {
+    pl: "Dostaniesz PDF, listy zakupów i przepisy — zawsze pod ręką.",
+    en: "Get PDFs, shopping lists, and recipes — always at hand.",
+    de: "Du erhältst PDFs, Einkaufslisten und Rezepte – immer zur Hand.",
+    fr: "PDF, listes de courses et recettes — toujours à portée.",
+    es: "Obtén PDF, listas de compras y recetas — siempre a mano.",
+    ua: "Отримаєте PDF, списки покупок і рецепти — завжди під рукою.",
+    ru: "Получите PDF, списки покупок и рецепты — всегда под рукой.",
+    zh: "获取 PDF、购物清单和食谱 —— 随时查看。",
+    ar: "ستحصل على ملفات PDF وقوائم التسوق ووصفات — دائمًا في متناولك.",
+    hi: "PDF, शॉपिंग लिस्ट और रेसिपी — हमेशा उपलब्ध।",
+    he: "קבל/י PDF, רשימות קניות ומתכונים — תמיד זמינים."
+  },
+  lookCTAStart: {
+    pl: "Zaczynamy",
+    en: "Let’s start",
+    de: "Los geht’s",
+    fr: "Commencer",
+    es: "Empezar",
+    ua: "Починаємо",
+    ru: "Начать",
+    zh: "开始",
+    ar: "لنبدأ",
+    hi: "शुरू करें",
+    he: "נתחיל"
+  },
+  lookCTASkip: {
+    pl: "Pomiń",
+    en: "Skip",
+    de: "Überspringen",
+    fr: "Passer",
+    es: "Omitir",
+    ua: "Пропустити",
+    ru: "Пропустить",
+    zh: "跳过",
+    ar: "تخطي",
+    hi: "छोड़ें",
+    he: "דלג/י"
+  },
+  replayIntro: {
+  pl: "Odtwórz intro",
+  en: "Replay intro",
+  de: "Intro erneut abspielen",
+  fr: "Rejouer l’intro",
+  es: "Reproducir intro",
+  ua: "Переглянути інтро ще раз",
+  ru: "Повторно показать интро",
+  zh: "重新播放介绍",
+  ar: "إعادة تشغيل المقدمة",
+  hi: "इंट्रो फिर चलाएँ",
+  he: "נגן את האינטרו שוב"
+}
+
+
 };
