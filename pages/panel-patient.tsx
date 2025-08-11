@@ -833,12 +833,13 @@ const handleShowDoctors = async () => {
       </div>
 
       <div className="w-full sm:max-w-[360px] min-h-[180px] flex flex-col justify-between items-center px-4 mx-auto">
-        <SelectMealsPerDayForm
-          value={interviewData?.mealsPerDay}
-          onChange={(meals: number) =>
-            setInterviewData({ ...interviewData, mealsPerDay: meals })
-          }
-        />
+      <SelectMealsPerDayForm
+        value={interviewData?.mealsPerDay ?? 0}
+        onChange={(meals: number) =>
+          setInterviewData({ ...interviewData, mealsPerDay: meals })
+        }
+        lang={lang}   // <-- DODANE
+      />
       </div>
     </div>
 

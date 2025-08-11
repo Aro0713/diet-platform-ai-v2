@@ -290,6 +290,19 @@ export const translationsUI: Record<string, Record<LangKey, string>> = {
       ar: 'نقص الوزن',
       he: 'תת משקל'
     },
+         selectMealsPerDay: {
+      pl: 'Liczba posiłków dziennie',
+      en: 'Number of meals per day',
+      ua: 'Кількість прийомів їжі на день',
+      es: 'Número de comidas por día',
+      fr: 'Nombre de repas par jour',
+      de: 'Anzahl der Mahlzeiten pro Tag',
+      ru: 'Количество приёмов пищи в день',
+      zh: '每日餐次',
+      hi: 'प्रति दिन भोजन की संख्या',
+      ar: 'عدد الوجبات يومياً',
+      he: 'מספר הארוחות ביום'
+    },
     normal: {
       pl: 'norma',
       en: 'normal',
