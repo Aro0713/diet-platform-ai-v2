@@ -217,13 +217,14 @@ return (
       <IntroOverlay
         lang={lang}
         onFinish={finishIntro}
-        videoSrcs={{ webm: '/intro.webm', mp4: '/intro.mp4' }}
+        // wideo leży w /public/screens/intro.mp4
+        videoSrcs={{ mp4: '/screens/intro.mp4' }} 
         slides={[
-          { image: '/screens/01-login.png', titleKey: 'loginBenefit1', descKey: 'lookSlide1' },
-          { image: '/screens/02-panel.png', titleKey: 'loginBenefit2', descKey: 'lookSlide2' },
+          { image: '/screens/01-login.png',       titleKey: 'loginBenefit1', descKey: 'lookSlide1' },
+          { image: '/screens/02-panel.png',       titleKey: 'loginBenefit2', descKey: 'lookSlide2' },
           { image: '/screens/03-diet-config.png', titleKey: 'loginBenefit2', descKey: 'lookSlide2' },
-          { image: '/screens/04-diet-table.png', titleKey: 'loginBenefit3', descKey: 'lookSlide3' },
-          { image: '/screens/05-ask-look.png', titleKey: 'lookCTAStart', descKey: 'lookSlide3' },
+          { image: '/screens/04-diet-table.png',  titleKey: 'loginBenefit3', descKey: 'lookSlide3' },
+          { image: '/screens/05-ask-look.png',    titleKey: 'lookCTAStart',  descKey: 'lookSlide3' },
         ]}
       />
     )}

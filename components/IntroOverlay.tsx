@@ -67,28 +67,42 @@ export default function IntroOverlay({
 
         {/* SLAJDY */}
         {step >= 0 && step < slides.length && (
-          <div className="w-full h-full flex items-center justify-center p-4">
-            <div className="relative grid md:grid-cols-2 gap-6 w-full max-w-5xl bg-slate-900/80 text-white rounded-2xl shadow-2xl overflow-hidden">
-              <div className="relative min-h-[260px]">
-                <Image
-                  src={slides[step].image}
-                  alt=""
-                  fill
-                  className="object-contain md:object-cover bg-slate-950/30"
-                  priority={step <= 1}
-                />
-              </div>
-              <div className="p-6 md:p-10">
-                <div className="flex items-start gap-3 mb-4">
-                  <Image src="/look-avatar.png" alt="Look" width={56} height={56} className="rounded-full" />
-                  <div>
-                    <p className="text-sm opacity-80">{tUI("lookIntroHello", lang)}</p>
-                    <h3 className="text-2xl font-semibold mt-1">{tUI(slides[step].titleKey as any, lang)}</h3>
-                  </div>
-                </div>
-                {slides[step].descKey && (
-                  <p className="opacity-90">{tUI(slides[step].descKey as any, lang)}</p>
-                )}
+  <div className="w-full h-full flex items-center justify-center p-4">
+    <div className="relative grid md:grid-cols-2 gap-6 w-full max-w-5xl bg-slate-900/80 text-white rounded-2xl shadow-2xl overflow-hidden">
+      <div className="relative min-h-[260px]">
+        <Image
+          src={slides[step].image}
+          alt=""
+          fill
+          sizes="(max-width: 768px) 90vw, 50vw"          // 👈 DODANE
+          className="object-contain md:object-cover bg-slate-950/30"
+          priority={step <= 1}
+          onError={(e) => {                              // 👈 DODANE fallback
+            // @ts-ignore – pozwólmy podmienić src runtime
+            e.currentTarget.src = '/logo-dietcare.png';
+          }}
+          unoptimized                                    // opcjonalnie: wyklucza optimizer Nexta dla lokalnych plików
+        />
+      </div>
+      <div className="p-6 md:p-10">
+        <div className="flex items-start gap-3 mb-4">
+          <Image
+            src="/Look.png"  // 👈 upewnij się, że to dokładnie Look.png
+            alt="Look"
+            width={56}
+            height={56}
+            className="rounded-full"
+            priority
+          />
+          <div>
+            <p className="text-sm opacity-80">{tUI("lookIntroHello", lang)}</p>
+            <h3 className="text-2xl font-semibold mt-1">{tUI(slides[step].titleKey as any, lang)}</h3>
+          </div>
+        </div>
+
+        {slides[step].descKey && (
+          <p className="opacity-90">{tUI(slides[step].descKey as any, lang)}</p>
+        )}
 
                 <div className="mt-6 flex items-center gap-2">
                   {[...Array(slides.length)].map((_, i) => (
