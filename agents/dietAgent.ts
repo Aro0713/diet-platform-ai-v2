@@ -1,7 +1,5 @@
 import { Agent, tool } from "@openai/agents";
 import OpenAI from "openai";
-import { interviewNarrativeAgent } from "@/agents/interviewNarrativeAgent";
-import { medicalLabAgent } from "@/agents/medicalLabAgent";
 import { nutrientRequirementsMap, type NutrientRequirements } from "@/utils/nutrientRequirementsMap";
 import type { Ingredient } from "@/utils/nutrition/calculateMealMacros";
 import type { Meal } from "@/types";
@@ -205,6 +203,76 @@ const cuisineMap: Record<string, string> = {
   "Afrykańska": "African",
   "Dieta arktyczna / syberyjska": "Arctic/Siberian"
 };
+// --- HELPERS: bierz tylko WYWIAD + MED z Supabase i sklej krótkie podsumowania ---
+
+function extractInterview(form: any, interviewData: any) {
+  const sup = form?.interview_data ?? null;
+  const mpdRaw = interviewData?.mealsPerDay ?? sup?.step6_q6 ?? null; // w Twojej próbce step6_q6 = "3"
+  const mealsPerDay = typeof mpdRaw === "string" ? parseInt(mpdRaw, 10) : mpdRaw;
+
+  return {
+    name: form?.name ?? null,
+    age: form?.age ?? null,
+    sex: form?.sex ?? null,
+    height: form?.height ?? null,
+    weight: form?.weight ?? null,
+    mealsPerDay: Number.isFinite(mealsPerDay) ? mealsPerDay : null,
+    sleepQuality: sup?.step1_q14 ?? null,     // "Dobra" w Twojej próbce
+    stressLevel: sup?.step1_q13 ?? null,      // "Średni"
+    physicalActivity: sup?.step8_q4 ?? null,  // "1.5 h"
+    narrativeText: sup?.narrativeText ?? null,
+    allergies: form?.allergies ?? null,       // w supabase to tekst; zostawiamy jako string
+    preferred: interviewData?.preferred ?? [],
+    disliked: interviewData?.disliked ?? [],
+  };
+}
+
+function extractMedical(form: any) {
+  const md = form?.medical_data ?? null;
+  return {
+    conditions: form?.conditions ?? [],               // ["Niewydolność serca"]
+    conditionGroups: form?.conditionGroups ?? [],     // ["Choroby układu krążenia"]
+    health_status: form?.health_status ?? null,
+    risks: md?.risks ?? [],
+    warnings: md?.warnings ?? [],
+    dqChecks: md?.dqChecks ?? {},
+    dietHints: {
+      avoid: md?.dietHints?.avoid ?? [],
+      recommend: md?.dietHints?.recommend ?? [],
+    },
+    enforceRanges: md?.enforceRanges ?? null,
+  };
+}
+
+function buildInterviewSummary(iv: ReturnType<typeof extractInterview>) {
+  // allergies w Supabase to tekst – pokaż jak jest
+  const allergiesLine = iv.allergies ? String(iv.allergies) : "none";
+  return [
+    `Age: ${iv.age ?? "unknown"}`,
+    `Sex: ${iv.sex ?? "unknown"}`,
+    `Height: ${iv.height ?? "unknown"} cm`,
+    `Weight: ${iv.weight ?? "unknown"} kg`,
+    `Meals/day: ${iv.mealsPerDay ?? "unknown"}`,
+    `Sleep quality: ${iv.sleepQuality ?? "unknown"}`,
+    `Stress level: ${iv.stressLevel ?? "unknown"}`,
+    `Physical activity: ${iv.physicalActivity ?? "unknown"}`,
+    `Allergies: ${allergiesLine}`,
+  ].join(", ");
+}
+
+function buildMedicalSummary(md: ReturnType<typeof extractMedical>) {
+  return [
+    `Conditions: ${md.conditions?.join(", ") || "none"}`,
+    `Condition groups: ${md.conditionGroups?.join(", ") || "none"}`,
+    `Health status: ${md.health_status ?? "not provided"}`,
+    `Risks: ${md.risks?.join(", ") || "none"}`,
+    `Warnings: ${md.warnings?.join(", ") || "none"}`,
+    `Diet hints: avoid → ${md.dietHints.avoid.join(", ") || "none"}, recommend → ${md.dietHints.recommend.join(", ") || "none"}`,
+    md.dqChecks?.avoidMicros?.length ? `Avoid micros: ${md.dqChecks.avoidMicros.join(", ")}` : null,
+    md.dqChecks?.recommendMicros?.length ? `Prefer micros: ${md.dqChecks.recommendMicros.join(", ")}` : null,
+    md.dqChecks?.avoidIngredients?.length ? `Avoid ingredients: ${md.dqChecks.avoidIngredients.join(", ")}` : null,
+  ].filter(Boolean).join("\n");
+}
 
 export async function generateDiet(input: any): Promise<any> {
   const {
@@ -229,15 +297,13 @@ export async function generateDiet(input: any): Promise<any> {
     : null);
   const pal = form.pal ?? 1.6;
   const cpm = form.cpm ?? (form.weight && pal ? Math.round(form.weight * 24 * pal) : null);
-  const mealsPerDay = interviewData.mealsPerDay ?? "not provided";
+  const iv = extractInterview(form, interviewData);
+  const md = extractMedical(form);
+  const mealsPerDay = iv.mealsPerDay ?? "not provided";
+  const interviewSummary = buildInterviewSummary(iv);
+  const medicalSummary = buildMedicalSummary(md);
 
-  const narrative = await interviewNarrativeAgent({ interviewData, goal: interviewData.goal, recommendation: interviewData.recommendation, lang });
-  const medical = await medicalLabAgent({
-  testResults,
-  description: medicalDescription,
-  lang,
-  selectedConditions: form.conditions ?? []
-});
+
   const modelDefinition = dietModelMap[modelKey || ""] || {};
   const modelMacroStr = modelDefinition.macros
     ? Object.entries(modelDefinition.macros).map(([k, v]) => `- ${k}: ${v}`).join('\n')
@@ -306,14 +372,15 @@ ${daysList}
 ⚠️ All numeric values must be per whole meal, not per 100g. Use realistic values and round to 1 decimal point.
 ⚠️ Do not skip any nutrient field. All macros, micros and vitamins must be present and realistic.
 
-Base the plan on:
 ✔ Patient profile from interview:
-${narrative}
+${interviewSummary}
+
+✔ Clinical risks and suggestions:
+${medicalSummary || "ℹ️ No clinical data provided."}
 
 ✔ Required nutrient ranges:
 ${nutrientRequirementsText}
 
-${hasMedicalData ? `✔ Clinical risks and suggestions:\n${medical}` : "ℹ️ No clinical risks provided."}
 ${hasMedicalData ? `✔ Adjust for patient diseases: ${form.conditions?.join(", ") || "unknown"}` : ""}
 
 ✔ Diet model: ${modelKey}, Cuisine: ${cuisine}
@@ -341,6 +408,7 @@ ${jsonFormatPreview}
 
 const completion = await openai.chat.completions.create({
   model: "gpt-4o",
+  response_format: { type: "json_object" },
   messages: [
     { role: "system", content: "You are a clinical dietitian AI." },
     { role: "user", content: prompt }
@@ -416,7 +484,6 @@ parsed.correctedDietPlan = result.plan;
 return {
   dietPlan: parsed.correctedDietPlan || rawDietPlan,
   notes: {},
-  translatedNarrative: narrative,
   translatedRecommendation: interviewData.recommendation
 };
 }
@@ -472,16 +539,12 @@ export const generateDietTool = tool({
 
     const pal = form.pal ?? 1.6;
     const cpm = form.cpm ?? (form.weight && pal ? Math.round(form.weight * 24 * pal) : null);
-    const mealsPerDay = interviewData.mealsPerDay ?? "not provided";
+    const iv = extractInterview(form, interviewData);
+    const md = extractMedical(form);
 
-    // 🔗 Pobranie danych z agentów wspierających
-    const narrative = await interviewNarrativeAgent({ interviewData, goal: interviewData.goal, recommendation: interviewData.recommendation, lang });
-    const medical = await medicalLabAgent({
-      testResults,
-      description: medicalDescription,
-      lang,
-      selectedConditions: form.conditions ?? []
-    });
+    const mealsPerDay = iv.mealsPerDay ?? "not provided";
+    const interviewSummary = buildInterviewSummary(iv);
+    const medicalSummary = buildMedicalSummary(md);
 
     const modelDefinition = dietModelMap[modelKey || ""] || {};
     const modelMacroStr = modelDefinition.macros
@@ -580,15 +643,14 @@ Example:
 ⚠️ All numeric values must be per entire meal (not per 100g) and must be rounded to 1 decimal place.
 ⚠️ Do NOT skip any field — all fields above must be filled with realistic values.
 
-Base the plan on:
 ✔ Patient profile from interview:
-${narrative}
+${interviewSummary}
+
+✔ Clinical risks and suggestions:
+${medicalSummary || "ℹ️ No clinical data provided."}
 
 ✔ Required nutrient ranges:
 ${nutrientRequirementsText}
-
-✔ Clinical risks and suggestions:
-${medical}
 
 ✔ Diet model: ${modelKey}, Cuisine: ${cuisine}
 ✔ CPM: ${cpm}, BMI: ${bmi}, PAL: ${pal}
@@ -616,6 +678,7 @@ ${jsonFormatPreview}
 try {
   const stream = await openai.chat.completions.create({
     model: "gpt-4o",
+    response_format: { type: "json_object" },
     messages: [
       { role: "system", content: "You are a clinical dietitian AI." },
       { role: "user", content: prompt }
