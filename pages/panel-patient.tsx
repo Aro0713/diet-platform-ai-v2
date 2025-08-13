@@ -452,7 +452,7 @@ const handleGenerateDiet = async () => {
 
     setProgressMessage(tUI('sendingDataToAI', lang));
     startFakeProgress(20, 95, 300000);
-    
+
     const res = await fetch('/api/generate-diet', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -462,8 +462,7 @@ const handleGenerateDiet = async () => {
         lang,
         goalExplanation,
         recommendation,
-        narrativeText,   // gotowy opis wywiadu (masz w stanie komponentu)
-        medicalData      // CAŁY obiekt z Supabase: { summary, json, dqChecks? }
+        medical: medicalData
       })
     });
 
@@ -834,14 +833,14 @@ const handleShowDoctors = async () => {
       </div>
 
       <div className="w-full sm:max-w-[360px] min-h-[180px] flex flex-col justify-between items-center px-4 mx-auto">
-      <SelectMealsPerDayForm
-        value={interviewData?.mealsPerDay ?? 0}
-        onChange={(meals: number) =>
-          setInterviewData({ ...interviewData, mealsPerDay: meals })
-        }
-        lang={lang}   // <-- DODANE
-      />
-      </div>
+  <SelectMealsPerDayForm
+    value={interviewData?.mealsPerDay ?? 0}
+    onChange={(meals: number) =>
+      setInterviewData({ ...interviewData, mealsPerDay: meals })
+    }
+    lang={lang}   // <-- DODANE
+  />
+</div>
     </div>
 
     {/* 🔽 Kolejna sekcja – status, przyciski, tabela */}

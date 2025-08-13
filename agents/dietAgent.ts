@@ -1,5 +1,7 @@
 import { Agent, tool } from "@openai/agents";
 import OpenAI from "openai";
+import { interviewNarrativeAgent } from "@/agents/interviewNarrativeAgent";
+import { medicalLabAgent } from "@/agents/medicalLabAgent";
 import { nutrientRequirementsMap, type NutrientRequirements } from "@/utils/nutrientRequirementsMap";
 import type { Ingredient } from "@/utils/nutrition/calculateMealMacros";
 import type { Meal } from "@/types";
@@ -210,17 +212,15 @@ export async function generateDiet(input: any): Promise<any> {
     interviewData,
     testResults,
     medicalDescription,
-    lang = "pl",
-    narrativeText,  // ⬅️ z Supabase
-    medicalData     // ⬅️ z Supabase { summary, json, dqChecks? }
+    lang = "pl"
   } = input;
-
-  const hasMedicalData = Boolean(
-    medicalData?.summary || medicalData?.json || testResults || medicalDescription
-  );
+  
+  const hasMedicalData = Boolean(testResults || medicalDescription);
   const modelKey = modelMap[form.model] || form.model?.toLowerCase();
   const goalExplanation = goalMap[interviewData.goal] || interviewData.goal;
   const cuisine = cuisineMap[interviewData.cuisine] || "global";
+  const cuisineContext = cuisineContextMap[interviewData.cuisine] || "general healthy cooking style";
+  const selectedLang = languageMap[lang] || "polski";
   const daysInLang = dayNames[lang] || dayNames['pl'];
   const daysList = daysInLang.map(d => `- ${d}`).join('\n');
 
@@ -230,10 +230,14 @@ export async function generateDiet(input: any): Promise<any> {
   const pal = form.pal ?? 1.6;
   const cpm = form.cpm ?? (form.weight && pal ? Math.round(form.weight * 24 * pal) : null);
   const mealsPerDay = interviewData.mealsPerDay ?? "not provided";
- 
-  const narrative = narrativeText ?? "";
-  const medical   = medicalData?.summary ?? "";
 
+  const narrative = await interviewNarrativeAgent({ interviewData, goal: interviewData.goal, recommendation: interviewData.recommendation, lang });
+  const medical = await medicalLabAgent({
+  testResults,
+  description: medicalDescription,
+  lang,
+  selectedConditions: form.conditions ?? []
+});
   const modelDefinition = dietModelMap[modelKey || ""] || {};
   const modelMacroStr = modelDefinition.macros
     ? Object.entries(modelDefinition.macros).map(([k, v]) => `- ${k}: ${v}`).join('\n')
@@ -389,20 +393,17 @@ if (
 }
 
 try {
-const result = await import("@/agents/dqAgent").then(m =>
-  m.dqAgent.run({
-    dietPlan: rawDietPlan,
-    model: modelKey,
-    goal: goalExplanation,
-    cpm,
-    weightKg: form.weight ?? null,
-    conditions: form.conditions ?? [],
-    dqChecks:
-      medicalData?.dqChecks ??
-      medicalData?.json?.dqChecks ??
-      form?.medical_data?.dqChecks ?? {}
-  })
-);
+  const result = await import("@/agents/dqAgent").then(m =>
+    m.dqAgent.run({
+      dietPlan: rawDietPlan,
+      model: modelKey,
+      goal: goalExplanation,
+      cpm,
+      weightKg: form.weight ?? null,
+      conditions: form.conditions ?? [],
+      dqChecks: form?.medical_data?.dqChecks ?? {}
+    })
+  );
 
 if (!result || !result.plan) {
   console.error("❌ dqAgent.run zwrócił pusty wynik:", result);
@@ -440,22 +441,21 @@ export const generateDietTool = tool({
     required: ["input"] as string[],
     additionalProperties: true
   } as const,
- async execute(input: any) {
-  const { input: nested } = input;
-  const {
-    form,
-    interviewData,
-    testResults,
-    medicalDescription,
-    lang = "pl",
-    narrativeText, // ⬅️ z Supabase
-    medicalData    // ⬅️ z Supabase
-  } = nested;
+  async execute(input: any) {
+    const { input: nested } = input;
+    const {
+      form,
+      interviewData,
+      testResults,
+      medicalDescription,
+      lang = "pl"
+    } = nested;
 
     const modelKey = modelMap[form.model] || (typeof form.model === "string" ? form.model.toLowerCase() : "");
     const goalExplanation = goalMap[interviewData.goal] || interviewData.goal;
     const cuisine = cuisineMap[interviewData.cuisine] || "global";
     const cuisineContext = cuisineContextMap[interviewData.cuisine] || "general healthy cooking style";
+    const selectedLang = languageMap[lang] || "polski";
     const daysInLang = dayNames[lang] || dayNames['pl'];
     const daysList = daysInLang.map(d => `- ${d}`).join('\n');
     const hasMedicalData = Boolean(testResults || medicalDescription);
@@ -474,9 +474,14 @@ export const generateDietTool = tool({
     const cpm = form.cpm ?? (form.weight && pal ? Math.round(form.weight * 24 * pal) : null);
     const mealsPerDay = interviewData.mealsPerDay ?? "not provided";
 
-   // używamy wyłącznie danych z Supabase
-    const narrative = narrativeText ?? "";
-    const medical   = medicalData?.summary ?? "";
+    // 🔗 Pobranie danych z agentów wspierających
+    const narrative = await interviewNarrativeAgent({ interviewData, goal: interviewData.goal, recommendation: interviewData.recommendation, lang });
+    const medical = await medicalLabAgent({
+      testResults,
+      description: medicalDescription,
+      lang,
+      selectedConditions: form.conditions ?? []
+    });
 
     const modelDefinition = dietModelMap[modelKey || ""] || {};
     const modelMacroStr = modelDefinition.macros
@@ -732,10 +737,7 @@ const result = await import("@/agents/dqAgent").then(m =>
     cpm,
     weightKg: form.weight ?? null,
     conditions: form.conditions ?? [],
-    dqChecks:
-      medicalData?.dqChecks ??
-      medicalData?.json?.dqChecks ??
-      form?.medical_data?.dqChecks ?? {}
+    dqChecks: form?.medical_data?.dqChecks ?? {}
   })
 );
 
