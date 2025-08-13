@@ -418,17 +418,20 @@ const saveDietToSupabaseOnly = async () => {
 };
 
 const handleGenerateDiet = async () => {
+  setIsGenerating(true); // ⬅️ start
   setProgress(5);
   setProgressMessage(tUI('startingDietGeneration', lang));
   setStreamingText('');
   setDietApproved(false);
 
   if (!medicalData) {
-    alert(tUI('medicalApprovalRequired', lang));
-    setProgress(0);
-    setProgressMessage('');
-    return;
-  }
+  alert(tUI('medicalApprovalRequired', lang));
+  setProgress(0);
+  setProgressMessage('');
+  setIsGenerating(false); // ⬅️
+  return;
+}
+
   if (form?.model === 'Dieta eliminacyjna' && (!interviewData || Object.keys(interviewData).length === 0)) {
   alert(tUI('interviewRequiredForElimination', lang));
   setProgress(0);
@@ -452,6 +455,22 @@ const handleGenerateDiet = async () => {
 
     setProgressMessage(tUI('sendingDataToAI', lang));
     startFakeProgress(20, 95, 300000);
+    if (!narrativeText || !narrativeText.trim()) {
+  
+          alert(tUI('narrativeMissing', lang)); // dodaj odpowiedni klucz do i18n
+      stopFakeProgress();
+      setProgress(0);
+      setProgressMessage('');
+      return;
+    }
+
+    if (!medicalData?.summary) {
+      alert(tUI('medicalSummaryMissing', lang)); // opcjonalnie
+      stopFakeProgress();
+      setProgress(0);
+      setProgressMessage('');
+      return;
+    }
 
     const res = await fetch('/api/generate-diet', {
       method: 'POST',
@@ -462,7 +481,8 @@ const handleGenerateDiet = async () => {
         lang,
         goalExplanation,
         recommendation,
-        medical: medicalData
+        narrativeText,   // gotowy opis wywiadu (masz w stanie komponentu)
+        medicalData      // CAŁY obiekt z Supabase: { summary, json, dqChecks? }
       })
     });
 
@@ -565,7 +585,6 @@ async function saveDraftToSupabaseWithDoctor(email: string): Promise<void> {
   }
 }
 
-
 const handleGenerateRecipes = async () => {
   try {
     setProgress(10);
@@ -613,8 +632,24 @@ const handleGenerateNarrative = async () => {
       })
     });
 
-    const { narrativeText } = await response.json();
-    if (narrativeText) setNarrativeText(narrativeText);
+    // ⬇️ nowa kontrola błędu HTTP
+    if (!response.ok) {
+      const msg = await response.text().catch(() => '');
+      throw new Error(msg || 'HTTP error');
+    }
+
+    const { narrativeText: generated } = await response.json();
+
+    if (generated && typeof generated === 'string') {
+      // ⬇️ zapisz w stanie lokalnym
+      setNarrativeText(generated);
+
+      // ⬇️ zmerguj do interviewData i TRWALE zapisz w Supabase
+      const nextInterview = { ...interviewData, narrativeText: generated };
+      // (opcjonalnie) zaktualizuj także stan interviewData, jeśli chcesz mieć spójność w UI:
+      // setInterviewData(nextInterview);
+      await saveInterviewData(nextInterview);
+    }
 
     setProgress(100);
     setProgressMessage(tUI('narrativeReady', lang));
@@ -627,6 +662,7 @@ const handleGenerateNarrative = async () => {
     setNarrativeText('⚠️ Błąd generowania opisu wywiadu przez AI');
     setProgress(0);
     setProgressMessage('');
+    // (opcjonalnie) alert(tUI('narrativeMissing', lang));
   }
 };
 

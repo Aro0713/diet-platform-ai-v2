@@ -5975,7 +5975,32 @@ subscriptionRequiredInfo: {
   ar: "إعادة تشغيل المقدمة",
   hi: "इंट्रो फिर चलाएँ",
   he: "נגן את האינטרו שוב"
-}
-
+},
+narrativeMissing: {
+  pl: "Brakuje opisu wywiadu. Wygeneruj i zatwierdź opis w sekcji „Wywiad”, a potem spróbuj ponownie.",
+  en: "Interview narrative is missing. Generate and confirm it in the “Interview” section, then try again.",
+  de: "Die Interview-Zusammenfassung fehlt. Erstellen und bestätigen Sie sie im Abschnitt „Interview“ und versuchen Sie es erneut.",
+  fr: "Le résumé de l’entretien est manquant. Générez-le et validez-le dans la section « Entretien », puis réessayez.",
+  es: "Falta la narrativa de la entrevista. Genérala y confírmala en la sección «Entrevista» y vuelve a intentarlo.",
+  ua: "Відсутній опис інтерв’ю. Згенеруйте та підтвердьте його в розділі «Інтерв’ю», а потім спробуйте ще раз.",
+  ru: "Отсутствует описание интервью. Сгенерируйте и подтвердите его в разделе «Интервью», затем попробуйте снова.",
+  zh: "缺少访谈摘要。请先在“访谈”部分生成并确认，然后重试。",
+  ar: "ملخص المقابلة غير موجود. يرجى إنشاؤه وتأكيده في قسم «المقابلة»، ثم أعد المحاولة.",
+  hi: "इंटरव्यू नैरेटिव उपलब्ध नहीं है। कृपया ‘इंटरव्यू’ सेक्शन में इसे जनरेट और कन्फ़र्म करें, फिर दोबारा कोशिश करें।",
+  he: "חסר סיכום הראיון. צור/צרי ואשר/י אותו בסעיף „ראיון”, ואז נסה/י שוב."
+},
+medicalSummaryMissing: {
+  pl: "Brakuje podsumowania medycznego. Uzupełnij i zapisz sekcję „Medyczne”, a potem spróbuj ponownie.",
+  en: "Medical summary is missing. Complete and save the “Medical” section, then try again.",
+  de: "Die medizinische Zusammenfassung fehlt. Füllen Sie den Abschnitt „Medizin“ aus und speichern Sie ihn, dann versuchen Sie es erneut.",
+  fr: "Le résumé médical est manquant. Complétez et enregistrez la section « Médical », puis réessayez.",
+  es: "Falta el resumen médico. Completa y guarda la sección «Médico» y vuelve a intentarlo.",
+  ua: "Відсутнє медичне резюме. Заповніть і збережіть розділ «Медичні дані», а потім спробуйте ще раз.",
+  ru: "Отсутствует медицинское резюме. Заполните и сохраните раздел «Медицинское», затем попробуйте снова.",
+  zh: "缺少医学摘要。请先在“医疗”部分完成并保存，然后重试。",
+  ar: "الملخص الطبي غير موجود. يرجى إكمال قسم «الطبي» وحفظه، ثم أعد المحاولة.",
+  hi: "मेडिकल सारांश उपलब्ध नहीं है। ‘मेडिकल’ सेक्शन पूरा करके सेव करें, फिर दोबारा कोशिश करें।",
+  he: "חסר סיכום רפואי. השלם/י ושמור/י את סעיף „רפואי”, ואז נסה/י שוב."
+},
 
 };
