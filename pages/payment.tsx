@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { supabase } from '@/lib/supabaseClient';
 import { tUI, type LangKey, languageLabels } from '@/utils/i18n';
 import 'react-international-phone/style.css';
+import { openCheckout } from '../src/native/browser';
 
 const planPrices = {
   '7d': 12900,
@@ -99,10 +100,10 @@ type PlanKey = keyof typeof planPrices;
     const { url } = await res.json();
 
     if (url) {
-      window.location.href = url;
-    } else {
-      alert(tUI('paymentInitError', lang));
-    }
+  await openCheckout(url);
+} else {
+  alert(tUI('paymentInitError', lang));
+}
 
     setIsLoading(false);
   };
@@ -139,6 +140,29 @@ type PlanKey = keyof typeof planPrices;
     const converted = (base / 100 / rate).toFixed(2);
     return `${converted} ${currency.toUpperCase()} (${(base / 100).toFixed(2)} PLN)`;
   };
+
+  const handlePay = async () => {
+  try {
+    const res = await fetch('/api/create-checkout-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      // JEŚLI Twój endpoint wymaga danych (np. planId), dodaj je tutaj:
+      // body: JSON.stringify({ planId }),
+    });
+    const data = await res.json();
+    const url =
+      data.url ??
+      data.sessionUrl ??
+      data.checkoutUrl ??
+      data.checkout_url;
+
+    if (!url) throw new Error('Brak URL do Checkout');
+    await openCheckout(url); // w app otworzy SFSafariView/Custom Tab; w web zrobi window.location
+  } catch (e) {
+    console.error('Nie udało się otworzyć płatności:', e);
+    alert('Nie udało się otworzyć płatności.');
+  }
+};
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 backdrop-blur text-white p-6">

@@ -1,0 +1,16 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appID": "APPLE_TEAM_ID.com.dcp.care",
+        "paths": [
+          "/auth/*",
+          "/payment/*",
+          "/invoice/*",
+          "/diet/*",
+          "/profile/*"
+        ]
+      }
+    ]
+  }
+}
