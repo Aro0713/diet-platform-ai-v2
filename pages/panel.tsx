@@ -315,84 +315,111 @@ const {
       setStreamingText(rawText);
     }
 
-    const parsed = tryParseJSON(rawCompleteText);
+let json: any;
+try {
+  json = JSON.parse(rawCompleteText);
+} catch (e) {
+  console.error('❌ Błąd parsowania JSON z diety:', rawCompleteText);
+  alert(tUI('dietGenerationFailed', lang));
+  setIsGenerating(false);
+  return;
+}
 
-    const mapDaysToPolish: Record<string, string> = {
-      Monday: 'Poniedziałek',
-      Tuesday: 'Wtorek',
-      Wednesday: 'Środa',
-      Thursday: 'Czwartek',
-      Friday: 'Piątek',
-      Saturday: 'Sobota',
-      Sunday: 'Niedziela'
-    };
-
-if (parsed.dietPlan && typeof parsed.dietPlan === 'object') {
-  const parsedDiet = parseRawDietPlan(parsed.dietPlan || parsed.correctedDietPlan);
+// --- priorytet 1: dietPlan / correctedDietPlan ---
+if (json.dietPlan && typeof json.dietPlan === 'object') {
+  const parsedDiet = parseRawDietPlan(json.dietPlan || json.correctedDietPlan);
   if (Object.keys(parsedDiet).length === 0) {
     console.warn('⚠️ Brak danych w dietPlan – nie zapisano.');
+    setIsGenerating(false);
     return;
   }
-
   setMealPlan(parsedDiet);
   setDiet(parsedDiet);
   setEditableDiet(parsedDiet);
   await saveDietPlan(parsedDiet);
+  setIsGenerating(false);
   return;
 }
 
-if (parsed.weekPlan && Array.isArray(parsed.weekPlan)) {
+// --- priorytet 2: weekPlan (fallback) ---
+const mapDaysToPolish: Record<string, string> = {
+  Monday: 'Poniedziałek',
+  Tuesday: 'Wtorek',
+  Wednesday: 'Środa',
+  Thursday: 'Czwartek',
+  Friday: 'Piątek',
+  Saturday: 'Sobota',
+  Sunday: 'Niedziela'
+};
+
+if (json.weekPlan && Array.isArray(json.weekPlan)) {
   const converted: Record<string, Meal[]> = {};
-  for (const { day, meals } of parsed.weekPlan) {
-    converted[mapDaysToPolish[day] || day] = meals.map((meal: any) => ({
+  for (const { day, meals } of json.weekPlan) {
+    converted[mapDaysToPolish[day] || day] = (meals || []).map((meal: any) => ({
       name: meal.name || '',
-      description: meal.menu || '',
+      menu: meal.menu || meal.description || meal.name || '',
       ingredients: Array.isArray(meal.ingredients) ? meal.ingredients : [],
-      calories: meal.kcal || 0,
+      macros: meal.macros || {
+        kcal: meal.kcal || 0, protein: 0, fat: 0, carbs: 0,
+        fiber: 0, sodium: 0, potassium: 0, calcium: 0, magnesium: 0,
+        iron: 0, zinc: 0, vitaminD: 0, vitaminB12: 0, vitaminC: 0,
+        vitaminA: 0, vitaminE: 0, vitaminK: 0,
+      },
       glycemicIndex: meal.glycemicIndex || 0,
       time: meal.time || ''
     }));
   }
-
   if (Object.keys(converted).length === 0) {
-    console.warn('⚠️ Brak danych do zapisania w saveDietPlan – weekPlan był pusty.');
+    console.warn('⚠️ Brak danych do zapisania – weekPlan był pusty.');
+    setIsGenerating(false);
     return;
   }
-
   setMealPlan(converted);
   setDiet(converted);
   setEditableDiet(converted);
   await saveDietPlan(converted);
+  setIsGenerating(false);
   return;
 }
 
-
-    if (parsed.mealPlan && Array.isArray(parsed.mealPlan)) {
+// --- priorytet 3: mealPlan (drugi fallback) ---
+if (json.mealPlan && Array.isArray(json.mealPlan)) {
   const converted: Record<string, Meal[]> = {};
-  for (const entry of parsed.mealPlan) {
-    const { day, meals } = entry;
-    converted[mapDaysToPolish[day] || day] = meals.map((m: any) => ({
+  for (const entry of json.mealPlan) {
+    const { day, meals } = entry || {};
+    converted[mapDaysToPolish[day] || day] = (meals || []).map((m: any) => ({
       name: m.name || '',
-      description: m.description || '',
-      ingredients: [],
-      calories: m.kcal || 0,
+      menu: m.description || m.name || '',
+      ingredients: Array.isArray(m.ingredients) ? m.ingredients : [],
+      macros: m.macros || {
+        kcal: m.kcal || 0, protein: 0, fat: 0, carbs: 0,
+        fiber: 0, sodium: 0, potassium: 0, calcium: 0, magnesium: 0,
+        iron: 0, zinc: 0, vitaminD: 0, vitaminB12: 0, vitaminC: 0,
+        vitaminA: 0, vitaminE: 0, vitaminK: 0,
+      },
       glycemicIndex: m.glycemicIndex || 0,
       time: m.time || ''
     }));
   }
   if (Object.keys(converted).length === 0) {
-    console.warn('⚠️ Brak danych do zapisania w saveDietPlan – weekPlan był pusty.');
+    console.warn('⚠️ Brak danych do zapisania – mealPlan był pusty.');
+    setIsGenerating(false);
     return;
   }
-
   setMealPlan(converted);
   setDiet(converted);
   setEditableDiet(converted);
-  await saveDietPlan(converted); 
+  await saveDietPlan(converted);
+  setIsGenerating(false);
   return;
 }
 
-    throw new Error('Brak poprawnego planu posiłków.');
+// --- nic nie pasuje ---
+console.error('❌ Brak poprawnego planu posiłków w odpowiedzi:', json);
+alert(tUI('dietGenerationFailed', lang));
+setIsGenerating(false);
+return;
+
   } catch (err) {
     console.error('❌ Błąd przy generowaniu:', err);
     alert(tUI('dietGenerationError', lang));
