@@ -100,6 +100,15 @@ export default function PatientPanelPage(): React.JSX.Element {
   const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
   const [subscriptionStartedAt, setSubscriptionStartedAt] = useState<string | null>(null);
   
+  // Auto-aktualizacja płatności po wygaśnięciu subskrypcji
+useEffect(() => {
+  if (!subscriptionExpiresAt) { setHasPaid(false); return; }
+  const check = () => setHasPaid(new Date(subscriptionExpiresAt) > new Date());
+  check();
+  const id = setInterval(check, 60_000); // sprawdzaj co minutę
+  return () => clearInterval(id);
+}, [subscriptionExpiresAt]);
+
   const formatDate = (dateString: string | null) => {
   if (!dateString) return '';
   return new Date(dateString).toLocaleDateString(lang || 'pl');
@@ -169,11 +178,12 @@ export default function PatientPanelPage(): React.JSX.Element {
     if (patientError) {
       console.error('❌ Błąd pobierania danych subskrypcji:', patientError.message);
     } else {
-      const status = patientData?.subscription_status || 'none';
+     const status  = patientData?.subscription_status || 'none';
       const expires = patientData?.subscription_expires_at || null;
+      const paid    = !!(expires && new Date(expires) > new Date());
 
-      setHasPaid(status !== 'none' && status !== 'expired');
-      setSubscriptionStatus(status);
+      setHasPaid(paid);
+      setSubscriptionStatus(paid ? status : 'expired');
       setSubscriptionExpiresAt(expires);
 
       console.log(`💳 status: ${status} | wygasa: ${expires}`);
@@ -633,18 +643,21 @@ const handleGenerateNarrative = async () => {
 console.log("📦 form w panel-patient:", form);
 
 const handleSectionChange = async (newSection: string) => {
+  if (!hasPaid && newSection !== 'data') {
+    alert(tUI('subscriptionRequired', lang));
+    return;
+  }
+
   // zapisz dane z aktualnej sekcji
   if (selectedSection === 'medical' && medicalData) {
     await saveMedicalData(medicalData);
     console.log('💾 Autozapis: dane medyczne zapisane');
   }
-
   if (selectedSection === 'interview' && interviewData) {
     await saveInterviewData(interviewData);
     console.log('💾 Autozapis: dane z wywiadu zapisane');
   }
 
-  // zmień sekcję i przewiń
   setSelectedSection(newSection);
   setTimeout(() => {
     document.getElementById(`section-${newSection}`)?.scrollIntoView({ behavior: 'smooth' });
@@ -700,12 +713,13 @@ const handleShowDoctors = async () => {
       onSelect={handleSectionChange}
       hasPaid={hasPaid}
     />
-        {subscriptionStatus !== 'none' && subscriptionStatus !== 'expired' && (
+        {hasPaid && (
         <p className="text-sm text-green-400 text-center mt-2">
           Twój plan: <strong>{subscriptionStatus}</strong><br />
           ważny do: <strong>{formatDate(subscriptionExpiresAt)}</strong>
         </p>
       )}
+
             {/* Główna zawartość */}
       <div className="z-10 flex flex-col w-full max-w-[1000px] mx-auto gap-6 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 mt-20 dark:text-white transition-colors animate-flip-in origin-center">
         {selectedSection === 'data' && (
