@@ -5,7 +5,7 @@ export const section3: Record<LangKey, any> = {
     title: 'Styl życia',
 
     q1: {
-      label: 'Czy podejmuje sex aktywność fizyczną?',
+      label: 'Czy podejmujesz aktywność fizyczną?',
       type: 'radio',
       options: ['Tak', 'Nie', 'Nie wiem']
     },
@@ -29,19 +29,19 @@ export const section3: Record<LangKey, any> = {
     },
 
     q5: {
-      label: 'Czy pali sex papierosy?',
+      label: 'Czy palisz papierosy?',
       type: 'radio',
       options: ['Tak', 'Nie', 'Okazjonalnie']
     },
 
     q6: {
-      label: 'Czy spożywa sex alkohol?',
+      label: 'Czy spożywasz alkohol?',
       type: 'radio',
       options: ['Tak', 'Nie', 'Okazjonalnie']
     },
 
     q7: {
-      label: 'Czy pije sex kawę lub herbatę?',
+      label: 'Czy pijesz kawę lub herbatę?',
       type: 'radio',
       options: ['Tak', 'Nie', 'Okazjonalnie']
     },
@@ -61,7 +61,7 @@ export const section3: Record<LangKey, any> = {
     },
 
     q8: {
-      label: 'Czy pije sex napoje energetyczne?',
+      label: 'Czy pijesz napoje energetyczne?',
       type: 'radio',
       options: ['Tak', 'Nie', 'Okazjonalnie']
     },

@@ -5,7 +5,7 @@ export const section2: Record<LangKey, any> = {
     title: 'Stan zdrowia',
 
     q1: {
-      label: 'Czy choruje sex na choroby przewlekłe?',
+      label: 'Czy chorujesz na choroby przewlekłe?',
       type: 'radio',
       options: ['Tak', 'Nie', 'Nie wiem']
     },
@@ -62,7 +62,7 @@ export const section2: Record<LangKey, any> = {
     },
 
     q7: {
-      label: 'Czy ma sex alergie lub nietolerancje pokarmowe?',
+      label: 'Czy masz alergie lub nietolerancje pokarmowe?',
       type: 'radio',
       options: ['Tak', 'Nie', 'Nie wiem']
     },
@@ -74,7 +74,7 @@ export const section2: Record<LangKey, any> = {
     },
 
     q9: {
-      label: 'Czy przyjmuje sex leki na stałe?',
+      label: 'Czy przyjmujesz na stałe leki?',
       type: 'radio',
       options: ['Tak', 'Nie', 'Nie wiem']
     },
@@ -86,7 +86,7 @@ export const section2: Record<LangKey, any> = {
     },
 
     q11: {
-      label: 'Czy stosuje sex suplementy diety?',
+     label: 'Czy stosujesz suplementy diety?',
       type: 'radio',
       options: ['Tak', 'Nie', 'Nie wiem']
     },
@@ -98,13 +98,13 @@ export const section2: Record<LangKey, any> = {
     },
 
     q13: {
-  label: 'Jak ocenia sex poziom stresu?',
+  label: 'Jak oceniasz swój poziom stresu?',
   type: 'select',
   options: ['Niski', 'Średni', 'Wysoki', 'Bardzo wysoki']
 },
 
   q14: {
-    label: 'Jak ocenia sex jakość snu?',
+    label: 'Jak oceniasz jakość snu?',
     type: 'select',
     options: [
       'Bardzo zła (częste wybudzenia)',

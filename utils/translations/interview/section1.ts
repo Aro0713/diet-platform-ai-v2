@@ -4,7 +4,7 @@ export const section1: Record<LangKey, any> = {
   pl: {
     title: 'Dane podstawowe i cel wizyty',
     q1: {
-      label: 'Jakie są sex oczekiwania względem współpracy dietetycznej?',
+      label: 'Jakie są twoje oczekiwania względem współpracy dietetycznej?',
       type: 'select',
       options: [
         'Redukcja masy ciała',
@@ -22,17 +22,17 @@ export const section1: Record<LangKey, any> = {
       dependsOn: { question: 'q1', value: 'Inne' }
     },
     q2: {
-      label: 'Czy była sex wcześniej na diecie?',
+      label: 'Czy była wcześniej stosowana dieta?',
       type: 'radio',
       options: ['Tak', 'Nie', 'Nie wiem']
     },
     q3: {
-      label: 'Jeśli tak, to na jakiej diecie była Pani/Pan i jakie były efekty?',
+      label: 'Jeśli tak, to jaka dieta i jakie były efekty?',
       type: 'text',
       dependsOn: { question: 'q2', value: 'Tak' }
     },
     q4: {
-      label: 'Czy obecnie korzysta sex z jakiejkolwiek diety lub planu żywieniowego?',
+      label: 'Czy obecnie korzystasz z jakiejkolwiek diety lub planu żywieniowego?',
       type: 'radio',
       options: ['Tak', 'Nie', 'Nie wiem']
     },

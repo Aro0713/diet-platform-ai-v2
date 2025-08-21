@@ -4,7 +4,7 @@ export const section9: Record<LangKey, Record<string, any>> = {
   pl: {
     title: 'Motywacja i możliwości',
     q1: {
-      label: 'Jak ocenia sex swoją motywację do zmiany nawyków (w skali 1–10)?',
+      label: 'Jak oceniasz swoją motywację do zmiany nawyków (w skali 1–10)?',
       type: 'select',
       options: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
     },
@@ -25,12 +25,12 @@ export const section9: Record<LangKey, Record<string, any>> = {
       dependsOn: { question: 'q3', value: 'Inne' }
     },
     q4: {
-      label: 'Ile czasu dziennie sex może przeznaczyć na przygotowywanie posiłków?',
+      label: 'Ile czasu dziennie możesz przeznaczyć na przygotowywanie posiłków?',
       type: 'select',
       options: ['0.5 h', '1 h', '1.5 h', '2 h', '2.5 h', '3 h', '3.5 h', '4 h', '4.5 h', '5 h', '5.5 h', '6 h', '6.5 h', '7 h', '7.5 h', '8 h', '8.5 h', '9 h', '9.5 h', '10 h']
     },
     q5: {
-      label: 'Czy sex ma budżetowe ograniczenia dotyczące diety?',
+      label: 'Czy masz budżetowe ograniczenia dotyczące diety?',
       type: 'radio',
       options: ['Tak', 'Nie']
     },

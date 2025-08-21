@@ -116,6 +116,19 @@ export const conditionGroupLabels: Record<string, Record<LangKey, string>> = {
     hi: "परजीवी रोग",
     ar: "الأمراض الطفيلية",
     he: "מחלות טפיליות"
+  },
+    "Choroby układu oddechowego": {
+    pl: "Choroby układu oddechowego",
+    en: "Respiratory diseases",
+    ua: "Захворювання дихальної системи",
+    es: "Enfermedades respiratorias",
+    fr: "Maladies respiratoires",
+    de: "Atemwegserkrankungen",
+    ru: "Заболевания дыхательной системы",
+    zh: "呼吸系统疾病",
+    hi: "श्वसन तंत्र के रोग",
+    ar: "أمراض الجهاز التنفسي",
+    he: "מחלות דרכי הנשימה"
   }
 };
 export const conditionLabels: Record<string, Record<LangKey, string>> = {

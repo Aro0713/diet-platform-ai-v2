@@ -5,25 +5,25 @@ export const section7: Record<LangKey, any> = {
     title: 'Problemy trawienne i jelitowe',
 
     q1: {
-      label: 'Czy sex często doświadcza wzdęć?',
+      label: 'Czy często doświadczasz wzdęć?',
       type: 'radio',
       options: ['Tak', 'Nie', 'Nie wiem']
     },
 
     q2: {
-      label: 'Czy sex często ma zaparcia?',
+      label: 'Czy często masz zaparcia?',
       type: 'radio',
       options: ['Tak', 'Nie', 'Nie wiem']
     },
 
     q3: {
-      label: 'Czy sex często ma biegunki?',
+      label: 'Czy często masz biegunki?',
       type: 'radio',
       options: ['Tak', 'Nie', 'Nie wiem']
     },
 
     q4: {
-      label: 'Czy sex często doświadcza refluksu?',
+      label: 'Czy często masz refluksu?',
       type: 'radio',
       options: ['Tak', 'Nie', 'Nie wiem']
     },
@@ -35,13 +35,13 @@ export const section7: Record<LangKey, any> = {
     },
 
     q5: {
-      label: 'Czy sex odczuwa ból brzucha po posiłkach?',
+      label: 'Czy odczuwasz ból brzucha po posiłkach?',
       type: 'radio',
       options: ['Tak', 'Nie', 'Nie wiem']
     },
 
       q6: {
-      label: 'Ile razy dziennie sex się wypróżnia?',
+      label: 'Ile razy dziennie się wypróżniasz?',
       type: 'select',
       options: [
         '0 – mam problem z zaparciami',
@@ -52,7 +52,7 @@ export const section7: Record<LangKey, any> = {
       ]
     },
     q7: {
-      label: 'Czy u sex zdiagnozowano choroby jelit (IBS, SIBO, celiakia)?',
+      label: 'Czy masz zdiagnozowane choroby jelit (IBS, SIBO, celiakia)?',
       type: 'radio',
       options: ['Tak', 'Nie']
     },

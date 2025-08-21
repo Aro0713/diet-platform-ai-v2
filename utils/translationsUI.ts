@@ -6002,5 +6002,18 @@ medicalSummaryMissing: {
   hi: "मेडिकल सारांश उपलब्ध नहीं है। ‘मेडिकल’ सेक्शन पूरा करके सेव करें, फिर दोबारा कोशिश करें।",
   he: "חסר סיכום רפואי. השלם/י ושמור/י את סעיף „רפואי”, ואז נסה/י שוב."
 },
+  subscriptionRequired: {
+    pl: "Dostęp do tej sekcji wymaga aktywnej subskrypcji.",
+    en: "Access to this section requires an active subscription.",
+    de: "Der Zugriff auf diesen Bereich erfordert ein aktives Abonnement.",
+    fr: "L'accès à cette section nécessite un abonnement actif.",
+    es: "El acceso a esta sección requiere una suscripción activa.",
+    ua: "Доступ до цього розділу вимагає активної підписки.",
+    ru: "Доступ к этому разделу требует активной подписки.",
+    zh: "访问此部分需要有效订阅。",
+    hi: "इस अनुभाग तक पहुँचने के लिए सक्रिय सदस्यता आवश्यक है।",
+    ar: "يتطلب الوصول إلى هذا القسم اشتراكًا نشطًا.",
+    he: "הגישה לסעיף זה מחייבת מנוי פעיל."
+  },
 
 };

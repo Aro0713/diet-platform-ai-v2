@@ -5,23 +5,23 @@ pl: {
   title: 'Historia masy ciała',
 
   q1_min: {
-    label: 'Jaka była najniższa masa ciała sex w ostatnich latach?',
+    label: 'Jaka była twoja najniższa masa ciała w ostatnich latach?',
     type: 'text'
   },
 
   q1_max: {
-    label: 'Jaka była najwyższa masa ciała sex w ostatnich latach?',
+    label: 'Jaka była twoja najwyższa masa ciała w ostatnich latach?',
     type: 'text'
   },
 
   q2: {
-    label: 'Czy masa ciała waha się często?',
+    label: 'Czy twoja masa ciała waha się często?',
     type: 'radio',
     options: ['Tak', 'Nie', 'Nie wiem']
   },
 
   q3: {
-    label: 'Czy masa ciała miała wpływ na sex samopoczucie lub relacje społeczne?',
+    label: 'Czy twoja masa ciała miała wpływ na sex samopoczucie lub relacje społeczne?',
     type: 'radio',
     options: ['Tak', 'Nie']
   }
