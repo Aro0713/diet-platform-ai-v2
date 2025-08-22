@@ -464,6 +464,7 @@ const handleGenerateNarrative = async () => {
     alert('⚠️ Nie udało się połączyć z AI.');
   }
 };
+
 const [patientEmailInput, setPatientEmailInput] = useState('');
 const [patientLoadStatus, setPatientLoadStatus] = useState<'idle' | 'loading' | 'notFound' | 'success'>('idle');
 
@@ -953,6 +954,25 @@ return (
 {isGenerating && (
   <div className="text-sm text-gray-600 italic mt-4 animate-pulse">
     ⏳ Piszę dietę... {streamingText.length > 20 && '(czekaj, trwa generowanie)'}
+  </div>
+)}
+{/* Podsumowanie wyborów pacjenta */}
+{(interviewData?.goal || interviewData?.model || interviewData?.cuisine) && (
+  <div className="w-full mb-4">
+    <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm bg-black/20 dark:bg-white/10 rounded-md px-4 py-3">
+      <span className="font-semibold">🎯 {tUI('goal', lang)}:</span>
+      <span>{interviewData?.goal ? tUI(interviewData.goal as any, lang) : '—'}</span>
+
+      <span className="opacity-40">|</span>
+
+      <span className="font-semibold">🧬 {tUI('dietModel', lang)}:</span>
+      <span>{interviewData?.model ? tUI(interviewData.model as any, lang) : '—'}</span>
+
+      <span className="opacity-40">|</span>
+
+      <span className="font-semibold">🌍 {tUI('cuisine', lang)}:</span>
+      <span>{interviewData?.cuisine ? tUI(interviewData.cuisine as any, lang) : '—'}</span>
+    </div>
   </div>
 )}
 
