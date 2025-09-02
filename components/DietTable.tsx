@@ -3,6 +3,18 @@ import { Meal } from '@/types';
 import { LangKey } from '@/utils/i18n';
 import { translationsUI } from '@/utils/translationsUI';
 
+function isNumericKeyObject(o: any): boolean {
+  return o && typeof o === "object" && !Array.isArray(o) &&
+         Object.keys(o).some(k => /^\d+$/.test(k));
+}
+
+function extractMealsFromNumericObject(o: Record<string, any>): any[] {
+  return Object.keys(o)
+    .filter(k => /^\d+$/.test(k))
+    .sort((a, b) => Number(a) - Number(b))
+    .map(k => o[k])
+    .filter(v => v && typeof v === "object" && !Array.isArray(v));
+}
 
 function normalizeDietData(input: any): Record<string, Meal[]> {
   const result: Record<string, Meal[]> = {};
@@ -11,68 +23,136 @@ function normalizeDietData(input: any): Record<string, Meal[]> {
   for (const [day, rawDayData] of Object.entries(input)) {
     const meals: Meal[] = [];
 
-    // Obsługa GPT (Record<string, Meal>)
+    // 🔸 CASE A: dzień jako OBIEKT
     if (rawDayData && typeof rawDayData === 'object' && !Array.isArray(rawDayData)) {
-      for (const [key, meal] of Object.entries(rawDayData)) {
-        if (!meal || typeof meal !== 'object') continue;
 
-        meals.push({
-          // name = typ posiłku (Śniadanie/Obiad...), menu = nazwa dania
-          name: (key as string) || 'Posiłek',
-          menu: meal.mealName || meal.name || meal.menu || 'Posiłek',
-          time: meal.time || key || '00:00',
-          day,
-          glycemicIndex: meal.glycemicIndex ?? 0,
-          ingredients: (meal.ingredients || []).map((i: any) => ({
-          product: i.product || i.name || '',
-          weight:
-            typeof i.weight === 'number' ? i.weight :
-            typeof i.quantity === 'number' ? i.quantity :
-            typeof (i.weight ?? i.quantity) === 'string' ? parseFloat(i.weight ?? i.quantity as string) :
-            0,
-          unit: i.unit || (typeof (i.weight ?? i.quantity) !== 'undefined' ? 'g' : undefined),
-        })),
+      // NEW: jeśli mamy { meals: [...] } -> iteruj po tej tablicy
+      if (Array.isArray((rawDayData as any).meals)) {
+        for (const meal of (rawDayData as any).meals) {
+          if (!meal || typeof meal !== 'object') continue;
+          meals.push({
+            name: meal.name || meal.mealName || 'Posiłek',
+            menu: meal.menu || meal.mealName || meal.name || 'Posiłek',
+            time: meal.time || '00:00',
+            day,
+            glycemicIndex: meal.glycemicIndex ?? 0,
+            ingredients: (meal.ingredients || []).map((i: any) => ({
+              product: i.product || i.name || '',
+              weight:
+                typeof i.weight === 'number' ? i.weight :
+                typeof i.quantity === 'number' ? i.quantity :
+                typeof (i.weight ?? i.quantity) === 'string' ? parseFloat(i.weight ?? i.quantity as string) :
+                0,
+              unit: i.unit || (typeof (i.weight ?? i.quantity) !== 'undefined' ? 'g' : undefined),
+            })),
+            macros: {
+              kcal: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0,
+              potassium: 0, calcium: 0, magnesium: 0, iron: 0, zinc: 0,
+              vitaminD: 0, vitaminB12: 0, vitaminC: 0,
+              vitaminA: 0, vitaminE: 0, vitaminK: 0,
+              ...(meal.macros || {})
+            }
+          });
+        }
+      } else {
+        // ORYGINALNA ścieżka: mapy "HH:MM" -> meal (albo inne klucze)
+        for (const [key, meal] of Object.entries(rawDayData)) {
+          if (!meal || typeof meal !== 'object') continue;
 
-          macros: {
-            kcal: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0,
-            potassium: 0, calcium: 0, magnesium: 0, iron: 0, zinc: 0,
-            vitaminD: 0, vitaminB12: 0, vitaminC: 0,
-            vitaminA: 0, vitaminE: 0, vitaminK: 0,
-            ...(meal.macros || {})
-          }
-        });
+          // NEW: pomijamy klucze nie-będące posiłkami
+          if (key === 'meals' || key === 'ingredients') continue;
+          if (Array.isArray(meal)) continue;
+
+          meals.push({
+            // name = typ posiłku (Śniadanie/Obiad...) lub klucz godzinowy
+            name: (key as string) || 'Posiłek',
+            menu: (meal as any).mealName || (meal as any).name || (meal as any).menu || 'Posiłek',
+            time: (meal as any).time || key || '00:00',
+            day,
+            glycemicIndex: (meal as any).glycemicIndex ?? 0,
+            ingredients: ((meal as any).ingredients || []).map((i: any) => ({
+              product: i.product || i.name || '',
+              weight:
+                typeof i.weight === 'number' ? i.weight :
+                typeof i.quantity === 'number' ? i.quantity :
+                typeof (i.weight ?? i.quantity) === 'string' ? parseFloat(i.weight ?? i.quantity as string) :
+                0,
+              unit: i.unit || (typeof (i.weight ?? i.quantity) !== 'undefined' ? 'g' : undefined),
+            })),
+            macros: {
+              kcal: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0,
+              potassium: 0, calcium: 0, magnesium: 0, iron: 0, zinc: 0,
+              vitaminD: 0, vitaminB12: 0, vitaminC: 0,
+              vitaminA: 0, vitaminE: 0, vitaminK: 0,
+              ...((meal as any).macros || {})
+            }
+          });
+        }
       }
     }
 
-    // Obsługa poprawnego Meal[]
+    // 🔸 CASE B: dzień jako TABLICA
     if (Array.isArray(rawDayData)) {
-      for (const meal of rawDayData) {
-        if (!meal || typeof meal !== 'object') continue;
 
-        meals.push({
-          name: meal.name || meal.mealName || 'Posiłek',
-          menu: meal.menu || meal.name || 'Posiłek',
-          time: meal.time || '00:00',
-          day,
-          glycemicIndex: meal.glycemicIndex ?? 0,
-        ingredients: (meal.ingredients || []).map((i: any) => ({
-  product: i.product || i.name || '',
-  weight:
-    typeof i.weight === 'number' ? i.weight :
-    typeof i.quantity === 'number' ? i.quantity :
-    typeof (i.weight ?? i.quantity) === 'string' ? parseFloat(i.weight ?? i.quantity as string) :
-    0,
-  unit: i.unit || (typeof (i.weight ?? i.quantity) !== 'undefined' ? 'g' : undefined),
-})),
+      // NEW: pakiet typu [ { "0": {...}, "1": {...}, ..., "ingredients": [] } ]
+      if (rawDayData.length === 1 && isNumericKeyObject(rawDayData[0])) {
+        const bundle = rawDayData[0] as Record<string, any>;
+        const extracted = extractMealsFromNumericObject(bundle);
+        for (const meal of extracted) {
+          if (!meal || typeof meal !== 'object') continue;
+          meals.push({
+            name: meal.name || meal.mealName || 'Posiłek',
+            menu: meal.menu || meal.mealName || meal.name || 'Posiłek',
+            time: meal.time || '00:00',
+            day,
+            glycemicIndex: meal.glycemicIndex ?? 0,
+            ingredients: (meal.ingredients || []).map((i: any) => ({
+              product: i.product || i.name || '',
+              weight:
+                typeof i.weight === 'number' ? i.weight :
+                typeof i.quantity === 'number' ? i.quantity :
+                typeof (i.weight ?? i.quantity) === 'string' ? parseFloat(i.weight ?? i.quantity as string) :
+                0,
+              unit: i.unit || (typeof (i.weight ?? i.quantity) !== 'undefined' ? 'g' : undefined),
+            })),
+            macros: {
+              kcal: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0,
+              potassium: 0, calcium: 0, magnesium: 0, iron: 0, zinc: 0,
+              vitaminD: 0, vitaminB12: 0, vitaminC: 0,
+              vitaminA: 0, vitaminE: 0, vitaminK: 0,
+              ...(meal.macros || {})
+            }
+          });
+        }
+      } else {
+        // ORYGINALNA ścieżka: poprawne Meal[]
+        for (const meal of rawDayData) {
+          if (!meal || typeof meal !== 'object') continue;
 
-          macros: {
-            kcal: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0,
-            potassium: 0, calcium: 0, magnesium: 0, iron: 0, zinc: 0,
-            vitaminD: 0, vitaminB12: 0, vitaminC: 0,
-            vitaminA: 0, vitaminE: 0, vitaminK: 0,
-            ...(meal.macros || {})
-          }
-        });
+          meals.push({
+            name: meal.name || meal.mealName || 'Posiłek',
+            menu: meal.menu || meal.name || 'Posiłek',
+            time: meal.time || '00:00',
+            day,
+            glycemicIndex: meal.glycemicIndex ?? 0,
+            ingredients: (meal.ingredients || []).map((i: any) => ({
+              product: i.product || i.name || '',
+              weight:
+                typeof i.weight === 'number' ? i.weight :
+                typeof i.quantity === 'number' ? i.quantity :
+                typeof (i.weight ?? i.quantity) === 'string' ? parseFloat(i.weight ?? i.quantity as string) :
+                0,
+              unit: i.unit || (typeof (i.weight ?? i.quantity) !== 'undefined' ? 'g' : undefined),
+            })),
+            macros: {
+              kcal: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0,
+              potassium: 0, calcium: 0, magnesium: 0, iron: 0, zinc: 0,
+              vitaminD: 0, vitaminB12: 0, vitaminC: 0,
+              vitaminA: 0, vitaminE: 0, vitaminK: 0,
+              ...(meal.macros || {})
+            }
+          });
+        }
       }
     }
 
