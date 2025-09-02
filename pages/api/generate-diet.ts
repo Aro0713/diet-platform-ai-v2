@@ -138,12 +138,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   res.setHeader("Connection", "keep-alive");
   res.setHeader("X-Accel-Buffering", "no");
 
+  // 🔧 natychmiastowy flush nagłówków i marker otwarcia strumienia
+  if (typeof (res as any).flushHeaders === "function") {
+    (res as any).flushHeaders();
+  }
+  sseWrite(res, { type: "status", phase: "sse-open", t: Date.now() });
+
   const ping = setInterval(() => sseWrite(res, { type: "ping", t: Date.now() }), 15000);
 
   try {
     sseWrite(res, { type: "start" });
 
-    // ── Prompt (minimalny, bo erzac – masz własnego agenta po stronie projektu)
+    // ── Prompt (minimalny – po Twojej stronie i tak masz pełną logikę agenta)
     const prompt = `
 You are a clinical dietitian AI. Return valid JSON ONLY (no code fences, no labels).
 Input (JSON):
@@ -154,6 +160,8 @@ Expected top-level: "dietPlan" (object by day) OR "meals" (flat array with {day,
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
     // ——— Strumień od OpenAI
+    sseWrite(res, { type: "status", phase: "openai-call-start" });
+
     const stream = await openai.chat.completions.create({
       model: "gpt-4o",
       response_format: { type: "json_object" },
@@ -166,12 +174,29 @@ Expected top-level: "dietPlan" (object by day) OR "meals" (flat array with {day,
     });
 
     let fullContent = "";
+    let sawChunk = false;
+
     for await (const chunk of stream) {
       const delta = (chunk as any)?.choices?.[0]?.delta?.content;
+      if (!sawChunk) {
+        sawChunk = true;
+        sseWrite(res, { type: "status", phase: "openai-stream-first-chunk" });
+      }
       if (delta) {
         fullContent += delta;
-        sseWrite(res, { type: "delta", text: delta }); // front to ignoruje — OK
+        sseWrite(res, { type: "delta", text: delta }); // front ignoruje — OK
       }
+    }
+
+    if (!sawChunk) {
+      sseWrite(res, { type: "warn", message: "OpenAI stream returned no chunks" });
+    }
+    sseWrite(res, { type: "status", phase: "openai-stream-end" });
+
+    if (!fullContent.trim()) {
+      sseWrite(res, { type: "error", message: "LLM returned empty response" });
+      clearInterval(ping);
+      return res.end();
     }
 
     // ——— Koniec generowania: spróbuj sparsować JSON (z obsługą CORRECTED_JSON=…)
@@ -190,12 +215,11 @@ Expected top-level: "dietPlan" (object by day) OR "meals" (flat array with {day,
       parsed?.CORRECTED_JSON?.dietPlan ??
       parsed?.CORRECTED_JSON;
 
-    // Fallback 1: root ma "meals": [...]
+    // Fallback: root ma "meals": [...]
     if (!dietPlan && Array.isArray(parsed?.meals)) {
       dietPlan = parsed.meals;
     }
 
-    // Jeśli nadal brak → błąd
     if (!dietPlan) {
       sseWrite(res, { type: "error", message: "❌ JSON nie zawiera pola 'dietPlan' ani 'meals'." });
       clearInterval(ping);
@@ -213,14 +237,13 @@ Expected top-level: "dietPlan" (object by day) OR "meals" (flat array with {day,
       dietPlan = byDay;
     }
 
-    // ——— Napraw kształty i znormalizuj składniki + przenieś nutrients→macros
+    // ——— Napraw kształty i znormalizuj składniki + przenieś nutrients→macros (bez liczenia)
     dietPlan = repairDietPlanShape(dietPlan);
 
     for (const day of Object.keys(dietPlan)) {
       if (!Array.isArray(dietPlan[day])) { dietPlan[day] = []; continue; }
 
       dietPlan[day] = dietPlan[day].map((meal: any) => {
-        // mapowanie / czyszczenie makr – bez przeliczania (makra nietykane)
         let macros = meal?.macros ?? meal?.nutrition ?? meal?.nutrients ?? undefined;
         if (macros && typeof macros === "object") {
           const cleanNum = (v: any) => {
@@ -232,23 +255,23 @@ Expected top-level: "dietPlan" (object by day) OR "meals" (flat array with {day,
             return undefined;
           };
           macros = {
-            calories:    cleanNum(macros.calories ?? macros.kcal),
-            protein:     cleanNum(macros.protein),
-            fat:         cleanNum(macros.fat),
-            carbs:       cleanNum(macros.carbohydrates ?? macros.carbs),
-            fiber:       cleanNum(macros.fiber),
-            sodium:      cleanNum(macros.sodium),
-            potassium:   cleanNum(macros.potassium),
-            magnesium:   cleanNum(macros.magnesium),
-            iron:        cleanNum(macros.iron),
-            zinc:        cleanNum(macros.zinc),
-            calcium:     cleanNum(macros.calcium),
-            vitaminD:    cleanNum(macros.vitaminD),
-            vitaminB12:  cleanNum(macros.vitaminB12),
-            vitaminC:    cleanNum(macros.vitaminC),
-            vitaminA:    cleanNum(macros.vitaminA),
-            vitaminE:    cleanNum(macros.vitaminE),
-            vitaminK:    cleanNum(macros.vitaminK),
+            calories:    cleanNum((macros as any).calories ?? (macros as any).kcal),
+            protein:     cleanNum((macros as any).protein),
+            fat:         cleanNum((macros as any).fat),
+            carbs:       cleanNum((macros as any).carbohydrates ?? (macros as any).carbs),
+            fiber:       cleanNum((macros as any).fiber),
+            sodium:      cleanNum((macros as any).sodium),
+            potassium:   cleanNum((macros as any).potassium),
+            magnesium:   cleanNum((macros as any).magnesium),
+            iron:        cleanNum((macros as any).iron),
+            zinc:        cleanNum((macros as any).zinc),
+            calcium:     cleanNum((macros as any).calcium),
+            vitaminD:    cleanNum((macros as any).vitaminD),
+            vitaminB12:  cleanNum((macros as any).vitaminB12),
+            vitaminC:    cleanNum((macros as any).vitaminC),
+            vitaminA:    cleanNum((macros as any).vitaminA),
+            vitaminE:    cleanNum((macros as any).vitaminE),
+            vitaminK:    cleanNum((macros as any).vitaminK),
           };
         }
 
@@ -259,66 +282,65 @@ Expected top-level: "dietPlan" (object by day) OR "meals" (flat array with {day,
           mealType: meal?.mealType ?? meal?.type ?? undefined,
           time: meal?.time ?? "",
           ingredients: normalizeIngredients(meal?.ingredients),
-          macros, // zostawiamy „jak jest”, tylko oczyszczone liczby
+          macros,
           glycemicIndex: meal?.glycemicIndex ?? meal?.gi ?? 0,
         };
       });
     }
 
- // ——— Czy w ogóle jest sens odpalać dqAgent?
-const everyMealEmpty = Object.values(dietPlan).every((arr: any) =>
-  Array.isArray(arr) && arr.every((m: any) => {
-    const hasIngr = Array.isArray(m?.ingredients) && m.ingredients.length > 0;
-    const hasMacros = m?.macros && typeof m.macros === "object" &&
-      Object.values(m.macros).some((v: any) => typeof v === "number" && isFinite(v));
-    return !hasIngr && !hasMacros;
-  })
-);
+    // ——— Czy w ogóle jest sens odpalać dqAgent?
+    const everyMealEmpty = Object.values(dietPlan).every((arr: any) =>
+      Array.isArray(arr) && arr.every((m: any) => {
+        const hasIngr = Array.isArray(m?.ingredients) && m.ingredients.length > 0;
+        const hasMacros = m?.macros && typeof m.macros === "object" &&
+          Object.values(m.macros).some((v: any) => typeof v === "number" && isFinite(v));
+        return !hasIngr && !hasMacros;
+      })
+    );
 
-if (everyMealEmpty) {
-  sseWrite(res, { type: "warn", message: "⚠️ Plan nie zawiera składników ani makr – pomijam dqAgent." });
-} else {
-  // 🔧 dqAgent potrzebuje struktury: Record<string, Record<string, Meal>>
-  const structuredForDQ: Record<string, Record<string, any>> = {};
-  for (const day of Object.keys(dietPlan)) {
-    const arr = Array.isArray(dietPlan[day]) ? dietPlan[day] : [];
-    structuredForDQ[day] = {};
-    arr.forEach((meal: any, idx: number) => {
-      const key = (meal?.mealType && typeof meal.mealType === "string")
-        ? meal.mealType
-        : `m${idx}`;
-      // Upewniamy się, że obiekt wygląda jak Meal (bez modyfikacji makr)
-      structuredForDQ[day][key] = {
-        ...meal,
-        name: meal?.name ?? meal?.mealName ?? "Posiłek",
-        time: meal?.time ?? "",
-        ingredients: Array.isArray(meal?.ingredients) ? meal.ingredients : [],
-        macros: meal?.macros ?? undefined,
-        glycemicIndex: meal?.glycemicIndex ?? meal?.gi ?? 0,
-      };
-    });
-  }
+    if (everyMealEmpty) {
+      sseWrite(res, { type: "warn", message: "⚠️ Plan nie zawiera składników ani makr – pomijam dqAgent." });
+    } else {
+      // 🔧 dqAgent potrzebuje struktury: Record<string, Record<string, Meal>>
+      const structuredForDQ: Record<string, Record<string, any>> = {};
+      for (const day of Object.keys(dietPlan)) {
+        const arr = Array.isArray(dietPlan[day]) ? dietPlan[day] : [];
+        structuredForDQ[day] = {};
+        arr.forEach((meal: any, idx: number) => {
+          const key = (meal?.mealType && typeof meal.mealType === "string")
+            ? meal.mealType
+            : `m${idx}`;
+          structuredForDQ[day][key] = {
+            ...meal,
+            name: meal?.name ?? meal?.mealName ?? "Posiłek",
+            time: meal?.time ?? "",
+            ingredients: Array.isArray(meal?.ingredients) ? meal.ingredients : [],
+            macros: meal?.macros ?? undefined,
+            glycemicIndex: meal?.glycemicIndex ?? meal?.gi ?? 0,
+          };
+        });
+      }
 
-  try {
-    const { dqAgent } = await import("@/agents/dqAgent");
-    const improved = await dqAgent.run({
-      dietPlan: structuredForDQ,            // ✅ to jest to, czego on oczekuje
-      model: (typeof form.model === "string" ? form.model.toLowerCase() : form.model),
-      goal: interviewData.goal,
-      cpm: form.cpm ?? null,
-      weightKg: form.weight ?? null,
-      conditions: form.conditions ?? [],
-      dqChecks: form?.medical_data?.dqChecks ?? {}
-    });
+      try {
+        const { dqAgent } = await import("@/agents/dqAgent");
+        const improved = await dqAgent.run({
+          dietPlan: structuredForDQ,
+          model: (typeof form.model === "string" ? form.model.toLowerCase() : form.model),
+          goal: interviewData.goal,
+          cpm: form.cpm ?? null,
+          weightKg: form.weight ?? null,
+          conditions: form.conditions ?? [],
+          dqChecks: form?.medical_data?.dqChecks ?? {}
+        });
 
-    // dqAgent zwraca: { type: "dietPlan", plan: Record<string, Meal[]>, violations: [] }
-    if (improved?.plan && typeof improved.plan === "object") {
-      dietPlan = improved.plan;            // ✅ mamy już płaskie tablice per dzień
+        // dqAgent zwraca: { type: "dietPlan", plan: Record<string, Meal[]>, violations: [] }
+        if (improved?.plan && typeof improved.plan === "object") {
+          dietPlan = improved.plan;
+        }
+      } catch (e: any) {
+        sseWrite(res, { type: "warn", message: `⚠️ dqAgent nie powiódł się: ${e?.message || "unknown"}` });
+      }
     }
-  } catch (e: any) {
-    sseWrite(res, { type: "warn", message: `⚠️ dqAgent nie powiódł się: ${e?.message || "unknown"}` });
-  }
-}
 
     // ——— Finalny event (front ustawi stan dopiero na to)
     sseWrite(res, { type: "final", result: { ...parsed, dietPlan } });
