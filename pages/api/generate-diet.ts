@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import OpenAI from "openai";
 
-/** ————————————— Helpers ————————————— */
+/** ───────────────────── Helpers ───────────────────── */
 
 function isNumericKeyObject(o: any): boolean {
   return !!(o && typeof o === "object" && !Array.isArray(o) &&
@@ -59,7 +59,7 @@ function repairDietPlanShape(plan: any): Record<string, any[]> {
       continue;
     }
 
-    // CASE 2: [ { "0": {...}, "1": {...}, ..., "ingredients": [] } ]
+    // CASE 2: [ { "0": {...}, "1": {...}, ... } ]
     if (Array.isArray(val) && val.length === 1 && isNumericKeyObject(val[0])) {
       const obj = val[0] as Record<string, any>;
       const meals = Object.keys(obj)
@@ -94,17 +94,32 @@ function sseWrite(res: NextApiResponse, payload: any) {
   res.write(`data: ${JSON.stringify(payload)}\n\n`);
 }
 
-/** ————————————— Next API config —————————————
- * Pozostawiamy bodyParser włączony (parsuje JSON z POST),
- * a odpowiedź wysyłamy jako SSE (res.write + \n\n).
- */
+function extractJSONObject(raw: string): any {
+  // usuń prefiksy typu "CORRECTED_JSON =" i płotki ```json
+  const clean = raw
+    .replace(/^\s*CORRECTED_JSON\s*=\s*/i, "")
+    .replace(/```(?:json)?/g, "")
+    .trim();
+  const start = clean.indexOf("{");
+  const end = clean.lastIndexOf("}");
+  if (start === -1 || end === -1 || end <= start) {
+    throw new Error("LLM did not return a JSON object");
+  }
+  const slice = clean.slice(start, end + 1);
+  try {
+    return JSON.parse(slice);
+  } catch {
+    // czasem model zwraca string-JSON w JSON
+    return JSON.parse(JSON.parse(slice));
+  }
+}
+
+/** ───────────────────── Next API config ───────────────────── */
 export const config = {
-  api: {
-    bodyParser: true,
-  },
+  api: { bodyParser: true },
 };
 
-/** ————————————— API Handler (SSE streaming) ————————————— */
+/** ───────────────────── API Handler (SSE streaming) ───────────────────── */
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
@@ -117,26 +132,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).end("Brakuje wymaganych danych wejściowych.");
   }
 
+  // Nagłówki SSE (utrzymują połączenie i omijają 300s timeout)
+  res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
+  res.setHeader("Cache-Control", "no-cache, no-transform");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no");
+
+  const ping = setInterval(() => sseWrite(res, { type: "ping", t: Date.now() }), 15000);
+
   try {
-    // Nagłówki SSE (utrzymują połączenie i omijają 300s timeout)
-    res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
-    res.setHeader("Cache-Control", "no-cache, no-transform");
-    res.setHeader("Connection", "keep-alive");
-    res.setHeader("X-Accel-Buffering", "no");
-
-    // Heartbeat co 15s, żeby połączenie nie zostało ścięte przez edge/proxy
-    const ping = setInterval(() => sseWrite(res, { type: "ping", t: Date.now() }), 15000);
-
-    // sygnał startu
     sseWrite(res, { type: "start" });
 
-    // ── Zbuduj prompt wejściowy (tu możesz podmienić na swój pełny prompt z dietAgenta)
-    // aby zachować spójność, przekazujemy pełne dane — po stronie modelu masz logikę formatu JSON.
+    // ── Prompt (minimalny, bo erzac – masz własnego agenta po stronie projektu)
     const prompt = `
-You are a clinical dietitian AI. Return valid JSON only.
+You are a clinical dietitian AI. Return valid JSON ONLY (no code fences, no labels).
 Input (JSON):
 ${JSON.stringify({ form, interviewData, testResults, medicalDescription, lang })}
-Expected top-level keys: "dietPlan", optionally "weeklyOverview", "shoppingList", "nutritionalSummary".
+Expected top-level: "dietPlan" (object by day) OR "meals" (flat array with {day,mealType,...}). Do NOT use "items".
 `;
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -154,76 +166,161 @@ Expected top-level keys: "dietPlan", optionally "weeklyOverview", "shoppingList"
     });
 
     let fullContent = "";
-
     for await (const chunk of stream) {
-      const delta = chunk.choices?.[0]?.delta?.content;
+      const delta = (chunk as any)?.choices?.[0]?.delta?.content;
       if (delta) {
         fullContent += delta;
-        // wyślij „na żywo” tokeny (opcjonalnie pokazywane w UI)
-        sseWrite(res, { type: "delta", text: delta });
+        sseWrite(res, { type: "delta", text: delta }); // front to ignoruje — OK
       }
     }
 
-    // ——— Koniec generowania: spróbuj sparsować JSON
+    // ——— Koniec generowania: spróbuj sparsować JSON (z obsługą CORRECTED_JSON=…)
     let parsed: any = null;
     try {
-      const clean = fullContent.replace(/```json/g, "").replace(/```/g, "").trim();
-      const first = clean.indexOf("{");
-      const last = clean.lastIndexOf("}");
-      if (first === -1 || last === -1) throw new Error("Brak nawiasów JSON");
-      parsed = JSON.parse(clean.slice(first, last + 1));
-      if (typeof parsed === "string") parsed = JSON.parse(parsed);
+      parsed = extractJSONObject(fullContent);
     } catch (e) {
       sseWrite(res, { type: "error", message: "❌ GPT zwrócił niepoprawny JSON — parsowanie nieudane." });
       clearInterval(ping);
       return res.end();
     }
 
-    // ——— Wyciągnij dietPlan z możliwych pól
-    let dietPlan = parsed?.dietPlan ?? parsed?.CORRECTED_JSON?.dietPlan ?? parsed?.CORRECTED_JSON;
+    // ——— Wyciągnij dietPlan z możliwych pól + fallback na płaskie "meals[]"
+    let dietPlan: any =
+      parsed?.dietPlan ??
+      parsed?.CORRECTED_JSON?.dietPlan ??
+      parsed?.CORRECTED_JSON;
+
+    // Fallback 1: root ma "meals": [...]
+    if (!dietPlan && Array.isArray(parsed?.meals)) {
+      dietPlan = parsed.meals;
+    }
+
+    // Jeśli nadal brak → błąd
     if (!dietPlan) {
-      sseWrite(res, { type: "error", message: "❌ JSON nie zawiera pola 'dietPlan'." });
+      sseWrite(res, { type: "error", message: "❌ JSON nie zawiera pola 'dietPlan' ani 'meals'." });
       clearInterval(ping);
       return res.end();
     }
 
-    // ——— Napraw kształty i znormalizuj składniki
+    // Jeśli dietPlan jest tablicą płaskich wpisów (day/mealType/...), zrób słownik dni
+    if (Array.isArray(dietPlan)) {
+      const byDay: Record<string, any[]> = {};
+      for (const m of dietPlan) {
+        const d = (m?.day ?? "Monday").toString();
+        if (!byDay[d]) byDay[d] = [];
+        byDay[d].push(m);
+      }
+      dietPlan = byDay;
+    }
+
+    // ——— Napraw kształty i znormalizuj składniki + przenieś nutrients→macros
     dietPlan = repairDietPlanShape(dietPlan);
 
     for (const day of Object.keys(dietPlan)) {
       if (!Array.isArray(dietPlan[day])) { dietPlan[day] = []; continue; }
-      dietPlan[day] = dietPlan[day].map((meal: any) => ({
+
+      dietPlan[day] = dietPlan[day].map((meal: any) => {
+        // mapowanie / czyszczenie makr – bez przeliczania (makra nietykane)
+        let macros = meal?.macros ?? meal?.nutrition ?? meal?.nutrients ?? undefined;
+        if (macros && typeof macros === "object") {
+          const cleanNum = (v: any) => {
+            if (typeof v === "number") return v;
+            if (typeof v === "string") {
+              const m = v.replace(",", ".").match(/-?\d+(\.\d+)?/);
+              return m ? parseFloat(m[0]) : undefined;
+            }
+            return undefined;
+          };
+          macros = {
+            calories:    cleanNum(macros.calories ?? macros.kcal),
+            protein:     cleanNum(macros.protein),
+            fat:         cleanNum(macros.fat),
+            carbs:       cleanNum(macros.carbohydrates ?? macros.carbs),
+            fiber:       cleanNum(macros.fiber),
+            sodium:      cleanNum(macros.sodium),
+            potassium:   cleanNum(macros.potassium),
+            magnesium:   cleanNum(macros.magnesium),
+            iron:        cleanNum(macros.iron),
+            zinc:        cleanNum(macros.zinc),
+            calcium:     cleanNum(macros.calcium),
+            vitaminD:    cleanNum(macros.vitaminD),
+            vitaminB12:  cleanNum(macros.vitaminB12),
+            vitaminC:    cleanNum(macros.vitaminC),
+            vitaminA:    cleanNum(macros.vitaminA),
+            vitaminE:    cleanNum(macros.vitaminE),
+            vitaminK:    cleanNum(macros.vitaminK),
+          };
+        }
+
+        return {
+          ...meal,
+          name: meal?.name ?? meal?.mealName ?? "Posiłek",
+          menu: meal?.menu ?? meal?.mealName ?? meal?.name ?? "Posiłek",
+          mealType: meal?.mealType ?? meal?.type ?? undefined,
+          time: meal?.time ?? "",
+          ingredients: normalizeIngredients(meal?.ingredients),
+          macros, // zostawiamy „jak jest”, tylko oczyszczone liczby
+          glycemicIndex: meal?.glycemicIndex ?? meal?.gi ?? 0,
+        };
+      });
+    }
+
+ // ——— Czy w ogóle jest sens odpalać dqAgent?
+const everyMealEmpty = Object.values(dietPlan).every((arr: any) =>
+  Array.isArray(arr) && arr.every((m: any) => {
+    const hasIngr = Array.isArray(m?.ingredients) && m.ingredients.length > 0;
+    const hasMacros = m?.macros && typeof m.macros === "object" &&
+      Object.values(m.macros).some((v: any) => typeof v === "number" && isFinite(v));
+    return !hasIngr && !hasMacros;
+  })
+);
+
+if (everyMealEmpty) {
+  sseWrite(res, { type: "warn", message: "⚠️ Plan nie zawiera składników ani makr – pomijam dqAgent." });
+} else {
+  // 🔧 dqAgent potrzebuje struktury: Record<string, Record<string, Meal>>
+  const structuredForDQ: Record<string, Record<string, any>> = {};
+  for (const day of Object.keys(dietPlan)) {
+    const arr = Array.isArray(dietPlan[day]) ? dietPlan[day] : [];
+    structuredForDQ[day] = {};
+    arr.forEach((meal: any, idx: number) => {
+      const key = (meal?.mealType && typeof meal.mealType === "string")
+        ? meal.mealType
+        : `m${idx}`;
+      // Upewniamy się, że obiekt wygląda jak Meal (bez modyfikacji makr)
+      structuredForDQ[day][key] = {
         ...meal,
         name: meal?.name ?? meal?.mealName ?? "Posiłek",
-        menu: meal?.menu ?? meal?.mealName ?? meal?.name ?? "Posiłek",
         time: meal?.time ?? "",
-        ingredients: normalizeIngredients(meal?.ingredients),
-        // nie dotykamy makr, jeśli są – zachowujemy
-        macros: meal?.macros ?? meal?.nutrition ?? undefined,
+        ingredients: Array.isArray(meal?.ingredients) ? meal.ingredients : [],
+        macros: meal?.macros ?? undefined,
         glycemicIndex: meal?.glycemicIndex ?? meal?.gi ?? 0,
-      }));
-    }
+      };
+    });
+  }
 
-    // ——— Opcjonalnie: spróbuj poprawić przez dqAgent (nie przerywaj w razie błędu)
-    try {
-      const { dqAgent } = await import("@/agents/dqAgent");
-      const improved = await dqAgent.run({
-        dietPlan,
-        model: (typeof form.model === "string" ? form.model.toLowerCase() : form.model),
-        goal: interviewData.goal,
-        cpm: form.cpm ?? null,
-        weightKg: form.weight ?? null,
-        conditions: form.conditions ?? [],
-        dqChecks: form?.medical_data?.dqChecks ?? {}
-      });
-      if (improved?.plan) {
-        dietPlan = improved.plan;
-      }
-    } catch (e: any) {
-      sseWrite(res, { type: "warn", message: `⚠️ dqAgent nie powiódł się: ${e?.message || "unknown"}` });
-    }
+  try {
+    const { dqAgent } = await import("@/agents/dqAgent");
+    const improved = await dqAgent.run({
+      dietPlan: structuredForDQ,            // ✅ to jest to, czego on oczekuje
+      model: (typeof form.model === "string" ? form.model.toLowerCase() : form.model),
+      goal: interviewData.goal,
+      cpm: form.cpm ?? null,
+      weightKg: form.weight ?? null,
+      conditions: form.conditions ?? [],
+      dqChecks: form?.medical_data?.dqChecks ?? {}
+    });
 
-    // ——— Finalny event
+    // dqAgent zwraca: { type: "dietPlan", plan: Record<string, Meal[]>, violations: [] }
+    if (improved?.plan && typeof improved.plan === "object") {
+      dietPlan = improved.plan;            // ✅ mamy już płaskie tablice per dzień
+    }
+  } catch (e: any) {
+    sseWrite(res, { type: "warn", message: `⚠️ dqAgent nie powiódł się: ${e?.message || "unknown"}` });
+  }
+}
+
+    // ——— Finalny event (front ustawi stan dopiero na to)
     sseWrite(res, { type: "final", result: { ...parsed, dietPlan } });
 
     clearInterval(ping);
@@ -232,6 +329,7 @@ Expected top-level keys: "dietPlan", optionally "weeklyOverview", "shoppingList"
     try {
       sseWrite(res, { type: "error", message: `❌ Błąd: ${err?.message || "Nieznany błąd"}` });
     } finally {
+      clearInterval(ping);
       return res.end();
     }
   }
