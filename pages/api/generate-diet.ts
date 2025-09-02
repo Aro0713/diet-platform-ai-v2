@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { generateDiet } from "@/agents/dietAgent";
+import OpenAI from "openai";
 
 /** ————————————— Helpers ————————————— */
 
@@ -90,73 +90,149 @@ function repairDietPlanShape(plan: any): Record<string, any[]> {
   return out;
 }
 
-/** ————————————— API Handler ————————————— */
+function sseWrite(res: NextApiResponse, payload: any) {
+  res.write(`data: ${JSON.stringify(payload)}\n\n`);
+}
+
+/** ————————————— Next API config —————————————
+ * Pozostawiamy bodyParser włączony (parsuje JSON z POST),
+ * a odpowiedź wysyłamy jako SSE (res.write + \n\n).
+ */
+export const config = {
+  api: {
+    bodyParser: true,
+  },
+};
+
+/** ————————————— API Handler (SSE streaming) ————————————— */
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
-    return res.status(405).send("Method Not Allowed");
+    res.setHeader("Allow", "POST");
+    return res.status(405).end("Method Not Allowed");
   }
 
-  if (!req.body?.form || !req.body?.interviewData) {
-    return res.status(400).send("Brakuje wymaganych danych wejściowych.");
+  const { form, interviewData, testResults, medicalDescription, lang = "pl" } = req.body || {};
+  if (!form || !interviewData) {
+    return res.status(400).end("Brakuje wymaganych danych wejściowych.");
   }
 
   try {
-    const result = await generateDiet(req.body);
+    // Nagłówki SSE (utrzymują połączenie i omijają 300s timeout)
+    res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
+    res.setHeader("Cache-Control", "no-cache, no-transform");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("X-Accel-Buffering", "no");
 
-    if (!result || typeof result !== "object" || !result.dietPlan) {
-      console.error("❌ Błąd: brak dietPlan w wyniku generateDiet");
-      return res.status(500).send("Nie udało się wygenerować planu diety.");
-    }
+    // Heartbeat co 15s, żeby połączenie nie zostało ścięte przez edge/proxy
+    const ping = setInterval(() => sseWrite(res, { type: "ping", t: Date.now() }), 15000);
 
-    // 🔧 1) Najpierw wyprostuj „kształty” dnia → wszędzie: day -> Meal[]
-    result.dietPlan = repairDietPlanShape(result.dietPlan);
+    // sygnał startu
+    sseWrite(res, { type: "start" });
 
-    // 🔧 2) Normalizacja składników (po naprawie kształtu), bez dotykania macros
-    for (const day of Object.keys(result.dietPlan)) {
-      // zabezpieczenie: jeśli coś popłynie, zrzuć do []
-      if (!Array.isArray(result.dietPlan[day])) {
-        console.warn(`⚠️  Dzień "${day}" nie jest tablicą po naprawie kształtu. Fallback do [].`);
-        result.dietPlan[day] = [];
-        continue;
+    // ── Zbuduj prompt wejściowy (tu możesz podmienić na swój pełny prompt z dietAgenta)
+    // aby zachować spójność, przekazujemy pełne dane — po stronie modelu masz logikę formatu JSON.
+    const prompt = `
+You are a clinical dietitian AI. Return valid JSON only.
+Input (JSON):
+${JSON.stringify({ form, interviewData, testResults, medicalDescription, lang })}
+Expected top-level keys: "dietPlan", optionally "weeklyOverview", "shoppingList", "nutritionalSummary".
+`;
+
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+    // ——— Strumień od OpenAI
+    const stream = await openai.chat.completions.create({
+      model: "gpt-4o",
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: "You are a clinical dietitian AI. Return valid JSON only." },
+        { role: "user", content: prompt }
+      ],
+      temperature: 0.7,
+      stream: true
+    });
+
+    let fullContent = "";
+
+    for await (const chunk of stream) {
+      const delta = chunk.choices?.[0]?.delta?.content;
+      if (delta) {
+        fullContent += delta;
+        // wyślij „na żywo” tokeny (opcjonalnie pokazywane w UI)
+        sseWrite(res, { type: "delta", text: delta });
       }
+    }
 
-      result.dietPlan[day] = result.dietPlan[day].map((meal: any) => {
-        const normalized = {
-          ...meal,
-          // zachowaj nazwy, ale ustaw sensowne fallbacki
-          name: meal?.name ?? meal?.mealName ?? "Posiłek",
-          menu: meal?.menu ?? meal?.mealName ?? meal?.name ?? "Posiłek",
-          time: meal?.time ?? "",
-          ingredients: normalizeIngredients(meal?.ingredients),
-          // 🧪 makra zostają jakie były — niczego nie zerujemy.
-          macros: meal?.macros ?? meal?.nutrition ?? undefined,
-          glycemicIndex: meal?.glycemicIndex ?? meal?.gi ?? 0,
-        };
-        return normalized;
+    // ——— Koniec generowania: spróbuj sparsować JSON
+    let parsed: any = null;
+    try {
+      const clean = fullContent.replace(/```json/g, "").replace(/```/g, "").trim();
+      const first = clean.indexOf("{");
+      const last = clean.lastIndexOf("}");
+      if (first === -1 || last === -1) throw new Error("Brak nawiasów JSON");
+      parsed = JSON.parse(clean.slice(first, last + 1));
+      if (typeof parsed === "string") parsed = JSON.parse(parsed);
+    } catch (e) {
+      sseWrite(res, { type: "error", message: "❌ GPT zwrócił niepoprawny JSON — parsowanie nieudane." });
+      clearInterval(ping);
+      return res.end();
+    }
+
+    // ——— Wyciągnij dietPlan z możliwych pól
+    let dietPlan = parsed?.dietPlan ?? parsed?.CORRECTED_JSON?.dietPlan ?? parsed?.CORRECTED_JSON;
+    if (!dietPlan) {
+      sseWrite(res, { type: "error", message: "❌ JSON nie zawiera pola 'dietPlan'." });
+      clearInterval(ping);
+      return res.end();
+    }
+
+    // ——— Napraw kształty i znormalizuj składniki
+    dietPlan = repairDietPlanShape(dietPlan);
+
+    for (const day of Object.keys(dietPlan)) {
+      if (!Array.isArray(dietPlan[day])) { dietPlan[day] = []; continue; }
+      dietPlan[day] = dietPlan[day].map((meal: any) => ({
+        ...meal,
+        name: meal?.name ?? meal?.mealName ?? "Posiłek",
+        menu: meal?.menu ?? meal?.mealName ?? meal?.name ?? "Posiłek",
+        time: meal?.time ?? "",
+        ingredients: normalizeIngredients(meal?.ingredients),
+        // nie dotykamy makr, jeśli są – zachowujemy
+        macros: meal?.macros ?? meal?.nutrition ?? undefined,
+        glycemicIndex: meal?.glycemicIndex ?? meal?.gi ?? 0,
+      }));
+    }
+
+    // ——— Opcjonalnie: spróbuj poprawić przez dqAgent (nie przerywaj w razie błędu)
+    try {
+      const { dqAgent } = await import("@/agents/dqAgent");
+      const improved = await dqAgent.run({
+        dietPlan,
+        model: (typeof form.model === "string" ? form.model.toLowerCase() : form.model),
+        goal: interviewData.goal,
+        cpm: form.cpm ?? null,
+        weightKg: form.weight ?? null,
+        conditions: form.conditions ?? [],
+        dqChecks: form?.medical_data?.dqChecks ?? {}
       });
+      if (improved?.plan) {
+        dietPlan = improved.plan;
+      }
+    } catch (e: any) {
+      sseWrite(res, { type: "warn", message: `⚠️ dqAgent nie powiódł się: ${e?.message || "unknown"}` });
     }
 
-    // ✅ Diagnostyka — pokaż już naprawiony i znormalizowany plan
-    console.log("✅ Zwrócony plan diety (po naprawie i normalizacji):",
-      JSON.stringify(result.dietPlan, null, 2)
-    );
+    // ——— Finalny event
+    sseWrite(res, { type: "final", result: { ...parsed, dietPlan } });
 
-    // 🔍 Dodatkowa, miękka walidacja (log only): czy jakiekolwiek macros istnieją?
-    const hasAnyMacros =
-      Object.values(result.dietPlan)
-        .flat()
-        .some((m: any) => m?.macros && Object.values(m.macros).some((v: any) => coerceNumber(v) !== null && coerceNumber(v)! > 0));
-
-    if (!hasAnyMacros) {
-      console.warn("⚠️  Plan wygląda na pozbawiony wartości odżywczych (wszystko puste/0). Sprawdź źródło GPT.");
-      // Nie przerywamy — frontend i tak pokaże, a dqAgent/calculateMealMacros mogą uzupełnić.
+    clearInterval(ping);
+    return res.end();
+  } catch (err: any) {
+    try {
+      sseWrite(res, { type: "error", message: `❌ Błąd: ${err?.message || "Nieznany błąd"}` });
+    } finally {
+      return res.end();
     }
-
-    res.status(200).json(result);
-  } catch (err) {
-    console.error("❌ Błąd generateDiet:", err);
-    res.status(500).send("Błąd generowania diety.");
   }
 }
-
