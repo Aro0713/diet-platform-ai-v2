@@ -1,45 +1,53 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { generateDiet } from "@/agents/dietAgent";
+import { generateDiet } from "@/agents/dietAgent"; // ✅ funkcja, nie agent
 
-function normalizeIngredients(ingredients: any[]) {
-  return (ingredients || []).map(i => ({
-    product: i.product ?? i.name ?? "",
-    weight: i.weight ?? i.quantity ?? null, // 🔹 zamiana quantity → weight
-    unit: i.unit || "g"
-  }));
+function sseWrite(res: NextApiResponse, payload: any) {
+  res.write(`data: ${JSON.stringify(payload)}\n\n`);
 }
+
+export const config = { api: { bodyParser: true } };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
-    return res.status(405).send("Method Not Allowed");
+    res.setHeader("Allow", "POST");
+    return res.status(405).end("Method Not Allowed");
+  }
+  if (!req.body?.form || !req.body?.interviewData) {
+    return res.status(400).end("Brakuje wymaganych danych wejściowych.");
   }
 
-  if (!req.body?.form || !req.body?.interviewData) {
-    return res.status(400).send("Brakuje wymaganych danych wejściowych.");
-  }
+  // SSE headers
+  res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
+  res.setHeader("Cache-Control", "no-cache, no-transform");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no");
+  (res as any).flushHeaders?.();
+  sseWrite(res, { type: "start" });
 
   try {
-    const result = await generateDiet(req.body);
+    const result = await generateDiet(req.body);   // ✅ wołamy funkcję
 
     if (!result || typeof result !== "object" || !result.dietPlan) {
-      console.error("❌ Błąd: brak dietPlan w wyniku generateDiet");
-      return res.status(500).send("Nie udało się wygenerować planu diety.");
+      sseWrite(res, { type: "error", message: "❌ Brak dietPlan w wyniku generateDiet" });
+      return res.end();
     }
 
-    // 🔹 Normalizacja składników we wszystkich dniach i posiłkach
+    // (opcjonalnie) delikatna normalizacja składników dla spójności z DietTable
     for (const day of Object.keys(result.dietPlan)) {
-      result.dietPlan[day] = result.dietPlan[day].map((meal: any) => ({
+      result.dietPlan[day] = (result.dietPlan[day] || []).map((meal: any) => ({
         ...meal,
-        ingredients: normalizeIngredients(meal.ingredients)
+        ingredients: (meal.ingredients || []).map((i: any) => ({
+          product: i?.product ?? i?.name ?? "",
+          weight: i?.weight ?? i?.quantity ?? null,
+          unit: i?.unit || "g",
+        })),
       }));
     }
 
-    // ✅ Diagnostyka - sprawdź, czy plan zawiera makroskładniki
-    console.log("✅ Zwrócony plan diety:", JSON.stringify(result.dietPlan, null, 2));
-
-    res.status(200).json(result);
-  } catch (err) {
-    console.error("❌ Błąd generateDiet:", err);
-    res.status(500).send("Błąd generowania diety.");
+    sseWrite(res, { type: "final", result });      // 👈 front zamknie spinner
+    return res.end();
+  } catch (err: any) {
+    sseWrite(res, { type: "error", message: `❌ Błąd generateDiet: ${err?.message || "Unknown"}` });
+    return res.end();
   }
 }
