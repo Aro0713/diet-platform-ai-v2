@@ -5,13 +5,13 @@ pl: {
   title: 'Kobiety – pytania dodatkowe',
 
   q1: {
-    label: 'Czy sex cykle miesiączkowe są regularne?',
+    label: 'Czy cykle miesiączkowe są regularne?',
     type: 'radio',
     options: ['Tak', 'Nie']
   },
 
   q2: {
-    label: 'Czy sex ma dolegliwości hormonalne (np. PCOS, endometrioza)?',
+    label: 'Czy masz dolegliwości hormonalne (np. PCOS, endometrioza)?',
     type: 'radio',
     options: ['Tak', 'Nie']
   },
@@ -39,25 +39,25 @@ pl: {
   },
 
   q3: {
-    label: 'Czy sex jest obecnie w ciąży lub karmi piersią?',
+    label: 'Czy jesteś obecnie w ciąży lub karmi piersią?',
     type: 'radio',
     options: ['Tak, jestem w ciąży', 'Tak, karmię piersią', 'Nie']
   },
 
   q4: {
-    label: 'Czy sex stosuje antykoncepcję hormonalną?',
+    label: 'Czy stosujesz antykoncepcję hormonalną?',
     type: 'radio',
     options: ['Tak', 'Nie']
   },
 
   q5: {
-    label: 'Czy jest sex w okresie perimenopauzy lub menopauzy?',
+    label: 'Czy jesteś  w okresie perimenopauzy lub menopauzy?',
     type: 'radio',
     options: ['Tak', 'Nie']
   },
 
   q5_htz: {
-    label: 'Czy stosuje HTZ (hormonalną terapię zastępczą)?',
+    label: 'Czy stosujesz HTZ (hormonalną terapię zastępczą)?',
     type: 'radio',
     options: ['Stosuję HTZ', 'Nie stosuję HTZ'],
     dependsOn: { question: 'q5', value: 'Tak' }
