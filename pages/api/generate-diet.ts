@@ -9,7 +9,7 @@ function isNumericKeyObject(o: any): boolean {
 }
 
 function isTimeKey(k: string): boolean {
-  return /^\d{1,2}:\d{2}$/.test(k); // np. 7:30 lub 07:30
+  return /^\d{1,2}:\d{2}$/.test(k);
 }
 
 function toArrayFromTimeMap(obj: Record<string, any>): any[] {
@@ -41,6 +41,54 @@ function normalizeIngredients(ingredients: any[]) {
   });
 }
 
+/** ── Dni tygodnia: kanoniczne klucze EN (dolny zapis) ───────────────── */
+
+const DAYS_EN = ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"] as const;
+type DayKeyEn = typeof DAYS_EN[number];
+
+function normalizeDayKeyRaw(s: any): string {
+  return (s ?? "").toString().trim().toLowerCase()
+    .normalize("NFD")
+    // @ts-ignore
+    .replace(/\p{Diacritic}/gu, "");
+}
+
+const DAY_ALIASES_TO_EN: Record<string, DayKeyEn> = {
+  // EN
+  "monday":"monday","mon":"monday","1":"monday","01":"monday",
+  "tuesday":"tuesday","tue":"tuesday","2":"tuesday","02":"tuesday",
+  "wednesday":"wednesday","wed":"wednesday","3":"wednesday","03":"wednesday",
+  "thursday":"thursday","thu":"thursday","thur":"thursday","4":"thursday","04":"thursday",
+  "friday":"friday","fri":"friday","5":"friday","05":"friday",
+  "saturday":"saturday","sat":"saturday","6":"saturday","06":"saturday",
+  "sunday":"sunday","sun":"sunday","7":"sunday","07":"sunday",
+  // PL (bez znaków)
+  "poniedzialek":"monday",
+  "wtorek":"tuesday",
+  "sroda":"wednesday",
+  "czwartek":"thursday",
+  "piatek":"friday",
+  "sobota":"saturday",
+  "niedziela":"sunday",
+};
+
+function toEnglishDayKey(input: any): DayKeyEn {
+  const raw = normalizeDayKeyRaw(input);
+  if ((DAYS_EN as readonly string[]).includes(raw)) return raw as DayKeyEn;
+  return DAY_ALIASES_TO_EN[raw] ?? "monday";
+}
+
+// Rekey: dowolne klucze → EN, oraz dopełnij brakujące dni pustą tablicą
+function rekeyDietPlanToEnglish(dietPlan: Record<string, any[]>): Record<DayKeyEn, any[]> {
+  const tmp: Partial<Record<DayKeyEn, any[]>> = {};
+  for (const [k, v] of Object.entries(dietPlan || {})) {
+    tmp[toEnglishDayKey(k)] = Array.isArray(v) ? v : [];
+  }
+  const out = {} as Record<DayKeyEn, any[]>;
+  for (const d of DAYS_EN) out[d] = tmp[d] ?? [];
+  return out;
+}
+
 /**
  * Naprawia „kształt” planu zanim przejdziemy do normalizacji składników:
  *  - { day: { meals: [...] } }           -> { day: [...] }
@@ -53,13 +101,12 @@ function repairDietPlanShape(plan: any): Record<string, any[]> {
   const out: Record<string, any[]> = {};
 
   for (const [day, val] of Object.entries(plan)) {
-    // CASE 1: { meals: [...] }
+    // { meals: [...] }
     if (val && typeof val === "object" && !Array.isArray(val) && Array.isArray((val as any).meals)) {
       out[day] = (val as any).meals;
       continue;
     }
-
-    // CASE 2: [ { "0": {...}, "1": {...}, ... } ]
+    // [ { "0": {...}, "1": {...}, ... } ]
     if (Array.isArray(val) && val.length === 1 && isNumericKeyObject(val[0])) {
       const obj = val[0] as Record<string, any>;
       const meals = Object.keys(obj)
@@ -70,20 +117,17 @@ function repairDietPlanShape(plan: any): Record<string, any[]> {
       out[day] = meals;
       continue;
     }
-
-    // CASE 3: mapa godzin { "07:30": {...}, ... }
+    // mapa godzin
     if (val && typeof val === "object" && !Array.isArray(val) && Object.keys(val).some(isTimeKey)) {
       out[day] = toArrayFromTimeMap(val as Record<string, any>);
       continue;
     }
-
-    // CASE 4: już poprawna tablica
+    // już tablica
     if (Array.isArray(val)) {
       out[day] = val as any[];
       continue;
     }
-
-    // Ostateczny fallback: pojedynczy obiekt -> tablica
+    // fallback
     out[day] = [val as any];
   }
 
@@ -95,7 +139,6 @@ function sseWrite(res: NextApiResponse, payload: any) {
 }
 
 function extractJSONObject(raw: string): any {
-  // usuń prefiksy typu "CORRECTED_JSON =" i płotki ```json
   const clean = raw
     .replace(/^\s*CORRECTED_JSON\s*=\s*/i, "")
     .replace(/```(?:json)?/g, "")
@@ -106,12 +149,8 @@ function extractJSONObject(raw: string): any {
     throw new Error("LLM did not return a JSON object");
   }
   const slice = clean.slice(start, end + 1);
-  try {
-    return JSON.parse(slice);
-  } catch {
-    // czasem model zwraca string-JSON w JSON
-    return JSON.parse(JSON.parse(slice));
-  }
+  try { return JSON.parse(slice); }
+  catch { return JSON.parse(JSON.parse(slice)); }
 }
 
 /** ───────────────────── Next API config ───────────────────── */
@@ -132,16 +171,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).end("Brakuje wymaganych danych wejściowych.");
   }
 
-  // Nagłówki SSE (utrzymują połączenie i omijają 300s timeout)
+  // SSE headers
   res.setHeader("Content-Type", "text/event-stream; charset=utf-8");
   res.setHeader("Cache-Control", "no-cache, no-transform");
   res.setHeader("Connection", "keep-alive");
   res.setHeader("X-Accel-Buffering", "no");
-
-  // 🔧 natychmiastowy flush nagłówków i marker otwarcia strumienia
-  if (typeof (res as any).flushHeaders === "function") {
-    (res as any).flushHeaders();
-  }
+  if (typeof (res as any).flushHeaders === "function") (res as any).flushHeaders();
   sseWrite(res, { type: "status", phase: "sse-open", t: Date.now() });
 
   const ping = setInterval(() => sseWrite(res, { type: "ping", t: Date.now() }), 15000);
@@ -149,12 +184,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     sseWrite(res, { type: "start" });
 
-    // ── Prompt (minimalny – po Twojej stronie i tak masz pełną logikę agenta)
+    const mealsPerDay = Number(interviewData?.mealsPerDay) || 4;
+
+    // ——— PROMPT: kanoniczne dni EN + 7-dni + liczba posiłków
     const prompt = `
 You are a clinical dietitian AI. Return valid JSON ONLY (no code fences, no labels).
+
+Requirements:
+- Produce a complete 7-day plan.
+- Use day keys EXACTLY as: ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"] (lowercase English).
+- For EACH day, include EXACTLY ${mealsPerDay} meals.
+- Each meal must be an object with:
+  { name, mealType ("breakfast"|"lunch"|"dinner"|"snack"), time ("HH:MM"),
+    ingredients: [{ product, weight (number), unit ("g"|"ml") }],
+    macros (optional numeric fields if provided) }
+- Do NOT use "items"; only "ingredients".
+- Top-level MUST be: { "dietPlan": { "<day>": [ ... ] } }
+
 Input (JSON):
 ${JSON.stringify({ form, interviewData, testResults, medicalDescription, lang })}
-Expected top-level: "dietPlan" (object by day) OR "meals" (flat array with {day,mealType,...}). Do NOT use "items".
 `;
 
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -175,7 +223,6 @@ Expected top-level: "dietPlan" (object by day) OR "meals" (flat array with {day,
 
     let fullContent = "";
     let sawChunk = false;
-
     for await (const chunk of stream) {
       const delta = (chunk as any)?.choices?.[0]?.delta?.content;
       if (!sawChunk) {
@@ -184,13 +231,10 @@ Expected top-level: "dietPlan" (object by day) OR "meals" (flat array with {day,
       }
       if (delta) {
         fullContent += delta;
-        sseWrite(res, { type: "delta", text: delta }); // front ignoruje — OK
+        sseWrite(res, { type: "delta", text: delta });
       }
     }
-
-    if (!sawChunk) {
-      sseWrite(res, { type: "warn", message: "OpenAI stream returned no chunks" });
-    }
+    if (!sawChunk) sseWrite(res, { type: "warn", message: "OpenAI stream returned no chunks" });
     sseWrite(res, { type: "status", phase: "openai-stream-end" });
 
     if (!fullContent.trim()) {
@@ -199,46 +243,44 @@ Expected top-level: "dietPlan" (object by day) OR "meals" (flat array with {day,
       return res.end();
     }
 
-    // ——— Koniec generowania: spróbuj sparsować JSON (z obsługą CORRECTED_JSON=…)
+    // ——— Parsowanie
     let parsed: any = null;
-    try {
-      parsed = extractJSONObject(fullContent);
-    } catch (e) {
+    try { parsed = extractJSONObject(fullContent); }
+    catch {
       sseWrite(res, { type: "error", message: "❌ GPT zwrócił niepoprawny JSON — parsowanie nieudane." });
       clearInterval(ping);
       return res.end();
     }
 
-    // ——— Wyciągnij dietPlan z możliwych pól + fallback na płaskie "meals[]"
+    // ——— Wyciągnięcie planu
     let dietPlan: any =
       parsed?.dietPlan ??
       parsed?.CORRECTED_JSON?.dietPlan ??
       parsed?.CORRECTED_JSON;
 
-    // Fallback: root ma "meals": [...]
     if (!dietPlan && Array.isArray(parsed?.meals)) {
       dietPlan = parsed.meals;
     }
-
     if (!dietPlan) {
       sseWrite(res, { type: "error", message: "❌ JSON nie zawiera pola 'dietPlan' ani 'meals'." });
       clearInterval(ping);
       return res.end();
     }
 
-    // Jeśli dietPlan jest tablicą płaskich wpisów (day/mealType/...), zrób słownik dni
+    // ——— Zamiana płaskiego na słownik dni
     if (Array.isArray(dietPlan)) {
       const byDay: Record<string, any[]> = {};
       for (const m of dietPlan) {
-        const d = (m?.day ?? "Monday").toString();
+        const d = toEnglishDayKey(m?.day ?? "monday");
         if (!byDay[d]) byDay[d] = [];
         byDay[d].push(m);
       }
       dietPlan = byDay;
     }
 
-    // ——— Napraw kształty i znormalizuj składniki + przenieś nutrients→macros (bez liczenia)
+    // ——— Naprawy i normalizacja
     dietPlan = repairDietPlanShape(dietPlan);
+    dietPlan = rekeyDietPlanToEnglish(dietPlan); // ✅ zawsze 7 kluczy: monday..sunday
 
     for (const day of Object.keys(dietPlan)) {
       if (!Array.isArray(dietPlan[day])) { dietPlan[day] = []; continue; }
@@ -277,6 +319,7 @@ Expected top-level: "dietPlan" (object by day) OR "meals" (flat array with {day,
 
         return {
           ...meal,
+          // dzień zostaje w kluczu słownika — nie nadpisujemy
           name: meal?.name ?? meal?.mealName ?? "Posiłek",
           menu: meal?.menu ?? meal?.mealName ?? meal?.name ?? "Posiłek",
           mealType: meal?.mealType ?? meal?.type ?? undefined,
@@ -288,7 +331,7 @@ Expected top-level: "dietPlan" (object by day) OR "meals" (flat array with {day,
       });
     }
 
-    // ——— Czy w ogóle jest sens odpalać dqAgent?
+    // ——— dqAgent tylko jeśli mamy dane
     const everyMealEmpty = Object.values(dietPlan).every((arr: any) =>
       Array.isArray(arr) && arr.every((m: any) => {
         const hasIngr = Array.isArray(m?.ingredients) && m.ingredients.length > 0;
@@ -301,7 +344,7 @@ Expected top-level: "dietPlan" (object by day) OR "meals" (flat array with {day,
     if (everyMealEmpty) {
       sseWrite(res, { type: "warn", message: "⚠️ Plan nie zawiera składników ani makr – pomijam dqAgent." });
     } else {
-      // 🔧 dqAgent potrzebuje struktury: Record<string, Record<string, Meal>>
+      // dqAgent expects: Record<string, Record<string, Meal>>
       const structuredForDQ: Record<string, Record<string, any>> = {};
       for (const day of Object.keys(dietPlan)) {
         const arr = Array.isArray(dietPlan[day]) ? dietPlan[day] : [];
@@ -332,17 +375,16 @@ Expected top-level: "dietPlan" (object by day) OR "meals" (flat array with {day,
           conditions: form.conditions ?? [],
           dqChecks: form?.medical_data?.dqChecks ?? {}
         });
-
-        // dqAgent zwraca: { type: "dietPlan", plan: Record<string, Meal[]>, violations: [] }
         if (improved?.plan && typeof improved.plan === "object") {
-          dietPlan = improved.plan;
+          // upewnij się, że pozostajemy przy EN kluczach:
+          dietPlan = rekeyDietPlanToEnglish(improved.plan as any);
         }
       } catch (e: any) {
         sseWrite(res, { type: "warn", message: `⚠️ dqAgent nie powiódł się: ${e?.message || "unknown"}` });
       }
     }
 
-    // ——— Finalny event (front ustawi stan dopiero na to)
+    // ——— Finalny event
     sseWrite(res, { type: "final", result: { ...parsed, dietPlan } });
 
     clearInterval(ping);
