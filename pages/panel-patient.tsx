@@ -27,6 +27,135 @@ import SelectMealsPerDayForm from '@/components/SelectMealsPerDay';
 import ProgressOverlay from '@/components/ProgressOverlay';
 import { useRef } from 'react';
 
+// ==== SSE + naprawa kształtu z API ====
+
+async function generateDietStreaming(
+  payload: any,
+  onDelta: (t: string) => void,
+  onFinal: (data: any) => void
+) {
+  const res = await fetch("/api/generate-diet", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = "";
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+
+    const frames = buf.split("\n\n"); // każda ramka SSE kończy się pustą linią
+    buf = frames.pop() || "";
+
+    for (const frame of frames) {
+      const line = frame.split("\n").find(l => l.startsWith("data: "));
+      if (!line) continue;
+
+      const jsonStr = line.slice(6); // usuń prefix "data: "
+      let evt: any;
+      try { evt = JSON.parse(jsonStr); } catch { continue; }
+
+      if (evt.type === "delta") {
+        onDelta?.(evt.text || "");
+      } else if (evt.type === "final") {
+        onFinal?.(evt.result);
+      } else if (evt.type === "error") {
+        throw new Error(evt.message || "Stream error");
+      }
+      // "start", "warn", "ping" możesz logować wg uznania
+    }
+  }
+}
+
+function mapIndexToDayName(idx: string | number, lang: string): string {
+  const days: Record<string, string[]> = {
+    pl: ["Poniedziałek","Wtorek","Środa","Czwartek","Piątek","Sobota","Niedziela"],
+    en: ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
+    de: ["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"],
+    fr: ["Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi","Dimanche"],
+    es: ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"],
+    ua: ["Понеділок","Вівторок","Середа","Четвер","П’ятниця","Субота","Неділя"],
+    ru: ["Понедельник","Вторник","Среда","Четверг","Пятница","Суббота","Воскресенье"],
+    zh: ["星期一","星期二","星期三","星期四","星期五","星期六","星期日"],
+    ar: ["الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت","الأحد"],
+    hi: ["सोमवार","मंगलवार","बुधवार","गुरुवार","शुक्रवार","शनिवार","रविवार"],
+    he: ["יום שני","יום שלישי","יום רביעי","יום חמישי","יום שישי","שבת","יום ראשון"]
+  };
+  const arr = days[lang] || days.pl;
+  const n = typeof idx === "string" ? parseInt(idx, 10) : idx;
+  return Number.isFinite(n) && arr[n] ? arr[n] : String(idx);
+}
+
+function parseQuantityToNumber(q: any): { weight: number|null, unit?: string } {
+  if (q == null) return { weight: null };
+  if (typeof q === "number") return { weight: q, unit: "g" };
+  if (typeof q !== "string") return { weight: null };
+  const s = q.trim().toLowerCase();
+  const mG = s.match(/^(\d+(?:[.,]\d+)?)\s*g$/);
+  if (mG) return { weight: parseFloat(mG[1].replace(",", ".")), unit: "g" };
+  const mMl = s.match(/^(\d+(?:[.,]\d+)?)\s*ml$/);
+  if (mMl) return { weight: parseFloat(mMl[1].replace(",", ".")), unit: "ml" };
+  const mNum = s.match(/^(\d+(?:[.,]\d+)?)$/); // "1", "2"
+  if (mNum) return { weight: parseFloat(mNum[1]), unit: "pcs" };
+  return { weight: null };
+}
+
+function repairStreamResult(result: any, lang: string) {
+  // wybierz dietPlan z możliwych miejsc
+  let plan = result?.dietPlan ?? result?.CORRECTED_JSON?.dietPlan ?? result?.CORRECTED_JSON ?? {};
+
+  const out: Record<string, Meal[]> = {};
+  for (const [dayKey, val] of Object.entries(plan || {})) {
+    const dayName = /^\d+$/.test(String(dayKey)) ? mapIndexToDayName(dayKey, lang) : (dayKey as string);
+
+    // ogarnij różne kształty dnia
+    let meals: any[] = [];
+    if (val && typeof val === "object" && !Array.isArray(val) && Array.isArray((val as any).meals)) {
+      meals = (val as any).meals;
+    } else if (Array.isArray(val)) {
+      meals = val;
+    } else if (val && typeof val === "object") {
+      meals = Object.values(val);
+    }
+
+    out[dayName] = (meals || []).map((m: any) => {
+      const ing = (m.ingredients || []).map((i: any) => {
+        const product = i.product ?? i.name ?? i.item ?? "";
+        const { weight, unit } = parseQuantityToNumber(i.weight ?? i.quantity);
+        return {
+          product,
+          weight: weight ?? 0,
+          unit: unit ?? (weight != null ? "g" : undefined),
+        };
+      });
+
+      return {
+        name: m.name ?? m.mealName ?? m.meal ?? "Posiłek",
+        menu: m.menu ?? m.mealName ?? m.meal ?? "Posiłek",
+        time: m.time ?? "",
+        glycemicIndex: m.glycemicIndex ?? m.gi ?? 0,
+        ingredients: ing,
+        macros: {
+          kcal: 0, protein: 0, fat: 0, carbs: 0,
+          fiber: 0, sodium: 0, potassium: 0, calcium: 0, magnesium: 0,
+          iron: 0, zinc: 0, vitaminD: 0, vitaminB12: 0, vitaminC: 0,
+          vitaminA: 0, vitaminE: 0, vitaminK: 0,
+          ...(m.macros ?? m.nutrition ?? {})
+        },
+        day: dayName
+      } as Meal;
+    });
+  }
+
+  return { ...result, dietPlan: out as Record<string, Meal[]> };
+}
+
 function parseRawDietPlan(raw: any): Record<string, Meal[]> {
   const parsed: Record<string, Meal[]> = {};
 
@@ -440,96 +569,56 @@ const handleGenerateDiet = async () => {
     return;
   }
   if (form?.model === 'Dieta eliminacyjna' && (!interviewData || Object.keys(interviewData).length === 0)) {
-  alert(tUI('interviewRequiredForElimination', lang));
-  setProgress(0);
-  setProgressMessage('');
-  return;
-}
+    alert(tUI('interviewRequiredForElimination', lang));
+    setProgress(0);
+    setProgressMessage('');
+    return;
+  }
 
   try {
-    const goalMap: Record<string, string> = {
-      lose: 'The goal is weight reduction.',
-      gain: 'The goal is to gain muscle mass.',
-      maintain: 'The goal is to maintain current weight.',
-      detox: 'The goal is detoxification and cleansing.',
-      regen: 'The goal is regeneration of the body and immune system.',
-      liver: 'The goal is to support liver function and reduce toxin load.',
-      kidney: 'The goal is to support kidney function and manage fluid/sodium balance.'
-    };
-
-    const recommendation = interviewData.recommendation?.trim();
-    const goalExplanation = goalMap[interviewData.goal] || '';
-
     setProgressMessage(tUI('sendingDataToAI', lang));
     startFakeProgress(20, 95, 300000);
+    // (opcjonalnie) pokaż spinner
+    // setIsGenerating(true);
 
-    const res = await fetch('/api/generate-diet', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    await generateDietStreaming(
+      {
         form,
         interviewData,
+        testResults: medicalData?.json,          // jeśli masz
+        medicalDescription: medicalData?.summary, // jeśli masz
         lang,
-        goalExplanation,
-        recommendation,
-        medical: medicalData
-      })
-    });
+      },
+      // onDelta — możesz pokazywać „pisanie”
+      (t) => setStreamingText(prev => prev + t),
+      // onFinal — dopiero tu wrzucamy dietę
+      (result) => {
+        setProgress(70);
+        setProgressMessage(tUI('validatingDiet', lang));
 
-    if (!res.body) throw new Error('Brak treści w odpowiedzi serwera.');
+        const fixed = repairStreamResult(result, lang); // <- napraw kształt po serwerze
+        // możesz użyć bezpośrednio, zamiast przepuszczać przez parseRawDietPlan
+        setEditableDiet(fixed.dietPlan as Record<string, Meal[]>);
+        setDietApproved(true);
 
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder('utf-8');
-    let rawText = '';
-    let rawCompleteText = '';
-    let done = false;
+        stopFakeProgress();
+        setProgress(100);
+        setProgressMessage(tUI('dietReady', lang));
+        setTimeout(() => {
+          setProgress(0);
+          setProgressMessage('');
+        }, 1000);
+      }
+    );
 
-    while (!done) {
-      const { value, done: doneReading } = await reader.read();
-      done = doneReading;
-      const chunk = decoder.decode(value, { stream: true });
-      rawText += chunk;
-      rawCompleteText += chunk;
-      setStreamingText(rawText);
-    }
-
-    setProgress(70);
-    setProgressMessage(tUI('validatingDiet', lang));
-
-    // ✅ Spróbuj sparsować wynik
-    let json;
-    try {
-      json = JSON.parse(rawCompleteText);
-    } catch (e) {
-      console.error('❌ Błąd parsowania JSON z diety:', rawCompleteText);
-      alert(tUI('dietGenerationFailed', lang));
-      stopFakeProgress();
-      setProgress(0);
-      setProgressMessage('');
-      return;
-    }
-
-    if (json.dietPlan && typeof json.dietPlan === 'object') {
-      const parsed = parseRawDietPlan(json.dietPlan || json.correctedDietPlan);
-      setEditableDiet(parsed);
-      setDietApproved(true);
-      stopFakeProgress();
-      setProgress(100);
-      setProgressMessage(tUI('dietReady', lang));
-      setTimeout(() => {
-        setProgress(0);
-        setProgressMessage('');
-      }, 1000);
-      return;
-    }
-
-    throw new Error('Brak poprawnego obiektu dietPlan');
   } catch (err) {
     console.error(`${tUI('dietGenerationErrorPrefix', lang)} ${err}`);
     alert(tUI('dietGenerationFailed', lang));
     stopFakeProgress();
     setProgress(0);
     setProgressMessage('');
+  } finally {
+    // setIsGenerating(false);
   }
 };
 
