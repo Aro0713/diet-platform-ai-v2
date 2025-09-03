@@ -224,6 +224,8 @@ export default function PatientPanelPage(): React.JSX.Element {
   const [doctorList, setDoctorList] = useState<{ id: string; name: string; email: string }[]>([]);
   const [selectedDoctor, setSelectedDoctor] = useState<string>('');
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const generatingRef = useRef(false);
+  const abortRef = useRef<AbortController | null>(null);
   const [isSending, setIsSending] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState<string>('none');
   const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
@@ -555,8 +557,73 @@ const saveDietToSupabaseOnly = async () => {
     setProgressMessage('');
   }
 };
+async function generateDietStreaming(
+  payload: any,
+  {
+    onPartial,
+    onFinal,
+    onStatus
+  }: {
+    onPartial: (day: string, meals: any[], progress?: number) => void;
+    onFinal: (data: any) => void;
+    onStatus?: (phase: string, meta?: any) => void;
+  }
+) {
+  // przerwij ewentualny poprzedni strumień
+  abortRef.current?.abort();
+  const controller = new AbortController();
+  abortRef.current = controller;
+
+  const res = await fetch("/api/generate-diet", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    signal: controller.signal,
+  });
+  if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = "";
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+
+    const frames = buf.split("\n\n");
+    buf = frames.pop() || "";
+
+    for (const frame of frames) {
+      if (!frame.startsWith("data:")) continue;
+
+      const jsonStr = frame.slice(5).trim(); // po "data:"
+      let evt: any;
+      try { evt = JSON.parse(jsonStr); } catch { continue; }
+
+      if (evt.type === "partial") {
+        // ⬅️ dzień po dniu
+        onPartial?.(evt.day, evt.meals || [], evt.progress);
+      } else if (evt.type === "final") {
+        onFinal?.(evt.result);
+      } else if (evt.type === "status" || evt.type === "warn") {
+        onStatus?.(evt.phase || evt.type, evt);
+      } else if (evt.type === "timeout") {
+        // serwer zamknął po ~270s – mamy częściowy plan
+        onStatus?.("timeout", evt);
+        return; // przerywamy czytanie, spinner zamknie onStatus/timeout po stronie UI
+      } else if (evt.type === "error") {
+        throw new Error(evt.message || "Stream error");
+      }
+      // "delta"/"ping" ignorujemy
+    }
+  }
+}
 
 const handleGenerateDiet = async () => {
+  if (generatingRef.current) return; // 🔒 anty-pętla
+  generatingRef.current = true;
+
   setProgress(5);
   setProgressMessage(tUI('startingDietGeneration', lang));
   setStreamingText('');
@@ -564,53 +631,65 @@ const handleGenerateDiet = async () => {
 
   if (!medicalData) {
     alert(tUI('medicalApprovalRequired', lang));
-    setProgress(0);
-    setProgressMessage('');
+    setProgress(0); setProgressMessage('');
+    generatingRef.current = false;
     return;
   }
   if (form?.model === 'Dieta eliminacyjna' && (!interviewData || Object.keys(interviewData).length === 0)) {
     alert(tUI('interviewRequiredForElimination', lang));
-    setProgress(0);
-    setProgressMessage('');
+    setProgress(0); setProgressMessage('');
+    generatingRef.current = false;
     return;
   }
 
   try {
-    setProgressMessage(tUI('sendingDataToAI', lang));
-    startFakeProgress(20, 95, 300000);
-    // (opcjonalnie) pokaż spinner
-    // setIsGenerating(true);
+    // animacja paska; front nie wisi, bo dostajemy "partial"
+    startFakeProgress(10, 95, 300000);
+    setIsGenerating(true);
+    setEditableDiet({}); // czyścimy widok przed nową generacją
 
     await generateDietStreaming(
       {
         form,
         interviewData,
-        testResults: medicalData?.json,          // jeśli masz
-        medicalDescription: medicalData?.summary, // jeśli masz
+        testResults: medicalData?.json,
+        medicalDescription: medicalData?.summary,
         lang,
       },
-      // onDelta — możesz pokazywać „pisanie”
-      (t) => setStreamingText(prev => prev + t),
-      // onFinal — dopiero tu wrzucamy dietę
-      (result) => {
-        setProgress(70);
-        setProgressMessage(tUI('validatingDiet', lang));
+      {
+        onPartial: (day, meals, prog) => {
+          // 🧩 dokładamy kolumnę dnia
+          setEditableDiet((prev: Record<string, Meal[]> | undefined) => {
+          const next: Record<string, Meal[]> = { ...(prev ?? {}) };
+          next[day as string] = (Array.isArray(meals) ? (meals as Meal[]) : []);
+          return next;
+        });
+          if (typeof prog === 'number') setProgress(Math.max(10, Math.min(prog, 99)));
+          setProgressMessage(`${tUI('writingDiet', lang)} — ${day}`);
+        },
+        onStatus: (phase) => {
+          if (phase === 'timeout') {
+            stopFakeProgress();
+            setProgress(100);
+            setProgressMessage(tUI('dietReady', lang));
+            setTimeout(() => { setProgress(0); setProgressMessage(''); }, 800);
+          }
+        },
+        onFinal: (result) => {
+          setProgress(70);
+          setProgressMessage(tUI('validatingDiet', lang));
 
-        const fixed = repairStreamResult(result, lang); // <- napraw kształt po serwerze
-        // możesz użyć bezpośrednio, zamiast przepuszczać przez parseRawDietPlan
-        setEditableDiet(fixed.dietPlan as Record<string, Meal[]>);
-        setDietApproved(true);
+          const fixed = repairStreamResult(result, lang);
+          setEditableDiet(fixed.dietPlan as Record<string, Meal[]>);
+          setDietApproved(true);
 
-        stopFakeProgress();
-        setProgress(100);
-        setProgressMessage(tUI('dietReady', lang));
-        setTimeout(() => {
-          setProgress(0);
-          setProgressMessage('');
-        }, 1000);
+          stopFakeProgress();
+          setProgress(100);
+          setProgressMessage(tUI('dietReady', lang));
+          setTimeout(() => { setProgress(0); setProgressMessage(''); }, 800);
+        }
       }
     );
-
   } catch (err) {
     console.error(`${tUI('dietGenerationErrorPrefix', lang)} ${err}`);
     alert(tUI('dietGenerationFailed', lang));
@@ -618,9 +697,11 @@ const handleGenerateDiet = async () => {
     setProgress(0);
     setProgressMessage('');
   } finally {
-    // setIsGenerating(false);
+    setIsGenerating(false);
+    generatingRef.current = false; // 🔓 odblokuj kolejne generowanie
   }
 };
+
 
 async function saveDraftToSupabaseWithDoctor(email: string): Promise<void> {
   try {
