@@ -208,6 +208,8 @@ function normalizeDietData(input: any): Record<string, Meal[]> {
 
   return parsed;
 }
+type DietMeta = { goal?: string; model?: string; cuisine?: string; mealsPerDay?: number };
+
 interface DietTableProps {
   editableDiet: Record<string, Meal[]>;
   setEditableDiet: (diet: Record<string, Meal[]>) => void;
@@ -216,6 +218,8 @@ interface DietTableProps {
   lang: LangKey;
   notes: Record<string, string>;
   setNotes: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  // (opcjonalnie) jeśli kiedyś będziesz chciał podać meta osobno:
+  // context?: DietMeta;
 }
 
 const getFallbackMeal = (): Meal => ({
@@ -289,12 +293,20 @@ const DietTable: React.FC<DietTableProps> = ({
   notes,
   setNotes,
 }) => {
-  const [saveMessage, setSaveMessage] = useState('');
-  const safeDiet = normalizeDietData(editableDiet);
-  const dayKeys = Object.keys(safeDiet);
-  const translatedDays = dayKeys.map((dayKey) =>
-    translationsUI[dayKey.toLowerCase()]?.[lang] || dayKey || '???'
-  );
+const [saveMessage, setSaveMessage] = useState('');
+
+// meta jedzie razem z dietą w kluczu __meta
+const meta: DietMeta = (editableDiet as any)?.__meta || {};
+// do renderu pomijamy klucze techniczne zaczynające się od "__"
+const dietOnly = Object.fromEntries(
+  Object.entries(editableDiet || {}).filter(([k]) => !k.startsWith('__'))
+);
+
+const safeDiet = normalizeDietData(dietOnly);
+const dayKeys = Object.keys(safeDiet);
+const translatedDays = dayKeys.map((dayKey) =>
+  translationsUI[dayKey.toLowerCase()]?.[lang] || dayKey || '???'
+);
 
   const maxMealCount = Math.max(...Object.values(safeDiet).map((meals) => meals.length));
 
@@ -357,17 +369,35 @@ return (
   <div className="overflow-auto">
     <table className="min-w-full border border-gray-600 bg-[#1a1e2c]/90 text-white shadow-md rounded-md overflow-hidden">
       <thead>
-        <tr>
-          {translatedDays.map((day, idx) => (
-            <th
-              key={day + idx}
-              className="border border-gray-600 bg-gray-800 text-sm font-semibold text-white px-4 py-2 text-center"
-            >
-              {day}
-            </th>
-          ))}
-        </tr>
-      </thead>
+  {(meta.goal || meta.model || meta.cuisine || typeof meta.mealsPerDay === 'number') && (
+    <tr>
+      <th
+        colSpan={dayKeys.length || 7}
+        className="border border-gray-600 bg-gray-900 text-[12px] md:text-sm text-white px-4 py-2"
+      >
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+          {meta.goal && <span>🎯 {meta.goal}</span>}
+          {meta.model && <span>🧬 {meta.model}</span>}
+          {meta.cuisine && <span>🍽️ {meta.cuisine}</span>}
+          {typeof meta.mealsPerDay === 'number' && (
+            <span>🍱 {meta.mealsPerDay} {translationsUI.mealsPerDay?.[lang] || 'posiłki/dzień'}</span>
+          )}
+        </div>
+      </th>
+    </tr>
+  )}
+  <tr>
+    {translatedDays.map((day, idx) => (
+      <th
+        key={day + idx}
+        className="border border-gray-600 bg-gray-800 text-sm font-semibold text-white px-4 py-2 text-center"
+      >
+        {day}
+      </th>
+    ))}
+  </tr>
+</thead>
+
       <tbody>
         {Array.from({ length: maxMealCount }).map((_, mealIndex) => (
           <tr key={mealIndex}>
