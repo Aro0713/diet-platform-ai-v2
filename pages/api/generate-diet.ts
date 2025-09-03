@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { generateDiet } from "@/agents/dietAgent"; // <-- funkcja (adapter) z dietAgenta
+import { generateDiet } from "@/agents/dietAgent"; 
 
 // --- stałe / helpers ---
 const DAYS_EN = ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"] as const;
@@ -56,61 +56,127 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: []
     };
 
-    for (let i = 0; i < DAYS_EN.length; i++) {
-      const day = DAYS_EN[i];
-      sseWrite(res, { type: "status", phase: "day-start", day, progress: Math.round((i / 7) * 100) });
+// --- CACHE na pełny plan, gdy agent zwróci od razu wszystko
+let cachedFull: Record<DayKey, any[]> | null = null;
 
-      let singleRes: any | null = null;
+// pomoc: mapuj PL -> EN klucze jeśli trzeba
+const mapDayKeyToEn = (k: string): DayKey => {
+  const n = k.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
+  const dict: Record<string, DayKey> = {
+    poniedzialek: "monday", wtorek: "tuesday", sroda: "wednesday",
+    czwartek: "thursday", piatek: "friday", sobota: "saturday", niedziela: "sunday",
+    monday:"monday", tuesday:"tuesday", wednesday:"wednesday",
+    thursday:"thursday", friday:"friday", saturday:"saturday", sunday:"sunday",
+  };
+  return dict[n] ?? "monday";
+};
 
-      // 1a) jeśli dietAgent umie singleDay — użyj
-      try {
-        singleRes = await generateDiet({
-          form, interviewData, testResults, medicalDescription, lang,
-          singleDay: day, mealsPerDay
-        });
-      } catch (e) {
-        console.warn("singleDay failed for", day, e);
-      }
+const extractWeekToCache = (raw: any): Record<DayKey, any[]> | null => {
+  const src = raw?.dietPlan ?? raw ?? null;
+  if (!src || typeof src !== "object") return null;
+  const out: Record<DayKey, any[]> = {
+    monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: []
+  };
+  let seen = 0;
+  for (const [k, v] of Object.entries(src)) {
+    const key = mapDayKeyToEn(k);
+    const arr = Array.isArray(v) ? v : Array.isArray((v as any).meals) ? (v as any).meals : null;
+    if (arr) { out[key] = arr; seen++; }
+  }
+  return seen > 1 ? out : null; // >1 dnia = to raczej pełny tydzień
+};
 
-      // 1b) fallback: gdy brak singleDay → poproś dietAgenta o CAŁOŚĆ tylko RAZ (na pierwszej iteracji),
-      // a potem bierz poszczególne dni z tego wyniku
-      if (!singleRes) {
-        if (i === 0) {
-          sseWrite(res, { type: "status", phase: "agent-run-full" });
-          const fullRes = await generateDiet({ form, interviewData, testResults, medicalDescription, lang, mealsPerDay });
-          if (!fullRes?.dietPlan) {
-            sseWrite(res, { type: "error", message: "❌ dietAgent nie zwrócił dietPlan" });
-            clearTimeout(hardEnd); clearInterval(ping); return res.end();
-          }
-          // zbuforuj całość do partialPlan
-          for (const k of Object.keys(fullRes.dietPlan)) {
-            const key = (k as string).toLowerCase() as DayKey;
-            if ((DAYS_EN as readonly string[]).includes(key)) {
-              partialPlan[key] = Array.isArray(fullRes.dietPlan[k]) ? fullRes.dietPlan[k] : [];
-            }
-          }
-        }
-      } else {
-        // mamy wynik tylko dla danego dnia
-        const plan = singleRes?.dietPlan ?? singleRes ?? {};
-        partialPlan[day] = Array.isArray(plan[day]) ? plan[day] :
-                           Array.isArray(plan?.[day]?.meals) ? plan[day].meals : [];
-      }
+// 🚀 Główna pętla (ale respektuje cache)
+for (let i = 0; i < DAYS_EN.length; i++) {
+  const day = DAYS_EN[i];
+  sseWrite(res, { type: "status", phase: "day-start", day, progress: Math.round((i / 7) * 100) });
 
-      // wyślij kawałek do UI od razu
-      sseWrite(res, { type: "partial", day, meals: partialPlan[day] || [], progress: Math.min(95, Math.round(((i + 1) / 7) * 100)) });
+  // jeśli mamy cache pełnego tygodnia, nie wołamy już agenta — tylko streamujemy
+  if (cachedFull) {
+    sseWrite(res, { type: "partial", day, meals: cachedFull[day] || [], progress: Math.min(95, Math.round(((i + 1) / 7) * 100)) });
+    // po ostatnim dniu zamknij
+    if (i === DAYS_EN.length - 1) {
+      sseWrite(res, { type: "final", result: { dietPlan: cachedFull } });
+      clearTimeout(hardEnd); clearInterval(ping);
+      return res.end();
     }
+    continue;
+  }
 
-    // 2) FINISH — pełny plan
-    sseWrite(res, { type: "final", result: { dietPlan: partialPlan } });
+  // spróbuj singleDay
+  let singleRes: any | null = null;
+  try {
+    singleRes = await generateDiet({
+      form, interviewData, testResults, medicalDescription, lang,
+      singleDay: day, mealsPerDay
+    });
+  } catch {}
 
-    clearTimeout(hardEnd);
-    clearInterval(ping);
+  // ⬇️ jeśli odpowiedź singleDay ZAWIERA cały tydzień — zbuforuj i natychmiast wyślij resztę
+  const maybeWeekFromSingle = extractWeekToCache(singleRes);
+  if (maybeWeekFromSingle) {
+    cachedFull = maybeWeekFromSingle;
+    // wyślij bieżący dzień
+    sseWrite(res, { type: "partial", day, meals: cachedFull[day] || [], progress: Math.min(95, Math.round(((i + 1) / 7) * 100)) });
+    // dostreamuj pozostałe dni BEZ dalszych wywołań agenta
+    for (let j = i + 1; j < DAYS_EN.length; j++) {
+      const d = DAYS_EN[j];
+      sseWrite(res, { type: "partial", day: d, meals: cachedFull[d] || [], progress: Math.min(95, Math.round(((j + 1) / 7) * 100)) });
+    }
+    sseWrite(res, { type: "final", result: { dietPlan: cachedFull } });
+    clearTimeout(hardEnd); clearInterval(ping);
     return res.end();
-  } catch (err: any) {
-    sseWrite(res, { type: "error", message: `❌ ${err?.message || "Unknown error"}` });
-    clearTimeout(hardEnd);
-    clearInterval(ping);
+  }
+
+  if (!singleRes) {
+    // fallback: wygeneruj RAZ pełny plan i zcache’uj
+    if (i === 0) {
+      sseWrite(res, { type: "status", phase: "agent-run-full" });
+      const fullRes = await generateDiet({ form, interviewData, testResults, medicalDescription, lang, mealsPerDay });
+      const maybeWeek = extractWeekToCache(fullRes);
+      if (!maybeWeek) {
+        sseWrite(res, { type: "error", message: "❌ dietAgent nie zwrócił dietPlan" });
+        clearTimeout(hardEnd); clearInterval(ping); return res.end();
+      }
+      cachedFull = maybeWeek;
+    } else {
+      // jeśli nie mamy cache, a to nie pierwszy dzień — to i tak bez sensu wołać agenta kolejny raz
+      sseWrite(res, { type: "warn", message: "⚠️ Missing cache; skipping extra agent call" });
+      cachedFull = { monday:[],tuesday:[],wednesday:[],thursday:[],friday:[],saturday:[],sunday:[] };
+    }
+  } else {
+    // normalna ścieżka: singleDay zwrócił tylko jeden dzień
+    const plan = singleRes?.dietPlan ?? singleRes ?? {};
+    const dayMeals = Array.isArray(plan[day]) ? plan[day] :
+                     Array.isArray(plan?.[day]?.meals) ? plan[day].meals : [];
+    sseWrite(res, { type: "partial", day, meals: dayMeals, progress: Math.min(95, Math.round(((i + 1) / 7) * 100)) });
+  }
+
+  // jeśli właśnie powstał cache pełnego planu — od razu dostreamuj resztę i kończ
+  if (cachedFull) {
+    // bieżący dzień mógł nie być wypchnięty — zadbaj o to
+    if (cachedFull[day] && (i === 0 || !singleRes)) {
+      sseWrite(res, { type: "partial", day, meals: cachedFull[day] || [], progress: Math.min(95, Math.round(((i + 1) / 7) * 100)) });
+    }
+    for (let j = i + 1; j < DAYS_EN.length; j++) {
+      const d = DAYS_EN[j];
+      sseWrite(res, { type: "partial", day: d, meals: cachedFull[d] || [], progress: Math.min(95, Math.round(((j + 1) / 7) * 100)) });
+    }
+    sseWrite(res, { type: "final", result: { dietPlan: cachedFull } });
+    clearTimeout(hardEnd); clearInterval(ping);
     return res.end();
   }
 }
+// (gdyby pętla przeszła bez cache — tu można jeszcze wysłać empty final)
+sseWrite(res, { type: "final", result: { dietPlan: {} } });
+clearTimeout(hardEnd);
+clearInterval(ping);
+return res.end();
+
+} catch (err: any) {
+  sseWrite(res, { type: "error", message: `❌ ${err?.message || "Unknown error"}` });
+  clearTimeout(hardEnd);
+  clearInterval(ping);
+  return res.end();
+}
+} 
