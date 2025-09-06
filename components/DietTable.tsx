@@ -3,6 +3,39 @@ import { Meal } from '@/types';
 import { LangKey } from '@/utils/i18n';
 import { translationsUI } from '@/utils/translationsUI';
 
+const normKey = (s: any) =>
+  String(s ?? '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/\s+/g, '_');
+
+function localizeMeta(val: any, lang: LangKey): string {
+  const raw = String(val ?? '').trim();
+  if (!raw) return '';
+  const k = normKey(raw);
+
+  // spróbuj bezpośrednio z translationsUI
+  const candidates = [raw, k, `goal_${k}`, `model_${k}`, `cuisine_${k}`];
+  for (const c of candidates) {
+    const hit = (translationsUI as any)?.[c]?.[lang];
+    if (hit) return hit;
+  }
+
+  // najczęstsze skróty z UI
+  const shorts: Record<string, Partial<Record<LangKey, string>>> = {
+    lose: { pl: 'Odchudzające (redukujące)', en: 'Weight loss' },
+    gain: { pl: 'Na masę', en: 'Muscle gain' },
+    maintain: { pl: 'Stabilizujące wagę', en: 'Weight maintenance' },
+    italian: { pl: 'Włoska', en: 'Italian' },
+    polish: { pl: 'Polska', en: 'Polish' },
+  };
+  if (shorts[k]?.[lang]) return shorts[k]![lang] as string;
+
+  // fallback
+  return raw.charAt(0).toUpperCase() + raw.slice(1);
+}
+
 function isNumericKeyObject(o: any): boolean {
   return o && typeof o === "object" && !Array.isArray(o) &&
          Object.keys(o).some(k => /^\d+$/.test(k));
@@ -376,9 +409,9 @@ return (
         className="border border-gray-600 bg-gray-900 text-[12px] md:text-sm text-white px-4 py-2"
       >
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
-          {meta.goal && <span>🎯 {meta.goal}</span>}
-          {meta.model && <span>🧬 {meta.model}</span>}
-          {meta.cuisine && <span>🍽️ {meta.cuisine}</span>}
+         {meta.goal   && <span>🎯 {localizeMeta(meta.goal,   lang)}</span>}
+          {meta.model  && <span>🧬 {localizeMeta(meta.model,  lang)}</span>}
+          {meta.cuisine&& <span>🍽️ {localizeMeta(meta.cuisine,lang)}</span>}
           {typeof meta.mealsPerDay === 'number' && (
             <span>🍱 {meta.mealsPerDay} {translationsUI.mealsPerDay?.[lang] || 'posiłki/dzień'}</span>
           )}
