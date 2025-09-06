@@ -804,27 +804,6 @@ const result = await import("@/agents/dqAgent").then(m =>
   })
 );
 
-// 🧠 Walidacja i poprawa przez dqAgent – bez parsowania
-try {
-  const { plan } = await import("@/agents/dqAgent").then(m =>
-    m.dqAgent.run({
-      dietPlan: confirmedPlan,
-      model: modelKey,
-      goal: goalExplanation,
-      cpm,
-      weightKg: form.weight ?? null,
-      conditions: hasMedicalData ? form.conditions ?? [] : []
-    })
-  );
-
-  if (plan) {
-    parsed.correctedDietPlan = plan;
-  }
-} catch (err) {
-  console.warn("⚠️ dqAgent błąd:", err);
-}
-
-
   // ✅ Zwróć poprawioną lub oryginalną wersję
 return {
   type: "json",

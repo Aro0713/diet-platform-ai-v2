@@ -68,6 +68,15 @@ export const dqAgent = {
       preferModels?: string[];
     };
   }) => {
+    
+// ⛳ Szybka ścieżka: bez LLM, oddaj plan jak jest (wymuś LLM przez USE_DQ_LLM=1)
+if (process.env.USE_DQ_LLM !== "1") {
+  return {
+    type: "dietPlan",
+    plan: convertStructuredToFlatPlan(dietPlan),
+    violations: []
+  };
+}
 
     const mergedRequirements = mergeRequirements([model, ...(conditions ?? [])]);
  const prompt = `You are a clinical dietitian AI and diet quality controller.

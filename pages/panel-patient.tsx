@@ -679,8 +679,19 @@ const handleGenerateDiet = async () => {
           setProgress(70);
           setProgressMessage(tUI('validatingDiet', lang));
 
-          const fixed = repairStreamResult(result, lang);
-          setEditableDiet(fixed.dietPlan as Record<string, Meal[]>);
+           const fixed = repairStreamResult(result, lang);
+          const model = result?.model ?? String(form?.model ?? '');
+          const cuisine = result?.cuisine ?? String(interviewData?.cuisine ?? '');
+
+          setEditableDiet({
+            ...(fixed.dietPlan as Record<string, Meal[]>),
+            __meta: {
+              model,
+              cuisine,
+              goal: interviewData?.goal,
+              mealsPerDay: Number(interviewData?.mealsPerDay) || undefined
+            }
+          } as any);
           setDietApproved(true);
 
           stopFakeProgress();
