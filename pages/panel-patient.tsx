@@ -580,7 +580,15 @@ async function generateDietStreaming(
     body: JSON.stringify(payload),
     signal: controller.signal,
   });
+  
   if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+  // 🔁 Fallback: jeśli API nie streamuje SSE, tylko zwraca JSON
+  const ct = res.headers.get("content-type") || "";
+  if (!ct.includes("text/event-stream")) {
+    const data = await res.json();
+    onFinal?.(data);
+    return; // ⬅️ kończymy bez czytania strumienia
+  }
 
   const reader = res.body.getReader();
   const decoder = new TextDecoder();

@@ -51,6 +51,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       plan[day] = normalizeMeals(plan[day]);
     }
 
+        // zwięzłe logi do Vercel (bez PII i bez pełnego JSON)
+  (() => {
+    const dayKeys = Object.keys(plan);
+    const mealsCount = dayKeys.reduce((acc, d) => acc + (Array.isArray(plan[d]) ? plan[d].length : 0), 0);
+    const sample =
+      dayKeys.slice(0, 2).map(d => {
+        const meals = Array.isArray(plan[d]) ? plan[d] : [];
+        const names = meals.slice(0, 2).map((m: any) => m?.menu || m?.mealName || m?.name).filter(Boolean);
+        return `${d}:${names.join("|")}`;
+      }).join(" ; ");
+    console.log(`[diet] OK — days=${dayKeys.length} meals=${mealsCount} sample=${sample}`);
+  })();
+
     // Zwięzły log (bez wypisywania całego JSON)
     try {
       const dayCount = Object.keys(plan).length;
