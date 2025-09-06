@@ -580,7 +580,7 @@ async function generateDietStreaming(
     body: JSON.stringify(payload),
     signal: controller.signal,
   });
-  
+
   if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
   // 🔁 Fallback: jeśli API nie streamuje SSE, tylko zwraca JSON
   const ct = res.headers.get("content-type") || "";
@@ -686,10 +686,21 @@ const handleGenerateDiet = async () => {
         onFinal: (result) => {
           setProgress(70);
           setProgressMessage(tUI('validatingDiet', lang));
+        const fixed = repairStreamResult(result, lang);
 
-           const fixed = repairStreamResult(result, lang);
-          const model = result?.model ?? String(form?.model ?? '');
-          const cuisine = result?.cuisine ?? String(interviewData?.cuisine ?? '');
+        // meta z wyniku lub z formularza/wywiadu
+        const model   = result?.model   ?? String(form?.model ?? '');
+        const cuisine = result?.cuisine ?? String(interviewData?.cuisine ?? '');
+        const goal    = interviewData?.goal ?? '';
+        const mealsPerDay = Number(interviewData?.mealsPerDay) || undefined;
+
+        // diet + meta dla nagłówka tabeli (Cel, Model, Kuchnia, Liczba posiłków)
+        setEditableDiet({
+          ...(fixed.dietPlan as Record<string, Meal[]>),
+          __meta: { goal, model, cuisine, mealsPerDay }
+        } as any);
+
+        setDietApproved(true);
 
           setEditableDiet({
             ...(fixed.dietPlan as Record<string, Meal[]>),
