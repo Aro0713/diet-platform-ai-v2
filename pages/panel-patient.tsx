@@ -914,11 +914,14 @@ const handleShowDoctors = async () => {
       hasPaid={hasPaid}
     />
         {hasPaid && (
-        <p className="text-sm text-green-400 text-center mt-2">
-          Twój plan: <strong>{subscriptionStatus}</strong><br />
-          ważny do: <strong>{formatDate(subscriptionExpiresAt)}</strong>
-        </p>
-      )}
+      <p
+        className="text-sm text-green-400 text-center mt-2"
+        dir={['ar','he'].includes(lang) ? 'rtl' : undefined}
+      >
+        {tUI('yourPlan', lang)} <strong>{subscriptionStatus}</strong><br />
+        {tUI('validUntil', lang)} <strong>{formatDate(subscriptionExpiresAt)}</strong>
+      </p>
+    )}
 
             {/* Główna zawartość */}
       <div className="z-10 flex flex-col w-full max-w-[1000px] mx-auto gap-6 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 mt-20 dark:text-white transition-colors animate-flip-in origin-center">

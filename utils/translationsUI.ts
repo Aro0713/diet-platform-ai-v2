@@ -1741,19 +1741,6 @@ time: {
   ar: "الوقت",
   he: "שעה"
 },
-calories: {
-  pl: "Kalorie",
-  en: "Calories",
-  es: "Calorías",
-  fr: "Calories",
-  de: "Kalorien",
-  ua: "Калорії",
-  ru: "Калории",
-  zh: "卡路里",
-  hi: "कैलोरी",
-  ar: "سعرات حرارية",
-  he: "קלוריות"
-},
 ingredients: {
   pl: "Składniki",
   en: "Ingredients",
@@ -2473,19 +2460,6 @@ save: {
   ar: "حفظ",
   he: "שמור"
 },
-fiber: {
-  pl: "Błonnik",
-  en: "Fiber",
-  es: "Fibra",
-  fr: "Fibre",
-  de: "Ballaststoffe",
-  ua: "Клітковина",
-  ru: "Клетчатка",
-  zh: "纤维",
-  hi: "रेशा",
-  ar: "الألياف",
-  he: "סיבים"
-},
 potassium: {
   pl: "Potas",
   en: "Potassium",
@@ -2499,19 +2473,7 @@ potassium: {
   ar: "البوتاسيوم",
   he: "אשלגן"
 },
-sodium: {
-  pl: "Sód",
-  en: "Sodium",
-  de: "Natrium",
-  fr: "Sodium",
-  es: "Sodio",
-  ru: "Натрий",
-  ua: "Натрій",
-  zh: "钠",
-  hi: "सोडियम",
-  ar: "صوديوم",
-  he: "נתרן"
-},
+
 dailyNutritionSummaryTitle: {
   pl: "📊 Dzienne podsumowanie makroskładników",
   en: "📊 Daily Nutrition Summary",
@@ -2827,6 +2789,15 @@ medicalConfirmationMessage: {
   ar: 'تم حفظ بياناتك. يمكنك الآن الانتقال إلى المقابلة لإخباري بتفضيلاتك ونمط حياتك. لماذا أقترح ذلك؟ كلما عرفت أكثر، زادت قدرتي على إعداد نظام غذائي مناسب لك. وإذا لم ترغب — أحترم ذلك. يمكنك مشاهدة بياناتك بالأرقام 📊🔢 أو الانتقال مباشرة إلى خطة النظام الغذائي 🍽️.',
   he: 'הנתונים שלך נשמרו. עכשיו תוכל לעבור לריאיון ולספר לי על ההעדפות ואורח החיים שלך. למה אני מציע את זה? ככל שאדע יותר – התפריט יהיה מותאם יותר בשבילך. אם לא בא לך – אני מכבד את זה. תוכל לראות את עצמך במספרים 📊🔢 או פשוט לעבור לתפריט התזונה 🍽️.',
 },
+yourPlan: {
+  pl: "Twój plan:", en: "Your plan:", es: "Tu plan:", fr: "Votre forfait :", de: "Dein Plan:",
+  ua: "Ваш план:", ru: "Ваш план:", zh: "您的方案：", hi: "आपकी योजना:", ar: "خطتك:", he: "התוכנית שלך:"
+},
+validUntil: {
+  pl: "ważny do:", en: "valid until:", es: "válido hasta:", fr: "בתוקף עד:", de: "gültig bis:",
+  ua: "дійсний до:", ru: "действует до:", zh: "有效期至：", hi: "तक मान्य:", ar: "ساري حتى:", he: "בתוקף עד:"
+},
+
 interviewConfirmationMessage: {
   pl: 'Dziękuję za uzupełnienie wywiadu! Możesz teraz skorzystać z kalkulatora, który obliczy Twoje parametry żywieniowe 📊, albo od razu przejść do planu diety 🍽️.',
   en: 'Thanks for completing the interview! You can now use the calculator to estimate your nutrition 📊, or go directly to the diet plan 🍽️.',
@@ -5678,19 +5649,6 @@ dietitianUnlimited: {
   hi: 'मरीज़ों के लिए आहार योजनाएँ बनाने की असीमित सुविधा। उन डॉक्टरों और डाइटीशियन के लिए आदर्श जो कई लोगों के साथ काम करते हैं।',
   he: 'גישה בלתי מוגבלת ליצירת תוכניות תזונה למטופלים. אידיאלי לרופאים ודיאטנים המטפלים במספר רב של מטופלים.'
 },
-validUntil: {
-  pl: 'Ważny do',
-  en: 'Valid until',
-  de: 'Gültig bis',
-  fr: 'Valide jusqu’au',
-  es: 'Válido hasta',
-  ua: 'Діє до',
-  ru: 'Действителен до',
-  zh: '有效期至',
-  ar: 'صالح حتى',
-  hi: 'मान्य है',
-  he: 'בתוקף עד'
-},
 vatNoteExempt: {
   pl: 'Sprzedaż zwolniona z VAT na podstawie art. 43 ust. 1 pkt 19 ustawy o podatku od towarów i usług (Dz.U. 2004 nr 54 poz. 535 z późn. zm.), PKD 96.04.Z',
   en: 'VAT-exempt sale under Art. 43 sec. 1 pt. 19 of the VAT Act (Journal of Laws 2004 No. 54, item 535 as amended) and PKD 96.04.Z',
@@ -6729,6 +6687,92 @@ cuisine_arctic: {
   ar: "حمية القطب الشمالي / سيبيريا",
   hi: "आर्कटिक / साइबेरियाई आहार",
   he: "דיאטה ארקטית / סיבירית"
+},
+// === DietTable i18n ===
+calories: {
+  pl: "Kalorie", en: "Calories", es: "Calorías", fr: "Calories", de: "Kalorien",
+  ua: "Калорії", ru: "Калории", zh: "卡路里", hi: "कैलोरी", ar: "السعرات", he: "קלוריות"
+},
+gi: {
+  pl: "IG", en: "GI", es: "IG", fr: "IG", de: "GI",
+  ua: "ГІ", ru: "ГИ", zh: "GI", hi: "GI", ar: "GI", he: "GI"
+},
+
+// skróty makro (1–2 litery w danym języku)
+proteinShort: {
+  pl: "B", en: "P", es: "P", fr: "P", de: "E",
+  ua: "Б", ru: "Б", zh: "蛋", hi: "प्र", ar: "ب", he: "ח"
+},
+fatShort: {
+  pl: "T", en: "F", es: "G", fr: "L", de: "F",
+  ua: "Ж", ru: "Ж", zh: "脂", hi: "व", ar: "د", he: "ש"
+},
+carbsShort: {
+  pl: "W", en: "C", es: "C", fr: "G", de: "K",
+  ua: "В", ru: "У", zh: "碳", hi: "का", ar: "ك", he: "פ"
+},
+
+// mikro i minerały (pełne nazwy — do opisów)
+fiber: {
+  pl: "Błonnik", en: "Fiber", es: "Fibra", fr: "Fibres", de: "Ballaststoffe",
+  ua: "Клітковина", ru: "Клетчатка", zh: "膳食纤维", hi: "फाइबर", ar: "الألياف", he: "סיבים תזונתיים"
+},
+sodium: {
+  pl: "Sód", en: "Sodium", es: "Sodio", fr: "Sodium", de: "Natrium",
+  ua: "Натрій", ru: "Натрий", zh: "钠", hi: "सोडियम", ar: "صوديوم", he: "נתרן"
+},
+calcium: {
+  pl: "Wapń", en: "Calcium", es: "Calcio", fr: "Calcium", de: "Kalzium",
+  ua: "Кальцій", ru: "Кальций", zh: "钙", hi: "कैल्शियम", ar: "كالسيوم", he: "סידן"
+},
+magnesium: {
+  pl: "Magnez", en: "Magnesium", es: "Magnesio", fr: "Magnésium", de: "Magnesium",
+  ua: "Магній", ru: "Магний", zh: "镁", hi: "मैग्नीशियम", ar: "مغنيسيوم", he: "מגנזיום"
+},
+iron: {
+  pl: "Żelazo", en: "Iron", es: "Hierro", fr: "Fer", de: "Eisen",
+  ua: "Залізо", ru: "Железо", zh: "铁", hi: "लोहा", ar: "حديد", he: "ברזל"
+},
+zinc: {
+  pl: "Cynk", en: "Zinc", es: "Zinc", fr: "Zinc", de: "Zink",
+  ua: "Цинк", ru: "Цинк", zh: "锌", hi: "जिंक", ar: "زنك", he: "אבץ"
+},
+
+// witaminy – krótkie formy
+vitaminD_short: {
+  pl: "Wit. D", en: "Vit. D", es: "Vit. D", fr: "Vit. D", de: "Vit. D",
+  ua: "Віт. D", ru: "Вит. D", zh: "维D", hi: "वि. D", ar: "فيتامين د", he: "ויט. D"
+},
+vitaminB12_short: {
+  pl: "B12", en: "B12", es: "B12", fr: "B12", de: "B12",
+  ua: "B12", ru: "B12", zh: "B12", hi: "B12", ar: "B12", he: "B12"
+},
+vitaminC_short: {
+  pl: "Wit. C", en: "Vit. C", es: "Vit. C", fr: "Vit. C", de: "Vit. C",
+  ua: "Віт. C", ru: "Вит. C", zh: "维C", hi: "वि. C", ar: "فيتامين ج", he: "ויט. C"
+},
+vitaminA_short: {
+  pl: "Wit. A", en: "Vit. A", es: "Vit. A", fr: "Vit. A", de: "Vit. A",
+  ua: "Віт. A", ru: "Вит. A", zh: "维A", hi: "वि. A", ar: "فيتامين أ", he: "ויט. A"
+},
+vitaminE_short: {
+  pl: "Wit. E", en: "Vit. E", es: "Vit. E", fr: "Vit. E", de: "Vit. E",
+  ua: "Віт. E", ru: "Вит. E", zh: "维E", hi: "वि. E", ar: "فيتامين هـ", he: "ויט. E"
+},
+vitaminK_short: {
+  pl: "Wit. K", en: "Vit. K", es: "Vit. K", fr: "Vit. K", de: "Vit. K",
+  ua: "Віт. K", ru: "Вит. K", zh: "维K", hi: "वि. K", ar: "فيتامين ك", he: "ויט. K"
+},
+
+// jednostki
+g:  { pl: "g",  en: "g",  es: "g",  fr: "g",  de: "g",  ua: "г",   ru: "г",   zh: "克",     hi: "ग्राम",     ar: "غ",    he: "גרם" },
+mg: { pl: "mg", en: "mg", es: "mg", fr: "mg", de: "mg", ua: "мг",  ru: "мг",  zh: "毫克",   hi: "मि.ग्रा",   ar: "ملغ",  he: "מ״ג" },
+mcg:{ pl: "µg", en: "µg", es: "µg", fr: "µg", de: "µg", ua: "мкг", ru: "мкг", zh: "微克",   hi: "माइक्रोग्राम", ar: "مكغ", he: "מק״ג" },
+
+// podpis 7-dniowej sumy i etykieta "posiłki/dzień"
+weeklyTotal: {
+  pl: "7 dni razem:", en: "7 days total:", es: "Total 7 días:", fr: "Total 7 jours :", de: "Summe 7 Tage:",
+  ua: "Разом за 7 днів:", ru: "Итого за 7 дней:", zh: "7天合计：", hi: "7 दिनों का योग:", ar: "إجمالي 7 أيام:", he: "סה״כ 7 ימים:"
 },
 
 };

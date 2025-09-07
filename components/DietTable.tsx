@@ -326,7 +326,32 @@ const DietTable: React.FC<DietTableProps> = ({
   notes,
   setNotes,
 }) => {
-const [saveMessage, setSaveMessage] = useState('');
+// lokalizowane etykiety makro/mikro i skróty jednostek
+const t = (k: string, fb: string) => (translationsUI as any)?.[k]?.[lang] ?? fb;
+const L = {
+  calories:        t('calories', 'Calories'),
+  gi:               t('gi', 'GI'),
+  proteinShort:     t('proteinShort', 'P'),
+  fatShort:         t('fatShort', 'F'),
+  carbsShort:       t('carbsShort', 'C'),
+  fiber:            t('fiber', 'Fiber'),
+  sodium:           t('sodium', 'Sodium'),
+  potassium:        t('potassium', 'Potassium'),
+  calcium:          t('calcium', 'Calcium'),
+  magnesium:        t('magnesium', 'Magnesium'),
+  iron:             t('iron', 'Iron'),
+  zinc:             t('zinc', 'Zinc'),
+  vitaminD:         t('vitaminD_short', 'Vit. D'),
+  vitaminB12:       t('vitaminB12_short', 'B12'),
+  vitaminC:         t('vitaminC_short', 'Vit. C'),
+  vitaminA:         t('vitaminA_short', 'Vit. A'),
+  vitaminE:         t('vitaminE_short', 'Vit. E'),
+  vitaminK:         t('vitaminK_short', 'Vit. K'),
+  g:                t('g', 'g'),
+  mg:               t('mg', 'mg'),
+  mcg:              t('mcg', 'µg'),
+};
+
 
 // meta jedzie razem z dietą w kluczu __meta
 const meta: DietMeta = (editableDiet as any)?.__meta || {};
@@ -335,14 +360,12 @@ const dietOnly = Object.fromEntries(
   Object.entries(editableDiet || {}).filter(([k]) => !k.startsWith('__'))
 );
 
-const safeDiet = normalizeDietData(dietOnly);
-const dayKeys = Object.keys(safeDiet);
-const translatedDays = dayKeys.map((dayKey) =>
-  translationsUI[dayKey.toLowerCase()]?.[lang] || dayKey || '???'
-);
-
-  const maxMealCount = Math.max(...Object.values(safeDiet).map((meals) => meals.length));
-
+  const safeDiet = normalizeDietData(dietOnly);
+  const dayKeys = Object.keys(safeDiet);
+  const translatedDays = dayKeys.map((dayKey) =>
+    translationsUI[dayKey.toLowerCase()]?.[lang] || dayKey || '???'
+  );
+  const maxMealCount = Math.max(0, ...Object.values(safeDiet).map((meals) => meals.length));
   const handleInputChange = (day: string, mealIndex: number, field: keyof Meal, value: string) => {
   const updatedDayMeals = [...(editableDiet[day] || [])];
   const meal = updatedDayMeals[mealIndex] ? { ...updatedDayMeals[mealIndex] } : getFallbackMeal();
@@ -388,16 +411,19 @@ const translatedDays = dayKeys.map((dayKey) =>
     return true;
   };
 
-  const handleSave = () => {
-    if (validateDiet()) {
-      setConfirmedDiet(editableDiet);
-      setSaveMessage('✅ Zapisano zmiany');
-      setTimeout(() => setSaveMessage(''), 3000);
-    } else {
-      setSaveMessage('❌ Uzupełnij wszystkie pola');
-      setTimeout(() => setSaveMessage(''), 4000);
-    }
-  };
+  const [saveMessage, setSaveMessage] = React.useState<string>('');
+
+  const handleSave = React.useCallback(() => {
+  if (validateDiet()) {
+    setConfirmedDiet(editableDiet);
+    setSaveMessage('✅ Zapisano zmiany');
+    window.setTimeout(() => setSaveMessage(''), 3000);
+  } else {
+    setSaveMessage('❌ Uzupełnij wszystkie pola');
+    window.setTimeout(() => setSaveMessage(''), 4000);
+  }
+}, [editableDiet, dayKeys, setConfirmedDiet]);
+
 return (
   <div className="overflow-auto">
     <table className="min-w-full border border-gray-600 bg-[#1a1e2c]/90 text-white shadow-md rounded-md overflow-hidden">
@@ -469,20 +495,20 @@ return (
                     </ul>
                     )}
                     <div className="text-xs text-gray-400">
-                      Kalorie: {meal.macros?.kcal && meal.macros.kcal > 0 ? `${round(meal.macros.kcal)} kcal` : '–'} | IG: {meal.glycemicIndex > 0 ? meal.glycemicIndex : '–'}
+                    {L.calories}: {meal.macros?.kcal && meal.macros.kcal > 0 ? `${round(meal.macros.kcal)} kcal` : '–'} | {L.gi}: {meal.glycemicIndex > 0 ? meal.glycemicIndex : '–'}
                     </div>
                     {meal.macros && (
                       <div className="text-xs text-gray-500 leading-tight whitespace-pre-wrap">
-                        B: {round(meal.macros.protein ?? 0)}g, T: {round(meal.macros.fat ?? 0)}g, W: {round(meal.macros.carbs ?? 0)}g
-                        <br />
-                        🌿 Błonnik: {round(meal.macros.fiber ?? 0)}g | 🧂 Sód: {round(meal.macros.sodium ?? 0)}mg | 🥔 Potas: {round(meal.macros.potassium ?? 0)}mg
-                        <br />
-                        🦴 Wapń: {round(meal.macros.calcium ?? 0)}mg | 🧬 Magnez: {round(meal.macros.magnesium ?? 0)}mg | 🩸 Żelazo: {round(meal.macros.iron ?? 0)}mg | 🧪 Cynk: {round(meal.macros.zinc ?? 0)}mg
-                        <br />
-                        ☀️ Wit. D: {round(meal.macros.vitaminD ?? 0)}µg | 🧠 B12: {round(meal.macros.vitaminB12 ?? 0)}µg | 🍊 C: {round(meal.macros.vitaminC ?? 0)}mg
-                        <br />
-                        👁️ A: {round(meal.macros.vitaminA ?? 0)}µg | 🧈 E: {round(meal.macros.vitaminE ?? 0)}mg | 💉 K: {round(meal.macros.vitaminK ?? 0)}µg
-                      </div>
+                      {L.proteinShort}: {round(meal.macros.protein ?? 0)}{L.g}, {L.fatShort}: {round(meal.macros.fat ?? 0)}{L.g}, {L.carbsShort}: {round(meal.macros.carbs ?? 0)}{L.g}
+                      <br />
+                      🌿 {L.fiber}: {round(meal.macros.fiber ?? 0)}{L.g} | 🧂 {L.sodium}: {round(meal.macros.sodium ?? 0)}{L.mg} | 🥔 {L.potassium}: {round(meal.macros.potassium ?? 0)}{L.mg}
+                      <br />
+                      🦴 {L.calcium}: {round(meal.macros.calcium ?? 0)}{L.mg} | 🧬 {L.magnesium}: {round(meal.macros.magnesium ?? 0)}{L.mg} | 🩸 {L.iron}: {round(meal.macros.iron ?? 0)}{L.mg} | 🧪 {L.zinc}: {round(meal.macros.zinc ?? 0)}{L.mg}
+                      <br />
+                      ☀️ {L.vitaminD}: {round(meal.macros.vitaminD ?? 0)}{L.mcg} | 🧠 {L.vitaminB12}: {round(meal.macros.vitaminB12 ?? 0)}{L.mcg} | 🍊 {L.vitaminC}: {round(meal.macros.vitaminC ?? 0)}{L.mg}
+                      <br />
+                      👁️ {L.vitaminA}: {round(meal.macros.vitaminA ?? 0)}{L.mcg} | 🧈 {L.vitaminE}: {round(meal.macros.vitaminE ?? 0)}{L.mg} | 💉 {L.vitaminK}: {round(meal.macros.vitaminK ?? 0)}{L.mcg}
+                    </div>
                     )}
                   </div>
                 </td>
@@ -495,12 +521,12 @@ return (
             const macros = sumDailyMacros(safeDiet[day] || []);
             return (
               <td key={day + '_sum'} className="border border-gray-600 px-2 py-1 text-left text-gray-300 whitespace-pre-wrap align-top">
-                B: {round(macros.protein)}g, T: {round(macros.fat)}g, W: {round(macros.carbs)}g<br />
-                🌿 Błonnik: {round(macros.fiber)}g | 🧂 Sód: {round(macros.sodium)}mg | 🥔 Potas: {round(macros.potassium)}mg<br />
-                🦴 Wapń: {round(macros.calcium)}mg | 🧬 Magnez: {round(macros.magnesium)}mg | 🩸 Żelazo: {round(macros.iron)}mg | 🧪 Cynk: {round(macros.zinc)}mg<br />
-                ☀️ Wit. D: {round(macros.vitaminD)}µg | 🧠 B12: {round(macros.vitaminB12)}µg | 🍊 C: {round(macros.vitaminC)}mg<br />
-                👁️ A: {round(macros.vitaminA)}µg | 🧈 E: {round(macros.vitaminE)}mg | 💉 K: {round(macros.vitaminK)}µg
-              </td>
+              {L.proteinShort}: {round(macros.protein)}{L.g}, {L.fatShort}: {round(macros.fat)}{L.g}, {L.carbsShort}: {round(macros.carbs)}{L.g}<br />
+              🌿 {L.fiber}: {round(macros.fiber)}{L.g} | 🧂 {L.sodium}: {round(macros.sodium)}{L.mg} | 🥔 {L.potassium}: {round(macros.potassium)}{L.mg}<br />
+              🦴 {L.calcium}: {round(macros.calcium)}{L.mg} | 🧬 {L.magnesium}: {round(macros.magnesium)}{L.mg} | 🩸 {L.iron}: {round(macros.iron)}{L.mg} | 🧪 {L.zinc}: {round(macros.zinc)}{L.mg}<br />
+              ☀️ {L.vitaminD}: {round(macros.vitaminD)}{L.mcg} | 🧠 {L.vitaminB12}: {round(macros.vitaminB12)}{L.mcg} | 🍊 {L.vitaminC}: {round(macros.vitaminC)}{L.mg}<br />
+              👁️ {L.vitaminA}: {round(macros.vitaminA)}{L.mcg} | 🧈 {L.vitaminE}: {round(macros.vitaminE)}{L.mg} | 💉 {L.vitaminK}: {round(macros.vitaminK)}{L.mcg}
+            </td>
             );
           })}
         </tr>
@@ -514,11 +540,11 @@ return (
               return (
                 <>
                   <div dangerouslySetInnerHTML={{ __html: translationsUI.weeklyTotal?.[lang] || '7 dni razem:' }} />
-                  B: {round(weekly.protein)}g, T: {round(weekly.fat)}g, W: {round(weekly.carbs)}g<br />
-                  🌿 Błonnik: {round(weekly.fiber)}g | 🧂 Sód: {round(weekly.sodium)}mg | 🥔 Potas: {round(weekly.potassium)}mg<br />
-                  🦴 Wapń: {round(weekly.calcium)}mg | 🧬 Magnez: {round(weekly.magnesium)}mg | 🩸 Żelazo: {round(weekly.iron)}mg | 🧪 Cynk: {round(weekly.zinc)}mg<br />
-                  ☀️ Wit. D: {round(weekly.vitaminD)}µg | 🧠 B12: {round(weekly.vitaminB12)}µg | 🍊 C: {round(weekly.vitaminC)}mg<br />
-                  👁️ A: {round(weekly.vitaminA)}µg | 🧈 E: {round(weekly.vitaminE)}mg | 💉 K: {round(weekly.vitaminK)}µg
+                  {L.proteinShort}: {round(weekly.protein)}{L.g}, {L.fatShort}: {round(weekly.fat)}{L.g}, {L.carbsShort}: {round(weekly.carbs)}{L.g}<br />
+                  🌿 {L.fiber}: {round(weekly.fiber)}{L.g} | 🧂 {L.sodium}: {round(weekly.sodium)}{L.mg} | 🥔 {L.potassium}: {round(weekly.potassium)}{L.mg}<br />
+                  🦴 {L.calcium}: {round(weekly.calcium)}{L.mg} | 🧬 {L.magnesium}: {round(weekly.magnesium)}{L.mg} | 🩸 {L.iron}: {round(weekly.iron)}{L.mg} | 🧪 {L.zinc}: {round(weekly.zinc)}{L.mg}<br />
+                  ☀️ {L.vitaminD}: {round(weekly.vitaminD)}{L.mcg} | 🧠 {L.vitaminB12}: {round(weekly.vitaminB12)}{L.mcg} | 🍊 {L.vitaminC}: {round(weekly.vitaminC)}{L.mg}<br />
+                  👁️ {L.vitaminA}: {round(weekly.vitaminA)}{L.mcg} | 🧈 {L.vitaminE}: {round(weekly.vitaminE)}{L.mg} | 💉 {L.vitaminK}: {round(weekly.vitaminK)}{L.mcg}
                 </>
               );
             })()}
