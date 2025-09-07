@@ -421,7 +421,26 @@ const saveDietToSupabaseAndPdf = async () => {
       ? parseFloat((form.weight / ((form.height / 100) ** 2)).toFixed(1))
       : 0;
 
-    const mealArray: Meal[] = (Object.values(editableDiet || {}) as Meal[][]).flat();
+    const mealArray: Meal[] = Object.entries(editableDiet || {})
+      // pomiń meta / techniczne
+      .filter(([k]) => !k.startsWith('__'))
+      // dzień może być tablicą albo mapą posiłków
+      .flatMap(([, v]: [string, any]) => Array.isArray(v) ? v : Object.values(v || {}))
+      // dopilnuj składników
+      .map((m: any) => ({
+        ...m,
+        ingredients: Array.isArray(m?.ingredients)
+          ? m.ingredients.map((i: any) => ({
+              product: i?.product ?? i?.name ?? '',
+              weight: typeof i?.weight === 'number'
+                ? i.weight
+                : typeof i?.quantity === 'number'
+                  ? i.quantity
+                  : Number(i?.weight ?? i?.quantity) || 0,
+              unit: i?.unit || (i?.weight != null || i?.quantity != null ? 'g' : undefined),
+            }))
+          : []
+      }));
     if (!mealArray.length) {
       alert(tUI('noMealsToSave', lang));
       stopFakeProgress();
@@ -1099,7 +1118,26 @@ const handleShowDoctors = async () => {
           ? parseFloat((form.weight / ((form.height / 100) ** 2)).toFixed(1))
           : 0;
 
-      const mealArray: Meal[] = (Object.values(editableDiet || {}) as Meal[][]).flat();
+      const mealArray: Meal[] = Object.entries(editableDiet || {})
+      // pomiń meta / techniczne
+      .filter(([k]) => !k.startsWith('__'))
+      // dzień może być tablicą albo mapą posiłków
+      .flatMap(([, v]: [string, any]) => Array.isArray(v) ? v : Object.values(v || {}))
+      // dopilnuj składników
+      .map((m: any) => ({
+        ...m,
+        ingredients: Array.isArray(m?.ingredients)
+          ? m.ingredients.map((i: any) => ({
+              product: i?.product ?? i?.name ?? '',
+              weight: typeof i?.weight === 'number'
+                ? i.weight
+                : typeof i?.quantity === 'number'
+                  ? i.quantity
+                  : Number(i?.weight ?? i?.quantity) || 0,
+              unit: i?.unit || (i?.weight != null || i?.quantity != null ? 'g' : undefined),
+            }))
+          : []
+      }));
 
       if (!Array.isArray(mealArray) || mealArray.length === 0) {
         alert(tUI('dietPlanEmptyOrInvalid', lang));
