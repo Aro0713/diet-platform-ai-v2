@@ -118,7 +118,6 @@ ${JSON.stringify(dietPlan, null, 2)}`;
         { role: "system", content: "You are a clinical diet quality controller for structured JSON plans." },
         { role: "user", content: prompt }
       ],
-      temperature: 0.4
     });
 
     const text = completion.choices[0].message.content ?? "";

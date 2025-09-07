@@ -413,7 +413,6 @@ const completion = await openai.chat.completions.create({
     { role: "system", content: "You are a clinical dietitian AI." },
     { role: "user", content: prompt }
   ],
-  temperature: 0.7,
   stream: true
 });
 
@@ -677,13 +676,12 @@ ${jsonFormatPreview}
 
 try {
   const stream = await openai.chat.completions.create({
-    model: "gpt-4o",
+    model: "gpt-5",
     response_format: { type: "json_object" },
     messages: [
       { role: "system", content: "You are a clinical dietitian AI." },
       { role: "user", content: prompt }
     ],
-    temperature: 0.7,
     stream: true
   });
 
