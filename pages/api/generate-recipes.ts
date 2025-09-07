@@ -40,21 +40,44 @@ function normalizeIngredients(arr: any): NormalizedIngredient[] {
   }));
 }
 
+// meal może być stringiem lub obiektem { "Śniadanie": { title, ingredients, ... } }
+function coerceMealKeyAndPayload(r: any): { mealKey: string; payload: any } {
+  const val = r?.meal;
+  if (val && typeof val === "object" && !Array.isArray(val)) {
+    const keys = Object.keys(val);
+    if (keys.length === 1) {
+      const k = String(keys[0]);
+      const payload = { ...r, ...(val[k] || {}) };
+      return { mealKey: k, payload };
+    }
+  }
+  return { mealKey: String(val ?? "").trim(), payload: r };
+}
+
 function normalizeRecipe(r: any): NormalizedRecipe {
+  const { mealKey, payload } = coerceMealKeyAndPayload(r);
+
+  const title =
+    (typeof payload?.title === "string" && payload.title.trim()) ? payload.title.trim() :
+    (typeof payload?.dish === "string" && payload.dish.trim()) ? payload.dish.trim() :
+    "";
+
+  const instructions = Array.isArray(payload?.instructions)
+    ? payload.instructions.filter((s: any) => typeof s === "string" && s.trim().length > 0).map((s: string) => s.trim())
+    : Array.isArray(payload?.steps)
+      ? payload.steps.filter((s: any) => typeof s === "string" && s.trim().length > 0).map((s: string) => s.trim())
+      : [];
+
   return {
-    day: String(r?.day ?? "").trim(),
-    meal: String(r?.meal ?? "").trim(),
-    title: String(r?.title ?? r?.dish ?? "").trim(),
-    time: r?.time ? String(r.time).trim() : undefined,
-    ingredients: normalizeIngredients(r?.ingredients),
-    instructions: Array.isArray(r?.instructions)
-      ? r.instructions
-          .filter((s: any) => typeof s === "string" && s.trim().length > 0)
-          .map((s: string) => s.trim())
-      : [],
+    day: String(payload?.day ?? r?.day ?? "").trim(),
+    meal: mealKey || String(r?.meal ?? "").trim(),
+    title,
+    time: payload?.time ? String(payload.time).trim() : undefined,
+    ingredients: normalizeIngredients(payload?.ingredients),
+    instructions,
     nutrientSummary:
-      typeof r?.nutrientSummary === "object" && r?.nutrientSummary
-        ? r.nutrientSummary
+      typeof payload?.nutrientSummary === "object" && payload?.nutrientSummary
+        ? payload.nutrientSummary
         : undefined,
   };
 }
@@ -70,25 +93,29 @@ type RecipeForUI = {
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "POST") {
-    return res.status(405).send("Method Not Allowed");
-  }
-
-  if (!req.body || !req.body.dietPlan) {
-    return res.status(400).send("Brakuje dietPlan w danych wejściowych.");
-  }
+  if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
+  if (!req.body || !req.body.dietPlan) return res.status(400).send("Brakuje dietPlan w danych wejściowych.");
 
   try {
-    // ⬇️ prosto jak w generate-diet.ts
     const result = await generateRecipes(req.body);
 
-    if (!result || typeof result !== "object" || !Array.isArray(result.recipes)) {
-      console.error("❌ Brak pola recipes (array) w odpowiedzi generateRecipes");
+    // recipeAgent może zwrócić tablicę lub (rzadziej) słownik { day: { meal: {...} } }
+    let rawRecipes: any[] = [];
+    if (Array.isArray(result?.recipes)) rawRecipes = result.recipes;
+    else if (result?.recipes && typeof result.recipes === "object") {
+      // zamień słownik na tablicę wpisów
+      for (const [day, meals] of Object.entries(result.recipes as Record<string, any>)) {
+        for (const [meal, payload] of Object.entries(meals || {})) {
+          rawRecipes.push({ day, meal, ...(payload as any) });
+        }
+      }
+    } else {
+      console.error("❌ Brak pola recipes w odpowiedzi generateRecipes");
       return res.status(500).send("Nie udało się wygenerować przepisów.");
     }
 
     // Normalizacja przepisów
-    const recipes: NormalizedRecipe[] = result.recipes.map(normalizeRecipe);
+    const recipes: NormalizedRecipe[] = rawRecipes.map(normalizeRecipe);
 
     // 🔁 Zamiana tablicy na słownik { [day]: { [meal]: RecipeForUI } }
     const recipesByDay: Record<string, Record<string, RecipeForUI>> = {};
@@ -99,17 +126,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const uiRecipe: RecipeForUI = {
         dish: r.title,
-        // te pola mogą nie występować — zachowaj opcjonalnie, z fallbackami:
         description: (r as any).description ?? undefined,
         servings: typeof (r as any).servings === "number" ? (r as any).servings : 1,
         time: r.time,
-        // name/amount/unit  →  product/weight/unit
         ingredients: r.ingredients.map(i => ({
           product: i.name,
           weight: i.amount,
           unit: i.unit,
         })),
-        // instructions → steps
         steps: r.instructions,
       };
 
@@ -117,13 +141,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       recipesByDay[dayKey][mealKey] = uiRecipe;
     }
 
-    // zwięzłe logi do Vercel (bez PII i bez pełnego JSON)
+    // zwięzłe logi do Vercel (bez PII)
     (() => {
       const total = recipes.length;
-      const sample = recipes
-        .slice(0, 2)
-        .map(r => `${r.day}/${r.meal}:${r.title}`)
-        .join(" ; ");
+      const sample = recipes.slice(0, 2).map(r => `${r.day}/${r.meal}:${r.title}`).join(" ; ");
       console.log(`[recipes] OK — count=${total} sample=${sample}`);
     })();
 
