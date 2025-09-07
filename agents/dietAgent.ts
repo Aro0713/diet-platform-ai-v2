@@ -284,7 +284,7 @@ export async function generateDiet(input: any): Promise<any> {
   } = input;
   
   const hasMedicalData = Boolean(testResults || medicalDescription);
-  const modelKey = modelMap[form.model] || form.model?.toLowerCase();
+  const modelKey =  modelMap[interviewData?.model] ||modelMap[form?.model] || (interviewData?.model ?? form?.model ?? "").toLowerCase();
   const goalExplanation = goalMap[interviewData.goal] || interviewData.goal;
   const cuisine = cuisineMap[interviewData.cuisine] || "global";
   const cuisineContext = cuisineContextMap[interviewData.cuisine] || "general healthy cooking style";

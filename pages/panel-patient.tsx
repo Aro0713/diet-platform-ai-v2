@@ -689,7 +689,7 @@ const handleGenerateDiet = async () => {
         const fixed = repairStreamResult(result, lang);
 
         // meta z wyniku lub z formularza/wywiadu
-        const model   = String(form?.model ?? result?.model ?? '');
+        const model   = String(interviewData?.model ?? form?.model ?? result?.model ?? '');
         const cuisine = String(interviewData?.cuisine ?? result?.cuisine ?? '');
         const goal    = interviewData?.goal ?? '';
         const mealsPerDay = Number(interviewData?.mealsPerDay) || undefined;
