@@ -1,80 +1,122 @@
-import { Agent } from "@openai/agents";
-import OpenAI from "openai";
+// agents/recipeAgent.ts
+import { Agent, run } from "@openai/agents";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// ✅ Mapa kuchni świata (możesz rozszerzać w jednym miejscu)
+const cuisineContextMap: Record<string, string> = {
+  "Polska": "Polish cuisine: soups, fermented vegetables, root vegetables, pork, rye bread",
+  "Włoska": "Italian cuisine: pasta, olive oil, tomatoes, basil, cheeses like mozzarella and parmesan",
+  "Japońska": "Japanese cuisine: rice, miso, seaweed, tofu, sushi, umami-rich dishes",
+  "Chińska": "Chinese cuisine: stir-fried dishes, ginger, garlic, soy sauce, rice, noodles",
+  "Tajska": "Thai cuisine: coconut milk, chili, lemongrass, coriander, sweet-spicy balance",
+  "Wietnamska": "Vietnamese cuisine: fresh herbs, rice noodles, fish sauce, light broths",
+  "Indyjska": "Indian cuisine: rich spices, curries, lentils, turmeric, ghee",
+  "Koreańska": "Korean cuisine: fermented vegetables, gochujang, rice, grilled meats",
+  "Bliskowschodnia": "Middle Eastern: legumes, olive oil, tahini, spices, flatbreads",
+  "Francuska": "French: sauces, butter, herbs de Provence, regional meats",
+  "Hiszpańska": "Spanish: olive oil, paprika, garlic, seafood, tapas",
+  "Skandynawska": "Scandinavian: rye, fish, dairy, root vegetables",
+  "Północnoamerykańska": "North American: diverse fusion, whole grains, grilling",
+  "Brazylijska": "Brazilian: rice, beans, cassava, tropical fruits",
+  "Afrykańska": "African: millet, legumes, peanut stew, bold spices",
+  "Dieta arktyczna / syberyjska": "Arctic/Siberian: fish, berries, root vegetables, animal fat"
+};
 
+// 🔐 UWAGA: „Agent” NIE przyjmuje tu temperature/response_format — same core pola.
 export const recipeAgent = new Agent({
   name: "Recipe Agent",
+  model: "gpt-5",
   instructions: `
 You are a multilingual professional chef and clinical nutritionist.
 
-Your job is to generate complete, step-by-step cooking recipes for each meal in a 7-day dietary plan provided to you.
+Your job is to generate complete, step-by-step cooking recipes for each meal in a 7-day dietary plan.
 
-Guidelines:
-- Output must be in JSON only.
-- Input is an object of format: { lang: "pl", dietPlan: { Monday: { meals: [...] }, Tuesday: ... }, nutrientFocus: ["iron", "vitaminD", ...] }
-- Use the target language from input.lang (e.g. "pl", "en", "es", "fr", etc.) for the entire output.
-- All fields – recipe title, ingredient names, and instructions – must be written in the selected language.
-- Do not mix languages. Translate everything accordingly to sound natural in the target language.
+INPUT FORMAT (you receive a single JSON string):
+{
+  "lang": "pl" | "en" | "es" | "fr" | ...,
+  "dietPlan": { /* day/meal keys to REUSE AS-IS */ },
+  "nutrientFocus": ["iron","vitaminD",...],
+  "cuisine": "Polska" | "Włoska" | ...,
+  "cuisineNote": "Resolved cuisine profile to follow (authentic)"
+}
 
-For each meal:
-- Extract: meal name, ingredients[], time (if given)
-- Generate a detailed, realistic recipe including:
-  - Cooking steps (numbered), methods, temperatures, timings
-  - Serving suggestion
-  - Use realistic culinary vocabulary for the selected language
-  - Mention utensil or method if relevant (e.g. blender, oven, frying pan)
+CRITICAL RULES:
+- Reuse EXACT day/meal KEYS from input.dietPlan; do NOT rename or translate keys themselves.
+- Translate CONTENT (titles, ingredients, instructions) to input.lang (natural style) only.
+- Follow input.cuisineNote strictly (authentic culinary profile).
+- ALWAYS include spices, herbs, fats/oils, and condiments where appropriate.
+- Prefer ingredients supporting input.nutrientFocus (if provided).
+- Units allowed: "g", "ml", "szt". Round amounts sensibly.
+- Healthy, realistic methods; numbered steps where useful.
 
-Ingredients:
-- Must be complete and realistic.
-- Always include:
-  - spices (e.g. salt, pepper, curry, chili)
-  - herbs (e.g. basil, dill, parsley)
-  - oils and fats (e.g. olive oil, butter, ghee)
-  - condiments and sauces (e.g. soy sauce, mustard)
-- When selecting such ingredients, favor those rich in vitamins and minerals (e.g. parsley for vitamin K and C, turmeric for anti-inflammatory effects, olive oil for vitamin E).
-- Remember that herbs and fats influence the nutritional profile (e.g. absorption of vitamins A, D, E, K).
-- Prefer ingredients that support the goal of the diet (e.g. iron-rich herbs for anemia support).
-- If nutrientFocus is provided, prefer ingredients that contribute to those nutrients.
-
-Output format:
+OUTPUT: JSON ONLY, with structure:
 {
   "recipes": [
     {
-      "day": "Monday",
-      "meal": "Śniadanie",
-      "title": "Jajecznica z pomidorami i szczypiorkiem",
-      "time": "07:30",
+      "day": "<day key from dietPlan>",
+      "meal": "<meal key from dietPlan>",
+      "title": "<dish title in input.lang>",
+      "time": "HH:MM" | "<short time>",
       "ingredients": [
-        { "name": "jajka", "amount": 120, "unit": "g" },
-        { "name": "masło", "amount": 10, "unit": "g" },
-        { "name": "sól", "amount": 1, "unit": "g" },
-        { "name": "pieprz", "amount": 0.5, "unit": "g" }
+        { "name": "<string>", "amount": <number>, "unit": "g" | "ml" | "szt" }
       ],
-      "instructions": [
-        "Umyj i pokrój pomidory w kostkę.",
-        "Na patelni rozgrzej odrobinę masła.",
-        "Wbij jajka i smaż mieszając.",
-        "Dodaj pomidory, mieszaj 2–3 minuty.",
-        "Dopraw solą i pieprzem, posyp szczypiorkiem i podawaj."
-      ],
-      "nutrientSummary": {
-        "protein": 18,
-        "fat": 12,
-        "carbs": 5,
-        "fiber": 1,
-        "sodium": 350,
-        "iron": 2.1,
-        "vitaminD": 1.2
-      }
+      "instructions": ["step 1", "step 2", "..."],
+      "nutrientSummary": { /* optional micronutrients if meaningful */ }
     }
   ]
 }
 
-Rules:
-- Do not return Markdown or natural language explanations.
-- Do not return any comments or metadata.
-- Return only valid, clean JSON in the expected format.
-  `,
-  model: "gpt-4o"
+Cuisine context map (reference):
+${JSON.stringify(cuisineContextMap, null, 2)}
+`.trim()
 });
+
+// —————————————————————————————————————————————
+//  Cienki wrapper jak generateDiet()  → generateRecipes()
+//  (bez temperature/response_format w opcjach run — zgodne ze starszym SDK)
+// —————————————————————————————————————————————
+
+function tryParseJsonLoose(text: string): any | null {
+  // 1) próba normalna
+  try { return JSON.parse(text); } catch {}
+
+  // 2) usuń fence'y
+  const cleaned = text.replace(/```json|```/g, "").trim();
+  try { return JSON.parse(cleaned); } catch {}
+
+  // 3) wyciągnij największy blok { ... }
+  const match = cleaned.match(/\{[\s\S]*\}$/);
+  if (match) {
+    try { return JSON.parse(match[0]); } catch {}
+  }
+  return null;
+}
+
+export async function generateRecipes(input: any): Promise<{ recipes: any[] }> {
+  const { lang = "pl", cuisine, dietPlan, nutrientFocus = [] } = input || {};
+  const cuisineNote = cuisineContextMap[cuisine] || "general culinary tradition";
+
+  const userPayload = {
+    lang,
+    nutrientFocus,
+    cuisine,
+    cuisineNote,
+    dietPlan // klucze day/meal mają zostać użyte 1:1
+  };
+
+  // starsze SDK: run(agent, input: string) → wynik może mieć różne pola; bierzemy defensywnie
+  const result: any = await run(recipeAgent, JSON.stringify(userPayload));
+  const text = String(
+    result?.finalOutput ??
+    result?.output_text ??
+    ""
+  ).trim();
+
+  const parsed = tryParseJsonLoose(text);
+  if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.recipes)) {
+    return { recipes: [] };
+  }
+  return parsed as { recipes: any[] };
+}
+
+// (opcjonalnie) eksport mapy kuchni, gdyby była potrzebna gdzie indziej
+export { cuisineContextMap };

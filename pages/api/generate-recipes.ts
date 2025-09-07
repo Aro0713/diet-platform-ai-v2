@@ -1,130 +1,81 @@
-import OpenAI from "openai";
+// pages/api/generate-recipes.ts
 import type { NextApiRequest, NextApiResponse } from "next";
+import { generateRecipes } from "@/agents/recipeAgent"; // ⬅️ tak samo jak w generate-diet.ts (generateDiet)
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// (opcjonalnie) mały, bezpieczny limit body
+export const config = { api: { bodyParser: { sizeLimit: "1mb" } } };
 
-export const config = {
-  api: {
-    bodyParser: true,
-    responseLimit: "4mb"
-  }
-};
-
-const cuisineContextMap: Record<string, string> = {
-  "Polska": "Polish cuisine: soups, fermented vegetables, root vegetables, pork, rye bread",
-  "Włoska": "Italian cuisine: pasta, olive oil, tomatoes, basil, cheeses like mozzarella and parmesan",
-  "Japońska": "Japanese cuisine: rice, miso, seaweed, tofu, sushi, umami-rich dishes",
-  "Chińska": "Chinese cuisine: stir-fried dishes, ginger, garlic, soy sauce, rice, noodles",
-  "Tajska": "Thai cuisine: coconut milk, chili, lemongrass, coriander, sweet and spicy balance",
-  "Wietnamska": "Vietnamese cuisine: fresh herbs, rice noodles, fish sauce, light broths",
-  "Indyjska": "Indian cuisine: rich spices, curries, lentils, turmeric, ghee",
-  "Koreańska": "Korean cuisine: fermented vegetables, gochujang, rice, grilled meats",
-  "Bliskowschodnia": "Middle Eastern cuisine: legumes, olive oil, tahini, spices, flatbreads",
-  "Francuska": "French cuisine: sauces, butter, herbs de Provence, regional meats",
-  "Hiszpańska": "Spanish cuisine: olive oil, paprika, garlic, seafood, tapas",
-  "Skandynawska": "Scandinavian cuisine: rye, fish, dairy, root vegetables",
-  "Północnoamerykańska": "North American cuisine: diverse fusion, whole grains, grilled dishes",
-  "Brazylijska": "Brazilian cuisine: rice, beans, cassava, tropical fruits",
-  "Afrykańska": "African cuisine: millet, legumes, peanut stew, bold spices",
-  "Dieta arktyczna / syberyjska": "Arctic/Siberian cuisine: fish, berries, root vegetables, animal fat"
-};
-
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
-
-  try {
-    const { dietPlan, lang = "pl", cuisine = "Polska", nutrientFocus = [] } = req.body;
-
-    if (!dietPlan || typeof dietPlan !== 'object') {
-      return res.status(400).json({ error: 'Invalid or missing dietPlan' });
-    }
-
-    const cuisineNote = cuisineContextMap[cuisine] || "general culinary tradition";
-
-    const prompt = `
-You are a culinary assistant AI specialized in healthy and clinical diets.
-Generate full culinary recipes for each meal in the diet plan below.
-Each meal has a dish name and a list of ingredients.
-
-Each recipe should include:
-- Dish name (as in the plan)
-- Day and meal (e.g. Monday - Śniadanie)
-- Short description (1–2 sentences)
-- Number of servings (assume 1 unless stated otherwise)
-- Ingredients: product (string), weight (number), unit (string)
-- Step-by-step preparation instructions (numbered)
-- Estimated cooking time
-- Nutrient summary: protein, fat, carbs, fiber, sodium, and all key micronutrients if available
-
-Focus on these nutrients: ${nutrientFocus.join(', ') || 'none'}
-Prefer ingredients that naturally support or increase these nutrients.
-
-All recipes must strictly follow the authentic culinary traditions and ingredient profile of: ${cuisineNote}.
-Do not adapt or localize the recipes to the patient's country or culture.
-Translate everything into: ${lang}. Use natural expressions in this language.
-
-Format strictly as JSON:
-{
-  "recipes": {
-    "Monday": {
-      "Śniadanie": {
-        "dish": "Owsianka z malinami",
-        "description": "A warm oatmeal breakfast with fresh raspberries and flax seeds.",
-        "servings": 1,
-        "ingredients": [
-          { "product": "Płatki owsiane", "weight": 60, "unit": "g" },
-          { "product": "Mleko", "weight": 200, "unit": "ml" },
-          { "product": "Maliny", "weight": 50, "unit": "g" }
-        ],
-        "steps": [...],
-        "time": "10 min",
-        "nutrientSummary": {
-          "protein": 18,
-          "fat": 6,
-          "carbs": 45,
-          "fiber": 4,
-          "sodium": 210,
-          "vitaminC": 15,
-          "iron": 1.2
-        }
-      }
-    }
-  }
+// --- Normalizacje jak w generate-diet.ts (spójny styl) ---
+function normalizeUnit(u: string | null | undefined): "g" | "ml" | "szt" {
+  const x = String(u || "").toLowerCase();
+  if (["g", "gram", "grams", "gramy"].includes(x)) return "g";
+  if (["ml", "milliliter", "milliliters", "mililitry"].includes(x)) return "ml";
+  if (["szt", "pcs", "piece", "pieces"].includes(x)) return "szt";
+  return "g";
 }
 
-Return ONLY JSON. No markdown. No comments.
+function normalizeIngredients(arr: any): Array<{ name: string; amount: number | null; unit: "g" | "ml" | "szt" }> {
+  const list = Array.isArray(arr) ? arr : [];
+  return list.map((i: any) => ({
+    name: String(i?.name ?? i?.product ?? "").trim(),
+    amount:
+      typeof i?.amount === "number" ? Math.round(i.amount) :
+      typeof i?.grams === "number" ? Math.round(i.grams) :
+      typeof i?.weight === "number" ? Math.round(i.weight) :
+      typeof i?.quantity === "number" ? Math.round(i.quantity) :
+      null,
+    unit: normalizeUnit(i?.unit),
+  }));
+}
 
-Input dietPlan:
-${JSON.stringify(dietPlan, null, 2)}
-`;
+function normalizeRecipe(r: any) {
+  return {
+    day: String(r?.day ?? "").trim(),
+    meal: String(r?.meal ?? "").trim(),
+    title: String(r?.title ?? r?.dish ?? "").trim(),
+    time: r?.time ? String(r.time).trim() : undefined,
+    ingredients: normalizeIngredients(r?.ingredients),
+    instructions: Array.isArray(r?.instructions)
+      ? r.instructions.filter((s: any) => typeof s === "string" && s.trim().length > 0).map((s: string) => s.trim())
+      : [],
+    nutrientSummary: typeof r?.nutrientSummary === "object" && r?.nutrientSummary
+      ? r.nutrientSummary
+      : undefined,
+  };
+}
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        { role: "system", content: "You are a culinary recipe AI." },
-        { role: "user", content: prompt }
-      ],
-      temperature: 0.7
-    });
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== "POST") {
+    return res.status(405).send("Method Not Allowed");
+  }
 
-    let text = completion.choices[0].message.content || "";
-    text = text.replace(/```json|```/g, '').trim();
+  // Możesz chcieć np. dietPlan + lang + cuisine + nutrientFocus – przekazujemy dalej 1:1
+  if (!req.body || !req.body.dietPlan) {
+    return res.status(400).send("Brakuje dietPlan w danych wejściowych.");
+  }
 
-    try {
-      const parsed = JSON.parse(text);
+  try {
+    // ⬇️ prosto jak w generate-diet.ts
+    const result = await generateRecipes(req.body);
 
-      if (!parsed || typeof parsed !== 'object' || !parsed.recipes || Object.keys(parsed.recipes).length === 0) {
-        console.warn("⚠️ RecipeAgent returned empty or invalid structure");
-        return res.status(200).json({ recipes: {} });
-      }
-
-      res.status(200).json(parsed);
-    } catch (err) {
-      console.error("❌ Nieprawidłowy JSON z OpenAI:", err);
-      res.status(500).send("Błąd parsowania odpowiedzi z przepisami.");
+    if (!result || typeof result !== "object" || !Array.isArray(result.recipes)) {
+      console.error("❌ Brak pola recipes (array) w odpowiedzi generateRecipes");
+      return res.status(500).send("Nie udało się wygenerować przepisów.");
     }
-  } catch (err) {
-    console.error("❌ Błąd generowania przepisów:", err);
-    res.status(500).send("Błąd serwera przy generowaniu przepisów.");
+
+    // Normalizacja przepisów
+    const recipes = result.recipes.map(normalizeRecipe);
+
+    // zwięzłe logi do Vercel (bez PII i bez pełnego JSON)
+    (() => {
+      const total = recipes.length;
+      const sample = recipes.slice(0, 2).map(r => `${r.day}/${r.meal}:${r.title}`).join(" ; ");
+      console.log(`[recipes] OK — count=${total} sample=${sample}`);
+    })();
+
+    return res.status(200).json({ ...result, recipes });
+  } catch (err: any) {
+    console.error("❌ Błąd generateRecipes:", err?.message || err);
+    return res.status(500).send("Błąd generowania przepisów.");
   }
 }

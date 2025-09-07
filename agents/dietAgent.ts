@@ -407,7 +407,7 @@ ${jsonFormatPreview}
 `;
 
 const completion = await openai.chat.completions.create({
-  model: "gpt-4o",
+  model: "gpt-5",
   response_format: { type: "json_object" },
   messages: [
     { role: "system", content: "You are a clinical dietitian AI." },

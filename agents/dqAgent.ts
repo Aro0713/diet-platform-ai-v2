@@ -68,7 +68,7 @@ export const dqAgent = {
       preferModels?: string[];
     };
   }) => {
-    
+
 // ⛳ Szybka ścieżka: bez LLM, oddaj plan jak jest (wymuś LLM przez USE_DQ_LLM=1)
 if (process.env.USE_DQ_LLM !== "1") {
   return {
@@ -113,7 +113,7 @@ Plan:
 ${JSON.stringify(dietPlan, null, 2)}`;
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-5",
       messages: [
         { role: "system", content: "You are a clinical diet quality controller for structured JSON plans." },
         { role: "user", content: prompt }

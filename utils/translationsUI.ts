@@ -6774,5 +6774,70 @@ weeklyTotal: {
   pl: "7 dni razem:", en: "7 days total:", es: "Total 7 días:", fr: "Total 7 jours :", de: "Summe 7 Tage:",
   ua: "Разом за 7 днів:", ru: "Итого за 7 дней:", zh: "7天合计：", hi: "7 दिनों का योग:", ar: "إجمالي 7 أيام:", he: "סה״כ 7 ימים:"
 },
+kcalMaintain: {
+  pl: 'Kcal (utrzymanie)',
+  en: 'Kcal (maintenance)',
+  es: 'Kcal (mantenimiento)',
+  fr: 'Kcal (maintien)',
+  de: 'Kcal (Erhaltung)',
+  ua: 'Ккал (підтримання)',
+  ru: 'Ккал (поддержание)',
+  zh: 'Kcal（维持）',
+  hi: 'कैलोरी (रखरखाव)',
+  ar: 'سعرات حرارية (الصيانة)',
+  he: 'קלוריות (תחזוקה)'
+},
+kcalReduce: {
+  pl: 'Kcal (redukcja)',
+  en: 'Kcal (reduction)',
+  es: 'Kcal (reducción)',
+  fr: 'Kcal (réduction)',
+  de: 'Kcal (Reduktion)',
+  ua: 'Ккал (зниження)',
+  ru: 'Ккал (снижение)',
+  zh: 'Kcal（减量）',
+  hi: 'कैलोरी (कमी)',
+  ar: 'سعرات حرارية (خفض)',
+  he: 'קלוריות (הפחתה)'
+},
+kcalGain: {
+  pl: 'Kcal (przyrost)',
+  en: 'Kcal (gain)',
+  es: 'Kcal (aumento)',
+  fr: 'Kcal (prise)',
+  de: 'Kcal (Zunahme)',
+  ua: 'Ккал (набір)',
+  ru: 'Ккал (набор)',
+  zh: 'Kcal（增量）',
+  hi: 'कैलोरी (वृद्धि)',
+  ar: 'سعرات حرارية (زيادة)',
+  he: 'קלוריות (עלייה)'
+},
+legend: {
+  pl: 'Legenda',
+  en: 'Legend',
+  es: 'Leyenda',
+  fr: 'Légende',
+  de: 'Legende',
+  ua: 'Легенда',
+  ru: 'Легенда',
+  zh: '图例',
+  hi: 'लीजेंड',
+  ar: 'مفتاح الرموز',
+  he: 'מקרא'
+},
+podwieczorek: {
+  pl: 'Podwieczorek',
+  en: 'Afternoon snack',
+  es: 'Merienda (tarde)',
+  fr: 'Goûter',
+  de: 'Nachmittagssnack',
+  ua: 'Полуденок',
+  ru: 'Полдник',
+  zh: '下午加餐',
+  hi: 'शाम का नाश्ता',
+  ar: 'وجبة خفيفة بعد الظهر',
+  he: 'ארוחת ביניים אחה״צ'
+},
 
 };
