@@ -10,6 +10,100 @@ import { convertInterviewAnswers } from '@/utils/interviewHelpers';
 import { supabase } from '@/lib/supabaseClient';
 import { translatedTitles } from '@/utils/translatedTitles';
 
+// ---------- Normalizatory i metryki PDF ----------
+type PdfMetrics = {
+  bmi: number | null;
+  ppm?: number | null;
+  cpm?: number | null;
+  pal?: number | null;
+  kcalMaintain?: number | null;
+  kcalReduce?: number | null;
+  kcalGain?: number | null;
+  nmcBroca?: number | null;
+  nmcLorentz?: number | null;
+};
+
+/** Bezpieczny kształt posiłków – uzupełnia brakujące pola i pilnuje tablic. */
+function ensureMealsArray(diet: Meal[] | undefined | null): Meal[] {
+  const safe: Meal[] = Array.isArray(diet) ? diet : [];
+  return safe.map((m, i) => ({
+    ...m,
+    name: m.name || m.menu || `Posiłek ${i + 1}`,
+    time: m.time || '–',
+    ingredients: Array.isArray(m.ingredients) ? m.ingredients : [],
+    macros: {
+      kcal: m.macros?.kcal ?? 0,
+      protein: m.macros?.protein ?? 0,
+      fat: m.macros?.fat ?? 0,
+      carbs: m.macros?.carbs ?? 0,
+      fiber: m.macros?.fiber ?? 0,
+      sodium: m.macros?.sodium ?? 0,
+      potassium: m.macros?.potassium ?? 0,
+      calcium: m.macros?.calcium ?? 0,
+      magnesium: m.macros?.magnesium ?? 0,
+      iron: m.macros?.iron ?? 0,
+      zinc: m.macros?.zinc ?? 0,
+      vitaminD: m.macros?.vitaminD ?? 0,
+      vitaminB12: m.macros?.vitaminB12 ?? 0,
+      vitaminC: m.macros?.vitaminC ?? 0,
+      vitaminA: m.macros?.vitaminA ?? 0,
+      vitaminE: m.macros?.vitaminE ?? 0,
+      vitaminK: m.macros?.vitaminK ?? 0,
+    },
+  }));
+}
+
+/** Liczy proste metryki dla PDF (fallback gdy calc brak lub niepełne). */
+function computePdfMetrics(
+  base: { bmi: number | null },
+  provided?: {
+    bmi?: number; ppm?: number; cpm?: number; pal?: number;
+    kcalMaintain?: number; kcalReduce?: number; kcalGain?: number;
+    nmcBroca?: number; nmcLorentz?: number;
+  },
+  diet?: Meal[]
+): PdfMetrics {
+  // Jeśli dostaliśmy komplet – po prostu zwróć
+  if (provided && (provided.ppm || provided.cpm || provided.kcalMaintain)) {
+    return {
+      bmi: provided.bmi ?? base.bmi ?? null,
+      ppm: provided.ppm ?? null,
+      cpm: provided.cpm ?? null,
+      pal: provided.pal ?? null,
+      kcalMaintain: provided.kcalMaintain ?? null,
+      kcalReduce: provided.kcalReduce ?? null,
+      kcalGain: provided.kcalGain ?? null,
+      nmcBroca: provided.nmcBroca ?? null,
+      nmcLorentz: provided.nmcLorentz ?? null,
+    };
+  }
+
+  // Prosty fallback: średnia dobowych kcal z diety → maintain;
+  // reduce/gain ±15% (zachowujemy prostotę w PDF).
+  const safe = ensureMealsArray(diet);
+  const byDate: Record<string, number> = {};
+  for (const m of safe) {
+    const d = (m as any).date || (m as any).day || 'D';
+    byDate[d] = (byDate[d] || 0) + (m.macros?.kcal ?? 0);
+  }
+  const days = Object.keys(byDate).length || 1;
+  const kcalMaintain = days ? Object.values(byDate).reduce((a, b) => a + b, 0) / days : 0;
+  const kcalReduce = Math.round(kcalMaintain * 0.85);
+  const kcalGain = Math.round(kcalMaintain * 1.15);
+
+  return {
+    bmi: base.bmi ?? null,
+    ppm: null,
+    cpm: null,
+    pal: null,
+    kcalMaintain: Math.round(kcalMaintain),
+    kcalReduce,
+    kcalGain,
+    nmcBroca: null,
+    nmcLorentz: null,
+  };
+}
+
 type Recipe = {
   dish: string;
   description: string;
@@ -44,6 +138,9 @@ export async function generateDietPdf(
 )
 
 {
+    // ✅ Normalizacja i metryki na starcie
+  const safeDiet: Meal[] = ensureMealsArray(diet);
+  const metrics: PdfMetrics = computePdfMetrics({ bmi }, calc, safeDiet);
   const pdfMake = (await import('pdfmake/build/pdfmake')).default;
   let dietitianSignature = tUI('missingData', lang);
 
@@ -96,7 +193,7 @@ if (!finalNarrative) {
 
   const content: any[] = [];
   const allergyList: string[] = [];
-  const sorted = [...diet].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+  const sorted = [...safeDiet].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
   const startDate = sorted[0]?.date || new Date().toISOString().slice(0, 10);
   const endDate = sorted[sorted.length - 1]?.date || new Date().toISOString().slice(0, 10);
 
@@ -142,19 +239,19 @@ ${tUI('region', lang)}: ${patient.region ? await getTranslation(patient.region, 
     margin: [0, 0, 0, 10]
   });
 
-  if (calc) {
+    if (metrics) {
     content.push({ text: `📊 ${tUI('calculationBlockTitle', lang)}`, style: 'subheader', margin: [0, 10, 0, 4] });
     content.push({
       ul: [
-        `BMI: ${calc.bmi}`,
-        `PPM: ${calc.ppm} kcal`,
-        `CPM: ${calc.cpm} kcal`,
-        `PAL: ${calc.pal}`,
-        `Kcal (utrzymanie): ${calc.kcalMaintain} kcal`,
-        `Kcal (redukcja): ${calc.kcalReduce} kcal`,
-        `Kcal (przyrost): ${calc.kcalGain} kcal`,
-        `NMC Broca: ${calc.nmcBroca} kg`,
-        `NMC Lorentz: ${calc.nmcLorentz} kg`
+        `BMI: ${metrics.bmi ?? 'n/a'}`,
+        `PPM: ${metrics.ppm ?? '–'} ${metrics.ppm ? 'kcal' : ''}`.trim(),
+        `CPM: ${metrics.cpm ?? '–'} ${metrics.cpm ? 'kcal' : ''}`.trim(),
+        `PAL: ${metrics.pal ?? '–'}`,
+        `${tUI('kcalMaintain', lang)}: ${metrics.kcalMaintain ?? '–'} ${metrics.kcalMaintain ? 'kcal' : ''}`.trim(),
+        `${tUI('kcalReduce', lang)}: ${metrics.kcalReduce ?? '–'} ${metrics.kcalReduce ? 'kcal' : ''}`.trim(),
+        `${tUI('kcalGain', lang)}: ${metrics.kcalGain ?? '–'} ${metrics.kcalGain ? 'kcal' : ''}`.trim(),
+        `NMC Broca: ${metrics.nmcBroca ?? '–'} ${metrics.nmcBroca ? 'kg' : ''}`.trim(),
+        `NMC Lorentz: ${metrics.nmcLorentz ?? '–'} ${metrics.nmcLorentz ? 'kg' : ''}`.trim(),
       ]
     });
   }
@@ -169,34 +266,13 @@ ${tUI('region', lang)}: ${patient.region ? await getTranslation(patient.region, 
 
     content.push({ text: finalNarrative || '⚠️ Brak opisu narracyjnego', margin: [0, 0, 0, 6] });
   }
-// przed groupedByDay
-const localizedDays = [
-  tUI("monday", lang),
-  tUI("tuesday", lang),
-  tUI("wednesday", lang),
-  tUI("thursday", lang),
-  tUI("friday", lang),
-  tUI("saturday", lang),
-  tUI("sunday", lang)
-];
-
-const normalizedDiet = diet.map((meal, idx) => {
-  if (!meal.day || meal.day === "Inne") {
-    meal.day = localizedDays[idx % 7]; // przypisz cyklicznie lub jak chcesz
-  }
-  return meal;
-});
-
- const groupedByDay: Record<string, Meal[]> = {};
-
-normalizedDiet.forEach((meal, idx) => {
-  const fallbackDay = `Dzień ${idx + 1}`;
-  const day: string = meal.day ?? fallbackDay;
-
+// Grupowanie po dniu (fallback na „Dzień N”)
+const groupedByDay: Record<string, Meal[]> = {};
+ensureMealsArray(safeDiet).forEach((meal, idx) => {
+  const day: string = (meal as any).day || (meal as any).date || `${tUI('day', lang)} ${idx + 1}`;
   if (!groupedByDay[day]) groupedByDay[day] = [];
   groupedByDay[day].push(meal);
 });
-
 
   for (const [day, meals] of Object.entries(groupedByDay)) {
     content.push({ text: `🗓️ ${day}`, style: 'subheader', margin: [0, 10, 0, 4] });
@@ -279,25 +355,39 @@ normalizedDiet.forEach((meal, idx) => {
         }
       ];
     }));
+      content.push({
+      table: {
+        widths: ['auto', 'auto', 'auto', '*'],
+        dontBreakRows: true,
+        keepWithHeaderRows: 1,
+        body: [
+          [
+            { text: tUI('mealName', lang), style: 'tableHeader' },
+            { text: tUI('time', lang), style: 'tableHeader' },
+            { text: `${tUI('calories', lang)} / IG`, style: 'tableHeader' },
+            { text: tUI('ingredients', lang), style: 'tableHeader' }
+          ],
+          ...rows.map((row) => row as any[]) // 👈 upewniamy się, że TS nie zgłasza błędu typu
+        ]
+      },
+      layout: 'lightHorizontalLines',
+      margin: [0, 0, 0, 10]
+    });
+        // Legenda skrótów pod tabelą dnia (i18n)
+        const legendAbbrev = [
+          `kcal = ${tUI('calories', lang)}`,
+          `B = ${tUI('protein', lang)}`,
+          `T = ${tUI('fat', lang)}`,
+          `W = ${tUI('carbs', lang)}`,
+          `🌿 = ${tUI('fiber', lang)}`
+        ].join('   •   ');
 
-   content.push({
-  table: {
-    widths: ['auto', 'auto', 'auto', '*'],
-    dontBreakRows: true,
-    keepWithHeaderRows: 1,
-    body: [
-      [
-        { text: tUI('mealName', lang), style: 'tableHeader' },
-        { text: tUI('time', lang), style: 'tableHeader' },
-        { text: `${tUI('calories', lang)} / IG`, style: 'tableHeader' },
-        { text: tUI('ingredients', lang), style: 'tableHeader' }
-      ],
-      ...rows.map((row) => row as any[]) // 👈 upewniamy się, że TS nie zgłasza błędu typu
-    ]
-  },
-  layout: 'lightHorizontalLines',
-  margin: [0, 0, 0, 10]
-});
+        content.push({
+          text: `${tUI('legend', lang)}: ${legendAbbrev}`,
+          style: 'smallCell',
+          margin: [0, 4, 0, 10],
+          color: '#475569'
+        });
 
   }
   // ➕ Lista zakupów z podziałem na kategorie
@@ -309,9 +399,8 @@ normalizedDiet.forEach((meal, idx) => {
     przyprawy: [],
     inne: []
   };
-
-  const shoppingList = generateShoppingList(diet);
-  const translatedItems = await Promise.all(
+    const shoppingList = generateShoppingList(safeDiet);
+    const translatedItems = await Promise.all(
     shoppingList.map(async (item) => {
       const translatedProduct = await getTranslation(item.product, lang);
       const translatedUnit = await getTranslation(item.unit, lang);
@@ -375,7 +464,7 @@ function summarizeNutritionByDay(diet: Meal[]) {
 }
 
 const format = (value: number, unit: string) => value > 0 ? `${Math.round(value)}${unit}` : '';
-const dailySummary = summarizeNutritionByDay(diet);
+const dailySummary = summarizeNutritionByDay(safeDiet);
 content.push({
   text: tUI('dailyNutritionSummaryTitle', lang),
   style: 'subheader',
