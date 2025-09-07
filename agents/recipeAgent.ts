@@ -24,7 +24,7 @@ const cuisineContextMap: Record<string, string> = {
 // 🔐 UWAGA: „Agent” NIE przyjmuje tu temperature/response_format — same core pola.
 export const recipeAgent = new Agent({
   name: "Recipe Agent",
-  model: "gpt-5",
+  model: "gpt-4o",
   instructions: `
 You are a multilingual professional chef and clinical nutritionist.
 

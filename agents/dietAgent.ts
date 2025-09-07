@@ -407,12 +407,13 @@ ${jsonFormatPreview}
 `;
 
 const completion = await openai.chat.completions.create({
-  model: "gpt-5",
+  model: "gpt-4o",
   response_format: { type: "json_object" },
   messages: [
     { role: "system", content: "You are a clinical dietitian AI." },
     { role: "user", content: prompt }
   ],
+  temperature: 0.7,
   stream: true
 });
 
@@ -676,12 +677,13 @@ ${jsonFormatPreview}
 
 try {
   const stream = await openai.chat.completions.create({
-    model: "gpt-5",
+    model: "gpt-4o",
     response_format: { type: "json_object" },
     messages: [
       { role: "system", content: "You are a clinical dietitian AI." },
       { role: "user", content: prompt }
     ],
+    temperature: 0.7,
     stream: true
   });
 
