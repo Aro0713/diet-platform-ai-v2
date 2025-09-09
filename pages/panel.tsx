@@ -197,7 +197,7 @@ const {
 const loadLatestDietFromSupabase = async (userId: string) => {
   const { data, error } = await supabase
     .from('patient_diets')
-    .select('diet, diet_plan, dietPlan, plan, status, created_at')
+    .select('diet_plan, status, created_at') // ✅ tylko istniejące kolumny
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(1)
@@ -208,20 +208,38 @@ const loadLatestDietFromSupabase = async (userId: string) => {
     return;
   }
 
-  const raw = data?.diet ?? data?.diet_plan ?? data?.dietPlan ?? data?.plan ?? null;
-  if (!raw) {
+  const rawJson = data?.diet_plan ?? null;
+  if (!rawJson) {
     console.log('ℹ️ Brak zapisanej diety dla pacjenta.');
     return;
   }
 
-  const loaded = parseRawDietPlan(raw);
-  if (Object.keys(loaded).length) {
-    setMealPlan(loaded);
-    setDiet(loaded);
-    setEditableDiet(loaded);
-  }
-};
+  // diet_plan bywa JSONB lub string → znormalizuj
+  const raw =
+    typeof rawJson === 'string'
+      ? (tryParseJSON(rawJson) ?? {})
+      : rawJson;
 
+  const loaded = parseRawDietPlan(raw);
+  if (!loaded || !Object.keys(loaded).length) {
+    console.warn('⚠️ diet_plan pusty lub w nieoczekiwanym formacie.');
+    return;
+  }
+
+  // Zasil panel
+  setMealPlan(loaded);
+  setDiet(loaded);
+  setEditableDiet(loaded);
+
+  // Spłaszcz do PDF
+  const flat = Object.entries(loaded).flatMap(([day, meals]) =>
+    (meals as Meal[]).map(m => ({ ...m, day }))
+  );
+  setConfirmedDiet(flat);
+
+  // Ustaw status zatwierdzenia wg rekordu
+  setDietApproved(data?.status === 'confirmed');
+};
 
   useEffect(() => {
   console.log("📊 form.user_id:", form?.user_id);
