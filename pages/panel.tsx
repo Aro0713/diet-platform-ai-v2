@@ -193,6 +193,34 @@ const {
   confirmDietPlan 
 } = usePatientSubmitData(form);
 
+// ⬇ pobierz najnowszą dietę pacjenta z `patient_diets`
+const loadLatestDietFromSupabase = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('patient_diets')
+    .select('diet, diet_plan, dietPlan, plan, status, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.warn('⚠️ Błąd pobierania diety pacjenta:', error.message);
+    return;
+  }
+
+  const raw = data?.diet ?? data?.diet_plan ?? data?.dietPlan ?? data?.plan ?? null;
+  if (!raw) {
+    console.log('ℹ️ Brak zapisanej diety dla pacjenta.');
+    return;
+  }
+
+  const loaded = parseRawDietPlan(raw);
+  if (Object.keys(loaded).length) {
+    setMealPlan(loaded);
+    setDiet(loaded);
+    setEditableDiet(loaded);
+  }
+};
 
 
   useEffect(() => {
@@ -200,6 +228,19 @@ const {
   console.log("📊 initialMedicalData:", initialMedicalData);
   console.log("📊 initialInterviewData:", initialInterviewData);
 }, [form, initialMedicalData, initialInterviewData]);
+
+// Gdy dieta wpadnie z bazy/hooka → pokaż ją w tabeli i umożliw PDF po zatwierdzeniu
+useEffect(() => {
+  if (editableDiet && Object.keys(editableDiet).length) {
+    setMealPlan(editableDiet);
+    setDiet(editableDiet);
+    const flat = Object.entries(editableDiet).flatMap(([day, meals]) =>
+      (meals as Meal[]).map(m => ({ ...m, day }))
+    );
+    setConfirmedDiet(flat); // PDF włączy się po wciśnięciu "Zatwierdź dietę"
+  }
+}, [editableDiet]);
+
 
   const t = (key: keyof typeof translationsUI): string => tUI(key, lang);
 
@@ -589,6 +630,7 @@ const handleSearchPatient = async () => {
     console.log('📥 Załadowano dane pacjenta:', patient.user_id);
     await loadPatientData(patient.user_id);
     setPatientLoadStatus('success');
+    await loadLatestDietFromSupabase(patient.user_id);
   } else {
     alert(tUI('accessRequestSent', lang)); // zgłoszenie wysłane, pacjent jeszcze nie istnieje
     setPatientLoadStatus('idle');
