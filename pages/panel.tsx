@@ -30,6 +30,7 @@ import { validateDiet } from '@/utils/validateDiet';
 // 🌍 Tłumaczenia
 import { tUI } from '@/utils/i18n';
 import { translationsUI } from '@/utils/translationsUI';
+import type { LangKey } from '@/utils/i18n';
 // 🔎 Tłumaczy zarówno klucze jak i już przetłumaczone wartości.
 // 1) Jeśli 'val' jest kluczem w translationsUI → tUI(val, lang)
 // 2) Jeśli 'val' jest wartością (np. "Dieta ketogeniczna") → znajdź klucz po values[lang] i przetłumacz
@@ -55,9 +56,6 @@ function tResolve(val: unknown, lang: LangKey): string {
   }
   return raw;
 }
-
-import type { LangKey } from '@/utils/i18n';
-
 import { usePatientFetchData } from '@/hooks/usePatientFetchData';
 import { usePatientSubmitData } from '@/hooks/usePatientSubmitData';
 
@@ -280,9 +278,11 @@ const loadLatestDietFromSupabase = async (userId: string) => {
   setEditableDiet(loaded);
 
   // Spłaszcz do PDF
-  const flat = Object.entries(loaded).flatMap(([day, meals]) =>
-    (meals as Meal[]).map(m => ({ ...m, day }))
-  );
+  const flat: Meal[] = [];
+  for (const [day, meals] of Object.entries(loaded)) {
+    const list = Array.isArray(meals) ? meals : Object.values(meals ?? {}) as Meal[];
+    for (const m of list) flat.push({ ...m, day });
+  }
   setConfirmedDiet(flat);
 
   // Ustaw status zatwierdzenia wg rekordu
@@ -300,10 +300,12 @@ useEffect(() => {
   if (editableDiet && Object.keys(editableDiet).length) {
     setMealPlan(editableDiet);
     setDiet(editableDiet);
-    const flat = Object.entries(editableDiet).flatMap(([day, meals]) =>
-      (meals as Meal[]).map(m => ({ ...m, day }))
-    );
-    setConfirmedDiet(flat); // PDF włączy się po wciśnięciu "Zatwierdź dietę"
+    const flat: Meal[] = [];
+    for (const [day, meals] of Object.entries(editableDiet)) {
+      const list = Array.isArray(meals) ? meals : Object.values(meals ?? {}) as Meal[];
+      for (const m of list) flat.push({ ...m, day });
+    }
+    setConfirmedDiet(flat);
   }
 }, [editableDiet]);
 
@@ -1225,53 +1227,60 @@ return (
   </div>
 
   <DietTable
-    editableDiet={editableDiet || {}}
-    setEditableDiet={setEditableDiet}
-    setConfirmedDiet={(dietByDay: any) => {
-      // obsługa: { [day]: Meal[] } | [[day, meals]] | [{day, meals}] | Meal[]
-      const asArray = (x: any): any[] =>
-        Array.isArray(x) ? x : (x && typeof x === 'object' ? Object.values(x) : []).filter(v => v != null);
+  editableDiet={editableDiet || {}}
+  setEditableDiet={setEditableDiet}
+  setConfirmedDiet={(dietByDay: any) => {
+    // zawsze zwróci tablicę
+    const asArray = (x: any): any[] =>
+      Array.isArray(x)
+        ? x
+        : (x && typeof x === 'object' ? Object.values(x) : []).filter(v => v != null);
 
-      const out: any[] = [];
-      const pushMeal = (day: string, m: any) => out.push({ ...(m || {}), day });
+    const out: any[] = [];
+    const pushMeal = (day: string, m: any) => out.push({ ...(m || {}), day });
 
-      try {
-        if (dietByDay && typeof dietByDay === 'object' && !Array.isArray(dietByDay)) {
-          for (const [day, meals] of Object.entries(dietByDay)) {
+    try {
+      if (dietByDay && typeof dietByDay === 'object' && !Array.isArray(dietByDay)) {
+        // { [day]: meals }
+        for (const [day, meals] of Object.entries(dietByDay)) {
+          for (const m of asArray(meals)) pushMeal(String(day), m);
+        }
+      } else if (Array.isArray(dietByDay)) {
+        if (dietByDay.length && Array.isArray(dietByDay[0])) {
+          // [[day, meals], ...]
+          for (const tuple of dietByDay as any[]) {
+            const [day, meals] = tuple;
             for (const m of asArray(meals)) pushMeal(String(day), m);
           }
-        } else if (Array.isArray(dietByDay)) {
-          if (dietByDay.length && Array.isArray(dietByDay[0])) {
-            for (const [day, meals] of dietByDay as any[]) {
-              for (const m of asArray(meals)) pushMeal(String(day), m);
-            }
-          } else if (
-            dietByDay.length &&
-            typeof dietByDay[0] === 'object' &&
-            dietByDay[0] !== null &&
-            ('day' in (dietByDay[0] as any) || 'meals' in (dietByDay[0] as any))
-          ) {
-            for (const item of dietByDay as any[]) {
-              const day = (item as any).day ?? '';
-              const meals = (item as any).meals ?? (item as any).items;
-              for (const m of asArray(meals)) pushMeal(String(day), m);
-            }
-          } else {
-            for (const m of dietByDay as any[]) pushMeal(String((m as any)?.day ?? ''), m);
+        } else if (
+          dietByDay.length &&
+          typeof dietByDay[0] === 'object' &&
+          dietByDay[0] !== null &&
+          ('day' in (dietByDay[0] as any) || 'meals' in (dietByDay[0] as any))
+        ) {
+          // [{ day, meals }, ...]
+          for (const item of dietByDay as any[]) {
+            const day = (item as any).day ?? '';
+            const meals = (item as any).meals ?? (item as any).items;
+            for (const m of asArray(meals)) pushMeal(String(day), m);
           }
+        } else {
+          // [meal, meal, ...]
+          for (const m of dietByDay as any[]) pushMeal(String((m as any)?.day ?? ''), m);
         }
-      } catch (e) {
-        console.warn('setConfirmedDiet normalize error:', e, dietByDay);
       }
+    } catch (e) {
+      console.warn('setConfirmedDiet normalize error:', e, dietByDay);
+    }
 
-      setConfirmedDiet(out);
-      setDietApproved(true);
-    }}
-    isEditable={!dietApproved}
-    lang={lang}
-    notes={notes}
-    setNotes={setNotes}
-  />
+    setConfirmedDiet(out);
+    setDietApproved(true);
+  }}
+  isEditable={!dietApproved}
+  lang={lang}
+  notes={notes}
+  setNotes={setNotes}
+/>
 </PanelCard>
 
 
