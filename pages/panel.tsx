@@ -1132,6 +1132,51 @@ return (
 
       {/* Sekcja 7: Tabela z dietą */}
        <PanelCard>
+          {/* 🔹 Podsumowanie: cel / model / kuchnia / liczba posiłków (jak w panelu pacjenta) */}
+            {(
+              patientChoice?.goal ||
+              patientChoice?.model ||
+              patientChoice?.cuisine ||
+              interviewData?.mealsPerDay
+            ) && (
+              <div className="mb-3">
+                <div className="flex flex-wrap gap-2">
+                  {/* Cel diety */}
+                  {patientChoice?.goal && (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-white text-xs font-semibold bg-pink-600/90">
+                      🎯 {tUI(patientChoice.goal as any, lang)}
+                    </span>
+                  )}
+
+                  {/* Model diety */}
+                  {patientChoice?.model && (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-white text-xs font-semibold bg-emerald-600/90">
+                      🧬 {tUI(patientChoice.model as any, lang)}
+                    </span>
+                  )}
+
+                  {/* Kuchnia świata */}
+                  {patientChoice?.cuisine && (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-white text-xs font-semibold bg-indigo-600/90">
+                      🌍 {tUI(patientChoice.cuisine as any, lang)}
+                    </span>
+                  )}
+
+                  {/* Liczba posiłków dziennie */}
+                  {(() => {
+                    const meals =
+                      interviewData?.mealsPerDay ??
+                      getRecommendedMealsPerDay(form, interviewData);
+                    return meals ? (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-white text-xs font-semibold bg-amber-600/90">
+                        {meals} {tUI('mealsPerDay', lang)}
+                      </span>
+                    ) : null;
+                  })()}
+                </div>
+              </div>
+            )}
+
           <DietTable
             editableDiet={editableDiet}
             setEditableDiet={setEditableDiet}
