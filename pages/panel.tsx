@@ -25,9 +25,7 @@ import ConfirmationModal from '@/components/ConfirmationModal';
 // 🧠 AI i utils
 import { convertInterviewAnswers, extractMappedInterview } from '@/utils/interviewHelpers';
 import { tryParseJSON } from '@/utils/tryParseJSON';
-import { generateDietPdf } from '@/utils/generateDietPdf';
 import { validateDiet } from '@/utils/validateDiet';
-
 
 // 🌍 Tłumaczenia
 import { tUI } from '@/utils/i18n';
@@ -41,30 +39,77 @@ import { usePatientSubmitData } from '@/hooks/usePatientSubmitData';
 // 📊 Typy
 import type { Meal } from '@/types';
 
+// Przepis w formacie używanym w UI i PDF
+type RecipeUI = {
+  dish: string;
+  description?: string;
+  servings?: number;
+  time?: string;
+  ingredients: { product: string; weight: number | null; unit: string }[];
+  steps: string[];
+};
+// → kształt zgodny z utils/generateDietPdf.ts (wymagane description i servings)
+type RecipePdf = {
+  dish: string;
+  description: string;
+  servings: number;
+  time?: string;
+  ingredients: { product: string; weight: number; unit: string }[];
+  steps: string[];
+};
+
+function toPdfRecipes(
+  input: Record<string, Record<string, RecipeUI>>
+): Record<string, Record<string, RecipePdf>> {
+  const out: Record<string, Record<string, RecipePdf>> = {};
+
+  // Object.entries z typami, żeby nie było 'implicitly any'
+  for (const [day, meals] of Object.entries(input ?? {}) as [string, Record<string, RecipeUI>][]) {
+    const dayOut: Record<string, RecipePdf> = {};
+
+    for (const [mealName, r] of Object.entries(meals ?? {}) as [string, RecipeUI][]) {
+      dayOut[mealName] = {
+        dish: r.dish ?? '',
+        description: r.description ?? '',
+        servings: typeof r.servings === 'number' ? r.servings : 1,
+        time: r.time || undefined,
+        ingredients: (r.ingredients ?? []).map(
+          (ing: RecipeUI['ingredients'][number]): { product: string; weight: number; unit: string } => ({
+            product: ing.product ?? '',
+            weight: typeof ing.weight === 'number' ? ing.weight : 0,
+            unit: ing.unit || 'g'
+          })
+        ),
+        steps: Array.isArray(r.steps) ? r.steps.filter((s): s is string => typeof s === 'string') : []
+      };
+    }
+
+    out[day] = dayOut;
+  }
+
+  return out;
+}
 function parseRawDietPlan(raw: any): Record<string, Meal[]> {
   const parsed: Record<string, Meal[]> = {};
-
   for (const [day, dayData] of Object.entries(raw || {})) {
     const mealsForDay: Meal[] = [];
-
     if (Array.isArray(dayData)) {
       for (const meal of dayData) {
         if (!meal || typeof meal !== 'object') continue;
-
         const name = meal.name || meal.menu || meal.mealName || 'Posiłek';
         const time = meal.time || '00:00';
-       const ingredients = (meal.ingredients || []).map((i: any) => ({
-        product: i.product || i.name || '',
-        weight:
-          typeof i.weight === 'number'
-            ? i.weight
-            : typeof i.quantity === 'number'
-            ? i.quantity
-            : Number(i.weight) || Number(i.quantity) || 0
-      })).filter((i: any) =>
-        i.product && typeof i.product === 'string' &&
-        !['undefined', 'null', 'name'].includes(i.product.toLowerCase())
-      );
+        const ingredients = (meal.ingredients || [])
+          .map((i: any) => ({
+            product: i.product || i.name || '',
+            weight:
+              typeof i.weight === 'number' ? i.weight :
+              typeof i.quantity === 'number' ? i.quantity :
+              Number(i.weight) || Number(i.quantity) || 0
+          }))
+          .filter((i: any) =>
+            i.product && typeof i.product === 'string' &&
+            !['undefined', 'null', 'name'].includes(i.product.toLowerCase())
+          );
         mealsForDay.push({
           name,
           time,
@@ -81,10 +126,8 @@ function parseRawDietPlan(raw: any): Record<string, Meal[]> {
         });
       }
     }
-
     parsed[day] = mealsForDay;
   }
-
   return parsed;
 }
 
@@ -122,6 +165,8 @@ function Panel() {
   const [narrativeText, setNarrativeText] = useState('');
   const [history, setHistory] = useState<any[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [recipes, setRecipes] = useState<Record<string, Record<string, RecipeUI>>>({});
+  const [recipesLoading, setRecipesLoading] = useState(false);
   const router = useRouter();
   const [patientMode, setPatientMode] = useState<'registered' | 'unregistered'>('registered');
   const [formUnregistered, setFormUnregistered] = useState<PatientFormData>({});
@@ -429,6 +474,37 @@ return;
     alert(tUI('dietGenerationError', lang));
   } finally {
     setIsGenerating(false);
+  }
+};
+const handleGenerateRecipes = async () => {
+  if (!mealPlan || Object.keys(mealPlan).length === 0) {
+    alert(tUI('dietGenerationFailed', lang)); // albo dodaj osobny klucz np. 'noDietForRecipes'
+    return;
+  }
+  try {
+    setRecipesLoading(true);
+    const res = await fetch('/api/generate-recipes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        dietPlan: mealPlan,       // ⬅️ przekazujemy słownik day -> Meal[]
+        lang,
+        cuisine: interviewData?.cuisine,
+        nutrientFocus: []         // (opcjonalnie) możesz tu podać listę mikro, jeśli masz
+      })
+    });
+    const json = await res.json();
+    if (json?.recipes && typeof json.recipes === 'object') {
+      setRecipes(json.recipes as Record<string, Record<string, RecipeUI>>);
+    } else {
+      console.warn('⚠️ Brak recipes w odpowiedzi:', json);
+      alert(tUI('dietGenerationFailed', lang)); // lub 'recipesGenerationFailed' jeśli masz klucz
+    }
+  } catch (e) {
+    console.error('❌ Błąd generate-recipes:', e);
+    alert(tUI('dietGenerationError', lang)); // lub 'recipesGenerationError'
+  } finally {
+    setRecipesLoading(false);
   }
 };
 
@@ -915,33 +991,35 @@ return (
     <button
       type="button"
       className="w-full h-full bg-green-700 text-white px-4 py-3 rounded-md font-medium hover:bg-green-800 disabled:opacity-50"
-      disabled={isGenerating || !confirmedDiet || !dietApproved}
+      disabled={isGenerating || !confirmedDiet?.length || !dietApproved}
       onClick={async () => {
         try {
           setIsGenerating(true);
           const { generateDietPdf } = await import('@/utils/generateDietPdf');
-          await generateDietPdf(
-            form,
-            bmi,
-            confirmedDiet!,
-            dietApproved,
-            notes,
-            lang,
-            interviewData,
-            {
-              bmi: interviewData.bmi,
-              ppm: interviewData.ppm,
-              cpm: interviewData.cpm,
-              pal: interviewData.pal,
-              kcalMaintain: interviewData.kcalMaintain,
-              kcalReduce: interviewData.kcalReduce,
-              kcalGain: interviewData.kcalGain,
-              nmcBroca: interviewData.nmcBroca,
-              nmcLorentz: interviewData.nmcLorentz
-            },
-            'download',
-            narrativeText
-          );
+        await generateDietPdf(
+          form,
+          bmi,
+          confirmedDiet!,
+          dietApproved,
+          notes,
+          lang,
+          interviewData,
+          {
+            bmi: interviewData.bmi,
+            ppm: interviewData.ppm,
+            cpm: interviewData.cpm,
+            pal: interviewData.pal,
+            kcalMaintain: interviewData.kcalMaintain,
+            kcalReduce: interviewData.kcalReduce,
+            kcalGain: interviewData.kcalGain,
+            nmcBroca: interviewData.nmcBroca,
+            nmcLorentz: interviewData.nmcLorentz
+          },
+          'download',            // 👈 brakujący argument `mode`
+          narrativeText,
+          toPdfRecipes(recipes)
+        );
+
         } catch (e) {
           alert('❌ Błąd przy generowaniu PDF');
           console.error(e);
@@ -954,6 +1032,18 @@ return (
     </button>
   </div>
 </div>
+
+  {/* 🍽️ Generuj przepisy */}
+  <div className="flex-1">
+    <button
+      type="button"
+      onClick={handleGenerateRecipes}
+      className="w-full h-full bg-amber-600 text-white px-4 py-3 rounded-md font-medium hover:bg-amber-700 disabled:opacity-50"
+      disabled={isGenerating || recipesLoading || !mealPlan || Object.keys(mealPlan).length === 0}
+    >
+      {recipesLoading ? '⏳ ' : '🍽️ '}{tUI('generateRecipes', lang)}
+    </button>
+  </div>
 
 {isGenerating && (
   <div className="text-sm text-gray-600 italic mt-4 animate-pulse">
@@ -998,6 +1088,43 @@ return (
             setNotes={setNotes}
           />
         </PanelCard>
+        {/* Sekcja: Przepisy kulinarne */}
+{Object.keys(recipes).length > 0 && (
+  <PanelCard title={`🍽️ ${tUI('recipesTitle', lang)}`}>
+    {Object.entries(recipes).map(([day, meals]) => (
+      <div key={day} className="mb-6">
+        <h3 className="text-lg font-semibold mb-3">{day}</h3>
+        {Object.entries(meals).map(([mealName, r]) => (
+          <div key={mealName} className="bg-black/20 dark:bg-white/10 rounded-lg p-4 mb-3">
+            <div className="font-medium">
+              {tUI(mealName.toLowerCase() as any, lang) || mealName}: {r.dish}
+            </div>
+            {!!r.time && <div className="text-sm opacity-80 mt-1">{tUI('time', lang)}: {r.time}</div>}
+            {!!r.description && <div className="text-sm italic mt-1">{r.description}</div>}
+
+            <div className="mt-3 text-sm">
+              <div className="font-semibold">{tUI('ingredients', lang)}:</div>
+              <ul className="list-disc ml-5">
+                {(r.ingredients || []).map((ing, idx) => (
+                  <li key={idx}>
+                    {ing.product} — {ing.weight ?? '–'} {ing.unit}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="mt-3 text-sm">
+              <div className="font-semibold">{tUI('steps', lang)}:</div>
+              <ol className="list-decimal ml-5">
+                {(r.steps || []).map((s, idx) => <li key={idx}>{s}</li>)}
+              </ol>
+            </div>
+          </div>
+        ))}
+      </div>
+    ))}
+  </PanelCard>
+)}
     </div>
   </main>
 );
