@@ -1110,98 +1110,72 @@ return (
     ⏳ Piszę dietę... {streamingText.length > 20 && '(czekaj, trwa generowanie)'}
   </div>
 )}
-{/* Podsumowanie wyborów pacjenta (z bazy) */}
-{(patientChoice?.goal || patientChoice?.model || patientChoice?.cuisine) && (
-  <div className="w-full mb-4">
-    <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm bg-black/20 dark:bg-white/10 rounded-md px-4 py-3">
-      <span className="font-semibold">🎯 {tUI('goal', lang)}:</span>
-      <span>{patientChoice?.goal ? tUI(patientChoice.goal as any, lang) : '—'}</span>
 
-      <span className="opacity-40">|</span>
+            {/* Sekcja 7: Tabela z dietą */}
+      <PanelCard>
+        {/* 🔹 Podsumowanie nad tabelą: cel / model / kuchnia / liczba posiłków */}
+        {(() => {
+          const goal    = interviewData?.goal    ?? patientChoice?.goal;
+          const model   = interviewData?.model   ?? patientChoice?.model;
+          const cuisine = interviewData?.cuisine ?? patientChoice?.cuisine;
+          const meals   = interviewData?.mealsPerDay ?? getRecommendedMealsPerDay(form, interviewData);
 
-      <span className="font-semibold">🧬 {tUI('dietModel', lang)}:</span>
-      <span>{patientChoice?.model ? tUI(patientChoice.model as any, lang) : '—'}</span>
+          if (!goal && !model && !cuisine && !meals) return null;
 
-      <span className="opacity-40">|</span>
-
-      <span className="font-semibold">🌍 {tUI('cuisine', lang)}:</span>
-      <span>{patientChoice?.cuisine ? tUI(patientChoice.cuisine as any, lang) : '—'}</span>
-    </div>
-  </div>
-)}
-
-      {/* Sekcja 7: Tabela z dietą */}
-       <PanelCard>
-          {/* 🔹 Podsumowanie: cel / model / kuchnia / liczba posiłków (jak w panelu pacjenta) */}
-            {(
-              patientChoice?.goal ||
-              patientChoice?.model ||
-              patientChoice?.cuisine ||
-              interviewData?.mealsPerDay
-            ) && (
-              <div className="mb-3">
-                <div className="flex flex-wrap gap-2">
-                  {/* Cel diety */}
-                  {patientChoice?.goal && (
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-white text-xs font-semibold bg-pink-600/90">
-                      🎯 {tUI(patientChoice.goal as any, lang)}
-                    </span>
-                  )}
-
-                  {/* Model diety */}
-                  {patientChoice?.model && (
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-white text-xs font-semibold bg-emerald-600/90">
-                      🧬 {tUI(patientChoice.model as any, lang)}
-                    </span>
-                  )}
-
-                  {/* Kuchnia świata */}
-                  {patientChoice?.cuisine && (
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-white text-xs font-semibold bg-indigo-600/90">
-                      🌍 {tUI(patientChoice.cuisine as any, lang)}
-                    </span>
-                  )}
-
-                  {/* Liczba posiłków dziennie */}
-                  {(() => {
-                    const meals =
-                      interviewData?.mealsPerDay ??
-                      getRecommendedMealsPerDay(form, interviewData);
-                    return meals ? (
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-white text-xs font-semibold bg-amber-600/90">
-                        {meals} {tUI('mealsPerDay', lang)}
-                      </span>
-                    ) : null;
-                  })()}
-                </div>
+          return (
+            <div className="mb-3">
+              <div className="flex flex-wrap gap-2">
+                {goal && (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-white text-xs font-semibold bg-pink-600/90">
+                    🎯 {tUI(goal as any, lang)}
+                  </span>
+                )}
+                {model && (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-white text-xs font-semibold bg-emerald-600/90">
+                    🧬 {tUI(model as any, lang)}
+                  </span>
+                )}
+                {cuisine && (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-white text-xs font-semibold bg-indigo-600/90">
+                    🌍 {tUI(cuisine as any, lang)}
+                  </span>
+                )}
+                {meals && (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-white text-xs font-semibold bg-amber-600/90">
+                    {meals} {tUI('mealsPerDay', lang)}
+                  </span>
+                )}
               </div>
-            )}
+            </div>
+          );
+        })()}
 
-          <DietTable
-            editableDiet={editableDiet}
-            setEditableDiet={setEditableDiet}
-            setConfirmedDiet={(dietByDay) => {
-              const mealsWithDays = Object.entries(dietByDay).flatMap(([day, meals]) =>
-                meals.map((meal) => ({ ...meal, day }))
-              );
-              setConfirmedDiet(mealsWithDays);
-              setDietApproved(true);
-            }}
-            isEditable={!dietApproved}
-            lang={lang}
-            notes={notes}
-            setNotes={setNotes}
-          />
-        </PanelCard>
-          {/* Opis/legenda tabeli diety (jak w panelu pacjenta) */}
-          <div className="mb-3 text-xs text-white/80 dark:text-white/70">
-            <span className="font-semibold">{tUI('legend', lang)}:</span>{' '}
-            kcal = {tUI('calories', lang)} •
-            {' '}B = {tUI('protein', lang)} •
-            {' '}T = {tUI('fat', lang)} •
-            {' '}W = {tUI('carbs', lang)} •
-            {' '}🌿 = {tUI('fiber', lang)}
-          </div>
+        {/* 🔎 Legenda skrótów (jak w panelu pacjenta) */}
+        <div className="mb-3 text-xs text-white/80 dark:text-white/70">
+          <span className="font-semibold">{tUI('legend', lang)}:</span>{' '}
+          kcal = {tUI('calories', lang)} •{' '}
+          B = {tUI('protein', lang)} •{' '}
+          T = {tUI('fat', lang)} •{' '}
+          W = {tUI('carbs', lang)} •{' '}
+          🌿 = {tUI('fiber', lang)}
+        </div>
+
+        <DietTable
+          editableDiet={editableDiet}
+          setEditableDiet={setEditableDiet}
+          setConfirmedDiet={(dietByDay) => {
+            const mealsWithDays = Object.entries(dietByDay).flatMap(([day, meals]) =>
+              meals.map((meal) => ({ ...meal, day }))
+            );
+            setConfirmedDiet(mealsWithDays);
+            setDietApproved(true);
+          }}
+          isEditable={!dietApproved}
+          lang={lang}
+          notes={notes}
+          setNotes={setNotes}
+        />
+      </PanelCard>
 
         {/* Sekcja: Przepisy kulinarne */}
       {Object.keys(recipes).length > 0 && (
