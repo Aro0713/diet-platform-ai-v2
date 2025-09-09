@@ -1161,37 +1161,40 @@ return (
 
 {/* Sekcja 7: Tabela z dietą */}
 <PanelCard>
-  {/* 🔹 Opis nad tabelą: Cel / Model / Kuchnia / Liczba posiłków */}
+  {/* 🔹 Opis nad tabelą: Cel / Model / Kuchnia / Liczba posiłków (z tłumaczeniami) */}
   {(() => {
-    const goalVal    = interviewData?.goal    ?? initialInterviewData?.goal    ?? (form as any)?.goal    ?? '';
-    const modelVal   = interviewData?.model   ?? initialInterviewData?.model   ?? (form as any)?.model   ?? '';
-    const cuisineVal = interviewData?.cuisine ?? initialInterviewData?.cuisine ?? (form as any)?.cuisine ?? '';
-    const meals      = interviewData?.mealsPerDay
-                    ?? initialInterviewData?.mealsPerDay
-                    ?? getRecommendedMealsPerDay(form, interviewData);
+    const goalVal =
+      interviewData?.goal ?? initialInterviewData?.goal ?? (form as any)?.goal ?? '';
+    const modelVal =
+      interviewData?.model ?? initialInterviewData?.model ?? (form as any)?.model ?? '';
+    const cuisineVal =
+      interviewData?.cuisine ?? initialInterviewData?.cuisine ?? (form as any)?.cuisine ?? '';
+    const meals =
+      interviewData?.mealsPerDay ??
+      initialInterviewData?.mealsPerDay ??
+      getRecommendedMealsPerDay(form, interviewData);
+
+    const safe = (v: any) => (v === null || v === undefined || v === '' ? '—' : v);
 
     return (
       <div className="mb-3">
-        {/* 4 kolumny (równe), responsywnie: 1/2/4 */}
+        {/* 4 kolumny (1/2/4 responsywnie) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
           <div className="flex items-center justify-between px-3 py-1 rounded-full text-xs text-white bg-pink-600/90">
             <span className="font-semibold">🎯 {tUI('goal', lang)}</span>
             <span className="pl-2 truncate">{tResolve(goalVal, lang)}</span>
           </div>
-
           <div className="flex items-center justify-between px-3 py-1 rounded-full text-xs text-white bg-emerald-600/90">
             <span className="font-semibold">🧬 {tUI('dietModel', lang)}</span>
             <span className="pl-2 truncate">{tResolve(modelVal, lang)}</span>
           </div>
-
           <div className="flex items-center justify-between px-3 py-1 rounded-full text-xs text-white bg-indigo-600/90">
             <span className="font-semibold">🌍 {tUI('cuisine', lang)}</span>
             <span className="pl-2 truncate">{tResolve(cuisineVal, lang)}</span>
           </div>
-
           <div className="flex items-center justify-between px-3 py-1 rounded-full text-xs text-white bg-amber-600/90">
             <span className="font-semibold">{tUI('mealsPerDay', lang)}</span>
-            <span className="pl-2">{meals ?? '—'}</span>
+            <span className="pl-2">{safe(meals)}</span>
           </div>
         </div>
       </div>
@@ -1223,17 +1226,45 @@ return (
   </div>
 
   <DietTable
-    editableDiet={(typeof editableDiet !== 'undefined' ? editableDiet : editableDiet)}
+    editableDiet={(editableDiet || {})}
     setEditableDiet={setEditableDiet}
-    setConfirmedDiet={(dietByDay) => {
-    const entries = Object.entries(dietByDay || {});
-    const mealsWithDays = entries.flatMap(([day, meals]) => {
-      const list = Array.isArray(meals) ? meals : Object.values(meals ?? {});
-      return list.map((meal: any) => ({ ...meal, day }));
-    });
-    setConfirmedDiet(mealsWithDays as any);
-    setDietApproved(true);
-  }}
+    setConfirmedDiet={(dietByDay: any) => {
+      // obsługa: { [day]: Meal[] } | [ [day, meals] ] | [{ day, meals }] | Meal[]
+      const toMeals = (day: string, meals: any): any[] => {
+        const arr = Array.isArray(meals)
+          ? meals
+          : meals && typeof meals === 'object'
+            ? Object.values(meals)
+            : [];
+        return arr.map((m: any) => ({ ...m, day }));
+      };
+
+      let out: any[] = [];
+
+      if (Array.isArray(dietByDay)) {
+        if (dietByDay.length && Array.isArray(dietByDay[0])) {
+          // [[day, meals], ...]
+          for (const [day, meals] of dietByDay as any[]) out.push(...toMeals(String(day), meals));
+        } else if (
+          dietByDay.length &&
+          typeof dietByDay[0] === 'object' &&
+          dietByDay[0] !== null &&
+          ('day' in (dietByDay[0] as any) || 'meals' in (dietByDay[0] as any))
+        ) {
+          // [{ day, meals }, ...]
+          for (const item of dietByDay as any[]) out.push(...toMeals(String(item.day ?? ''), item.meals));
+        } else {
+          // [meal, meal, ...]
+          out = (dietByDay as any[]).map((m: any) => ({ ...m, day: m?.day ?? '' }));
+        }
+      } else if (dietByDay && typeof dietByDay === 'object') {
+        // { [day]: meals }
+        for (const [day, meals] of Object.entries(dietByDay)) out.push(...toMeals(String(day), meals));
+      }
+
+      setConfirmedDiet(out);
+      setDietApproved(true);
+    }}
     isEditable={!dietApproved}
     lang={lang}
     notes={notes}
