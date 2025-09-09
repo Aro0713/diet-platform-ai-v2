@@ -1226,19 +1226,20 @@ return (
     editableDiet={(typeof editableDiet !== 'undefined' ? editableDiet : editableDiet)}
     setEditableDiet={setEditableDiet}
     setConfirmedDiet={(dietByDay) => {
-      const mealsWithDays = Object.entries(dietByDay).flatMap(([day, meals]) =>
-        meals.map((meal) => ({ ...meal, day }))
-      );
-      setConfirmedDiet(mealsWithDays);
-      setDietApproved(true);
-    }}
+    const entries = Object.entries(dietByDay || {});
+    const mealsWithDays = entries.flatMap(([day, meals]) => {
+      const list = Array.isArray(meals) ? meals : Object.values(meals ?? {});
+      return list.map((meal: any) => ({ ...meal, day }));
+    });
+    setConfirmedDiet(mealsWithDays as any);
+    setDietApproved(true);
+  }}
     isEditable={!dietApproved}
     lang={lang}
     notes={notes}
     setNotes={setNotes}
   />
 </PanelCard>
-
 
         {/* Sekcja: Przepisy kulinarne */}
       {Object.keys(recipes).length > 0 && (
