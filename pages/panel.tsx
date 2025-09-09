@@ -1148,46 +1148,56 @@ return (
             setNotes={setNotes}
           />
         </PanelCard>
-        {/* Sekcja: Przepisy kulinarne */}
-{Object.keys(recipes).length > 0 && (
-  <PanelCard title={`🍽️ ${tUI('recipesTitle', lang)}`}>
-    {Object.entries(recipes).map(([day, meals]) => (
-      <div key={day} className="mb-6">
-        <h3 className="text-lg font-semibold mb-3">{day}</h3>
-        {Object.entries(meals).map(([mealName, r]) => (
-          <div key={mealName} className="bg-black/20 dark:bg-white/10 rounded-lg p-4 mb-3">
-            <div className="font-medium">
-              {tUI(mealName.toLowerCase() as any, lang) || mealName}: {r.dish}
-            </div>
-            {!!r.time && <div className="text-sm opacity-80 mt-1">{tUI('time', lang)}: {r.time}</div>}
-            {!!r.description && <div className="text-sm italic mt-1">{r.description}</div>}
-
-            <div className="mt-3 text-sm">
-              <div className="font-semibold">{tUI('ingredients', lang)}:</div>
-              <ul className="list-disc ml-5">
-                {(r.ingredients || []).map((ing, idx) => (
-                  <li key={idx}>
-                    {ing.product} — {ing.weight ?? '–'} {ing.unit}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="mt-3 text-sm">
-              <div className="font-semibold">{tUI('steps', lang)}:</div>
-              <ol className="list-decimal ml-5">
-                {(r.steps || []).map((s, idx) => <li key={idx}>{s}</li>)}
-              </ol>
-            </div>
+          {/* Opis/legenda tabeli diety (jak w panelu pacjenta) */}
+          <div className="mb-3 text-xs text-white/80 dark:text-white/70">
+            <span className="font-semibold">{tUI('legend', lang)}:</span>{' '}
+            kcal = {tUI('calories', lang)} •
+            {' '}B = {tUI('protein', lang)} •
+            {' '}T = {tUI('fat', lang)} •
+            {' '}W = {tUI('carbs', lang)} •
+            {' '}🌿 = {tUI('fiber', lang)}
           </div>
-        ))}
-      </div>
-    ))}
-  </PanelCard>
-)}
-    </div>
-  </main>
-);
-}
 
-export default Panel;
+        {/* Sekcja: Przepisy kulinarne */}
+      {Object.keys(recipes).length > 0 && (
+        <PanelCard title={`🍽️ ${tUI('recipesTitle', lang)}`}>
+          {Object.entries(recipes).map(([day, meals]) => (
+            <div key={day} className="mb-6">
+              <h3 className="text-lg font-semibold mb-3">{day}</h3>
+              {Object.entries(meals).map(([mealName, r]) => (
+                <div key={mealName} className="bg-black/20 dark:bg-white/10 rounded-lg p-4 mb-3">
+                  <div className="font-medium">
+                    {tUI(mealName.toLowerCase() as any, lang) || mealName}: {r.dish}
+                  </div>
+                  {!!r.time && <div className="text-sm opacity-80 mt-1">{tUI('time', lang)}: {r.time}</div>}
+                  {!!r.description && <div className="text-sm italic mt-1">{r.description}</div>}
+
+                  <div className="mt-3 text-sm">
+                    <div className="font-semibold">{tUI('ingredients', lang)}:</div>
+                    <ul className="list-disc ml-5">
+                      {(r.ingredients || []).map((ing, idx) => (
+                        <li key={idx}>
+                          {ing.product} — {ing.weight ?? '–'} {ing.unit}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="mt-3 text-sm">
+                    <div className="font-semibold">{tUI('steps', lang)}:</div>
+                    <ol className="list-decimal ml-5">
+                      {(r.steps || []).map((s, idx) => <li key={idx}>{s}</li>)}
+                    </ol>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </PanelCard>
+                )}
+            </div>
+          </main>
+        );
+        }
+
+        export default Panel;
