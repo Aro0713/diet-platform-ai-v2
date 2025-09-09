@@ -1178,7 +1178,6 @@ return (
 
     return (
       <div className="mb-3">
-        {/* 4 kolumny (1/2/4 responsywnie) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
           <div className="flex items-center justify-between px-3 py-1 rounded-full text-xs text-white bg-pink-600/90">
             <span className="font-semibold">🎯 {tUI('goal', lang)}</span>
@@ -1226,40 +1225,43 @@ return (
   </div>
 
   <DietTable
-    editableDiet={(editableDiet || {})}
+    editableDiet={editableDiet || {}}
     setEditableDiet={setEditableDiet}
     setConfirmedDiet={(dietByDay: any) => {
-      // obsługa: { [day]: Meal[] } | [ [day, meals] ] | [{ day, meals }] | Meal[]
-      const toMeals = (day: string, meals: any): any[] => {
-        const arr = Array.isArray(meals)
-          ? meals
-          : meals && typeof meals === 'object'
-            ? Object.values(meals)
-            : [];
-        return arr.map((m: any) => ({ ...m, day }));
-      };
+      // obsługa: { [day]: Meal[] } | [[day, meals]] | [{day, meals}] | Meal[]
+      const asArray = (x: any): any[] =>
+        Array.isArray(x) ? x : (x && typeof x === 'object' ? Object.values(x) : []).filter(v => v != null);
 
-      let out: any[] = [];
+      const out: any[] = [];
+      const pushMeal = (day: string, m: any) => out.push({ ...(m || {}), day });
 
-      if (Array.isArray(dietByDay)) {
-        if (dietByDay.length && Array.isArray(dietByDay[0])) {
-          // [[day, meals], ...]
-          for (const [day, meals] of dietByDay as any[]) out.push(...toMeals(String(day), meals));
-        } else if (
-          dietByDay.length &&
-          typeof dietByDay[0] === 'object' &&
-          dietByDay[0] !== null &&
-          ('day' in (dietByDay[0] as any) || 'meals' in (dietByDay[0] as any))
-        ) {
-          // [{ day, meals }, ...]
-          for (const item of dietByDay as any[]) out.push(...toMeals(String(item.day ?? ''), item.meals));
-        } else {
-          // [meal, meal, ...]
-          out = (dietByDay as any[]).map((m: any) => ({ ...m, day: m?.day ?? '' }));
+      try {
+        if (dietByDay && typeof dietByDay === 'object' && !Array.isArray(dietByDay)) {
+          for (const [day, meals] of Object.entries(dietByDay)) {
+            for (const m of asArray(meals)) pushMeal(String(day), m);
+          }
+        } else if (Array.isArray(dietByDay)) {
+          if (dietByDay.length && Array.isArray(dietByDay[0])) {
+            for (const [day, meals] of dietByDay as any[]) {
+              for (const m of asArray(meals)) pushMeal(String(day), m);
+            }
+          } else if (
+            dietByDay.length &&
+            typeof dietByDay[0] === 'object' &&
+            dietByDay[0] !== null &&
+            ('day' in (dietByDay[0] as any) || 'meals' in (dietByDay[0] as any))
+          ) {
+            for (const item of dietByDay as any[]) {
+              const day = (item as any).day ?? '';
+              const meals = (item as any).meals ?? (item as any).items;
+              for (const m of asArray(meals)) pushMeal(String(day), m);
+            }
+          } else {
+            for (const m of dietByDay as any[]) pushMeal(String((m as any)?.day ?? ''), m);
+          }
         }
-      } else if (dietByDay && typeof dietByDay === 'object') {
-        // { [day]: meals }
-        for (const [day, meals] of Object.entries(dietByDay)) out.push(...toMeals(String(day), meals));
+      } catch (e) {
+        console.warn('setConfirmedDiet normalize error:', e, dietByDay);
       }
 
       setConfirmedDiet(out);
@@ -1271,6 +1273,7 @@ return (
     setNotes={setNotes}
   />
 </PanelCard>
+
 
         {/* Sekcja: Przepisy kulinarne */}
       {Object.keys(recipes).length > 0 && (
