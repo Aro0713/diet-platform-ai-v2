@@ -1,6 +1,6 @@
 ﻿// 🔁 React / Next
 import Head from 'next/head';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import LangAndThemeToggle from '@/components/LangAndThemeToggle';
 import PanelCard from '@/components/PanelCard';
@@ -129,6 +129,29 @@ function parseRawDietPlan(raw: any): Record<string, Meal[]> {
     parsed[day] = mealsForDay;
   }
   return parsed;
+}
+// 📅 Chronologia dni tygodnia (PL/EN) + fallback "Dzień N"
+const DAY_ORDER_PL = ['poniedziałek','wtorek','środa','czwartek','piątek','sobota','niedziela'];
+const DAY_ORDER_EN = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+
+function dayIndexOf(label: string): number {
+  const lc = String(label || '').toLowerCase().trim();
+  const idxPL = DAY_ORDER_PL.indexOf(lc);
+  if (idxPL >= 0) return idxPL;
+  const idxEN = DAY_ORDER_EN.indexOf(lc);
+  if (idxEN >= 0) return idxEN;
+  const m = lc.match(/dzień\s*(\d+)/i) || lc.match(/day\s*(\d+)/i);
+  if (m) return 100 + (parseInt(m[1]!, 10) || 0); // po tygodniu
+  return 999; // nieznane na koniec
+}
+
+function orderDietDays(diet: Record<string, Meal[]> | null | undefined): Record<string, Meal[]> {
+  const src = diet || {};
+  const ordered: Record<string, Meal[]> = {};
+  Object.keys(src)
+    .sort((a, b) => dayIndexOf(a) - dayIndexOf(b))
+    .forEach((k) => { ordered[k] = src[k]; });
+  return ordered;
 }
 
 type PatientFormData = {
@@ -1150,15 +1173,29 @@ return (
           );
         })()}
 
-        {/* 🔎 Legenda skrótów (jak w panelu pacjenta) */}
-        <div className="mb-3 text-xs text-white/80 dark:text-white/70">
-          <span className="font-semibold">{tUI('legend', lang)}:</span>{' '}
-          kcal = {tUI('calories', lang)} •{' '}
-          B = {tUI('protein', lang)} •{' '}
-          T = {tUI('fat', lang)} •{' '}
-          W = {tUI('carbs', lang)} •{' '}
-          🌿 = {tUI('fiber', lang)}
+      {/* 🔎 Legenda skrótów (jak w panelu pacjenta) */}
+      <div className="mb-3 text-xs text-white/80 dark:text-white/70">
+        <span className="font-semibold">{tUI('legend', lang)}:</span>
+        <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
+          <span>kcal = {tUI('calories', lang)}</span>
+          <span>B = {tUI('protein', lang)} (g)</span>
+          <span>T = {tUI('fat', lang)} (g)</span>
+          <span>W = {tUI('carbs', lang)} (g)</span>
+          <span>🌿 = {tUI('fiber', lang)} (g)</span>
+          <span>🧂 = {tUI('sodium', lang)} (mg)</span>
+          <span>🥔 = {tUI('potassium', lang)} (mg)</span>
+          <span>🦴 = {tUI('calcium', lang)} (mg)</span>
+          <span>🧬 = {tUI('magnesium', lang)} (mg)</span>
+          <span>🩸 = {tUI('iron', lang)} (mg)</span>
+          <span>🧪 = {tUI('zinc', lang)} (mg)</span>
+          <span>☀️ = {tUI('vitaminD', lang)} (µg)</span>
+          <span>🧠 = {tUI('vitaminB12', lang)} (µg)</span>
+          <span>🍊 = {tUI('vitaminC', lang)} (mg)</span>
+          <span>👁️ = {tUI('vitaminA', lang)} (µg)</span>
+          <span>🧈 = {tUI('vitaminE', lang)} (mg)</span>
+          <span>💉 = {tUI('vitaminK', lang)} (µg)</span>
         </div>
+      </div>
 
         <DietTable
           editableDiet={editableDiet}
