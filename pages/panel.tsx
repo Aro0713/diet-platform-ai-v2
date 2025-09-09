@@ -30,11 +30,36 @@ import { validateDiet } from '@/utils/validateDiet';
 // 🌍 Tłumaczenia
 import { tUI } from '@/utils/i18n';
 import { translationsUI } from '@/utils/translationsUI';
+// 🔎 Tłumaczy zarówno klucze jak i już przetłumaczone wartości.
+// 1) Jeśli 'val' jest kluczem w translationsUI → tUI(val, lang)
+// 2) Jeśli 'val' jest wartością (np. "Dieta ketogeniczna") → znajdź klucz po values[lang] i przetłumacz
+function tResolve(val: unknown, lang: LangKey): string {
+  const raw = (typeof val === 'string' ? val.trim() : '') as string;
+  if (!raw) return '—';
+
+  // Spróbuj potraktować jako klucz
+  try {
+    const direct = tUI(raw as any, lang);
+    if (direct && direct !== raw) return direct;
+  } catch {/* ignore */}
+
+  // Odwrotne wyszukiwanie: znajdź klucz, którego tłumaczenie w 'lang' == raw
+  for (const [k, v] of Object.entries(translationsUI)) {
+    if (v && typeof v === 'object' && (v as any)[lang] === raw) {
+      try {
+        return tUI(k as any, lang);
+      } catch {
+        return raw;
+      }
+    }
+  }
+  return raw;
+}
+
 import type { LangKey } from '@/utils/i18n';
 
 import { usePatientFetchData } from '@/hooks/usePatientFetchData';
 import { usePatientSubmitData } from '@/hooks/usePatientSubmitData';
-
 
 // 📊 Typy
 import type { Meal } from '@/types';
@@ -1138,60 +1163,32 @@ return (
 <PanelCard>
   {/* 🔹 Opis nad tabelą: Cel / Model / Kuchnia / Liczba posiłków */}
   {(() => {
-    // 1) Zbieramy wartości z różnych źródeł (bieżące -> initial -> form)
-    const goalKey =
-      (interviewData?.goal ??
-        initialInterviewData?.goal ??
-        (form as any)?.goal ??
-        '') as string;
-
-    const modelKey =
-      (interviewData?.model ??
-        initialInterviewData?.model ??
-        (form as any)?.model ??
-        '') as string;
-
-    const cuisineKey =
-      (interviewData?.cuisine ??
-        initialInterviewData?.cuisine ??
-        (form as any)?.cuisine ??
-        '') as string;
-
-    const meals =
-      interviewData?.mealsPerDay ??
-      initialInterviewData?.mealsPerDay ??
-      getRecommendedMealsPerDay(form, interviewData);
-
-    // 2) Tłumaczenie lub surowy tekst (gdy brak klucza w tUI)
-    const label = (k?: string) => {
-      if (!k) return '—';
-      const tr = tUI(k as any, lang);
-      return tr && tr.trim() && tr !== k ? tr : k;
-    };
+    const goalVal    = interviewData?.goal    ?? initialInterviewData?.goal    ?? (form as any)?.goal    ?? '';
+    const modelVal   = interviewData?.model   ?? initialInterviewData?.model   ?? (form as any)?.model   ?? '';
+    const cuisineVal = interviewData?.cuisine ?? initialInterviewData?.cuisine ?? (form as any)?.cuisine ?? '';
+    const meals      = interviewData?.mealsPerDay
+                    ?? initialInterviewData?.mealsPerDay
+                    ?? getRecommendedMealsPerDay(form, interviewData);
 
     return (
       <div className="mb-3">
-        {/* Równe rozłożenie: 4 kolumny; na małych ekranach układa się w 1–2 kolumny */}
+        {/* 4 kolumny (równe), responsywnie: 1/2/4 */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-          {/* 🎯 Cel diety */}
           <div className="flex items-center justify-between px-3 py-1 rounded-full text-xs text-white bg-pink-600/90">
             <span className="font-semibold">🎯 {tUI('goal', lang)}</span>
-            <span className="pl-2 truncate">{label(goalKey)}</span>
+            <span className="pl-2 truncate">{tResolve(goalVal, lang)}</span>
           </div>
 
-          {/* 🧬 Model diety */}
           <div className="flex items-center justify-between px-3 py-1 rounded-full text-xs text-white bg-emerald-600/90">
             <span className="font-semibold">🧬 {tUI('dietModel', lang)}</span>
-            <span className="pl-2 truncate">{label(modelKey)}</span>
+            <span className="pl-2 truncate">{tResolve(modelVal, lang)}</span>
           </div>
 
-          {/* 🌍 Kuchnia świata */}
           <div className="flex items-center justify-between px-3 py-1 rounded-full text-xs text-white bg-indigo-600/90">
             <span className="font-semibold">🌍 {tUI('cuisine', lang)}</span>
-            <span className="pl-2 truncate">{label(cuisineKey)}</span>
+            <span className="pl-2 truncate">{tResolve(cuisineVal, lang)}</span>
           </div>
 
-          {/* 🍽️ Liczba posiłków dziennie */}
           <div className="flex items-center justify-between px-3 py-1 rounded-full text-xs text-white bg-amber-600/90">
             <span className="font-semibold">{tUI('mealsPerDay', lang)}</span>
             <span className="pl-2">{meals ?? '—'}</span>
@@ -1201,7 +1198,7 @@ return (
     );
   })()}
 
-  {/* 🔎 Rozszerzona legenda skrótów (zostaw jak masz) */}
+  {/* 🔎 Rozszerzona legenda skrótów */}
   <div className="mb-3 text-xs text-white/80 dark:text-white/70">
     <span className="font-semibold">{tUI('legend', lang)}:</span>
     <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
@@ -1226,7 +1223,7 @@ return (
   </div>
 
   <DietTable
-    editableDiet={editableDiet}
+    editableDiet={(typeof editableDiet !== 'undefined' ? editableDiet : editableDiet)}
     setEditableDiet={setEditableDiet}
     setConfirmedDiet={(dietByDay) => {
       const mealsWithDays = Object.entries(dietByDay).flatMap(([day, meals]) =>
@@ -1241,6 +1238,7 @@ return (
     setNotes={setNotes}
   />
 </PanelCard>
+
 
         {/* Sekcja: Przepisy kulinarne */}
       {Object.keys(recipes).length > 0 && (
