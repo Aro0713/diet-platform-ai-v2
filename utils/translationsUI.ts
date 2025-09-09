@@ -6905,6 +6905,20 @@ legend: {
   ar: 'مفتاح الرموز',
   he: 'מקרא'
 },
+dietModel: {
+  pl: 'Model diety',
+  en: 'Diet model',
+  es: 'Modelo de dieta',
+  fr: 'Modèle de régime',
+  de: 'Diätmodell',
+  ua: 'Модель дієти',
+  ru: 'Модель диеты',
+  zh: '饮食模型',
+  hi: 'आहार मॉडल',
+  ar: 'نموذج النظام الغذائي',
+  he: 'מודל תזונתי'
+},
+
 podwieczorek: {
   pl: 'Podwieczorek',
   en: 'Afternoon snack',

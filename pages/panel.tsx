@@ -1134,49 +1134,74 @@ return (
   </div>
 )}
 
-           {/* Sekcja 7: Tabela z dietą */}
+{/* Sekcja 7: Tabela z dietą */}
 <PanelCard>
-  {/* 🔹 Opis nad tabelą: Cel / Model / Kuchnia / Liczba posiłków (zawsze widoczny) */}
+  {/* 🔹 Opis nad tabelą: Cel / Model / Kuchnia / Liczba posiłków */}
   {(() => {
+    // 1) Zbieramy wartości z różnych źródeł (bieżące -> initial -> form)
     const goalKey =
-      (interviewData?.goal ?? initialInterviewData?.goal ?? (form as any)?.goal ?? '') as string;
+      (interviewData?.goal ??
+        initialInterviewData?.goal ??
+        (form as any)?.goal ??
+        '') as string;
+
     const modelKey =
-      (interviewData?.model ?? initialInterviewData?.model ?? (form as any)?.model ?? '') as string;
+      (interviewData?.model ??
+        initialInterviewData?.model ??
+        (form as any)?.model ??
+        '') as string;
+
     const cuisineKey =
-      (interviewData?.cuisine ?? initialInterviewData?.cuisine ?? (form as any)?.cuisine ?? '') as string;
+      (interviewData?.cuisine ??
+        initialInterviewData?.cuisine ??
+        (form as any)?.cuisine ??
+        '') as string;
 
     const meals =
       interviewData?.mealsPerDay ??
       initialInterviewData?.mealsPerDay ??
       getRecommendedMealsPerDay(form, interviewData);
 
+    // 2) Tłumaczenie lub surowy tekst (gdy brak klucza w tUI)
     const label = (k?: string) => {
       if (!k) return '—';
       const tr = tUI(k as any, lang);
-      return tr && tr !== k ? tr : k;
+      return tr && tr.trim() && tr !== k ? tr : k;
     };
 
     return (
       <div className="mb-3">
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="inline-flex items-center px-3 py-1 rounded-full bg-pink-600/90 text-white font-semibold">
-            🎯 {tUI('goal', lang)}: {label(goalKey)}
-          </span>
-          <span className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-600/90 text-white font-semibold">
-            🧬 {tUI('dietModel', lang)}: {label(modelKey)}
-          </span>
-          <span className="inline-flex items-center px-3 py-1 rounded-full bg-indigo-600/90 text-white font-semibold">
-            🌍 {tUI('cuisine', lang)}: {label(cuisineKey)}
-          </span>
-          <span className="inline-flex items-center px-3 py-1 rounded-full bg-amber-600/90 text-white font-semibold">
-            {meals ?? '—'} {tUI('mealsPerDay', lang)}
-          </span>
+        {/* Równe rozłożenie: 4 kolumny; na małych ekranach układa się w 1–2 kolumny */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+          {/* 🎯 Cel diety */}
+          <div className="flex items-center justify-between px-3 py-1 rounded-full text-xs text-white bg-pink-600/90">
+            <span className="font-semibold">🎯 {tUI('goal', lang)}</span>
+            <span className="pl-2 truncate">{label(goalKey)}</span>
+          </div>
+
+          {/* 🧬 Model diety */}
+          <div className="flex items-center justify-between px-3 py-1 rounded-full text-xs text-white bg-emerald-600/90">
+            <span className="font-semibold">🧬 {tUI('dietModel', lang)}</span>
+            <span className="pl-2 truncate">{label(modelKey)}</span>
+          </div>
+
+          {/* 🌍 Kuchnia świata */}
+          <div className="flex items-center justify-between px-3 py-1 rounded-full text-xs text-white bg-indigo-600/90">
+            <span className="font-semibold">🌍 {tUI('cuisine', lang)}</span>
+            <span className="pl-2 truncate">{label(cuisineKey)}</span>
+          </div>
+
+          {/* 🍽️ Liczba posiłków dziennie */}
+          <div className="flex items-center justify-between px-3 py-1 rounded-full text-xs text-white bg-amber-600/90">
+            <span className="font-semibold">{tUI('mealsPerDay', lang)}</span>
+            <span className="pl-2">{meals ?? '—'}</span>
+          </div>
         </div>
       </div>
     );
   })()}
 
-  {/* 🔎 Rozszerzona legenda skrótów */}
+  {/* 🔎 Rozszerzona legenda skrótów (zostaw jak masz) */}
   <div className="mb-3 text-xs text-white/80 dark:text-white/70">
     <span className="font-semibold">{tUI('legend', lang)}:</span>
     <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
