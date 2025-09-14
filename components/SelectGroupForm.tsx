@@ -37,14 +37,16 @@ export default function SelectGroupForm({
   );
 
   const customStyles: StylesConfig<any, true> = {
-    control: (base) => ({
-      ...base,
-      backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
-      borderColor: isDarkMode ? '#475569' : '#d1d5db',
-      color: isDarkMode ? 'white' : 'black',
-      minHeight: '2.5rem',
-      boxShadow: 'none',
-    }),
+   control: (base) => ({
+  ...base,
+  backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
+  borderColor: isDarkMode ? '#475569' : '#d1d5db',
+  color: isDarkMode ? 'white' : 'black',
+  minHeight: '2.5rem',
+  boxShadow: 'none',
+  fontSize: '0.875rem', // ~text-sm
+}),
+
     menu: (base) => ({
       ...base,
       backgroundColor: isDarkMode ? '#1f2937' : '#ffffff',
@@ -61,55 +63,65 @@ export default function SelectGroupForm({
       overflowY: 'auto',
       padding: 0,
     }),
-    option: (base, state) => ({
-      ...base,
-      backgroundColor: state.isFocused
-        ? '#3b82f6'
-        : isDarkMode
-        ? '#1f2937'
-        : '#ffffff',
-      color: isDarkMode ? 'white' : 'black',
-      cursor: 'pointer',
-      padding: '8px 12px',
-    }),
+   option: (base, state) => ({
+  ...base,
+  backgroundColor: state.isFocused
+    ? '#3b82f6'
+    : isDarkMode
+    ? '#1f2937'
+    : '#ffffff',
+  color: isDarkMode ? 'white' : 'black',
+  cursor: 'pointer',
+  padding: '8px 12px',
+  fontSize: '0.875rem',
+}),
+
     multiValue: (base) => ({
       ...base,
       backgroundColor: isDarkMode ? '#475569' : '#e2e8f0',
     }),
     multiValueLabel: (base) => ({
-      ...base,
-      color: isDarkMode ? 'white' : 'black',
-    }),
-    input: (base) => ({
-      ...base,
-      color: isDarkMode ? 'white' : 'black',
-    }),
-    singleValue: (base) => ({
-      ...base,
-      color: isDarkMode ? 'white' : 'black',
-    }),
+  ...base,
+  color: isDarkMode ? 'white' : 'black',
+  fontSize: '0.875rem',
+}),
+
+   input: (base) => ({
+  ...base,
+  color: isDarkMode ? 'white' : 'black',
+  fontSize: '0.875rem',
+}),
+
+  singleValue: (base) => ({
+  ...base,
+  color: isDarkMode ? 'white' : 'black',
+  fontSize: '0.875rem',
+}),
+
   };
 
   return (
-    <div className="mt-4 text-black dark:text-white relative z-[9999] overflow-visible">
-      <label className="block font-semibold mb-2 text-gray-800 dark:text-white">
+    <div className="mt-4 w-full text-black dark:text-white relative z-10 overflow-visible">
+      <label className="block font-semibold mb-2 text-sm md:text-base text-gray-800 dark:text-white">
         {tUI('selectDiseaseGroups', lang)}
       </label>
-      <Select
-        isMulti
-        options={options}
-        value={selectedValues}
-        onChange={(selected) =>
-          setSelectedGroups(
-            Array.isArray(selected) ? selected.map((s) => s.value) : []
-          )
-        }
-        classNamePrefix="react-select"
-        menuPortalTarget={typeof window !== 'undefined' ? document.body : undefined}
-        menuPlacement="auto"
-        menuShouldScrollIntoView={false}
-        styles={customStyles}
-      />
+     <Select
+      isMulti
+      options={options}
+      value={selectedValues}
+      onChange={(selected) =>
+        setSelectedGroups(
+          Array.isArray(selected) ? selected.map((s) => s.value) : []
+        )
+      }
+      className="w-full text-sm md:text-base"
+      classNamePrefix="react-select"
+      placeholder={tUI('selectDiseaseGroups', lang)}
+      menuPortalTarget={typeof window !== 'undefined' ? document.body : undefined}
+      menuPlacement="auto"
+      menuShouldScrollIntoView={false}
+      styles={customStyles}
+    />
     </div>
   );
 }

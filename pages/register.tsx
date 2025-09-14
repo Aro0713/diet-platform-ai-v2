@@ -487,12 +487,10 @@ return (
   bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 
   backdrop-blur-[12px] 
   shadow-[inset_0_0_60px_rgba(255,255,255,0.08)] 
-  flex flex-col justify-start items-center pt-10 px-6 
-  text-white transition-all duration-300">
+  flex flex-col justify-start items-center pt-6 px-4 
+  text-white transition-all duration-300 overflow-x-hidden">
 
-
-
-  <nav className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between px-4">
+  <nav className="absolute top-3 left-3 right-3 z-50 flex items-center justify-between px-3">
     {/* 🌍 Wybór języka */}
     <div className="flex items-center gap-2">
       <label htmlFor="language-select" className="sr-only">Wybierz język</label>
@@ -504,7 +502,7 @@ return (
           setLang(selected);
           localStorage.setItem('platformLang', selected);
         }}
-        className="border rounded px-3 py-1 shadow bg-white/80 text-black backdrop-blur dark:bg-gray-800 dark:text-white"
+       className="border rounded px-3 py-1 text-sm shadow bg-white/80 text-black backdrop-blur dark:bg-gray-800 dark:text-white"
         aria-label="Language selection"
       >
         {Object.entries(languageLabels).map(([key, label]) => (
@@ -550,8 +548,7 @@ return (
   </nav>
 
            {/* 🔐 Login i Rejestracja */}
-    <section className="z-10 grid grid-cols-1 md:grid-cols-2 gap-8 mt-12 max-w-6xl mx-auto bg-white/30 dark:bg-gray-900/30 backdrop-blur-md p-10 rounded-2xl shadow-xl transition-colors dark:text-white">
-
+    <section className="z-10 grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mt-8 md:mt-12 w-full max-w-md md:max-w-6xl mx-auto bg-white/30 dark:bg-gray-900/30 backdrop-blur-md p-6 md:p-10 rounded-2xl shadow-xl transition-colors dark:text-white">
       <h1 id="auth-section" className="sr-only">Logowanie i rejestracja</h1>
         {confirmation && (
       <div className="fixed top-0 left-0 w-full z-50 bg-green-600 text-white text-center py-2 shadow-md animate-fadeOut">
@@ -560,7 +557,7 @@ return (
       )}
 
   {/* ✅ Login */}
-  <article className="z-10 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 transition-colors dark:text-white" aria-labelledby="login-form">
+  <article className="z-10 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-6 md:p-8 transition-colors dark:text-white" aria-labelledby="login-form">
     <h2 id="login-form" className="text-xl font-bold mb-4">{t('loginTitle')}</h2>
     <form onSubmit={handleLogin} className="space-y-4">
       <label htmlFor="login-email" className="sr-only">{t('email')}</label>
@@ -641,23 +638,23 @@ return (
   </article>
 
   {/* ✅ Rejestracja */}
-  <article className="z-10 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 transition-colors dark:text-white" aria-labelledby="register-form">
+  <article className="z-10 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-6 md:p-8 transition-colors dark:text-white" aria-labelledby="register-form">
     <h2 id="register-form" className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
       {t('registerTitle')}
     </h2>
 
-    <div className="flex gap-3 mb-4" role="radiogroup" aria-label={t('selectRole')}>
+    <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-4 w-full" role="radiogroup" aria-label={t('selectRole')}>
       {router.isReady && (
         <>
           {(router.query.mode === 'doctor' || router.query.mode === 'dietitian') && (
             <>
              <button
               onClick={() => setUserType('doctor')}
-              className={`px-4 py-2 rounded transition ${
-                userType === 'doctor'
-                  ? 'bg-blue-700 text-white'
-                  : 'bg-blue-100 text-blue-700'
-              }`}
+            className={`w-full sm:w-auto text-sm sm:text-base px-4 py-2 rounded transition ${
+              userType === 'doctor'
+                ? 'bg-blue-700 text-white'
+                : 'bg-blue-100 text-blue-700'
+            }`}
               role="radio"
               aria-checked={userType === 'doctor'}
               aria-label={t('roleDoctor')}
@@ -667,7 +664,7 @@ return (
 
             <button
             onClick={() => setUserType('dietitian')}
-            className={`px-4 py-2 rounded transition ${
+            className={`w-full sm:w-auto text-sm sm:text-base px-4 py-2 rounded transition ${
               userType === 'dietitian'
                 ? 'bg-purple-700 text-white'
                 : 'bg-purple-100 text-purple-700'
@@ -684,7 +681,7 @@ return (
           {(!router.query.mode || router.query.mode === 'register' || router.query.mode === 'patient') && (
            <button
             onClick={() => setUserType('patient')}
-            className={`px-4 py-2 rounded transition ${
+            className={`w-full sm:w-auto text-sm sm:text-base px-4 py-2 rounded transition ${
               userType === 'patient'
                 ? 'bg-green-700 text-white'
                 : 'bg-green-100 text-green-700'

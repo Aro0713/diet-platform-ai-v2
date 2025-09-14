@@ -762,11 +762,11 @@ return (
     bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60
     backdrop-blur-[12px]
     shadow-[inset_0_0_60px_rgba(255,255,255,0.08)]
-    flex flex-col justify-start items-center pt-10 px-6
-    text-white transition-all duration-300"
+    flex flex-col justify-start items-center pt-6 md:pt-10 px-4 md:px-6
+    text-white transition-all duration-300 overflow-x-hidden"
   >
 {/* Pasek z nagłówkiem i przełącznikiem */}
-<div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between px-4">
+<div className="absolute top-3 left-3 right-3 z-50 flex items-center justify-between px-3">
   <div className="flex flex-col">
     <h1 className="text-2xl font-bold text-white dark:text-white">
       {tUI('doctorPanelTitle', lang)}
@@ -832,8 +832,7 @@ return (
 </div>
 
     {/* Główna zawartość */}
-    <div className="z-10 flex flex-col w-full max-w-[1400px] mx-auto gap-6 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 mt-20 dark:text-white transition-colors">
-
+    <div className="z-10 flex flex-col w-full max-w-[1400px] mx-auto gap-6 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-5 md:p-10 mt-16 md:mt-20 dark:text-white transition-colors">
 <PanelCard>
   <div className="flex gap-4 mb-4">
   <label className="flex items-center gap-2">
@@ -859,7 +858,7 @@ return (
 </div>
 
 
-<div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-10">
   {/* 🔵 LEWA: Pacjent z kontem DCP */}
   <div className="flex flex-col gap-4">
     <label className="text-sm font-medium text-black dark:text-white">
@@ -1017,7 +1016,7 @@ return (
 
           {/* Sekcja 4: Cel, model, kuchnia */}
     
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 items-start">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 mt-4 items-start">
         <PanelCard className="h-full">
           <DietGoalForm
             onChange={(goal) => setInterviewData({ ...interviewData, goal })}
@@ -1050,13 +1049,13 @@ return (
         />
       </PanelCard>
     
-<div className="flex flex-wrap justify-between items-stretch gap-4 mt-6 w-full">
+<div className="flex flex-wrap justify-between items-stretch gap-3 sm:gap-4 mt-6 w-full">
   {/* 🔵 Wygeneruj dietę */}
   <div className="flex-1">
     <button
       type="button"
       onClick={handleSubmit}
-      className="w-full h-full bg-blue-600 text-white px-4 py-3 rounded-md font-medium hover:bg-blue-700 disabled:opacity-50"
+      className="w-full h-full bg-blue-600 text-white px-3 py-3 md:px-4 rounded-md font-medium hover:bg-blue-700 disabled:opacity-50 text-sm md:text-base"
       disabled={isGenerating}
     >
       {isGenerating ? (
@@ -1073,7 +1072,7 @@ return (
     <div className="flex-1">
       <button
         type="button"
-        className="w-full h-full bg-purple-700 text-white px-4 py-3 rounded-md font-medium hover:bg-purple-800 disabled:opacity-50"
+        className="w-full h-full bg-purple-700 text-white px-3 py-3 md:px-4 rounded-md font-medium hover:bg-purple-800 disabled:opacity-50 text-sm md:text-base"
         onClick={handleApproveDiet}
         disabled={isGenerating}
       >
@@ -1087,7 +1086,7 @@ return (
     <div className="flex-1">
       <button
         type="button"
-        className="w-full h-full bg-indigo-600 text-white px-4 py-3 rounded-md font-medium hover:bg-indigo-700 disabled:opacity-50"
+        className="w-full h-full bg-indigo-600 text-white px-3 py-3 md:px-4 rounded-md font-medium hover:bg-indigo-700 disabled:opacity-50 text-sm md:text-base"
         onClick={handleSendDietToPatient}
         disabled={isGenerating || !form?.email}
       >
@@ -1100,7 +1099,7 @@ return (
   <div className="flex-1">
     <button
       type="button"
-      className="w-full h-full bg-green-700 text-white px-4 py-3 rounded-md font-medium hover:bg-green-800 disabled:opacity-50"
+      className="w-full h-full bg-green-700 text-white px-3 py-3 md:px-4 rounded-md font-medium hover:bg-green-800 disabled:opacity-50 text-sm md:text-base"
       disabled={isGenerating || !confirmedDiet?.length || !dietApproved}
       onClick={async () => {
         try {
@@ -1148,7 +1147,7 @@ return (
     <button
       type="button"
       onClick={handleGenerateRecipes}
-      className="w-full h-full bg-amber-600 text-white px-4 py-3 rounded-md font-medium hover:bg-amber-700 disabled:opacity-50"
+      className="w-full h-full bg-amber-600 text-white px-3 py-3 md:px-4 rounded-md font-medium hover:bg-amber-700 disabled:opacity-50 text-sm md:text-base"
       disabled={isGenerating || recipesLoading || !mealPlan || Object.keys(mealPlan).length === 0}
     >
       {recipesLoading ? '⏳ ' : '🍽️ '}{tUI('generateRecipes', lang)}
@@ -1180,7 +1179,7 @@ return (
 
     return (
       <div className="mb-3">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs sm:text-sm">
           <div className="flex items-center justify-between px-3 py-1 rounded-full text-xs text-white bg-pink-600/90">
             <span className="font-semibold">🎯 {tUI('goal', lang)}</span>
             <span className="pl-2 truncate">{tResolve(goalVal, lang)}</span>
@@ -1291,7 +1290,7 @@ return (
             <div key={day} className="mb-6">
               <h3 className="text-lg font-semibold mb-3">{day}</h3>
               {Object.entries(meals).map(([mealName, r]) => (
-                <div key={mealName} className="bg-black/20 dark:bg-white/10 rounded-lg p-4 mb-3">
+                <div key={mealName} className="bg-black/20 dark:bg-white/10 rounded-lg p-3 sm:p-4 mb-3">
                   <div className="font-medium">
                     {tUI(mealName.toLowerCase() as any, lang) || mealName}: {r.dish}
                   </div>

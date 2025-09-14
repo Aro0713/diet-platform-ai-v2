@@ -31,15 +31,17 @@ export default function SelectMealsPerDayForm({ value, onChange, lang }: Props) 
   return (
     <PanelCard title={`🍽️ ${title}`} className="h-full">
       <div className="flex flex-col space-y-2">
-        <label className="text-sm font-medium text-black dark:text-white">
+        <label className="text-sm md:text-base font-medium text-black dark:text-white">
+
           {label}
         </label>
 
         <select
-          className="w-full rounded-md px-3 py-2 bg-white dark:bg-gray-800 text-black dark:text-white border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={Number.isFinite(value) ? value : 0}
-          onChange={(e) => onChange(Number(e.target.value))}
-        >
+        className="w-full text-sm md:text-base rounded-md px-3 py-2 bg-white dark:bg-gray-800 text-black dark:text-white border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        value={Number.isFinite(value) ? value : 0}
+        onChange={(e) => onChange(Number(e.target.value))}
+        aria-label={label}
+      >
           <option value={0}>{`-- ${label} --`}</option>
           {options.map((n) => (
             <option key={n} value={n}>

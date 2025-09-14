@@ -255,15 +255,16 @@ export default function SelectCuisineForm({ onChange, lang }: Props) {
   return (
     <PanelCard title={`🌍 ${tTitle}`} className="h-full">
       <div className="flex flex-col space-y-2">
-        <label className="text-sm font-medium text-black dark:text-white">
+        <label className="text-sm md:text-base font-medium text-black dark:text-white">
           {tLabel}
         </label>
 
         <select
-          className="w-full rounded-md px-3 py-2 bg-white dark:bg-gray-800 text-black dark:text-white border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          defaultValue=""
-          onChange={(e) => onChange(e.target.value)}
-        >
+        className="w-full text-sm md:text-base rounded-md px-3 py-2 bg-white dark:bg-gray-800 text-black dark:text-white border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        defaultValue=""
+        onChange={(e) => onChange(e.target.value)}
+        aria-label={tLabel}
+      >
           <option value="">{`-- ${tLabel} --`}</option>
           {cuisineKeys.map((key) => (
             <option key={key} value={key}>

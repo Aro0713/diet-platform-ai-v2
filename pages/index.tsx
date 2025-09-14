@@ -84,9 +84,10 @@ const replayIntro = () => {
 
 return (
   <main className="relative min-h-screen bg-[#0f271e]/70 bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 backdrop-blur-[12px] shadow-[inset_0_0_60px_rgba(255,255,255,0.08)] flex flex-col justify-start items-center pt-10 px-6 text-white transition-all duration-300">
-    <Head>
-      <title>Diet Care Platform</title>
-    </Head>
+   <Head>
+  <title>Diet Care Platform</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </Head>
 
     {/* Pasek języka + odtwórz intro + tryb ciemny */}
     <nav className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between px-4">
@@ -137,7 +138,7 @@ return (
     </nav>
 
     {/* Główna zawartość */}
-    <div className="z-10 flex flex-col items-center justify-start text-center px-4 mt-6 w-full max-w-5xl bg-white/30 backdrop-blur-md rounded-2xl shadow-xl p-10 dark:bg-gray-900/30 dark:text-white transition-colors">
+    <div className="z-10 flex flex-col items-center justify-start text-center px-4 mt-6 w-full max-w-xl md:max-w-5xl bg-white/30 ... p-6 md:p-10 ...">
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -175,14 +176,14 @@ return (
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 2.5, duration: 0.8 }}
-        className="mt-10 flex flex-col md:flex-row gap-4"
+        className="mt-10 flex flex-col md:flex-row gap-4 w-full md:w-auto"
       >
         <button
           onClick={() => {
             localStorage.setItem('entryMode', 'doctor');
             window.location.href = '/register?mode=doctor';
           }}
-          className="bg-blue-600 text-white px-6 py-3 rounded-lg text-lg shadow hover:bg-blue-700 transition text-center"
+          className="w-full md:w-auto bg-blue-600 text-white px-6 py-3 rounded-lg text-lg shadow hover:bg-blue-700 transition text-center"
         >
           {tUI('enterAsDoctor', lang)}
         </button>
@@ -192,7 +193,7 @@ return (
             localStorage.setItem('entryMode', 'patient');
             window.location.href = '/register?mode=patient';
           }}
-          className="bg-green-600 text-white px-6 py-3 rounded-lg text-lg shadow hover:bg-green-700 transition text-center"
+          className="w-full md:w-auto bg-green-600 text-white px-6 py-3 rounded-lg text-lg shadow hover:bg-green-700 transition text-center"
         >
           {tUI('enterAsPatient', lang)}
         </button>
@@ -203,7 +204,7 @@ return (
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ delay: 3.5, duration: 1 }}
-      className="absolute bottom-[160px] right-[40px] text-[2.6rem] font-handwriting text-[#f8f9fa] tracking-wide drop-shadow-xl"
+      className="hidden sm:block pointer-events-none select-none absolute bottom-16 right-4 md:bottom-24 md:right-6 text-3xl md:text-[2.6rem] font-handwriting text-[#f8f9fa] tracking-wide drop-shadow-xl"
       style={{ transform: 'rotate(-28deg)' }}
     >
       {tUI('signature', lang)}

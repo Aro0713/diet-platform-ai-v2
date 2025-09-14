@@ -122,9 +122,8 @@ const fetchPatientData = async () => {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold">🧍 {tUI('patientData', lang)}</h2>
-
-      <div className="flex gap-4">
+      <h2 className="text-base md:text-lg font-semibold">🧍 {tUI('patientData', lang)}</h2>
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
         <label className="flex items-center gap-2">
           <input
             type="radio"
@@ -151,31 +150,34 @@ const fetchPatientData = async () => {
         <div className="space-y-2">
           <input
             type="email"
-            className="w-full border px-3 py-2 rounded bg-white text-black border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600"
+            className="w-full text-sm md:text-base border px-3 py-2 rounded bg-white text-black border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600"
             placeholder={tUI('enterPatientEmail', lang)}
             value={emailInput}
             onChange={(e) => setEmailInput(e.target.value)}
           />
-          <button
+         <button
             onClick={fetchPatientData}
-            className="bg-blue-600 text-white px-4 py-2 rounded"
+            className="w-full sm:w-auto text-sm md:text-base bg-blue-600 text-white px-4 py-2 rounded"
           >
             🔍 {tUI('fetchPatientData', lang)}
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+
           <input
             type="text"
             placeholder={tUI('name', lang)}
-            className="border px-3 py-2 rounded bg-white text-black border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600"
+            className="w-full text-sm md:text-base border px-3 py-2 rounded bg-white text-black border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600"
+
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
           <input
             type="email"
             placeholder={tUI('email', lang)}
-            className="border px-3 py-2 rounded bg-white text-black border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600"
+            className="w-full text-sm md:text-base border px-3 py-2 rounded bg-white text-black border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600"
+
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
           />
@@ -195,25 +197,28 @@ const fetchPatientData = async () => {
           <button
             type="button"
             onClick={createPatientAccount}
-            className="bg-green-700 text-white px-4 py-2 rounded"
+           className="w-full sm:w-auto text-sm md:text-base bg-green-700 text-white px-4 py-2 rounded"
           >
             ➕ {tUI('createAccount', lang)}
           </button>
         </div>
       )}
 
-      {status && <p className="text-sm text-gray-600 dark:text-gray-300">{status}</p>}
+      {status && <p className="text-sm md:text-base text-gray-600 dark:text-gray-300">{status}</p>}
 
-      <div className="grid grid-cols-2 gap-4 mt-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 mt-4">
+
         <input
           type="number"
           placeholder={tUI('age', lang)}
-          className="border px-3 py-2 rounded bg-white text-black border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600"
+          className="w-full text-sm md:text-base border px-3 py-2 rounded bg-white text-black border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600"
+
           value={form.age || ''}
           onChange={(e) => setForm({ ...form, age: Number(e.target.value) })}
         />
         <select
-          className="border px-3 py-2 rounded bg-white text-black border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600"
+          className="w-full text-sm md:text-base border px-3 py-2 rounded bg-white text-black border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600"
+
           value={form.sex}
           onChange={(e) => setForm({ ...form, sex: e.target.value as 'male' | 'female' })}
         >
@@ -224,14 +229,16 @@ const fetchPatientData = async () => {
         <input
           type="number"
           placeholder={tUI('weight', lang)}
-          className="border px-3 py-2 rounded bg-white text-black border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600"
+          className="w-full text-sm md:text-base border px-3 py-2 rounded bg-white text-black border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600"
+
           value={form.weight || ''}
           onChange={(e) => setForm({ ...form, weight: Number(e.target.value) })}
         />
         <input
           type="number"
           placeholder={tUI('height', lang)}
-          className="border px-3 py-2 rounded bg-white text-black border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600"
+          className="w-full text-sm md:text-base border px-3 py-2 rounded bg-white text-black border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600"
+
           value={form.height || ''}
           onChange={(e) => setForm({ ...form, height: Number(e.target.value) })}
         />

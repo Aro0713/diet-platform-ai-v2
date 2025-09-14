@@ -905,13 +905,13 @@ const handleShowDoctors = async () => {
 
   return (
     
-    <main className="relative min-h-screen bg-[#0f271e]/70 bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 backdrop-blur-[12px] shadow-[inset_0_0_60px_rgba(255,255,255,0.08)] flex flex-col justify-start items-center pt-10 px-6 text-white transition-all duration-300">
+    <main className="relative min-h-screen bg-[#0f271e]/70 bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 backdrop-blur-[12px] shadow-[inset_0_0_60px_rgba(255,255,255,0.08)] flex flex-col justify-start items-center pt-6 px-4 md:pt-10 md:px-6 text-white transition-all duration-300 overflow-x-hidden">
       <Head>
         <title>{tUI('patientPanelTitle', lang)}</title>
       </Head>
 
       {/* Pasek nagłówka */}
-     <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between px-4">
+     <div className="absolute top-3 left-3 right-3 z-50 flex items-center justify-between px-3">
         <div className="flex flex-col">
           {form?.name && (
             <span className="text-sm font-medium text-white dark:text-white">
@@ -943,7 +943,7 @@ const handleShowDoctors = async () => {
     )}
 
             {/* Główna zawartość */}
-      <div className="z-10 flex flex-col w-full max-w-[1000px] mx-auto gap-6 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 mt-20 dark:text-white transition-colors animate-flip-in origin-center">
+       <div className="z-10 flex flex-col w-full max-w-[1000px] mx-auto gap-6 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-5 md:p-10 mt-16 md:mt-20 dark:text-white transition-colors animate-flip-in origin-center">
         {selectedSection === 'data' && (
           <>
             <PatientSelfForm
@@ -1046,29 +1046,30 @@ const handleShowDoctors = async () => {
 {selectedSection === 'diet' && (
   <div className="space-y-6">
     {/* 🧠 Cel, model, kuchnia, posiłki – 2 rzędy po 2 kolumny */}
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-center">
-      <div className="w-full sm:max-w-[360px] min-h-[180px] flex flex-col justify-between items-center px-4 mx-auto">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 text-center w-full">
+      <div className="w-full sm:max-w-[360px] min-h-[180px] flex flex-col justify-between items-stretch px-3 sm:px-4 mx-auto">
+
         <DietGoalForm
           lang={lang}
           onChange={(goal) => setInterviewData({ ...interviewData, goal })}
         />
       </div>
+      <div className="w-full sm:max-w-[360px] min-h-[180px] flex flex-col justify-between items-stretch px-3 sm:px-4 mx-auto">
 
-      <div className="w-full sm:max-w-[360px] min-h-[180px] flex flex-col justify-between items-center px-4 mx-auto">
         <SelectModelForm
           lang={lang}
           onChange={(model) => setInterviewData({ ...interviewData, model })}
         />
       </div>
+     <div className="w-full sm:max-w-[360px] min-h-[180px] flex flex-col justify-between items-stretch px-3 sm:px-4 mx-auto">
 
-     <div className="w-full sm:max-w-[360px] min-h-[180px] flex flex-col justify-between items-center px-4 mx-auto">
        <SelectCuisineForm
           lang={lang}
           onChange={(cuisine) => setInterviewData({ ...interviewData, cuisine })}
         />
       </div>
+      <div className="w-full sm:max-w-[360px] min-h-[180px] flex flex-col justify-between items-stretch px-3 sm:px-4 mx-auto">
 
-      <div className="w-full sm:max-w-[360px] min-h-[180px] flex flex-col justify-between items-center px-4 mx-auto">
   <SelectMealsPerDayForm
     value={interviewData?.mealsPerDay ?? 0}
     onChange={(meals: number) =>
@@ -1091,12 +1092,12 @@ const handleShowDoctors = async () => {
     </div>
   )}
 
-<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-6">
+<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mt-6">
   {/* 🧠 Generuj dietę */}
   <button
     onClick={handleGenerateDiet}
     disabled={isGenerating}
-    className="w-28 h-28 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition disabled:opacity-50"
+    className="w-24 h-24 sm:w-28 sm:h-28 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition disabled:opacity-50"
   >
     <span className="text-4xl leading-none">🧠</span>
     <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
@@ -1328,7 +1329,7 @@ const handleShowDoctors = async () => {
 {selectedSection === 'diet' && recipes && Object.keys(recipes).length > 0 && (
   <div className="mt-6 space-y-6">
     {Object.entries(recipes).map(([day, meals]: any) => (
-      <div key={day} className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow">
+      <div key={day} className="bg-white dark:bg-slate-800 rounded-xl p-3 sm:p-4 shadow">
         <h3 className="text-lg font-bold mb-2">{day}</h3>
         {Object.entries(meals).map(([mealName, recipe]: any) => (
           <div key={mealName} className="mb-4">

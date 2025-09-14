@@ -165,8 +165,8 @@ type PlanKey = keyof typeof planPrices;
 };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 backdrop-blur text-white p-6">
-      <nav className="flex justify-between mb-8">
+    <main className="min-h-screen bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 backdrop-blur text-white px-4 py-6 md:p-6 overflow-x-hidden">
+      <nav className="flex items-center justify-between mb-6 md:mb-8 gap-3">
         <select
           value={lang}
           onChange={(e) => {
@@ -174,7 +174,7 @@ type PlanKey = keyof typeof planPrices;
             setLang(val);
             localStorage.setItem('platformLang', val);
           }}
-          className="bg-white text-black px-3 py-1 rounded"
+          className="bg-white text-black text-sm px-3 py-2 rounded w-auto"
         >
           {Object.entries(languageLabels).map(([key, label]) => (
             <option key={key} value={key}>{label}</option>
@@ -193,23 +193,23 @@ type PlanKey = keyof typeof planPrices;
         </button>
       </nav>
 
-      <h1 className="text-2xl font-normal text-center mb-6">
+      <h1 className="text-xl md:text-2xl font-semibold text-center mb-4 md:mb-6">
         {tUI('choosePlan', lang)}
       </h1>
 
       <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 w-full">
           {planOptions.map(plan => (
             <div
               key={plan.id}
               onClick={() => setSelectedPlan(plan.id)}
-              className={`cursor-pointer rounded-lg p-4 border ${
+              className={`cursor-pointer rounded-lg p-4 md:p-5 border transition-colors ${
                 selectedPlan === plan.id
                   ? 'border-green-400 bg-green-900/40'
                   : 'border-white/20 bg-white/10'
               }`}
             >
-              <h2 className="text-xl font-bold mb-1">{plan.title}</h2>
+              <h2 className="text-lg md:text-xl font-bold mb-1">{plan.title}</h2>
               <p className="text-sm text-emerald-300 mb-2">
             {displayPrice(plan.id)} <span className="text-xs text-white/60">({tUI('vatExemptNote', lang)})</span>
             </p>
@@ -221,7 +221,7 @@ type PlanKey = keyof typeof planPrices;
         <button
           type="submit"
           disabled={!selectedPlan || isLoading}
-          className="block w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-4 rounded disabled:opacity-50"
+          className="block w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 md:py-2 px-4 rounded-lg disabled:opacity-50 text-base md:text-lg font-semibold"
         >
           {tUI('payNow', lang)}
         </button>

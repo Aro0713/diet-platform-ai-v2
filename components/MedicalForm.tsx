@@ -339,7 +339,7 @@ const handleConfirmAnalysis = async () => {
                 type="text"
                 value={testResults[fieldKey] || ""}
                 onChange={(e) => handleTestResultChange(fieldKey, e.target.value)}
-                className="w-full px-4 py-2 rounded-md bg-white text-black placeholder-gray-500 
+               className="w-full text-sm md:text-base px-3 py-2 rounded-md bg-white text-black placeholder-gray-500 
                           dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 
                           border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors"
                 placeholder={`${tUI('rangePrefix', lang)} ${testReferenceValues[test] || tUI('enterResult', lang)}`}
@@ -354,7 +354,7 @@ const handleConfirmAnalysis = async () => {
       <button
         onClick={handleMedicalAnalysis}
         disabled={loading}
-        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition disabled:opacity-50"
+        className="w-full md:w-auto px-4 py-2 text-sm md:text-base bg-blue-600 text-white rounded hover:bg-blue-700 transition disabled:opacity-50"
       >
         {loading ? tUI("analyzing", lang) : tUI("analyzeTestResults", lang)}
       </button>
@@ -369,7 +369,7 @@ const handleConfirmAnalysis = async () => {
         <textarea
           value={editedSummary}
           onChange={(e) => setEditedSummary(e.target.value)}
-          className="w-full p-2 rounded bg-white dark:bg-gray-700 text-black dark:text-white border dark:border-gray-500"
+          className="w-full text-sm md:text-base p-2 rounded bg-white dark:bg-gray-700 text-black dark:text-white border dark:border-gray-500"
           rows={6}
         />
         <div className="flex justify-end mt-2">
@@ -392,12 +392,12 @@ const handleConfirmAnalysis = async () => {
     </div>
   )}
 
-<div className="mt-4 flex flex-col md:flex-row gap-3">
+<div className="mt-4 flex flex-col sm:flex-row gap-2 sm:gap-3 w-full">
   <button
     type="button"
     onClick={handleConfirmAnalysis}
     disabled={!medicalSummary}
-    className={`flex-1 px-4 py-2 rounded-md shadow-md font-semibold transition-colors ${
+    className={`flex-1 w-full md:w-auto text-sm md:text-base px-4 py-2 rounded-md shadow-md font-semibold transition-colors ${
       isConfirmed
         ? "bg-green-100 text-green-800 cursor-default"
         : "bg-green-600 text-white hover:bg-green-700"
@@ -411,7 +411,7 @@ const handleConfirmAnalysis = async () => {
       handleEditAnalysis();
       setIsConfirmed(false); // 👈 Cofnij stan zatwierdzenia po edycji
     }}
-    className="flex-1 px-4 py-2 bg-yellow-400 text-black rounded-md shadow-md hover:bg-yellow-500 transition-colors"
+    className="flex-1 w-full md:w-auto text-sm md:text-base px-4 py-2 bg-yellow-400 text-black rounded-md shadow-md hover:bg-yellow-500 transition-colors"
   >
     ✏️ {tUI("editAnalysis", lang)}
   </button>
@@ -431,7 +431,7 @@ const handleConfirmAnalysis = async () => {
       setTimeout(() => setShowSnackbar(false), 3000);
     }}
 
-      className="flex-1 px-4 py-2 bg-red-600 text-white rounded-md shadow-md hover:bg-red-700 transition-colors"
+     className="flex-1 w-full md:w-auto text-sm md:text-base px-4 py-2 bg-red-600 text-white rounded-md shadow-md hover:bg-red-700 transition-colors"
     >
       🗑️ {tUI("deleteMedicalData", lang)}
     </button>

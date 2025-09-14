@@ -213,18 +213,20 @@ export default function SelectGoalForm({ selectedGoals, setSelectedGoals, lang }
   };
 
   return (
-    <PanelCard title="🎯 Cele diety" className="bg-[#0d1117] text-white border border-gray-600">
-      <label className="block text-sm font-medium mb-2">
+    <PanelCard title="🎯 Cele diety" className="bg-[#0d1117] text-white border border-gray-600 p-4 md:p-6">
+
+      <label className="block text-sm md:text-base font-medium mb-2">
         {lang === 'pl' ? 'Wybierz cele diety:' : 'Select diet goals:'}
       </label>
 
       <select
-        multiple
-        className="w-full rounded-md px-3 py-2 bg-[#1e293b] text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        value={selectedGoals}
-        onChange={handleChange}
-        size={Math.min(8, Object.keys(goalLabels).length)}
-      >
+          multiple
+          className="w-full text-sm md:text-base rounded-md px-3 py-2 bg-[#1e293b] text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          value={selectedGoals}
+          onChange={handleChange}
+          aria-label={lang === 'pl' ? 'Cele diety' : 'Diet goals'}
+          size={Math.min(8, Object.keys(goalLabels).length)}
+        >
         {Object.entries(goalLabels).map(([key, labels]) => (
           <option key={key} value={key}>
             {labels[lang] || labels.pl}

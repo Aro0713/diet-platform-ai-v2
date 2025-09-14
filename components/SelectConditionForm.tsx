@@ -52,14 +52,16 @@ const SelectConditionForm: React.FC<Props> = ({ selectedConditions, setSelectedC
     }));
 
   const customStyles: StylesConfig<any, true> = {
-    control: (base) => ({
-      ...base,
-      backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
-      borderColor: isDarkMode ? '#334155' : '#cccccc',
-      color: isDarkMode ? 'white' : 'black',
-      minHeight: '2.5rem',
-      boxShadow: 'none',
-    }),
+   control: (base) => ({
+  ...base,
+  backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
+  borderColor: isDarkMode ? '#334155' : '#cccccc',
+  color: isDarkMode ? 'white' : 'black',
+  minHeight: '2.5rem',
+  boxShadow: 'none',
+  fontSize: '0.875rem', // ~ text-sm
+}),
+
     menu: (base) => ({
       ...base,
       backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
@@ -76,57 +78,66 @@ const SelectConditionForm: React.FC<Props> = ({ selectedConditions, setSelectedC
       overflowY: 'auto',
       padding: 0,
     }),
-    option: (base, state) => ({
-      ...base,
-      backgroundColor: state.isFocused
-        ? '#3b82f6'
-        : isDarkMode
-        ? '#1e293b'
-        : '#ffffff',
-      color: isDarkMode ? 'white' : 'black',
-      cursor: 'pointer',
-      padding: '8px 12px',
-    }),
+   option: (base, state) => ({
+  ...base,
+  backgroundColor: state.isFocused
+    ? '#3b82f6'
+    : isDarkMode
+    ? '#1e293b'
+    : '#ffffff',
+  color: isDarkMode ? 'white' : 'black',
+  cursor: 'pointer',
+  padding: '8px 12px',
+  fontSize: '0.875rem',
+}),
+
     multiValue: (base) => ({
       ...base,
       backgroundColor: isDarkMode ? '#334155' : '#e2e8f0',
     }),
-    multiValueLabel: (base) => ({
-      ...base,
-      color: isDarkMode ? 'white' : 'black',
-    }),
+   multiValueLabel: (base) => ({
+  ...base,
+  color: isDarkMode ? 'white' : 'black',
+  fontSize: '0.875rem',
+}),
+
     input: (base) => ({
-      ...base,
-      color: isDarkMode ? 'white' : 'black',
-    }),
-    singleValue: (base) => ({
-      ...base,
-      color: isDarkMode ? 'white' : 'black',
-    }),
+  ...base,
+  color: isDarkMode ? 'white' : 'black',
+  fontSize: '0.875rem',
+}),
+
+   singleValue: (base) => ({
+  ...base,
+  color: isDarkMode ? 'white' : 'black',
+  fontSize: '0.875rem',
+}),
+
   };
 
   return (
     <PanelCard
      title={`🧬 ${tUI('diseaseFilterTitle', lang)}`}
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
         <div>
-          <label className="text-sm font-medium mb-2 block">
+          <label className="text-sm md:text-base font-medium mb-2 block">
         {tUI('selectDiseaseGroups', lang)}
           </label>
           <Select
-            isMulti
-            options={groupOptions}
-            value={groupOptions.filter((g) => selectedGroups.includes(g.value))}
-            onChange={(selected) => setSelectedGroups(selected.map((g) => g.value))}
-            classNamePrefix="react-select"
-            menuPortalTarget={document.body}
-            styles={customStyles}
-          />
+          isMulti
+          options={groupOptions}
+          value={groupOptions.filter((g) => selectedGroups.includes(g.value))}
+          onChange={(selected) => setSelectedGroups(selected.map((g) => g.value))}
+          className="w-full text-sm md:text-base"
+          classNamePrefix="react-select"
+          menuPortalTarget={typeof window !== 'undefined' ? document.body : undefined}
+          styles={customStyles}
+        />
         </div>
 
         <div>
-         <label className="text-sm font-medium mb-2 block">
+         <label className="text-sm md:text-base font-medium mb-2 block">
           {tUI('searchCondition', lang)}
         </label>
           <input
@@ -134,14 +145,14 @@ const SelectConditionForm: React.FC<Props> = ({ selectedConditions, setSelectedC
             placeholder={tUI('conditionPlaceholder', lang)}
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="w-full border rounded-md px-3 py-2 bg-white text-black placeholder:text-gray-500 
+           className="w-full text-sm md:text-base border rounded-md px-3 py-2 bg-white text-black placeholder:text-gray-500 
                        border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:placeholder:text-gray-400"
           />
         </div>
       </div>
 
       <div className="mt-6">
-        <label className="text-sm font-medium mb-2 block">
+        <label className="text-sm md:text-base font-medium mb-2 block">
         {tUI('selectConditions', lang).replace('{count}', String(selectedConditions.length))}
       </label>
         <Select
@@ -149,8 +160,9 @@ const SelectConditionForm: React.FC<Props> = ({ selectedConditions, setSelectedC
           options={conditionOptions}
           value={conditionOptions.filter((opt) => selectedConditions.includes(opt.value))}
           onChange={(selected) => setSelectedConditions(selected.map((c) => c.value))}
+          className="w-full text-sm md:text-base"
           classNamePrefix="react-select"
-          menuPortalTarget={document.body}
+          menuPortalTarget={typeof window !== 'undefined' ? document.body : undefined}
           styles={customStyles}
         />
       </div>

@@ -282,7 +282,7 @@ const handleGenerateNarrative = async () => {
 };
 
 return (
-    <PanelCard className="z-10 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-10 dark:text-white transition-colors min-h-[550px]">
+    <PanelCard className="z-10 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-5 md:p-10 dark:text-white transition-colors min-h-[550px]">
       <div className="bg-blue-50 border border-blue-200 text-blue-900 dark:bg-blue-900 dark:border-blue-400 dark:text-white p-4 rounded text-sm mb-6 space-y-2">
         <p><strong>{tUI('interviewNoticeTitle', lang)}</strong> {tUI('interviewNotice1', lang)}</p>
         <p>{tUI('interviewNotice2', lang)}</p>
@@ -332,27 +332,26 @@ return (
                       <input
                         type="text"
                         maxLength={300}
-                        className="mt-2 w-full border rounded-md px-2 py-1 text-sm leading-5 
-                          bg-white text-black border-gray-300 placeholder:text-gray-500
-                          dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:placeholder:text-gray-400"
+                        className="mt-2 w-full border rounded-md px-3 py-2 text-sm md:text-base leading-5 
+                      bg-white text-black border-gray-300 placeholder:text-gray-500
+                      dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:placeholder:text-gray-400"
                         placeholder={tUI('pleaseSpecify', lang)}
                         value={allAnswers[`${scopedName}_details`] || ''}
-                        onChange={(e) => {
-                          const cleaned = e.target.value.replace(
-                            /[^\u0000-\u007F\p{L}\p{N}\p{P}\p{Zs}]/gu, ''
-                          );
-                          handleChange(scopedName, cleaned);
-
-                        }}
+                       onChange={(e) => {
+                        const cleaned = e.target.value.replace(
+                          /[^\u0000-\u007F\p{L}\p{N}\p{P}\p{Zs}]/gu, ''
+                        );
+                        handleChange(`${scopedName}_details`, cleaned);
+                      }}
                       />
                     )}
                   </>
                 ) : q.type === 'select' && q.options ? (
                   <>
                     <select
-                      className="w-full border rounded-md p-2 
-                        bg-white text-black border-gray-300 placeholder:text-gray-500
-                        dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:placeholder:text-gray-400"
+                      className="w-full border rounded-md px-3 py-2 text-sm md:text-base
+                    bg-white text-black border-gray-300 placeholder:text-gray-500
+                    dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:placeholder:text-gray-400"
                       value={answer}
                       onChange={(e) => handleChange(scopedName, e.target.value)}
                     >
@@ -373,9 +372,9 @@ return (
                         <input
                           type="text"
                           maxLength={300}
-                          className="mt-2 w-full border rounded-md px-2 py-1 text-sm leading-5 
-                            bg-white text-black border-gray-300 placeholder:text-gray-500
-                            dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:placeholder:text-gray-400"
+                          className="mt-2 w-full border rounded-md px-3 py-2 text-sm md:text-base leading-5 
+                      bg-white text-black border-gray-300 placeholder:text-gray-500
+                      dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:placeholder:text-gray-400"
                           placeholder={tUI('pleaseSpecify', lang)}
                           value={allAnswers[`${scopedName}_other`] || ''}
                           onChange={(e) => {
@@ -391,9 +390,9 @@ return (
                   <input
                     type="text"
                     maxLength={300}
-                    className="w-full border rounded-md px-2 py-1 text-sm leading-5 
-                      bg-white text-black border-gray-300 placeholder:text-gray-500
-                      dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:placeholder:text-gray-400"
+                    className="w-full border rounded-md px-3 py-2 text-sm md:text-base leading-5 
+                  bg-white text-black border-gray-300 placeholder:text-gray-500
+                  dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:placeholder:text-gray-400"
                     value={answer}
                     onChange={(e) => {
                       const cleaned = e.target.value.replace(
@@ -412,7 +411,7 @@ return (
   <div className="flex justify-between items-center flex-wrap gap-4">
     {currentStep > 0 && (
       <button
-        className="bg-gray-300 hover:brightness-90 text-black font-semibold px-5 py-2.5 rounded-xl"
+        className="w-full sm:w-auto bg-gray-300 hover:brightness-90 text-black font-semibold px-4 py-2 rounded-lg text-sm md:text-base"
         onClick={back}
       >
         ⬅️ {tUI('back', lang)}
@@ -424,7 +423,7 @@ return (
         <button
           onClick={handleFinish}
           disabled={saving}
-          className="bg-green-500 hover:brightness-90 text-white font-semibold px-5 py-2.5 rounded-xl disabled:opacity-50"
+          className="w-full sm:w-auto bg-green-500 hover:brightness-90 text-white font-semibold px-4 py-2 rounded-lg text-sm md:text-base disabled:opacity-50"
         >
           {saving ? 'Zapisywanie...' : saved ? 'Zapisano ✓' : `✅ ${tUI('saveInterview', lang)}`}
         </button>
@@ -432,14 +431,14 @@ return (
         <button
           onClick={handleGeneratePdfOnly}
           disabled={generatingPdf}
-          className="bg-purple-600 hover:brightness-90 text-white font-semibold px-5 py-2.5 rounded-xl disabled:opacity-50"
+         className="w-full sm:w-auto bg-purple-600 hover:brightness-90 text-white font-semibold px-4 py-2 rounded-lg text-sm md:text-base disabled:opacity-50"
         >
           {generatingPdf ? 'Generuję PDF...' : `🧾 ${tUI('generateInterviewPdf', lang)}`}
         </button>
       </div>
     ) : (
       <button
-        className="ml-auto bg-blue-500 hover:brightness-90 text-white font-semibold px-5 py-2.5 rounded-xl"
+        className="w-full sm:w-auto bg-green-600 hover:brightness-90 text-white font-semibold px-4 py-2 rounded-lg text-sm md:text-base"
         onClick={next}
       >
         {tUI('next', lang)} ➡️
@@ -447,14 +446,14 @@ return (
     )}
   </div>
 
-{isLastStep && (
-  <div className="space-y-3">
-    <label className="block text-sm font-semibold">
-      🧠 {tUI('interviewNarrativeLabel', lang) || 'Narracyjny opis pacjenta (AI)'}
-    </label>
+      {isLastStep && (
+        <div className="space-y-3">
+          <label className="block text-sm font-semibold">
+            🧠 {tUI('interviewNarrativeLabel', lang) || 'Narracyjny opis pacjenta (AI)'}
+          </label>
 
-    <textarea
-      className="w-full border rounded-xl px-4 py-3 text-sm leading-6
+          <textarea
+            className="w-full border rounded-xl px-3 py-2 text-sm md:text-base leading-6
         bg-white text-black border-gray-300 placeholder:text-gray-500
         dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:placeholder:text-gray-400"
       rows={6}
@@ -468,7 +467,7 @@ return (
         type="button"
         onClick={handleGenerateNarrative}
         disabled={narrativeGenerating}
-        className="bg-blue-500 hover:brightness-90 text-white font-semibold px-5 py-2.5 rounded-xl disabled:opacity-50"
+       className="w-full sm:w-auto bg-blue-500 hover:brightness-90 text-white font-semibold px-4 py-2 rounded-lg text-sm md:text-base disabled:opacity-50"
       >
         {narrativeGenerating
           ? tUI('generatingNarrativePending', lang)
