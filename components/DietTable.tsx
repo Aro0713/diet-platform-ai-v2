@@ -366,6 +366,14 @@ const dietOnly = Object.fromEntries(
     translationsUI[dayKey.toLowerCase()]?.[lang] || dayKey || '???'
   );
   const maxMealCount = Math.max(0, ...Object.values(safeDiet).map((meals) => meals.length));
+  // ⛑️ Gdy brak danych – pokaż placeholder zamiast pustej tabeli / błędów map()
+if (dayKeys.length === 0 || maxMealCount === 0) {
+  return (
+    <div className="w-full rounded-md border border-gray-600 bg-[#0d1117] p-4 text-sm text-gray-300">
+      {translationsUI.noDietData?.[lang] || 'Brak danych diety do wyświetlenia.'}
+    </div>
+  );
+}
   const handleInputChange = (day: string, mealIndex: number, field: keyof Meal, value: string) => {
   const updatedDayMeals = [...(editableDiet[day] || [])];
   const meal = updatedDayMeals[mealIndex] ? { ...updatedDayMeals[mealIndex] } : getFallbackMeal();
@@ -426,7 +434,7 @@ const dietOnly = Object.fromEntries(
 
 return (
   <div className="overflow-auto">
-    <table className="min-w-full border border-gray-600 bg-[#1a1e2c]/90 text-white shadow-md rounded-md overflow-hidden">
+    <table className="min-w-full table-fixed break-words border border-gray-600 bg-[#1a1e2c]/90 text-white shadow-md rounded-md overflow-hidden">
       <thead>
   {(meta.goal || meta.model || meta.cuisine || typeof meta.mealsPerDay === 'number') && (
     <tr>
@@ -485,7 +493,7 @@ return (
                         <li key={idx} className="flex items-center gap-2">
                           <span>
                             {i.product}
-                            {Number.isFinite(weight) && (weight as number) > 0
+                           {Number.isFinite(Number(weight)) && Number(weight) > 0
                           ? ` (${round(Number(weight))}${(i as any).unit || 'g'})`
                           : ""}
                           </span>
