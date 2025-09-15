@@ -6,6 +6,7 @@ import { useBasket } from '@/hooks/useBasket';
 import ShoppingListCard from '@/components/ShoppingListCard';
 import ProductAnswerCard from '@/components/ProductAnswerCard';
 import { Send } from 'lucide-react';
+import Image from 'next/image';
 
 interface Props {
   lang: LangKey;
@@ -73,6 +74,7 @@ export default function ProductAssistantPanel({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [chatHistory, setChatHistory] = useState<any[]>([]);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const { addProduct, basket } = useBasket();
 
 
@@ -137,9 +139,16 @@ export default function ProductAssistantPanel({
       setLoading(false);
     }
   };
+  // sprzątanie ObjectURL
+// (jeśli użytkownik opuści widok przed wysłaniem)
+React.useEffect(() => {
+  return () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+  };
+}, [previewUrl]);
 
   return (
-    <div className="bg-slate-900 text-white p-6 rounded-xl shadow-md mt-6 max-w-3xl mx-auto">
+    <div className="bg-slate-900 text-white p-4 sm:p-6 rounded-xl shadow-md mt-6 w-full max-w-3xl mx-auto overflow-hidden break-words">
       <h2 className="text-2xl font-bold mb-4">
         👋 {tUI('lookWelcomeHeader', lang, { name: patient?.name?.split(' ')[0] || '' })}
       </h2>
@@ -155,13 +164,21 @@ export default function ProductAssistantPanel({
 
       {!response && !loading && (
         <div className="flex items-center gap-3 mb-4">
-          <img src="/Look.png" alt="Look avatar" className="w-12 h-12 rounded-full shadow-md ring-2 ring-emerald-500" />
+          <Image
+            src="/Look.png"
+            alt="Look avatar"
+            width={48}
+            height={48}
+            unoptimized
+            priority
+            className="rounded-full shadow-md ring-2 ring-emerald-500"
+          />
           <p className="text-lg font-semibold">{tUI('lookReadyToHelp', lang)}</p>
         </div>
       )}
 
       {chatHistory.length > 0 && (
-        <div className="mt-6 space-y-4">
+        <div className="mt-6 space-y-4 min-w-0">
           {chatHistory.map((msg, index) => (
             <div
               key={index}
@@ -177,7 +194,7 @@ export default function ProductAssistantPanel({
                   <span className="font-bold">Look:</span>
                 </div>
               )}
-              <p className="whitespace-pre-wrap">{msg.content}</p>
+              <p className="whitespace-pre-wrap break-words">{msg.content}</p>
 
               {/* 🔊 Dodaj odtwarzacz audio tylko do ostatniej odpowiedzi */}
               {msg.role === 'assistant' &&
@@ -195,7 +212,8 @@ export default function ProductAssistantPanel({
         </div>
       )}
 
-   <div className="flex items-center gap-2 mt-4">
+{/* 🔎 wiersz: tekst + przycisk „zdjęcie” + „wyślij” */}
+<div className="mt-4 flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
   <input
     type="text"
     value={question}
@@ -207,12 +225,23 @@ export default function ProductAssistantPanel({
       }
     }}
     placeholder={tUI('askQuestionPlaceholder', lang)}
-    className="flex-grow p-2 rounded-md text-black placeholder-gray-400"
+    className="flex-1 min-w-0 p-2 rounded-md text-black placeholder-gray-400"
   />
 
+  {/* 📷 przycisk do wyboru zdjęcia (otwiera natywny picker kamera/galeria) */}
+  <button
+    type="button"
+    onClick={() => document.getElementById('look-file-input')?.click()}
+    className="sm:w-11 h-11 px-3 rounded-md bg-emerald-700 hover:bg-emerald-800 text-white font-medium whitespace-nowrap"
+    title={tUI('attachPhoto', lang) || 'Dodaj zdjęcie'}
+  >
+    📷
+  </button>
+
+  {/* ▶️ wyślij */}
   <button
     onClick={handleAsk}
-    className="w-10 h-10 rounded-full bg-green-600 hover:bg-green-700 flex items-center justify-center text-white shadow disabled:opacity-50"
+    className="sm:w-11 h-11 rounded-full bg-green-600 hover:bg-green-700 flex items-center justify-center text-white shadow disabled:opacity-50"
     disabled={loading}
     title={tUI('startConversationWithLook', lang)}
   >
@@ -220,15 +249,70 @@ export default function ProductAssistantPanel({
   </button>
 </div>
 
+{/* ukryty input file (obsługa Android/iOS) */}
 <input
+  id="look-file-input"
   type="file"
   accept="image/*"
+  capture="environment"
+  className="hidden"
   onChange={(e) => {
-    const selected = e.target.files?.[0];
-    setImageFile(selected instanceof File ? selected : null);
+    const f = e.target.files?.[0] || null;
+    if (!f) {
+      setImageFile(null);
+      setPreviewUrl(null);
+      return;
+    }
+    // walidacja: typ i rozmiar (np. do 8 MB)
+    if (!f.type.startsWith('image/')) {
+      setError('Obsługiwane są wyłącznie obrazy.');
+      return;
+    }
+    if (f.size > 8 * 1024 * 1024) {
+      setError('Plik jest zbyt duży (max 8 MB).');
+      return;
+    }
+    setError(null);
+    setImageFile(f);
+    const url = URL.createObjectURL(f);
+    setPreviewUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return url;
+    });
   }}
-  className="mt-2"
 />
+
+{/* mini-podgląd wybranego zdjęcia */}
+{previewUrl && (
+  <div className="mt-2 flex items-center gap-3">
+    <Image
+      src={previewUrl}
+      alt="Wybrane zdjęcie"
+      width={56}
+      height={56}
+      unoptimized
+      className="rounded-md object-cover"
+    />
+    <div className="text-xs text-gray-300 flex-1 min-w-0 truncate">
+      {imageFile?.name} • {(imageFile?.size ? Math.round(imageFile.size / 1024) : 0)} KB
+    </div>
+    <button
+      type="button"
+      onClick={() => {
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        setPreviewUrl(null);
+        setImageFile(null);
+        // reset inputa file (dla wyboru tego samego pliku ponownie)
+        const el = document.getElementById('look-file-input') as HTMLInputElement | null;
+        if (el) el.value = '';
+      }}
+      className="px-3 py-1 rounded-md bg-slate-700 hover:bg-slate-600 text-white text-xs"
+    >
+      ✖
+    </button>
+  </div>
+)}
+
 
       {error && <p className="text-red-400 mt-4">{error}</p>}
 
@@ -247,9 +331,6 @@ export default function ProductAssistantPanel({
           }}
         />
       )}
-    {response?.mode === 'shopping' && (
-    <ShoppingListCard response={response} lang={lang} />
-    )}
 </div>
 );
 }
