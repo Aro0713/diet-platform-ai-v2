@@ -548,7 +548,19 @@ return (
   </nav>
 
            {/* 🔐 Login i Rejestracja */}
-    <section className="z-10 grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mt-8 md:mt-12 w-full max-w-md md:max-w-6xl mx-auto bg-white/30 dark:bg-gray-900/30 backdrop-blur-md p-6 md:p-10 rounded-2xl shadow-xl transition-colors dark:text-white">
+    <section
+  className="
+    z-10
+    grid grid-cols-1 lg:grid-cols-2
+    gap-6 lg:gap-8
+    mt-8 lg:mt-12
+    w-full max-w-3xl lg:max-w-6xl mx-auto
+    bg-white/30 dark:bg-gray-900/30 backdrop-blur-md
+    p-6 lg:p-10
+    rounded-2xl shadow-xl transition-colors dark:text-white
+    overflow-hidden
+  "
+>
       <h1 id="auth-section" className="sr-only">Logowanie i rejestracja</h1>
         {confirmation && (
       <div className="fixed top-0 left-0 w-full z-50 bg-green-600 text-white text-center py-2 shadow-md animate-fadeOut">
@@ -643,7 +655,11 @@ return (
       {t('registerTitle')}
     </h2>
 
-    <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-4 w-full" role="radiogroup" aria-label={t('selectRole')}>
+    <div
+  className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3 mb-4 w-full"
+  role="radiogroup"
+  aria-label={t('selectRole')}
+>
       {router.isReady && (
         <>
           {(router.query.mode === 'doctor' || router.query.mode === 'dietitian') && (
@@ -726,11 +742,14 @@ return (
 
       <div className="w-full">
       <label htmlFor="phone" className="sr-only">{t('phone')}</label>
+
       <PhoneInput
-        defaultCountry={detectedCountry}
+        defaultCountry={(detectedCountry ?? 'pl') as CountryIso2}
         value={form.phone}
         onChange={(phone) => setForm({ ...form, phone })}
-        inputClassName="w-full h-[44px] text-sm bg-white dark:bg-gray-800 text-black dark:text-white border border-gray-300 dark:border-gray-600 rounded px-3 py-2"
+        className="!w-full"
+        inputClassName="!w-full h-[44px] text-sm bg-white dark:bg-gray-800 text-black dark:text-white border border-gray-300 dark:border-gray-600 rounded px-3 py-2"
+        countrySelectorStyleProps={{ buttonClassName: "!h-[44px]" }}
         inputProps={{
           name: 'phone',
           required: true,
@@ -740,7 +759,7 @@ return (
         }}
       />
       </div>
-      
+    
       <div>
         <label htmlFor="password" className="sr-only">{t('password')}</label>
         <input
