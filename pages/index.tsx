@@ -83,7 +83,14 @@ const replayIntro = () => {
   if (!mounted) return null;
 
 return (
-  <main className="relative min-h-screen bg-[#0f271e]/70 bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 backdrop-blur-[12px] shadow-[inset_0_0_60px_rgba(255,255,255,0.08)] flex flex-col justify-start items-center pt-10 px-6 text-white transition-all duration-300">
+  <main
+  className="relative min-h-screen
+  bg-[#0f271e]/70 bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60
+  dark:from-[#0e231b]/80 dark:to-[#0c1f18]/60
+  backdrop-blur-[12px] shadow-[inset_0_0_60px_rgba(255,255,255,0.08)]
+  flex flex-col justify-start items-center pt-10 px-6
+  text-gray-900 dark:text-white transition-all duration-300"
+>
    <Head>
   <title>Diet Care Platform</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -138,20 +145,27 @@ return (
     </nav>
 
     {/* Główna zawartość */}
-    <div className="z-10 flex flex-col items-center justify-start text-center px-4 mt-6 w-full max-w-xl md:max-w-5xl bg-white/30 ... p-6 md:p-10 ...">
+    <div
+        className="z-10 flex flex-col items-center justify-start text-center px-4 mt-6
+        w-full max-w-xl md:max-w-5xl
+        bg-white/30 dark:bg-gray-900/30 backdrop-blur-md
+        p-6 md:p-10 rounded-2xl shadow-xl transition-colors"
+      >
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.5, duration: 1 }}
       >
         <Image
-          src="/logo-dietcare.png"
-          alt="Logo Diet Care Platform"
-          width={260}
-          height={80}
-          className="mx-auto"
-          priority
-        />
+        id="site-logo"
+        src="/logo-dietcare.png"
+        alt="Logo Diet Care Platform"
+        width={260}
+        height={80}
+        className="mx-auto"
+        priority
+      />
+
       </motion.div>
 
       <motion.h1
@@ -167,7 +181,9 @@ return (
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.5, duration: 1 }}
-        className="mt-6 text-2xl md:text-[1.7rem] font-serif text-[#f1f1f1] dark:text-[#e4e4e4] max-w-4xl leading-relaxed whitespace-pre-line drop-shadow"
+        className="mt-6 text-2xl md:text-[1.7rem] font-serif
+        text-gray-800 dark:text-gray-200
+        max-w-4xl leading-relaxed whitespace-pre-line drop-shadow"
       >
         {tUI('slogan', lang)}
       </motion.p>
