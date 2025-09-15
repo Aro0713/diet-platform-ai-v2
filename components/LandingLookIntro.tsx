@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { tUI, LangKey } from '@/utils/i18n';
 import { motion } from 'framer-motion';
@@ -8,7 +8,6 @@ export default function LandingLookIntro() {
   const [lang, setLang] = useState<LangKey>('pl');
   const [clicked, setClicked] = useState(false);
   const [randomTop, setRandomTop] = useState('50%');
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // 🔍 wykryj mobile (bez SSR błędów)
   const isMobile = useMemo(() => {
@@ -48,7 +47,6 @@ export default function LandingLookIntro() {
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
         const audio = new Audio(url);
-        // iOS: od iOS 13+ musi być w konsekwencji gestu — tutaj jest
         audio.play().catch(() => {/* ignoruj, jeśli user zablokował dźwięk */});
       } catch (err) {
         console.error('🔊 Błąd audio:', err);
@@ -59,20 +57,6 @@ export default function LandingLookIntro() {
 
   const message = tUI('lookIntroMessage', lang);
   const clickMessage = tUI('lookClickMessage', lang);
-
-  // 📸 proste „pobierz zdjęcie” (kamera/galeria) – działa w Android/iOS przeglądarka i WebView
-  const onAvatarClick = () => {
-    setClicked(true);
-    // Opcjonalnie: pobierz zdjęcie użytkownika
-    fileInputRef.current?.click();
-  };
-
-  const onFilePicked = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    // Tu możesz wysłać do backendu / ustawić stan / zapisać w profilu
-    console.log('📸 Wybrano zdjęcie:', file.name, file.type, Math.round(file.size / 1024), 'KB');
-  };
 
   // 📐 style/pozycja zależna od urządzenia
   const containerClass =
@@ -100,11 +84,11 @@ export default function LandingLookIntro() {
         transition={{ duration: 0.6, ease: 'easeOut' }}
         className={containerClass}
         style={containerStyle}
-        onClick={onAvatarClick}
+        onClick={() => setClicked(true)}
         role="button"
         aria-label="Look helper"
       >
-        {/* Awatar Look – bezpieczne ładowanie w WebView (Android/iOS) */}
+        {/* Awatar Look */}
         <motion.div
           animate={clicked ? { rotate: [0, -10, 10, -6, 6, -2, 2, 0] } : {}}
           transition={{ duration: 0.6 }}
@@ -125,11 +109,9 @@ export default function LandingLookIntro() {
 
         {/* Dymek z tekstem */}
         <div
-          className="relative text-[13px] sm:text-sm px-4 py-3 rounded-2xl shadow-xl comic-bubble bg-white text-gray-900 dark:bg-gray-800 dark:text-white
-                     max-w-[78vw] sm:max-w-md"
+          className={`relative text-[13px] sm:text-sm px-4 py-3 rounded-2xl shadow-xl comic-bubble bg-white text-gray-900 dark:bg-gray-800 dark:text-white max-w-[78vw] sm:max-w-md`}
           style={{ maxWidth: bubbleMaxWidth }}
         >
-          {/* ogonek dymka – inna pozycja na mobile (na dole) */}
           {!isMobile ? (
             <div className="absolute -left-4 top-6 w-0 h-0 border-t-[12px] border-t-transparent border-b-[12px] border-b-transparent border-r-[12px] border-r-white dark:border-r-gray-800" />
           ) : (
@@ -140,16 +122,6 @@ export default function LandingLookIntro() {
           </p>
         </div>
       </motion.div>
-
-      {/* ukryty input do pobierania zdjęć (kamera/galeria) */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="hidden"
-        onChange={onFilePicked}
-      />
 
       <style jsx>{`
         .comic-bubble {
