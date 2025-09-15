@@ -8,6 +8,7 @@ export default function LandingLookIntro() {
   const [lang, setLang] = useState<LangKey>('pl');
   const [clicked, setClicked] = useState(false);
   const [randomTop, setRandomTop] = useState('50%');
+  const [anchorPos, setAnchorPos] = useState<{ top: number; left: number } | null>(null);
 
   // 🔍 wykryj mobile (bez SSR błędów)
   const isMobile = useMemo(() => {
@@ -33,6 +34,29 @@ export default function LandingLookIntro() {
 
     return () => clearTimeout(timer);
   }, [isMobile]);
+  useEffect(() => {
+  if (typeof window === 'undefined' || !isMobile) {
+    setAnchorPos(null);
+    return;
+  }
+
+  // 👇 USTAL selektor elementu z logo – najlepiej nadaj mu id="site-logo"
+  const logo = document.querySelector<HTMLElement>('#site-logo, .site-logo, header img, header svg');
+  const safe = {
+    top: Number(getComputedStyle(document.documentElement).getPropertyValue('--sat') || 0) || 0,
+  };
+
+  if (logo) {
+    const rect = logo.getBoundingClientRect();
+    const top = Math.max(8, rect.bottom + 8); // tuż pod logo
+    const left = Math.max(8, rect.left);      // wyrównanie do lewej krawędzi logo
+    setAnchorPos({ top, left });
+  } else {
+    // fallback: górny-lewy róg, z uwzględnieniem safe-area
+    const fallbackTop = 16 + safe.top;
+    setAnchorPos({ top: fallbackTop, left: 16 });
+  }
+}, [isMobile, visible]);
 
   // 🔊 audio po kliknięciu (mobile iOS wymaga gesture — mamy go)
   useEffect(() => {
@@ -62,16 +86,23 @@ export default function LandingLookIntro() {
   const containerClass =
     'z-50 flex items-center gap-3 sm:gap-4 cursor-pointer';
   const containerStyle: React.CSSProperties = isMobile
+  ? anchorPos
     ? {
         position: 'fixed',
-        left: 'max(env(safe-area-inset-left), 16px)',
-        bottom: 'max(env(safe-area-inset-bottom), 16px)',
+        left: anchorPos.left,
+        top: anchorPos.top,
       }
     : {
         position: 'fixed',
-        left: '24px',
-        top: randomTop,
-      };
+        left: 'max(env(safe-area-inset-left), 16px)',
+        top: 'max(env(safe-area-inset-top), 16px)',
+      }
+  : {
+      position: 'fixed',
+      left: '24px',
+      top: randomTop,
+    };
+
 
   const avatarSize = isMobile ? 72 : 96; // px
   const bubbleMaxWidth = isMobile ? '78vw' : '24rem';
