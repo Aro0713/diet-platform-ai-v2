@@ -140,65 +140,65 @@ export default function CalculationBlock({ form, interview, lang, onResult }: Pr
 ]);
 
   return (
- <PanelCard title={`🧮 ${tUI('calculator', lang)}`} className="h-full">
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start text-sm">
-      <div className="space-y-1">
-        <div><span className="font-medium">{tCalc('bmi', lang)}:</span> {isValid(bmi) ? bmi.toFixed(1) : tUI('noData', lang)}</div>
-        <div><span className="font-medium">{tCalc('ppm', lang)}:</span> {isValid(ppm) ? `${Math.round(ppm)} kcal` : tUI('noData', lang)}</div>
-        <div className="flex items-center gap-2">
-          <span className="font-medium">PAL:</span>
-          <select
-            value={pal}
-            onChange={(e) => setPal(parseFloat(e.target.value))}
-            className="border px-2 py-1 rounded bg-white text-black text-sm dark:bg-gray-800 dark:text-white dark:border-gray-600"
-          >
-            {Object.entries(activityLevels).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label[lang]}
-              </option>
-            ))}
-          </select>
-          {autoPAL && pal === autoPAL && (
-            <span className="text-xs italic text-gray-400">(z wywiadu)</span>
-          )}
-        </div>
-        <div><span className="font-medium">{tCalc('cpm', lang)}:</span> {isValid(cpm) ? `${Math.round(cpm)} kcal` : tUI('noData', lang)}</div>
+<PanelCard title={`🧮 ${tUI('calculator', lang)}`} className="h-full overflow-hidden break-words">
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start text-sm min-w-0">
+    <div className="space-y-1">
+      <div><span className="font-medium">{tCalc('bmi', lang)}:</span> {isValid(bmi) ? bmi.toFixed(1) : tUI('noData', lang)}</div>
+      <div><span className="font-medium">{tCalc('ppm', lang)}:</span> {isValid(ppm) ? `${Math.round(ppm)} kcal` : tUI('noData', lang)}</div>
+
+      {/* PAL – podmiana */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 min-w-0">
+        <span className="font-medium shrink-0">PAL:</span>
+        <select
+          value={pal}
+          onChange={(e) => setPal(parseFloat(e.target.value))}
+          className="w-full sm:w-auto min-w-0 border px-2 py-1 rounded bg-white text-black text-sm dark:bg-gray-800 dark:text-white dark:border-gray-600"
+        >
+          {Object.entries(activityLevels).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label[lang]}
+            </option>
+          ))}
+        </select>
+        {autoPAL && pal === autoPAL && (
+          <span className="block sm:inline text-xs italic text-gray-400 leading-snug break-words min-w-0">
+            (z wywiadu)
+          </span>
+        )}
       </div>
 
-      <div className="space-y-1">
-        <div><span className="font-medium">{tCalc('broca', lang)}:</span> {isValid(nmcBroca) ? `${nmcBroca.toFixed(1)} kg` : tUI('noData', lang)}</div>
-        <div><span className="font-medium">{tCalc('lorentz', lang)}:</span> {isValid(nmcLorentz) ? `${nmcLorentz.toFixed(1)} kg` : tUI('noData', lang)}</div>
-      </div>
-
-      <div className="space-y-1 text-xs">
-        <div>
-          <strong>{tUI('physicalActivity', lang)}:</strong>{' '}
-          {interview.q1 === 'Tak'
-            ? interview.q2 || tUI('yes', lang)
-            : interview.q1 || <span className="text-red-500">{tUI('noData', lang)}</span>}
-        </div>
-
-        <div>
-          <strong>{tUI('sleepQuality', lang)}:</strong>{' '}
-          {interview.q7
-            ? interview.q7
-            : <span className="text-blue-400">{tUI('noData', lang)}</span>}
-        </div>
-
-        <div>
-          <strong>{tUI('stressLevel', lang)}:</strong>{' '}
-          {interview.q8
-            ? interview.q8
-            : <span className="text-red-500">{tUI('noData', lang)}</span>}
-        </div>
-      </div>
+      <div><span className="font-medium">{tCalc('cpm', lang)}:</span> {isValid(cpm) ? `${Math.round(cpm)} kcal` : tUI('noData', lang)}</div>
     </div>
 
-    {interpretation && (
-      <div className="mt-4 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 rounded dark:bg-yellow-200 dark:border-yellow-500 dark:text-black">
-        {interpretation}
+    <div className="space-y-1">
+      <div><span className="font-medium">{tCalc('broca', lang)}:</span> {isValid(nmcBroca) ? `${nmcBroca.toFixed(1)} kg` : tUI('noData', lang)}</div>
+      <div><span className="font-medium">{tCalc('lorentz', lang)}:</span> {isValid(nmcLorentz) ? `${nmcLorentz.toFixed(1)} kg` : tUI('noData', lang)}</div>
+    </div>
+
+    {/* prawa kolumna – podmiana klas */}
+    <div className="space-y-1 text-xs break-words min-w-0">
+      <div>
+        <strong>{tUI('physicalActivity', lang)}:</strong>{' '}
+        {interview.q1 === 'Tak'
+          ? interview.q2 || tUI('yes', lang)
+          : interview.q1 || <span className="text-red-500">{tUI('noData', lang)}</span>}
       </div>
-    )}
-  </PanelCard>
+      <div>
+        <strong>{tUI('sleepQuality', lang)}:</strong>{' '}
+        {interview.q7 ? interview.q7 : <span className="text-blue-400">{tUI('noData', lang)}</span>}
+      </div>
+      <div>
+        <strong>{tUI('stressLevel', lang)}:</strong>{' '}
+        {interview.q8 ? interview.q8 : <span className="text-red-500">{tUI('noData', lang)}</span>}
+      </div>
+    </div>
+  </div>
+
+  {interpretation && (
+    <div className="mt-4 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 rounded dark:bg-yellow-200 dark:border-yellow-500 dark:text-black">
+      {interpretation}
+    </div>
+  )}
+</PanelCard>
 );
 }
