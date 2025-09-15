@@ -122,64 +122,80 @@ const fetchPatientData = async () => {
     }
   };
 
-  return (
-    <div className="space-y-4 w-full max-w-3xl overflow-x-hidden">
-      <h2 className="text-base md:text-lg font-semibold">🧍 {tUI('patientData', lang)}</h2>
-      <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-4">
-        <label className="flex items-center gap-2">
-          <input
-            type="radio"
-            name="mode"
-            value="lookup"
-            checked={mode === 'lookup'}
-            onChange={() => setMode('lookup')}
-          />
-          {tUI('patientHasAccount', lang)}
-        </label>
-        <label className="flex items-center gap-2">
-          <input
-            type="radio"
-            name="mode"
-            value="create"
-            checked={mode === 'create'}
-            onChange={() => setMode('create')}
-          />
-          {tUI('createAccountForPatient', lang)}
-        </label>
-      </div>
+return (
+  <div className="w-full max-w-3xl mx-auto overflow-hidden space-y-4">
+    <h2 className="text-base md:text-lg font-semibold">
+      🧍 {tUI('patientData', lang)}
+    </h2>
 
-      {mode === 'lookup' ? (
-        <div className="space-y-2">
-          <input
-            type="email"
-            className="w-full min-w-0 text-sm md:text-base border px-3 py-2 rounded bg-white text-black border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600"
-            placeholder={tUI('enterPatientEmail', lang)}
-            value={emailInput}
-            onChange={(e) => setEmailInput(e.target.value)}
-          />
-         <button
-            onClick={fetchPatientData}
-            className="w-full sm:w-auto text-sm md:text-base bg-blue-600 text-white px-4 py-2 rounded"
-          >
-            🔍 {tUI('fetchPatientData', lang)}
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-          <input
-            type="text"
-            placeholder={tUI('name', lang)}
-            className="w-full min-w-0 text-sm md:text-base border px-3 py-2 rounded bg-white text-black border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-          />
-          <input
+    {/* tryb: wyszukaj / utwórz */}
+    <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-4">
+      <label className="flex items-center gap-2">
+        <input
+          type="radio"
+          name="mode"
+          value="lookup"
+          checked={mode === 'lookup'}
+          onChange={() => setMode('lookup')}
+        />
+        {tUI('patientHasAccount', lang)}
+      </label>
+      <label className="flex items-center gap-2">
+        <input
+          type="radio"
+          name="mode"
+          value="create"
+          checked={mode === 'create'}
+          onChange={() => setMode('create')}
+        />
+        {tUI('createAccountForPatient', lang)}
+      </label>
+    </div>
+
+    {mode === 'lookup' ? (
+      /* 🔎 WYSZUKIWANIE PO E-MAILU */
+      <div className="space-y-2 min-w-0">
+        <input
+          type="email"
+          className="w-full min-w-0 text-sm md:text-base border px-3 py-2 rounded
+                     bg-white text-black border-gray-300
+                     dark:bg-gray-800 dark:text-white dark:border-gray-600"
+          placeholder={tUI('enterPatientEmail', lang)}
+          value={emailInput}
+          onChange={(e) => setEmailInput(e.target.value)}
+        />
+        <button
+          onClick={fetchPatientData}
+          className="w-full sm:w-auto text-sm md:text-base bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+        >
+          🔍 {tUI('fetchPatientData', lang)}
+        </button>
+      </div>
+    ) : (
+      /* ➕ UTWÓRZ KONTO PACJENTA */
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 min-w-0">
+        <input
+          type="text"
+          placeholder={tUI('name', lang)}
+          className="w-full min-w-0 text-sm md:text-base border px-3 py-2 rounded
+                     bg-white text-black border-gray-300
+                     dark:bg-gray-800 dark:text-white dark:border-gray-600"
+          value={form.name}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
+        />
+
+        <input
           type="email"
           placeholder={tUI('email', lang)}
-          className="w-full min-w-0 text-sm md:text-base border px-3 py-2 rounded bg-white text-black border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-          />
+          className="w-full min-w-0 text-sm md:text-base border px-3 py-2 rounded
+                     bg-white text-black border-gray-300
+                     dark:bg-gray-800 dark:text-white dark:border-gray-600"
+          value={form.email}
+          onChange={(e) => setForm({ ...form, email: e.target.value })}
+        />
+
+        {/* wrapper usuwa „rozpychanie” PhoneInput */}
+        <div className="w-full min-w-0">
           <PhoneInput
             defaultCountry={(detectedCountry ?? 'pl') as CountryIso2}
             value={form.phone}
@@ -194,30 +210,34 @@ const fetchPatientData = async () => {
               placeholder: tUI('phone', lang),
             }}
           />
-          <button
-            type="button"
-            onClick={createPatientAccount}
-            className="w-full sm:w-auto min-w-0 text-sm md:text-base bg-green-700 text-white px-4 py-2 rounded"
-          >
-            ➕ {tUI('createAccount', lang)}
-          </button>
         </div>
-      )}
 
-      {status && <p className="text-sm md:text-base text-gray-600 dark:text-gray-300">{status}</p>}
+        <button
+          type="button"
+          onClick={createPatientAccount}
+          className="w-full sm:w-auto min-w-0 text-sm md:text-base bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded"
+        >
+          ➕ {tUI('createAccount', lang)}
+        </button>
+      </div>
+    )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 mt-4">
+    {status && (
+      <p className="text-sm md:text-base text-gray-600 dark:text-gray-300">{status}</p>
+    )}
 
-          {/* WIEK */}
+    {/* 📋 DANE PODSTAWOWE */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 mt-4 min-w-0">
+      {/* WIEK */}
       <input
         type="number"
         placeholder={tUI('age', lang)}
         inputMode="numeric"
         min={0}
         className="w-full min-w-0 text-sm md:text-base border px-3 py-2 rounded
-                  bg-white text-black border-gray-300
-                  dark:bg-gray-800 dark:text-white dark:border-gray-600"
-        value={form.age ?? ''} // input może mieć number | ''
+                   bg-white text-black border-gray-300
+                   dark:bg-gray-800 dark:text-white dark:border-gray-600"
+        value={form.age ?? ''}
         onChange={(e) => {
           const v = e.target.value;
           setForm({ ...form, age: v === '' ? form.age : Number(v) });
@@ -227,8 +247,8 @@ const fetchPatientData = async () => {
       {/* PŁEĆ */}
       <select
         className="w-full min-w-0 text-sm md:text-base border px-3 py-2 rounded
-                  bg-white text-black border-gray-300
-                  dark:bg-gray-800 dark:text-white dark:border-gray-600"
+                   bg-white text-black border-gray-300
+                   dark:bg-gray-800 dark:text-white dark:border-gray-600"
         value={form.sex}
         onChange={(e) => setForm({ ...form, sex: e.target.value as 'male' | 'female' })}
       >
@@ -245,8 +265,8 @@ const fetchPatientData = async () => {
         min={0}
         step="0.1"
         className="w-full min-w-0 text-sm md:text-base border px-3 py-2 rounded
-                  bg-white text-black border-gray-300
-                  dark:bg-gray-800 dark:text-white dark:border-gray-600"
+                   bg-white text-black border-gray-300
+                   dark:bg-gray-800 dark:text-white dark:border-gray-600"
         value={form.weight ?? ''}
         onChange={(e) => {
           const v = e.target.value;
@@ -262,18 +282,17 @@ const fetchPatientData = async () => {
         min={0}
         step="0.1"
         className="w-full min-w-0 text-sm md:text-base border px-3 py-2 rounded
-                  bg-white text-black border-gray-300
-                  dark:bg-gray-800 dark:text-white dark:border-gray-600"
+                   bg-white text-black border-gray-300
+                   dark:bg-gray-800 dark:text-white dark:border-gray-600"
         value={form.height ?? ''}
         onChange={(e) => {
           const v = e.target.value;
           setForm({ ...form, height: v === '' ? form.height : Number(v) });
         }}
       />
-
-      </div>
     </div>
-  );
+  </div>
+);
 };
 
 export default PatientPanelSection;
