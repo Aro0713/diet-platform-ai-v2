@@ -69,6 +69,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         console.log('🖼️ Zdjęcie dołączone do zapytania.');
       }
     }
+    // ⛔ Puste zapytanie i brak obrazu — nie ma co analizować
+    if (!question && !base64Image) {
+      return res.status(400).json({ error: 'Puste pytanie.' });
+    }
 
     const questionType = await detectQuestionType(question, lang);
     const firstName = patient?.name?.split?.(' ')[0] || 'Pacjencie';
@@ -171,6 +175,7 @@ Reply in a balanced, practical tone. You may explain:
 - or suggest better timing or alternatives.
 
 Never be judgmental. The goal is to support the patient in real-world choices.
+When mode is "shopping", you MUST include "shoppingList" (flat array). You MAY also include "shoppingGroups", but "shoppingList" is required.
 
 Example:
 {
@@ -308,7 +313,8 @@ Answer briefly, clearly, and professionally — like a trusted digital dietitian
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages,
-      temperature: 0.4
+      temperature: 0.4,
+      response_format: { type: 'json_object' }
     });
 
     const content = completion.choices[0]?.message?.content;
@@ -325,18 +331,47 @@ Answer briefly, clearly, and professionally — like a trusted digital dietitian
     }
 
     try {
-      const cleaned = content
-        .replace(/^```json\n?/, '')
-        .replace(/^```/, '')
-        .replace(/\n?```$/, '')
-        .trim();
+    const cleaned = content.replace(/```[\s\S]*?json|```/gi, '').trim();
 
       const parsed = JSON.parse(cleaned);
+      // 🧹 Normalizacja pod UI (ShoppingListCard używa shoppingList)
+if (parsed?.mode === 'shopping') {
+  // jeśli model zwrócił "shoppingGroups", spłaszcz do "shoppingList"
+  if (!parsed.shoppingList && Array.isArray(parsed.shoppingGroups)) {
+    parsed.shoppingList = parsed.shoppingGroups.flatMap((group: any) =>
+      (group?.items || []).map((it: any) => ({
+        product: it?.product ?? it?.name ?? '',
+        quantity: String(it?.quantity ?? it?.qty ?? ''),
+        unit: it?.unit ?? '',
+        localPrice: it?.localPrice ?? '',
+        onlinePrice: it?.onlinePrice ?? '',
+        shopSuggestion: group?.shop ?? it?.shop ?? ''
+      }))
+    );
+    delete parsed.shoppingGroups;
+  }
+
+  // uzupełnij brakujące pola wymagane przez UI
+  if (!parsed.day) parsed.day = targetDay;
+  if (!parsed.totalEstimatedCost) {
+    parsed.totalEstimatedCost = { local: '', online: '' };
+  }
+  if (!parsed.answer) parsed.answer = 'Your shopping list is below 👇';
+}
+
+// Dla "product" i "response" dopilnuj, by "answer" istniało
+if (!parsed.answer) {
+  parsed.answer =
+    parsed.summary ||
+    (parsed.mode === 'product'
+      ? 'Analysis of the product is below.'
+      : 'Odpowiedź poniżej.');
+}
 
       const ttsRes = await openai.audio.speech.create({
         model: 'tts-1-hd',
        voice: 'echo',
-        input: parsed.answer || 'Brak odpowiedzi.'
+        input: String(parsed.answer || 'Brak odpowiedzi.')
       });
 
       const audioBuffer = Buffer.from(await ttsRes.arrayBuffer());
