@@ -433,14 +433,22 @@ if (dayKeys.length === 0 || maxMealCount === 0) {
 }, [editableDiet, dayKeys, setConfirmedDiet]);
 
 return (
-  <div className="overflow-auto">
-    <table className="min-w-full table-fixed break-words border border-gray-600 bg-[#1a1e2c]/90 text-white shadow-md rounded-md overflow-hidden">
-      <thead>
+  <div className="
+  relative -mx-4 md:mx-0 px-4
+  overflow-x-auto md:overflow-x-visible
+  overflow-y-visible
+  scroll-smooth
+  snap-x snap-mandatory
+">
+
+    <table className="min-w-[980px] md:min-w-full table-fixed break-words border border-gray-600 bg-[#1a1e2c]/90 text-white shadow-md rounded-md overflow-hidden">
+
+      <thead className="sticky top-0 z-10 bg-[#1a1e2c]/90">
   {(meta.goal || meta.model || meta.cuisine || typeof meta.mealsPerDay === 'number') && (
     <tr>
       <th
         colSpan={dayKeys.length || 7}
-        className="border border-gray-600 bg-gray-900 text-[12px] md:text-sm text-white px-4 py-2"
+        className="snap-start border border-gray-600 bg-gray-900 text-[12px] md:text-sm text-white px-3 py-2"
       >
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
          {meta.goal   && <span>🎯 {localizeMeta(meta.goal,   lang)}</span>}
@@ -456,9 +464,9 @@ return (
   <tr>
     {translatedDays.map((day, idx) => (
       <th
-        key={day + idx}
-        className="border border-gray-600 bg-gray-800 text-sm font-semibold text-white px-4 py-2 text-center"
-      >
+          key={day + idx}
+          className="min-w-[260px] md:min-w-0 snap-start border border-gray-600 bg-gray-800 text-sm font-semibold text-white px-3 py-2 text-center"
+        >
         {day}
       </th>
     ))}
@@ -471,7 +479,7 @@ return (
             {dayKeys.map((day) => {
               const meal = safeDiet[day]?.[mealIndex] ?? getFallbackMeal();
               return (
-                <td key={day + mealIndex} className="border border-gray-600 bg-[#0d1117] px-3 py-2 align-top text-white">
+                <td key={day + mealIndex} className="min-w-[260px] md:min-w-0 snap-start border border-gray-600 bg-[#0d1117] px-3 py-2 align-top text-white">
                   <div className="space-y-2">
                     {/* typ posiłku (Śniadanie/Obiad...) */}
                     <div className="text-[11px] uppercase tracking-wide text-gray-400">
@@ -528,7 +536,10 @@ return (
           {dayKeys.map((day) => {
             const macros = sumDailyMacros(safeDiet[day] || []);
             return (
-              <td key={day + '_sum'} className="border border-gray-600 px-2 py-1 text-left text-gray-300 whitespace-pre-wrap align-top">
+              <td
+                key={day + '_sum'}
+                className="min-w-[260px] md:min-w-0 snap-start border border-gray-600 px-3 py-2 text-left text-gray-300 whitespace-pre-wrap align-top"
+              >
               {L.proteinShort}: {round(macros.protein)}{L.g}, {L.fatShort}: {round(macros.fat)}{L.g}, {L.carbsShort}: {round(macros.carbs)}{L.g}<br />
               🌿 {L.fiber}: {round(macros.fiber)}{L.g} | 🧂 {L.sodium}: {round(macros.sodium)}{L.mg} | 🥔 {L.potassium}: {round(macros.potassium)}{L.mg}<br />
               🦴 {L.calcium}: {round(macros.calcium)}{L.mg} | 🧬 {L.magnesium}: {round(macros.magnesium)}{L.mg} | 🩸 {L.iron}: {round(macros.iron)}{L.mg} | 🧪 {L.zinc}: {round(macros.zinc)}{L.mg}<br />
@@ -560,7 +571,10 @@ return (
         </tr>
         <tr>
           {dayKeys.map((day) => (
-            <td key={day + '_note'} className="border border-gray-600 px-2 py-1 bg-[#0d1117] text-white align-top">
+            <td
+                key={day + '_note'}
+                className="min-w-[260px] md:min-w-0 snap-start border border-gray-600 px-3 py-2 bg-[#0d1117] text-white align-top"
+              >
               {isEditable ? (
                 <textarea
                   className="w-full border rounded-md px-2 py-1 text-sm bg-[#0d1117] text-white border-gray-600"
