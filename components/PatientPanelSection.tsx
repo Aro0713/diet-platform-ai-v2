@@ -3,7 +3,9 @@ import { supabase } from '@/lib/supabaseClient';
 import { PatientData } from '@/types';
 import { LangKey, tUI } from '@/utils/i18n';
 import { PhoneInput } from 'react-international-phone';
+import type { CountryIso2 } from 'react-international-phone';
 import 'react-international-phone/style.css';
+
 
 interface Props {
   form: PatientData;
@@ -15,18 +17,18 @@ const PatientPanelSection = ({ form, setForm, lang }: Props) => {
   const [mode, setMode] = useState<'lookup' | 'create'>('lookup');
   const [emailInput, setEmailInput] = useState('');
   const [status, setStatus] = useState('');
-  const [detectedCountry, setDetectedCountry] = useState<'pl'>('pl');
+  const [detectedCountry, setDetectedCountry] = useState<CountryIso2>('pl');
 
-  useEffect(() => {
-    fetch('https://ip-api.com/json/')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.countryCode) {
-          setDetectedCountry(data.countryCode.toLowerCase());
-        }
-      })
-      .catch(() => setDetectedCountry('pl'));
-  }, []);
+useEffect(() => {
+  fetch('https://ip-api.com/json/')
+    .then((res) => res.json())
+    .then((data) => {
+      const cc = String(data?.countryCode || '').toLowerCase();
+      setDetectedCountry((cc || 'pl') as CountryIso2);
+    })
+    .catch(() => setDetectedCountry('pl'));
+}, []);
+
 
 const fetchPatientData = async () => {
   setStatus(tUI('searchingPatient', lang));
@@ -121,9 +123,9 @@ const fetchPatientData = async () => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full max-w-3xl overflow-x-hidden">
       <h2 className="text-base md:text-lg font-semibold">🧍 {tUI('patientData', lang)}</h2>
-      <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+      <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-4">
         <label className="flex items-center gap-2">
           <input
             type="radio"
@@ -150,7 +152,7 @@ const fetchPatientData = async () => {
         <div className="space-y-2">
           <input
             type="email"
-            className="w-full text-sm md:text-base border px-3 py-2 rounded bg-white text-black border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600"
+            className="w-full min-w-0 text-sm md:text-base border px-3 py-2 rounded bg-white text-black border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600"
             placeholder={tUI('enterPatientEmail', lang)}
             value={emailInput}
             onChange={(e) => setEmailInput(e.target.value)}
@@ -164,28 +166,26 @@ const fetchPatientData = async () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-
           <input
             type="text"
             placeholder={tUI('name', lang)}
-            className="w-full text-sm md:text-base border px-3 py-2 rounded bg-white text-black border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600"
-
+            className="w-full min-w-0 text-sm md:text-base border px-3 py-2 rounded bg-white text-black border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
           <input
-            type="email"
-            placeholder={tUI('email', lang)}
-            className="w-full text-sm md:text-base border px-3 py-2 rounded bg-white text-black border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600"
-
+          type="email"
+          placeholder={tUI('email', lang)}
+          className="w-full min-w-0 text-sm md:text-base border px-3 py-2 rounded bg-white text-black border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
           />
           <PhoneInput
-            defaultCountry={detectedCountry}
+            defaultCountry={(detectedCountry ?? 'pl') as CountryIso2}
             value={form.phone}
             onChange={(phone) => setForm({ ...form, phone })}
-            inputClassName="w-full h-[44px] text-sm bg-white dark:bg-gray-800 text-black dark:text-white border border-gray-300 dark:border-gray-600 rounded px-3 py-2"
+            className="!w-full"
+            inputClassName="!w-full h-[44px] text-sm bg-white dark:bg-gray-800 text-black dark:text-white border border-gray-300 dark:border-gray-600 rounded px-3 py-2"
             inputProps={{
               name: 'phone',
               required: true,
@@ -197,7 +197,7 @@ const fetchPatientData = async () => {
           <button
             type="button"
             onClick={createPatientAccount}
-           className="w-full sm:w-auto text-sm md:text-base bg-green-700 text-white px-4 py-2 rounded"
+            className="w-full sm:w-auto min-w-0 text-sm md:text-base bg-green-700 text-white px-4 py-2 rounded"
           >
             ➕ {tUI('createAccount', lang)}
           </button>
@@ -208,40 +208,69 @@ const fetchPatientData = async () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 mt-4">
 
-        <input
-          type="number"
-          placeholder={tUI('age', lang)}
-          className="w-full text-sm md:text-base border px-3 py-2 rounded bg-white text-black border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600"
+          {/* WIEK */}
+      <input
+        type="number"
+        placeholder={tUI('age', lang)}
+        inputMode="numeric"
+        min={0}
+        className="w-full min-w-0 text-sm md:text-base border px-3 py-2 rounded
+                  bg-white text-black border-gray-300
+                  dark:bg-gray-800 dark:text-white dark:border-gray-600"
+        value={form.age ?? ''} // input może mieć number | ''
+        onChange={(e) => {
+          const v = e.target.value;
+          setForm({ ...form, age: v === '' ? form.age : Number(v) });
+        }}
+      />
 
-          value={form.age || ''}
-          onChange={(e) => setForm({ ...form, age: Number(e.target.value) })}
-        />
-        <select
-          className="w-full text-sm md:text-base border px-3 py-2 rounded bg-white text-black border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600"
+      {/* PŁEĆ */}
+      <select
+        className="w-full min-w-0 text-sm md:text-base border px-3 py-2 rounded
+                  bg-white text-black border-gray-300
+                  dark:bg-gray-800 dark:text-white dark:border-gray-600"
+        value={form.sex}
+        onChange={(e) => setForm({ ...form, sex: e.target.value as 'male' | 'female' })}
+      >
+        <option value="">{tUI('sex', lang)}</option>
+        <option value="female">{tUI('female', lang)}</option>
+        <option value="male">{tUI('male', lang)}</option>
+      </select>
 
-          value={form.sex}
-          onChange={(e) => setForm({ ...form, sex: e.target.value as 'male' | 'female' })}
-        >
-          <option value="">{tUI('sex', lang)}</option>
-          <option value="female">{tUI('female', lang)}</option>
-          <option value="male">{tUI('male', lang)}</option>
-        </select>
-        <input
-          type="number"
-          placeholder={tUI('weight', lang)}
-          className="w-full text-sm md:text-base border px-3 py-2 rounded bg-white text-black border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600"
+      {/* WAGA */}
+      <input
+        type="number"
+        placeholder={tUI('weight', lang)}
+        inputMode="decimal"
+        min={0}
+        step="0.1"
+        className="w-full min-w-0 text-sm md:text-base border px-3 py-2 rounded
+                  bg-white text-black border-gray-300
+                  dark:bg-gray-800 dark:text-white dark:border-gray-600"
+        value={form.weight ?? ''}
+        onChange={(e) => {
+          const v = e.target.value;
+          setForm({ ...form, weight: v === '' ? form.weight : Number(v) });
+        }}
+      />
 
-          value={form.weight || ''}
-          onChange={(e) => setForm({ ...form, weight: Number(e.target.value) })}
-        />
-        <input
-          type="number"
-          placeholder={tUI('height', lang)}
-          className="w-full text-sm md:text-base border px-3 py-2 rounded bg-white text-black border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600"
+      {/* WZROST */}
+      <input
+        type="number"
+        placeholder={tUI('height', lang)}
+        inputMode="decimal"
+        min={0}
+        step="0.1"
+        className="w-full min-w-0 text-sm md:text-base border px-3 py-2 rounded
+                  bg-white text-black border-gray-300
+                  dark:bg-gray-800 dark:text-white dark:border-gray-600"
+        value={form.height ?? ''}
+        onChange={(e) => {
+          const v = e.target.value;
+          setForm({ ...form, height: v === '' ? form.height : Number(v) });
+        }}
+      />
 
-          value={form.height || ''}
-          onChange={(e) => setForm({ ...form, height: Number(e.target.value) })}
-        />
       </div>
     </div>
   );
