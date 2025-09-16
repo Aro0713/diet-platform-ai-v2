@@ -14,33 +14,29 @@ export const config = {
 };
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-async function detectQuestionType(
-  question: string,
-  lang: string
-): Promise<'shopping' | 'shoppingGroups' | 'product' | 'other'> {
+async function detectQuestionType(question: string, lang: string): Promise<'shopping' | 'shoppingGroups' | 'product' | 'other'> {
   const response = await openai.chat.completions.create({
     model: 'gpt-4o',
     temperature: 0,
-    response_format: { type: 'json_object' },
     messages: [
       {
         role: 'system',
-        content: 'Return strictly JSON: {"intent":"shopping|shoppingGroups|product|other"}. No prose.'
+        content: `You are an intent classifier inside Diet Care Platform (DCP).
+Classify the user question into one of the following:
+- "shoppingGroups": if it's about grouping purchases by store (e.g. Lidl, Biedronka), splitting by location, or comparing shops
+- "shopping": if it's about what to buy, list of items, prices, costs, availability in general
+- "product": if it's about a specific food, ingredient, barcode, nutrition, packaging, allergens
+- "other": anything else
+
+Only respond with one of the following: shoppingGroups, shopping, product, or other.
+Use language: ${lang}`
       },
-      {
-        role: 'user',
-        content: JSON.stringify({ lang, question })
-      }
+      { role: 'user', content: question }
     ]
   });
 
-  const raw = response.choices[0]?.message?.content || '{}';
-  try {
-    const { intent } = JSON.parse(raw) as { intent?: string };
-    const v = String(intent || '').toLowerCase();
-    if (v === 'shoppinggroups') return 'shoppingGroups';
-    if (v === 'shopping' || v === 'product') return v as any;
-  } catch {}
+  const intent = response.choices[0]?.message?.content?.trim().toLowerCase();
+  if (intent === 'shoppinggroups' || intent === 'shopping' || intent === 'product') return intent as any;
   return 'other';
 }
 
@@ -77,8 +73,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const questionType = await detectQuestionType(question, lang);
     const firstName = patient?.name?.split?.(' ')[0] || 'Pacjencie';
 
-    if (questionType === 'product' || (base64Image && questionType !== 'shopping' && questionType !== 'shoppingGroups')) {
-
+    if ((questionType === 'product' || base64Image) && !question.toLowerCase().includes('co kupić')) {
       const result = await analyzeProductInput({
         barcode: 'N/A',
         productName: '[From user question]',
@@ -223,6 +218,8 @@ Examples:
 - Israel → ILS
 - China → CNY
 
+If you're unsure, default to USD.
+}
 Patient region: ${patient?.region || '[unknown]'}
 Location: ${patient?.location || '[not specified]'}
 
@@ -274,7 +271,6 @@ You MUST return all answers in JSON structure, matching the UI modes:
 - mode: "shopping" → ShoppingListCard
 - mode: "product" → ProductAnswerCard
 - mode: "response" → general answer
-If explicit items are missing, infer them from the diet plan for the day "${targetDay}" and return at least 8–12 items.
 
 If a photo is provided, try to identify the food or product based on visual clues. If unsure, say so — but still try.
 
@@ -312,8 +308,7 @@ Answer briefly, clearly, and professionally — like a trusted digital dietitian
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages,
-      temperature: 0.4,
-      response_format: { type: 'json_object' }
+      temperature: 0.4
     });
 
     const content = completion.choices[0]?.message?.content;
@@ -328,70 +323,6 @@ Answer briefly, clearly, and professionally — like a trusted digital dietitian
         audio: null
       });
     }
-    function normalizeDayKey(key: string = '') {
-  const k = key.trim().toLowerCase();
-  const map: Record<string, string> = {
-    'poniedziałek': 'monday','wtorek': 'tuesday','środa': 'wednesday',
-    'czwartek': 'thursday','piątek': 'friday','sobota': 'saturday','niedziela': 'sunday'
-  };
-  if (map[k]) return map[k];
-  return k.replace(/\s+/g, '');
-}
-function pickMealsForDay(dietPlan: any, targetDay: string) {
-  if (!dietPlan) return [];
-  const normTarget = normalizeDayKey(targetDay);
-  const objKeys = typeof dietPlan === 'object' && !Array.isArray(dietPlan) ? Object.keys(dietPlan) : [];
-  if (objKeys.length) {
-    let byKey = dietPlan[targetDay] || dietPlan[targetDay.toLowerCase()];
-    if (!byKey) {
-      const hit = objKeys.find(k => normalizeDayKey(k) === normTarget);
-      if (hit) byKey = dietPlan[hit];
-    }
-    if (Array.isArray(byKey) && byKey.length) return byKey;
-    for (const k of objKeys) if (Array.isArray(dietPlan[k]) && dietPlan[k].length) return dietPlan[k];
-  }
-  if (Array.isArray(dietPlan)) {
-    let dayObj = dietPlan.find(d => normalizeDayKey(d?.day || d?.name) === normTarget);
-    if (!dayObj) dayObj = dietPlan.find(d => Array.isArray(d?.meals) && d.meals.length) || dietPlan[0];
-    const meals = dayObj?.meals ?? dayObj?.items ?? dayObj?.dayMeals ?? [];
-    if (Array.isArray(meals) && meals.length) return meals;
-  }
-  return [];
-}
-function extractIngredientsFromMeal(meal: any) {
-  const out: Array<{ product: string; quantity: string; unit: string }> = [];
-  const pushObj = (n: any, q: any, u: any) => {
-    const product = String(n ?? '').trim(); if (!product) return;
-    out.push({ product, quantity: q != null ? String(q) : '', unit: u != null ? String(u) : '' });
-  };
-  if (Array.isArray(meal?.ingredients)) for (const ing of meal.ingredients)
-    pushObj(ing?.name ?? ing?.product ?? ing?.title, ing?.quantity ?? ing?.qty ?? ing?.amount, ing?.unit ?? ing?.uom);
-  if (Array.isArray(meal?.products)) for (const p of meal.products)
-    pushObj(p?.name ?? p?.product, p?.quantity ?? p?.qty, p?.unit);
-  if (Array.isArray(meal?.recipe?.ingredients)) for (const ing of meal.recipe.ingredients)
-    pushObj(ing?.name ?? ing?.product, ing?.quantity ?? ing?.qty, ing?.unit);
-  if (Array.isArray(meal?.items)) for (const s of meal.items) if (typeof s === 'string') pushObj(s, '', '');
-  if (Array.isArray(meal?.ingredients) && meal.ingredients.every((x: any) => typeof x === 'string'))
-    for (const s of meal.ingredients) pushObj(s, '', '');
-  return out;
-}
-function buildShoppingListFromDietPlanRobust(dietPlan: any, targetDay: string) {
-  const meals = pickMealsForDay(dietPlan, targetDay);
-  const itemsRaw: Array<{ product: string; quantity: string; unit: string }> = [];
-  for (const meal of Array.isArray(meals) ? meals : []) itemsRaw.push(...extractIngredientsFromMeal(meal));
-  const agg = new Map<string, { product: string; quantity: string; unit: string }>();
-  for (const it of itemsRaw) {
-    const key = `${it.product.trim().toLowerCase()}|${(it.unit || '').trim().toLowerCase()}`;
-    const prev = agg.get(key); const qNum = Number(it.quantity);
-    if (!prev) agg.set(key, { ...it });
-    else {
-      const prevNum = Number(prev.quantity);
-      if (!isNaN(qNum) && !isNaN(prevNum)) agg.set(key, { ...prev, quantity: String(prevNum + qNum) });
-      else agg.set(key, prev);
-    }
-  }
-  return Array.from(agg.values());
-}
 
     try {
       const cleaned = content
@@ -401,49 +332,10 @@ function buildShoppingListFromDietPlanRobust(dietPlan: any, targetDay: string) {
         .trim();
 
       const parsed = JSON.parse(cleaned);
-      // Wymuś poprawny tryb na podstawie intencji
-if (questionType === 'shopping' && parsed?.mode !== 'shopping') {
-  parsed.mode = 'shopping';
-}
-
-// Zapewnij, że UI dostanie shoppingList
-if (parsed?.mode === 'shopping') {
-  if (!parsed.shoppingList && Array.isArray(parsed.shoppingGroups)) {
-    parsed.shoppingList = parsed.shoppingGroups.flatMap((group: any) =>
-      (group?.items || []).map((it: any) => ({
-        product: it?.product ?? it?.name ?? '',
-        quantity: String(it?.quantity ?? it?.qty ?? ''),
-        unit: it?.unit ?? '',
-        localPrice: it?.localPrice ?? '',
-        onlinePrice: it?.onlinePrice ?? '',
-        shopSuggestion: group?.shop ?? it?.shop ?? ''
-      }))
-    );
-  }
-
-  if (!Array.isArray(parsed.shoppingList) || parsed.shoppingList.length === 0) {
-    parsed.shoppingList = buildShoppingListFromDietPlanRobust(dietPlan, targetDay);
-  }
-
-  if (!Array.isArray(parsed.shoppingList) || parsed.shoppingList.length === 0) {
-    parsed.mode = 'response';
-    parsed.answer = 'Nie mogę przygotować listy zakupów, bo w planie diety nie znaleziono składników na wybrany dzień. Wygeneruj dietę albo zapytaj o inny dzień.';
-    parsed.summary = 'Brak składników w planie diety dla tego dnia.';
-  } else {
-    if (!parsed.day) parsed.day = targetDay;
-    if (!parsed.totalEstimatedCost) parsed.totalEstimatedCost = { local: '', online: '' };
-    if (!parsed.answer) parsed.answer = 'Your shopping list is below 👇';
-  }
-}
-
-// Dla innych trybów – zawsze miej answer
-if (!parsed.answer) {
-  parsed.answer = parsed.summary || (parsed.mode === 'product' ? 'Analysis of the product is below.' : 'Odpowiedź poniżej.');
-}
 
       const ttsRes = await openai.audio.speech.create({
         model: 'tts-1-hd',
-        voice: 'alloy',
+       voice: 'echo',
         input: parsed.answer || 'Brak odpowiedzi.'
       });
 
