@@ -2,12 +2,12 @@ import OpenAI from "openai";
 import { nutrientRequirementsMap } from "@/utils/nutrientRequirementsMap";
 import { testReferenceValues } from "@/components/testReferenceValues";
 
-// 🔹 Dozwolone typy referencji (w components masz stringi; zostawiam unię na przyszłość)
+// 🔹 Dozwolone typy referencji
 type TestRefValue = string | { unit?: string; normalRange?: string };
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-/** Parsuje z referencji zakres liczbowy (np. "70–99 mg/dL" albo "0.4–4.0 mIU/L") – prosty wariant (fallback). */
+/** Prosty (fallback) parser min–max z referencji */
 function parseRange(ref: TestRefValue): { min: number; max: number; unit?: string } | null {
   if (!ref) return null;
 
@@ -29,7 +29,7 @@ function parseRange(ref: TestRefValue): { min: number; max: number; unit?: strin
   return null;
 }
 
-/** Zwraca mapę: nazwa badania -> tekst referencji (np. "70–99 mg/dL") */
+/** Mapa: badanie -> tekst referencji (do UI) */
 function buildRefRangeTextMap(): Record<string, string> {
   const out: Record<string, string> = {};
   for (const [k, vRaw] of Object.entries(testReferenceValues as Record<string, TestRefValue>)) {
@@ -39,7 +39,7 @@ function buildRefRangeTextMap(): Record<string, string> {
   return out;
 }
 
-/* ------------------------- 🔧 NOWE HELPERY (aliasy/jednostki) ------------------------- */
+/* ------------------------- 🔧 HELPERY (aliasy/jednostki/sygnały) ------------------------- */
 
 // Normalizacja stringów
 function norm(s: string) {
@@ -50,7 +50,7 @@ function norm(s: string) {
     .trim();
 }
 
-// Aliasowanie nazw (po lewej — różne warianty, po prawej — klucz kanoniczny z testReferenceValues)
+// Aliasowanie nazw badań (po lewej – warianty, po prawej – klucz kanoniczny z testReferenceValues)
 const TEST_ALIASES_RAW: Record<string, string> = {
   "glukoza": "glucose",
   "glukoza na czczo": "glucose",
@@ -67,7 +67,7 @@ const TEST_ALIASES_RAW: Record<string, string> = {
   "ferrytyna": "ferritin",
   "witamina d": "vitamin_d_25oh",
   "25(oh)d": "vitamin_d_25oh",
-  // możesz dopisać kolejne aliasy w miarę potrzeb
+  "kreatynina": "creatinine"
 };
 
 const TEST_ALIASES: Record<string, string> = Object.entries(TEST_ALIASES_RAW)
@@ -82,7 +82,7 @@ function canonicalTestKey(raw: string): string {
 function parseValueUnit(input: string | number): { value: number | null; unit?: string } {
   if (typeof input === "number") return { value: input, unit: undefined };
   const s = String(input).trim();
-  // dopuszcza np. "> 7,0 mmol/L", "130 mg/dL", "58 %", "5.1"
+  // np. "> 7,0 mmol/L", "130 mg/dL", "58 %", "5.1"
   const m = s.match(/([<>]=?|≤|≥)?\s*(-?\d+(?:[.,]\d+)?)/);
   const value = m ? parseFloat(m[2].replace(",", ".")) : null;
   const rest = m ? s.slice(m.index! + m[0].length) : "";
@@ -91,7 +91,7 @@ function parseValueUnit(input: string | number): { value: number | null; unit?: 
   return { value, unit };
 }
 
-// Bardziej odporny parser zakresów referencyjnych (obsługa ≤/≥/< /> oraz min–max)
+// Bardziej odporny parser referencji (≤/≥/< /> oraz min–max)
 type Range = { min?: number; max?: number; unit?: string };
 function parseRefRangeAdvanced(ref: TestRefValue): Range | null {
   if (!ref) return null;
@@ -118,7 +118,7 @@ function parseRefRangeAdvanced(ref: TestRefValue): Range | null {
   return null;
 }
 
-// Konwersje jednostek dla kluczowych badań (rozszerzaj w razie potrzeby)
+// Konwersje jednostek dla kluczowych badań
 type UnitConv = (v: number) => number;
 const UNIT_CONVERSIONS: Record<string, Record<string, UnitConv>> = {
   glucose: { "mmol/L->mg/dL": v => v * 18, "mg/dL->mmol/L": v => v / 18 },
@@ -142,6 +142,27 @@ function classify(value: number, range: Range): Class {
   if (range.max != null && value > range.max) return "high";
   if (range.min == null && range.max == null) return "unknown";
   return "normal";
+}
+
+// Ekstrakcja ciśnienia tętniczego z opisu (np. "180, 90", "180/90", "180 90")
+function extractBloodPressures(text: string): Array<{ systolic: number; diastolic: number }> {
+  const res: Array<{ systolic: number; diastolic: number }> = [];
+  const s = (text || "").replace(",", "/");
+  const re = /(\d{2,3})\s*[\/ ]\s*(\d{2,3})/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(s)) !== null) {
+    const sys = parseInt(m[1], 10);
+    const dia = parseInt(m[2], 10);
+    if (!Number.isNaN(sys) && !Number.isNaN(dia)) res.push({ systolic: sys, diastolic: dia });
+  }
+  return res;
+}
+
+// Detekcja prostych słów-kluczy z opisu (bez „mapowania” zaleceń)
+function extractKeywords(text: string): string[] {
+  const t = norm(text || "");
+  const keys = ["arytmia", "szmery", "udar", "zawal", "nadcisnienie", "insulinoopornosc", "cukrzyca", "nerki", "kreatynina", "ekg"];
+  return keys.filter(k => t.includes(k));
 }
 
 /* ------------------------- 🔧 KONIEC HELPERÓW ------------------------- */
@@ -172,7 +193,7 @@ export async function medicalLabAgent({
     }
   }
 
-  // 2) Wykryj odchylenia (z aliasami nazw + konwersją jednostek + status per badanie)
+  // 2) Wykryj odchylenia (aliasy + konwersja jednostek + status per badanie)
   const abnormalities: string[] = [];
   const labStatus: Record<string, {
     displayName: string;
@@ -185,7 +206,6 @@ export async function medicalLabAgent({
   }> = {};
   const unmatchedTests: string[] = [];
   const unitWarnings: string[] = [];
-
   const refRangeText = buildRefRangeTextMap();
 
   for (const [testNameRaw, rawVal] of Object.entries(testResults || {})) {
@@ -236,42 +256,66 @@ export async function medicalLabAgent({
     if (cls === "high") abnormalities.push(`${testNameRaw}: high (${parsedValRaw}${valUnit ? " " + valUnit : ""}, ref ${refText})`);
   }
 
-  // 3) Prompt z twardymi regułami spójności i echem labStatus
+  // 3) Wyciągnij sygnały z opisu (np. BP i słowa-klucze)
+  const bpMeasurements = extractBloodPressures(description || "");
+  const keywords = extractKeywords(description || "");
+
+  // 4) Prompt – bez twardych map zaleceń; model sam dedukuje mikro/makro/produkty z odchyleń + warunków
   const fenceJson = "```json";
   const fenceEnd = "```";
 
   const prompt = `
 You are a professional medical lab assistant AI working **inside a digital dietetics platform**.
 
-Patient provided:
-- Lab test results (raw): ${JSON.stringify(testResults, null, 2)}
-- Parsed lab status (normalized keys): ${JSON.stringify(labStatus, null, 2)}
+INPUT DATA (structured):
+- Output language: ${lang}
+- Diagnosed/selected conditions: ${selectedConditions?.length ? selectedConditions.join(", ") : "None"}
+- Lab test results (raw as entered): ${JSON.stringify(testResults, null, 2)}
+- Parsed lab status (normalized): ${JSON.stringify(labStatus, null, 2)}
 - Out-of-range findings (computed): ${abnormalities.length ? abnormalities.join("; ") : "None"}
-- Medical description: "${description}"
-- Diagnosed conditions: ${selectedConditions?.length ? selectedConditions.join(", ") : "None"}
-- Enforce these micro/macro ranges (merged, most restrictive): ${JSON.stringify(mergedRequirements, null, 2)}
-- Reference ranges map (for UI annotation): ${JSON.stringify(refRangeText, null, 2)}
+- Reference ranges (for UI): ${JSON.stringify(refRangeText, null, 2)}
+- Merged nutrient ranges to ENFORCE (hard constraints for diet generator): ${JSON.stringify(mergedRequirements, null, 2)}
+- Clinical description (free text): "${description}"
+- Derived signals from description:
+  - Blood pressure readings: ${JSON.stringify(bpMeasurements)}
+  - Keywords: ${JSON.stringify(keywords)}
 - Unmatched tests (no reference found): ${JSON.stringify(unmatchedTests)}
 - Unit warnings: ${JSON.stringify(unitWarnings)}
-- Output language: ${lang}
 
 STRICT RULES:
-- If ANY entry in "Parsed lab status" has class "low" or "high", your **first sentence MUST state that abnormalities are present** (in ${lang}). Do NOT claim "all normal".
-- Your clinical text MUST be consistent with the provided "Parsed lab status" and "Out-of-range findings".
-- Do NOT tell the user to visit external professionals; the platform handles diet creation.
+1) If ANY "labStatus" entry has class "low" or "high", your **first sentence MUST state that abnormalities are present** in ${lang}. Never claim "all normal" in that case.
+2) Your clinical text MUST stay consistent with "labStatus", BP readings, and listed conditions.
+3) You MUST produce specific **dietary recommendations**: 
+   - **macros** (fiber/protein/carbs/fats/sodium/potassium, etc.),
+   - **micros** (named vitamins/minerals/omega-3 etc.),
+   - **food groups** to emphasize/limit (e.g., "ciemnozielone warzywa", "ryby tłuste", "produkty wysokosodowe").
+   They MUST be **explicitly linked** (rationale) to the corresponding abnormality/condition (e.g., "podwyższona kreatynina → ogranicz białko").
+4) Do NOT use external citations or generic advice like "visit a professional". The platform will auto-generate a diet from your JSON.
+5) NEVER contradict "enforceRanges". If a potential recommendation would conflict, include it under "conflicts" with an explanation and DO NOT add it to recommendations.
 
-OUTPUT:
-1) First: a concise clinical analysis in ${lang} (no headings).
-2) Immediately after: a fenced JSON for the diet engine.
-   - Echo the "labStatus" object **exactly** as provided (immutably).
-   - Include "enforceRanges" and "refRanges".
-   - Fill diet hints/checks coherently with findings.
+OUTPUT FORMAT (two parts):
+A) First: a concise clinical narrative in ${lang} (no headings).
+B) Immediately after: a fenced JSON with this exact top-level structure:
 
 ${fenceJson}
 {
   "labStatus": ${JSON.stringify(labStatus, null, 2)},
-  "risks": [],
-  "warnings": [],
+  "recommendations": {
+    "macros": [
+      { "name": "", "direction": "increase|decrease|moderate", "rationale": "", "linksTo": ["<testKey or condition>"], "confidence": 0.0 }
+    ],
+    "micros": [
+      { "name": "", "direction": "increase|decrease", "rationale": "", "linksTo": ["<testKey or condition>"], "confidence": 0.0 }
+    ],
+    "foods": {
+      "emphasize": [
+        { "group": "", "examples": [], "rationale": "", "linksTo": ["<testKey or condition>"], "confidence": 0.0 }
+      ],
+      "limit": [
+        { "group": "", "examples": [], "rationale": "", "linksTo": ["<testKey or condition>"], "confidence": 0.0 }
+      ]
+    }
+  },
   "dietHints": { "avoid": [], "recommend": [] },
   "dqChecks": {
     "avoidIngredients": [],
@@ -288,13 +332,20 @@ ${fenceJson}
   },
   "refRanges": ${JSON.stringify(refRangeText, null, 2)},
   "enforceRanges": ${JSON.stringify(mergedRequirements, null, 2)},
+  "conflicts": [],
   "unmatchedTests": ${JSON.stringify(unmatchedTests)},
   "unitWarnings": ${JSON.stringify(unitWarnings)}
 }
 ${fenceEnd}
+
+FILLING GUIDANCE (not a fixed mapping, just expectations):
+- Base your macro/micro/food proposals on the exact abnormalities and conditions provided (e.g., high BP, high creatinine, hyperglycemia, dyslipidemia, arrhythmia).
+- Choose 3–6 items per subsection where relevant. Use clear Polish names for foods and nutrients when ${lang} is "pl".
+- "linksTo" must reference concrete keys (e.g., "creatinine", "glucose", or "Nadciśnienie tętnicze").
+- Keep "confidence" in [0..1] as your internal certainty.
 `;
 
-  // 4) Wywołanie modelu
+  // 5) Wywołanie modelu
   const completion = await openai.chat.completions.create({
     model: "gpt-4o",
     messages: [{ role: "user", content: prompt }],
