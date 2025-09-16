@@ -122,18 +122,17 @@ export default function ProductAssistantPanel({
         ...(data.audio ? { audio: data.audio } : {})
       });
 
-    const assistantText =
-        typeof data?.answer === 'string' && data.answer.trim()
-          ? data.answer
-          : data?.mode === 'shopping'
-            ? 'Your shopping list is below 👇'
-            : '';
+        const assistantText =
+        typeof data?.answer === 'string' ? data.answer.trim() : '';
 
-      setChatHistory((prev) => [
-        ...prev,
-        { role: 'user', content: question },
-        { role: 'assistant', content: assistantText }
-      ]);
+      setChatHistory((prev) => {
+        const next = [...prev, { role: 'user', content: question }];
+        // Dla shopping nie dodajemy bąbelka asystenta.
+        if (assistantText && data.mode !== 'shopping') {
+          next.push({ role: 'assistant', content: assistantText });
+        }
+        return next;
+      });
 
       setQuestion('');
 
@@ -215,8 +214,9 @@ React.useEffect(() => {
 
               {/* 🔊 Dodaj odtwarzacz audio tylko do ostatniej odpowiedzi */}
               {msg.role === 'assistant' &&
-                response?.audio &&
-                index === chatHistory.length - 1 && (
+              response?.audio &&
+              response?.mode !== 'shopping' &&  // nie pokazuj audio dla shopping
+              index === chatHistory.length - 1 && (
                   <button
                     onClick={() => new Audio(response.audio!).play()}
                     className="mt-2 px-3 py-1 bg-emerald-600 text-white rounded hover:bg-emerald-700"

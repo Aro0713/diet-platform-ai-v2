@@ -434,15 +434,7 @@ if (parsed?.mode === 'shopping') {
   }
 }
 
-// Dla "product" i "response" dopilnuj, by "answer" istniało
-if (!parsed.answer) {
-  parsed.answer =
-    parsed.summary ||
-    (parsed.mode === 'product'
-      ? 'Analysis of the product is below.'
-      : 'Odpowiedź poniżej.');
-}
-
+if (!parsed.answer) parsed.answer = '';
 
       const ttsRes = await openai.audio.speech.create({
         model: 'tts-1-hd',
