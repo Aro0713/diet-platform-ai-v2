@@ -14,31 +14,42 @@ export const config = {
 };
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-async function detectQuestionType(question: string, lang: string): Promise<'shopping' | 'shoppingGroups' | 'product' | 'other'> {
+async function detectQuestionType(
+  question: string,
+  lang: string
+): Promise<'shopping' | 'shoppingGroups' | 'product' | 'other'> {
   const response = await openai.chat.completions.create({
     model: 'gpt-4o',
     temperature: 0,
+    response_format: { type: 'json_object' },
     messages: [
       {
         role: 'system',
-        content: `You are an intent classifier inside Diet Care Platform (DCP).
-Classify the user question into one of the following:
-- "shoppingGroups": if it's about grouping purchases by store (e.g. Lidl, Biedronka), splitting by location, or comparing shops
-- "shopping": if it's about what to buy, list of items, prices, costs, availability in general
-- "product": if it's about a specific food, ingredient, barcode, nutrition, packaging, allergens
-- "other": anything else
-
-Only respond with one of the following: shoppingGroups, shopping, product, or other.
-Use language: ${lang}`
+        content:
+          'Return strictly JSON: {"intent":"shopping|shoppingGroups|product|other"}. No prose.'
       },
-      { role: 'user', content: question }
+      {
+        role: 'user',
+        content: JSON.stringify({ lang, question })
+      }
     ]
   });
 
-  const intent = response.choices[0]?.message?.content?.trim().toLowerCase();
-  if (intent === 'shoppinggroups' || intent === 'shopping' || intent === 'product') return intent as any;
+  const raw = response.choices[0]?.message?.content || '{}';
+  let intent = 'other';
+  try {
+    const intentObj = JSON.parse(raw);
+    intent = String(intentObj.intent || '').toLowerCase();
+  } catch {
+    intent = 'other';
+  }
+
+  // Normalizacja i whitelist
+  if (intent === 'shoppinggroups') return 'shoppingGroups';
+  if (intent === 'shopping' || intent === 'product') return intent as any;
   return 'other';
 }
+
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -58,6 +69,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const dietPlan = rawDiet?.weekPlan || rawDiet;
     const basket = JSON.parse(fields.basket?.[0] || '[]');
     const chatHistory = JSON.parse(fields.chatHistory?.[0] || '[]');
+    // 🌍 Geo z Vercel (dokładniejsze waluty/sklepy)
+    const reqCountry = (req.headers['x-vercel-ip-country'] as string) || '';
+    const reqCity = (req.headers['x-vercel-ip-city'] as string) || '';
+    const reqRegion = (req.headers['x-vercel-ip-country-region'] as string) || '';
 
     let base64Image = '';
     const rawFile = files.image;
@@ -69,15 +84,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         console.log('🖼️ Zdjęcie dołączone do zapytania.');
       }
     }
-    // ⛔ Puste zapytanie i brak obrazu — nie ma co analizować
-    if (!question && !base64Image) {
-      return res.status(400).json({ error: 'Puste pytanie.' });
-    }
-
+    
     const questionType = await detectQuestionType(question, lang);
     const firstName = patient?.name?.split?.(' ')[0] || 'Pacjencie';
 
-    if ((questionType === 'product' || base64Image) && !question.toLowerCase().includes('co kupić')) {
+    if ((questionType === 'product' || (base64Image && questionType !== 'shopping' && questionType !== 'shoppingGroups'))) {
       const result = await analyzeProductInput({
         barcode: 'N/A',
         productName: '[From user question]',
@@ -140,6 +151,20 @@ function getTargetDay(question: string): string {
 }
 
 const targetDay = getTargetDay(question); // <- dynamicznie ustalamy dzień
+
+function resolveCurrency(region?: string, countryHeader?: string): string {
+  const r = (region || countryHeader || '').toLowerCase();
+  if (r.includes('pol') || r.includes('pl')) return 'PLN';
+  if (r.includes('ger') || r.includes('de')) return 'EUR';
+  if (r.includes('fr')) return 'EUR';
+  if (r.includes('usa') || r === 'us' || r === 'usa' || r.includes('united states')) return 'USD';
+  if (r.includes('india') || r.includes('in')) return 'INR';
+  if (r.includes('ukr') || r.includes('ua')) return 'UAH';
+  if (r.includes('isr') || r.includes('il')) return 'ILS';
+  if (r.includes('china') || r.includes('cn')) return 'CNY';
+  return 'USD';
+}
+const resolvedCurrency = resolveCurrency(patient?.region, reqCountry);
 
 const prompt = `
 You are Look — a friendly personal assistant inside the Diet Care Platform (DCP).
@@ -224,9 +249,9 @@ Examples:
 - China → CNY
 
 If you're unsure, default to USD.
-}
 Patient region: ${patient?.region || '[unknown]'}
 Location: ${patient?.location || '[not specified]'}
+Currency (resolved server-side): ${resolvedCurrency}
 
 You must respond in structured JSON only. Do NOT use markdown, HTML, or prose. The UI will render everything.
 Image: ${base64Image ? '[attached]' : '[none]'}
@@ -348,7 +373,7 @@ if (parsed?.mode === 'shopping') {
         shopSuggestion: group?.shop ?? it?.shop ?? ''
       }))
     );
-    delete parsed.shoppingGroups;
+    // zostawiamy shoppingGroups dla UI (nie usuwamy)
   }
 
   // uzupełnij brakujące pola wymagane przez UI
@@ -356,7 +381,6 @@ if (parsed?.mode === 'shopping') {
   if (!parsed.totalEstimatedCost) {
     parsed.totalEstimatedCost = { local: '', online: '' };
   }
-  if (!parsed.answer) parsed.answer = 'Your shopping list is below 👇';
 }
 
 // Dla "product" i "response" dopilnuj, by "answer" istniało
@@ -370,7 +394,7 @@ if (!parsed.answer) {
 
       const ttsRes = await openai.audio.speech.create({
         model: 'tts-1-hd',
-       voice: 'echo',
+        voice: 'alloy',
         input: String(parsed.answer || 'Brak odpowiedzi.')
       });
 
