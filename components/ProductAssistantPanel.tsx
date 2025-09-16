@@ -41,22 +41,33 @@ type LookResponse =
       };
       audio?: string;
     }
-  | {
+    | {
       mode: 'shopping';
       day: string;
       shoppingList: {
         product: string;
         quantity: string;
         unit: string;
-        localPrice: string;
-        onlinePrice: string;
-        shopSuggestion: string;
+        localPrice?: string;
+        onlinePrice?: string;
+        shopSuggestion?: string;
       }[];
-      totalEstimatedCost: {
-        local: string;
-        online: string;
+      shoppingGroups?: {
+        shop: string;
+        items: {
+          product: string;
+          quantity: string;
+          unit: string;
+          localPrice?: string;
+          onlinePrice?: string;
+          shopSuggestion?: string;
+        }[];
+      }[];
+      totalEstimatedCost?: {
+        local?: string;
+        online?: string;
       };
-      summary: string;
+      summary?: string;
       audio?: string;
     };
 
@@ -106,21 +117,23 @@ export default function ProductAssistantPanel({
       const data = await res.json();
       if (!res.ok) return setError(data.error || 'Błąd odpowiedzi');
 
-      setResponse({
+     setResponse({
         ...data,
         ...(data.audio ? { audio: data.audio } : {})
       });
-      
-      {response?.mode === 'shopping' && (
-      <ShoppingListCard response={response} lang={lang} />
-      )}
 
+    const assistantText =
+        typeof data?.answer === 'string' && data.answer.trim()
+          ? data.answer
+          : data?.mode === 'shopping'
+            ? 'Your shopping list is below 👇'
+            : '';
 
-    setChatHistory((prev) => [
+      setChatHistory((prev) => [
         ...prev,
         { role: 'user', content: question },
-        { role: 'assistant', content: data.answer }
-        ]);
+        { role: 'assistant', content: assistantText }
+      ]);
 
       setQuestion('');
 
@@ -139,6 +152,10 @@ export default function ProductAssistantPanel({
       setLoading(false);
     }
   };
+  type ShoppingResponse = Extract<LookResponse, { mode: 'shopping' }>;
+const shoppingResponse: ShoppingResponse | null =
+  response?.mode === 'shopping' ? (response as ShoppingResponse) : null;
+
   // sprzątanie ObjectURL
 // (jeśli użytkownik opuści widok przed wysłaniem)
 React.useEffect(() => {
@@ -331,6 +348,18 @@ React.useEffect(() => {
           }}
         />
       )}
-</div>
-);
-}
+      {shoppingResponse && (
+        <ShoppingListCard
+          response={shoppingResponse}
+          lang={lang}
+        />
+      )}
+
+      {response?.mode === 'response' && (
+        <div className="mt-4 p-4 rounded-lg bg-emerald-100 text-black">
+          {response.answer}
+        </div>
+      )}
+      </div>
+      );
+      }

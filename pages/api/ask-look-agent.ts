@@ -14,31 +14,43 @@ export const config = {
 };
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-async function detectQuestionType(question: string, lang: string): Promise<'shopping' | 'shoppingGroups' | 'product' | 'other'> {
+
+async function detectQuestionType(
+  question: string,
+  lang: string
+): Promise<'shopping' | 'shoppingGroups' | 'product' | 'other'> {
   const response = await openai.chat.completions.create({
     model: 'gpt-4o',
     temperature: 0,
+    response_format: { type: 'json_object' },
     messages: [
       {
         role: 'system',
-        content: `You are an intent classifier inside Diet Care Platform (DCP).
-Classify the user question into one of the following:
-- "shoppingGroups": if it's about grouping purchases by store (e.g. Lidl, Biedronka), splitting by location, or comparing shops
-- "shopping": if it's about what to buy, list of items, prices, costs, availability in general
-- "product": if it's about a specific food, ingredient, barcode, nutrition, packaging, allergens
-- "other": anything else
-
-Only respond with one of the following: shoppingGroups, shopping, product, or other.
-Use language: ${lang}`
+        content:
+          'Return strictly JSON: {"intent":"shopping|shoppingGroups|product|other"}. No prose.'
       },
-      { role: 'user', content: question }
+      {
+        role: 'user',
+        content: JSON.stringify({ lang, question })
+      }
     ]
   });
 
-  const intent = response.choices[0]?.message?.content?.trim().toLowerCase();
-  if (intent === 'shoppinggroups' || intent === 'shopping' || intent === 'product') return intent as any;
+  const raw = response.choices[0]?.message?.content || '{}';
+  let intent = 'other';
+  try {
+    const intentObj = JSON.parse(raw);
+    intent = String(intentObj.intent || '').toLowerCase();
+  } catch {
+    intent = 'other';
+  }
+
+  // Normalizacja i whitelist
+  if (intent === 'shoppinggroups') return 'shoppingGroups';
+  if (intent === 'shopping' || intent === 'product') return intent as any;
   return 'other';
 }
+
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -58,6 +70,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const dietPlan = rawDiet?.weekPlan || rawDiet;
     const basket = JSON.parse(fields.basket?.[0] || '[]');
     const chatHistory = JSON.parse(fields.chatHistory?.[0] || '[]');
+    // 🌍 Geo z Vercel (dokładniejsze waluty/sklepy)
+    const reqCountry = (req.headers['x-vercel-ip-country'] as string) || '';
+    const reqCity = (req.headers['x-vercel-ip-city'] as string) || '';
+    const reqRegion = (req.headers['x-vercel-ip-country-region'] as string) || '';
 
     let base64Image = '';
     const rawFile = files.image;
@@ -69,11 +85,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         console.log('🖼️ Zdjęcie dołączone do zapytania.');
       }
     }
-
+    
     const questionType = await detectQuestionType(question, lang);
     const firstName = patient?.name?.split?.(' ')[0] || 'Pacjencie';
 
-    if ((questionType === 'product' || base64Image) && !question.toLowerCase().includes('co kupić')) {
+    if ((questionType === 'product' || (base64Image && questionType !== 'shopping' && questionType !== 'shoppingGroups'))) {
       const result = await analyzeProductInput({
         barcode: 'N/A',
         productName: '[From user question]',
@@ -137,6 +153,20 @@ function getTargetDay(question: string): string {
 
 const targetDay = getTargetDay(question); // <- dynamicznie ustalamy dzień
 
+function resolveCurrency(region?: string, countryHeader?: string): string {
+  const r = (region || countryHeader || '').toLowerCase();
+  if (r.includes('pol') || r.includes('pl')) return 'PLN';
+  if (r.includes('ger') || r.includes('de')) return 'EUR';
+  if (r.includes('fr')) return 'EUR';
+  if (r.includes('usa') || r === 'us' || r === 'usa' || r.includes('united states')) return 'USD';
+  if (r.includes('india') || r.includes('in')) return 'INR';
+  if (r.includes('ukr') || r.includes('ua')) return 'UAH';
+  if (r.includes('isr') || r.includes('il')) return 'ILS';
+  if (r.includes('china') || r.includes('cn')) return 'CNY';
+  return 'USD';
+}
+const resolvedCurrency = resolveCurrency(patient?.region, reqCountry);
+
 const prompt = `
 You are Look — a friendly personal assistant inside the Diet Care Platform (DCP).
 You have access to everything the patient has provided: health conditions, medical results, interview, goals, diet plan, basket, and uploaded images.
@@ -171,6 +201,7 @@ Reply in a balanced, practical tone. You may explain:
 - or suggest better timing or alternatives.
 
 Never be judgmental. The goal is to support the patient in real-world choices.
+When mode is "shopping", you MUST include "shoppingList" (flat array). You MAY also include "shoppingGroups", but "shoppingList" is required.
 
 Example:
 {
@@ -219,9 +250,9 @@ Examples:
 - China → CNY
 
 If you're unsure, default to USD.
-}
 Patient region: ${patient?.region || '[unknown]'}
 Location: ${patient?.location || '[not specified]'}
+Currency (resolved server-side): ${resolvedCurrency}
 
 You must respond in structured JSON only. Do NOT use markdown, HTML, or prose. The UI will render everything.
 Image: ${base64Image ? '[attached]' : '[none]'}
@@ -308,7 +339,8 @@ Answer briefly, clearly, and professionally — like a trusted digital dietitian
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages,
-      temperature: 0.4
+      temperature: 0.4,
+      response_format: { type: 'json_object' }
     });
 
     const content = completion.choices[0]?.message?.content;
@@ -325,18 +357,97 @@ Answer briefly, clearly, and professionally — like a trusted digital dietitian
     }
 
     try {
-      const cleaned = content
-        .replace(/^```json\n?/, '')
-        .replace(/^```/, '')
-        .replace(/\n?```$/, '')
-        .trim();
+    const cleaned = content.replace(/```[\s\S]*?json|```/gi, '').trim();
 
       const parsed = JSON.parse(cleaned);
+      function buildShoppingListFromDietPlan(dietPlan: any, day: string) {
+  if (!dietPlan) return [];
+
+  // obsłuż oba formaty: { Monday: [...] } lub { weekPlan: { Monday: [...] } } – ale masz już weekPlan wyciągnięty wyżej
+  const dayMeals = dietPlan[day] || dietPlan[day.toLowerCase()] || [];
+
+  const items: Array<{ product: string; quantity: string; unit: string }> = [];
+
+  for (const meal of Array.isArray(dayMeals) ? dayMeals : []) {
+    // 1) Nowa/normatywna struktura: meal.ingredients: [{ name, quantity, unit }] lub [{ product, qty, unit }]
+    if (Array.isArray(meal?.ingredients)) {
+      for (const ing of meal.ingredients) {
+        const name = ing?.name ?? ing?.product ?? ing?.title ?? '';
+        const qty = ing?.quantity ?? ing?.qty ?? ing?.amount ?? '';
+        const unit = ing?.unit ?? ing?.uom ?? '';
+        if (name) items.push({ product: String(name), quantity: String(qty ?? ''), unit: String(unit ?? '') });
+      }
+    }
+    // 2) Starsza/luźna struktura: meal składniki jako stringi
+    if (Array.isArray(meal?.items)) {
+      for (const s of meal.items) {
+        if (typeof s === 'string') items.push({ product: s, quantity: '', unit: '' });
+      }
+    }
+  }
+
+  // Proste deduplikowanie po nazwie (zachowaj pierwszą ilość)
+  const seen = new Map<string, { product: string; quantity: string; unit: string }>();
+  for (const it of items) {
+    const key = it.product.trim().toLowerCase();
+    if (!key) continue;
+    if (!seen.has(key)) seen.set(key, it);
+  }
+  return Array.from(seen.values());
+}
+
+      // 🧹 Normalizacja pod UI (ShoppingListCard używa shoppingList)
+if (parsed?.mode === 'shopping') {
+  // 1) Jeśli mamy grupy – spłaszcz do shoppingList, ale NIE usuwaj shoppingGroups (UI może użyć obu)
+  if (!parsed.shoppingList && Array.isArray(parsed.shoppingGroups)) {
+    parsed.shoppingList = parsed.shoppingGroups.flatMap((group: any) =>
+      (group?.items || []).map((it: any) => ({
+        product: it?.product ?? it?.name ?? '',
+        quantity: String(it?.quantity ?? it?.qty ?? ''),
+        unit: it?.unit ?? '',
+        localPrice: it?.localPrice ?? '',
+        onlinePrice: it?.onlinePrice ?? '',
+        shopSuggestion: group?.shop ?? it?.shop ?? ''
+      }))
+    );
+    // ⛔ NIE usuwamy parsed.shoppingGroups
+  }
+
+  // 2) Serwerowy fallback: jeśli nadal brak listy, zbuduj z planu diety dla targetDay
+  if (!Array.isArray(parsed.shoppingList) || parsed.shoppingList.length === 0) {
+    const fallbackList = buildShoppingListFromDietPlan(dietPlan, targetDay);
+    parsed.shoppingList = fallbackList;
+  }
+
+  // 3) Uzupełnij wymagane pola
+  if (!parsed.day) parsed.day = targetDay;
+  if (!parsed.totalEstimatedCost) {
+    parsed.totalEstimatedCost = { local: '', online: '' };
+  }
+
+  // 4) Jeśli po wszystkich krokach lista jest dalej pusta – zmień tryb na response z komunikatem
+  if (!Array.isArray(parsed.shoppingList) || parsed.shoppingList.length === 0) {
+    parsed.mode = 'response';
+    parsed.answer =
+      'Nie mogę przygotować listy zakupów, bo w planie diety nie znaleziono składników na wybrany dzień. Wygeneruj dietę albo zapytaj o inny dzień.';
+    parsed.summary = 'Brak składników w planie diety dla tego dnia.';
+  }
+}
+
+// Dla "product" i "response" dopilnuj, by "answer" istniało
+if (!parsed.answer) {
+  parsed.answer =
+    parsed.summary ||
+    (parsed.mode === 'product'
+      ? 'Analysis of the product is below.'
+      : 'Odpowiedź poniżej.');
+}
+
 
       const ttsRes = await openai.audio.speech.create({
         model: 'tts-1-hd',
-       voice: 'echo',
-        input: parsed.answer || 'Brak odpowiedzi.'
+        voice: 'alloy',
+        input: String(parsed.answer || 'Brak odpowiedzi.')
       });
 
       const audioBuffer = Buffer.from(await ttsRes.arrayBuffer());
