@@ -14,6 +14,7 @@ export const config = {
 };
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
 async function detectQuestionType(
   question: string,
   lang: string
@@ -359,9 +360,45 @@ Answer briefly, clearly, and professionally — like a trusted digital dietitian
     const cleaned = content.replace(/```[\s\S]*?json|```/gi, '').trim();
 
       const parsed = JSON.parse(cleaned);
+      function buildShoppingListFromDietPlan(dietPlan: any, day: string) {
+  if (!dietPlan) return [];
+
+  // obsłuż oba formaty: { Monday: [...] } lub { weekPlan: { Monday: [...] } } – ale masz już weekPlan wyciągnięty wyżej
+  const dayMeals = dietPlan[day] || dietPlan[day.toLowerCase()] || [];
+
+  const items: Array<{ product: string; quantity: string; unit: string }> = [];
+
+  for (const meal of Array.isArray(dayMeals) ? dayMeals : []) {
+    // 1) Nowa/normatywna struktura: meal.ingredients: [{ name, quantity, unit }] lub [{ product, qty, unit }]
+    if (Array.isArray(meal?.ingredients)) {
+      for (const ing of meal.ingredients) {
+        const name = ing?.name ?? ing?.product ?? ing?.title ?? '';
+        const qty = ing?.quantity ?? ing?.qty ?? ing?.amount ?? '';
+        const unit = ing?.unit ?? ing?.uom ?? '';
+        if (name) items.push({ product: String(name), quantity: String(qty ?? ''), unit: String(unit ?? '') });
+      }
+    }
+    // 2) Starsza/luźna struktura: meal składniki jako stringi
+    if (Array.isArray(meal?.items)) {
+      for (const s of meal.items) {
+        if (typeof s === 'string') items.push({ product: s, quantity: '', unit: '' });
+      }
+    }
+  }
+
+  // Proste deduplikowanie po nazwie (zachowaj pierwszą ilość)
+  const seen = new Map<string, { product: string; quantity: string; unit: string }>();
+  for (const it of items) {
+    const key = it.product.trim().toLowerCase();
+    if (!key) continue;
+    if (!seen.has(key)) seen.set(key, it);
+  }
+  return Array.from(seen.values());
+}
+
       // 🧹 Normalizacja pod UI (ShoppingListCard używa shoppingList)
 if (parsed?.mode === 'shopping') {
-  // jeśli model zwrócił "shoppingGroups", spłaszcz do "shoppingList"
+  // 1) Jeśli mamy grupy – spłaszcz do shoppingList, ale NIE usuwaj shoppingGroups (UI może użyć obu)
   if (!parsed.shoppingList && Array.isArray(parsed.shoppingGroups)) {
     parsed.shoppingList = parsed.shoppingGroups.flatMap((group: any) =>
       (group?.items || []).map((it: any) => ({
@@ -373,13 +410,27 @@ if (parsed?.mode === 'shopping') {
         shopSuggestion: group?.shop ?? it?.shop ?? ''
       }))
     );
-    // zostawiamy shoppingGroups dla UI (nie usuwamy)
+    // ⛔ NIE usuwamy parsed.shoppingGroups
   }
 
-  // uzupełnij brakujące pola wymagane przez UI
+  // 2) Serwerowy fallback: jeśli nadal brak listy, zbuduj z planu diety dla targetDay
+  if (!Array.isArray(parsed.shoppingList) || parsed.shoppingList.length === 0) {
+    const fallbackList = buildShoppingListFromDietPlan(dietPlan, targetDay);
+    parsed.shoppingList = fallbackList;
+  }
+
+  // 3) Uzupełnij wymagane pola
   if (!parsed.day) parsed.day = targetDay;
   if (!parsed.totalEstimatedCost) {
     parsed.totalEstimatedCost = { local: '', online: '' };
+  }
+
+  // 4) Jeśli po wszystkich krokach lista jest dalej pusta – zmień tryb na response z komunikatem
+  if (!Array.isArray(parsed.shoppingList) || parsed.shoppingList.length === 0) {
+    parsed.mode = 'response';
+    parsed.answer =
+      'Nie mogę przygotować listy zakupów, bo w planie diety nie znaleziono składników na wybrany dzień. Wygeneruj dietę albo zapytaj o inny dzień.';
+    parsed.summary = 'Brak składników w planie diety dla tego dnia.';
   }
 }
 
@@ -391,6 +442,7 @@ if (!parsed.answer) {
       ? 'Analysis of the product is below.'
       : 'Odpowiedź poniżej.');
 }
+
 
       const ttsRes = await openai.audio.speech.create({
         model: 'tts-1-hd',
