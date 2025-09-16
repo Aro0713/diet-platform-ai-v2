@@ -354,12 +354,6 @@ React.useEffect(() => {
           lang={lang}
         />
       )}
-
-      {response?.mode === 'response' && (
-        <div className="mt-4 p-4 rounded-lg bg-emerald-100 text-black">
-          {response.answer}
-        </div>
-      )}
       </div>
       );
       }
