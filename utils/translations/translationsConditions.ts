@@ -1038,6 +1038,19 @@ Object.assign(testLabels, {
     ar: "الكرياتينين",
     he: "קריאטינין"
   },
+    "Witamina D3 [25(OH)D]": {
+    pl: "Witamina D3 [25(OH)D]",
+    en: "Vitamin D3 [25(OH)D]",
+    ua: "Вітамін D3 [25(OH)D]",
+    es: "Vitamina D3 [25(OH)D]",
+    fr: "Vitamine D3 [25(OH)D]",
+    de: "Vitamin D3 [25(OH)D]",
+    ru: "Витамин D3 [25(OH)D]",
+    zh: "维生素D3 [25(OH)D]",
+    hi: "विटामिन D3 [25(OH)D]",
+    ar: "فيتامين D3 [25(OH)D]",
+    he: "ויטמין D3 [25(OH)D]"
+  },
   "EKG": {
     pl: "EKG",
     en: "ECG",

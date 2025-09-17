@@ -48,6 +48,7 @@ const MedicalForm: React.FC<MedicalFormProps> = ({
   const [availableConditions, setAvailableConditions] = useState<string[]>([]);
   const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
   const [testResults, setTestResults] = useState<{ [key: string]: string }>({});
+  const [hasLoadedInitial, setHasLoadedInitial] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [medicalSummary, setMedicalSummary] = useState<string | undefined>();
   const [structuredOutput, setStructuredOutput] = useState<any | undefined>();
@@ -79,9 +80,40 @@ useEffect(() => {
 
   setSelectedGroups(initialData.selectedGroups || []);
   setSelectedConditions(initialData.selectedConditions || []);
-  setTestResults(initialData.testResults || {});
+
+  // 🔁 MIGRACJA LEGACY TEST KEYS → nowy klucz 25(OH)D
+  const LEGACY_TEST_ALIASES: Record<string, string> = {
+    "Witamina D": "Witamina D3 [25(OH)D]",
+    "Witamina D3": "Witamina D3 [25(OH)D]",
+    "Vitamin D": "Witamina D3 [25(OH)D]",
+    "25(OH)D": "Witamina D3 [25(OH)D]"
+  };
+
+  const migrated: Record<string, string> = {};
+  const src = initialData.testResults || {};
+
+  for (const [k, v] of Object.entries(src)) {
+    // k ma postać: `${condition}__${test}`
+    const parts = k.split("__");
+    if (parts.length !== 2) {
+      // bezpieczeństwo: przepisz jak jest
+      migrated[k] = v as string;
+      continue;
+    }
+    const [cond, test] = parts;
+    const alias = LEGACY_TEST_ALIASES[test] || test;
+    const newKey = `${cond}__${alias}`;
+
+    // Jeśli trafi się duplikat tego samego newKey, zachowaj niepustą wartość
+    if (!migrated[newKey] || String(migrated[newKey]).trim() === "") {
+      migrated[newKey] = v as string;
+    }
+  }
+
+  setTestResults(migrated);
   setHasLoadedInitial(true);
-}, [initialData]);
+}, [initialData, hasLoadedInitial]);
+
 
 
 // ✅ dynamiczne przypisanie availableConditions po zmianie grup
@@ -289,9 +321,7 @@ const handleConfirmAnalysis = async () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedSummary, setEditedSummary] = useState("");
   const [isConfirmed, setIsConfirmed] = useState(false);
-  const [hasLoadedInitial, setHasLoadedInitial] = useState(false);
-
-
+  
   return (
   <PanelCard title={`🧪 ${tUI('testResults', lang)}`}>
     <SelectGroupForm

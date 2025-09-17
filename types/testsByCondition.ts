@@ -56,7 +56,7 @@ export const testsByCondition: { [key: string]: string[] } = {
       "Magnez (Mg)",
       "Wapń (Ca)",
       "Witamina B12",
-      "Witamina D",
+      "Witamina D3 [25(OH)D]",
       "Witamina K",
       "Witamina A",
       "Witamina E",
@@ -140,14 +140,14 @@ export const testsByCondition: { [key: string]: string[] } = {
       "Densytometria (DXA)",
       "Wapń",
       "Fosfor",
-      "Witamina D3",
+      "Witamina D3 [25(OH)D]",
       "Morfologia",
     ],
     "Osteopenia": [
       "Densytometria (DXA)",
       "Wapń",
       "Fosfor",
-      "Witamina D3",
+      "Witamina D3 [25(OH)D]",
       "Morfologia",
     ],
     "Choroba zwyrodnieniowa stawów": [
@@ -202,13 +202,13 @@ export const testsByCondition: { [key: string]: string[] } = {
     "Choroby psychiczne i neurologiczne": [
       "Morfologia",
       "Witaminy z grupy B",
-      "Witamina D3",
+      "Witamina D3 [25(OH)D]",
     ],
     "Choroby skóry": [
       "Morfologia",
       "CRP",
       "IgE (alergie)",
-      "Witamina D3",
+      "Witamina D3 [25(OH)D]",
     ],
     "Anemia niedoborowa": [
       "Morfologia",
@@ -220,7 +220,7 @@ export const testsByCondition: { [key: string]: string[] } = {
     "Krzywica": [
       "Wapń",
       "Fosfor",
-      "Witamina D3",
+      "Witamina D3 [25(OH)D]",
       "PTH",
       "Morfologia",
     ],
@@ -271,7 +271,7 @@ export const testsByCondition: { [key: string]: string[] } = {
       "EEG",
       "MRI mózgu",
       "Poziom leków przeciwpadaczkowych (wg stosowanego leku)",
-      "Witamina D",
+      "Witamina D3 [25(OH)D]",
       "Witamina B12",
       "Morfologia",
       "Glukoza"
@@ -291,7 +291,7 @@ export const testsByCondition: { [key: string]: string[] } = {
       "Opis choroby",
       "Testy funkcji motorycznych (UPDRS)",
       "Morfologia",
-      "Witamina D",
+      "Witamina D3 [25(OH)D]",
       "Witamina B12",
       "Homocysteina"
     ],
@@ -302,7 +302,7 @@ export const testsByCondition: { [key: string]: string[] } = {
       "Morfologia",
       "Albumina",
       "Witamina A",
-      "Witamina D",
+      "Witamina D3 [25(OH)D]",
       "Witamina E",
       "Witamina K",
       "Glukoza",
@@ -316,7 +316,7 @@ export const testsByCondition: { [key: string]: string[] } = {
       "Gazometria krwi",
       "Morfologia",
       "CRP",
-      "Witamina D"
+      "Witamina D3 [25(OH)D]"
     ],
 
     "Przewlekłe zapalenie trzustki": [
@@ -327,7 +327,7 @@ export const testsByCondition: { [key: string]: string[] } = {
       "Glukoza",
       "Morfologia",
       "CRP",
-      "Witamina D",
+      "Witamina D3 [25(OH)D]",
       "Witamina B12"
     ],
 
@@ -346,7 +346,7 @@ export const testsByCondition: { [key: string]: string[] } = {
       "Albumina",
       "Kalprotektyna w kale",
       "Witamina B12",
-      "Witamina D",
+      "Witamina D3 [25(OH)D]",
       "Żelazo",
       "Ferrytyna"
     ],
@@ -358,7 +358,7 @@ export const testsByCondition: { [key: string]: string[] } = {
       "OB.",
       "Albumina",
       "Kalprotektyna w kale",
-      "Witamina D",
+      "Witamina D3 [25(OH)D]",
       "Żelazo",
       "Ferrytyna"
     ],
@@ -420,7 +420,7 @@ export const testsByCondition: { [key: string]: string[] } = {
       "Fenyloalanina we krwi",
       "Tyrozyna we krwi",
       "Morfologia",
-      "Witamina D"
+      "Witamina D3 [25(OH)D]"
     ],
 
     "Galaktozemia": [
@@ -428,7 +428,7 @@ export const testsByCondition: { [key: string]: string[] } = {
       "Galaktoza we krwi",
       "Aktywność GALT",
       "Morfologia",
-      "Witamina D"
+      "Witamina D3 [25(OH)D]"
     ],
     "Choroby pasożytnicze (parazytozy)": [
       "Badanie kału (3-krotne)",

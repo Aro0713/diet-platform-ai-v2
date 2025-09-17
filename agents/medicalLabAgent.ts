@@ -50,7 +50,7 @@ function norm(s: string) {
     .trim();
 }
 
-// Aliasowanie nazw badań (po lewej – warianty, po prawej – klucz kanoniczny z testReferenceValues)
+// Aliasowanie nazw badań (po lewej – warianty, po prawej – kanoniczny klucz z testReferenceValues)
 const TEST_ALIASES_RAW: Record<string, string> = {
   "glukoza": "glucose",
   "glukoza na czczo": "glucose",
@@ -158,10 +158,10 @@ function extractBloodPressures(text: string): Array<{ systolic: number; diastoli
   return res;
 }
 
-// Detekcja prostych słów-kluczy z opisu (bez „mapowania” zaleceń)
+// Detekcja prostych słów-kluczy z opisu (bez mapowania zaleceń)
 function extractKeywords(text: string): string[] {
   const t = norm(text || "");
-  const keys = ["arytmia", "szmery", "udar", "zawal", "nadcisnienie", "insulinoopornosc", "cukrzyca", "nerki", "kreatynina", "ekg"];
+  const keys = ["arytmia", "szmery", "udar", "zawal", "nadcisnienie", "insulinoopornosc", "cukrzyca", "nerki", "kreatynina", "ekg", "padaczka", "epilepsja"];
   return keys.filter(k => t.includes(k));
 }
 
@@ -260,7 +260,7 @@ export async function medicalLabAgent({
   const bpMeasurements = extractBloodPressures(description || "");
   const keywords = extractKeywords(description || "");
 
-  // 4) Prompt – bez twardych map zaleceń; model sam dedukuje mikro/makro/produkty z odchyleń + warunków
+  // 4) Prompt – zero twardych map; model generuje rekomendacje dla dowolnych chorób/odchyleń
   const fenceJson = "```json";
   const fenceEnd = "```";
 
@@ -284,14 +284,19 @@ INPUT DATA (structured):
 
 STRICT RULES:
 1) If ANY "labStatus" entry has class "low" or "high", your **first sentence MUST state that abnormalities are present** in ${lang}. Never claim "all normal" in that case.
-2) Your clinical text MUST stay consistent with "labStatus", BP readings, and listed conditions.
-3) You MUST produce specific **dietary recommendations**: 
-   - **macros** (fiber/protein/carbs/fats/sodium/potassium, etc.),
-   - **micros** (named vitamins/minerals/omega-3 etc.),
-   - **food groups** to emphasize/limit (e.g., "ciemnozielone warzywa", "ryby tłuste", "produkty wysokosodowe").
-   They MUST be **explicitly linked** (rationale) to the corresponding abnormality/condition (e.g., "podwyższona kreatynina → ogranicz białko").
-4) Do NOT use external citations or generic advice like "visit a professional". The platform will auto-generate a diet from your JSON.
-5) NEVER contradict "enforceRanges". If a potential recommendation would conflict, include it under "conflicts" with an explanation and DO NOT add it to recommendations.
+2) Keep the narrative **consistent** with "labStatus", BP readings, and listed conditions. Do not contradict them.
+3) Produce **specific, clinically coherent dietary recommendations for ANY abnormality/condition** (no closed catalog):
+   - **macros** (fiber/protein/carbs/fats/sodium/potassium, etc.) with clear direction (increase/decrease/moderate),
+   - **micros** (vitamins/minerals/omega-3 etc.) with direction,
+   - **food groups** to emphasize/limit with 2–5 concrete examples each.
+   For every item include a short **rationale** and **linksTo** (e.g., ["glucose", "Nadciśnienie tętnicze"]).
+4) Reflect comorbidity conflicts: if a plausible recommendation may conflict with "enforceRanges" or another condition, put it into **"conflicts"** with an explanation and **do not** add it to recommendations.
+5) Deduplicate items; prefer precise terms in ${lang}. No generic advice like "eat healthy".
+6) Return at least:
+   - 3 macro recommendations (if relevant),
+   - 4 micro recommendations across different nutrients (if relevant),
+   - 3 food groups to emphasize and 3 to limit (if relevant). If not applicable, explain why in "clinicalRules.notes".
+7) The JSON must follow the exact schema below.
 
 OUTPUT FORMAT (two parts):
 A) First: a concise clinical narrative in ${lang} (no headings).
@@ -339,10 +344,9 @@ ${fenceJson}
 ${fenceEnd}
 
 FILLING GUIDANCE (not a fixed mapping, just expectations):
-- Base your macro/micro/food proposals on the exact abnormalities and conditions provided (e.g., high BP, high creatinine, hyperglycemia, dyslipidemia, arrhythmia).
-- Choose 3–6 items per subsection where relevant. Use clear Polish names for foods and nutrients when ${lang} is "pl".
-- "linksTo" must reference concrete keys (e.g., "creatinine", "glucose", or "Nadciśnienie tętnicze").
-- Keep "confidence" in [0..1] as your internal certainty.
+- Base all proposals on the exact abnormalities (e.g., high glucose, dyslipidemia, high creatinine) and any conditions (e.g., CKD, celiac, epilepsy, pregnancy, heart failure, thyroid disorders).
+- Use explicit Polish names for foods/nutrients when ${lang} is "pl". 
+- Be specific (e.g., "zwiększ błonnik rozpuszczalny" zamiast "jedz więcej błonnika", "ogranicz sód <2 g/d").
 `;
 
   // 5) Wywołanie modelu
