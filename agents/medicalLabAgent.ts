@@ -65,8 +65,14 @@ const TEST_ALIASES_RAW: Record<string, string> = {
   "ft4": "FT4",
   "zelazo": "iron",
   "ferrytyna": "ferritin",
-  "witamina d": "vitamin_d_25oh",
-  "25(oh)d": "vitamin_d_25oh",
+  "witamina d": "Witamina D3 [25(OH)D]",
+  "witamina d3": "Witamina D3 [25(OH)D]",
+  "vitamin d": "Witamina D3 [25(OH)D]",
+  "vitamin d3": "Witamina D3 [25(OH)D]",
+  "25(oh)d": "Witamina D3 [25(OH)D]",
+  "25 oh d": "Witamina D3 [25(OH)D]",
+  "25-hydroksywitamina d": "Witamina D3 [25(OH)D]",
+  "25-hydroxy vitamin d": "Witamina D3 [25(OH)D]",
   "kreatynina": "creatinine"
 };
 
@@ -75,7 +81,11 @@ const TEST_ALIASES: Record<string, string> = Object.entries(TEST_ALIASES_RAW)
 
 function canonicalTestKey(raw: string): string {
   const n = norm(raw);
-  return TEST_ALIASES[n] ?? raw;
+  const aliased = TEST_ALIASES[n] ?? raw;
+  // preferuj dokładnie taki klucz, jaki istnieje w testReferenceValues
+  if ((testReferenceValues as any)[aliased] !== undefined) return aliased;
+  if ((testReferenceValues as any)[raw] !== undefined) return raw;
+  return aliased;
 }
 
 // Parsowanie wartości i potencjalnej jednostki z wpisu pacjenta
@@ -119,13 +129,67 @@ function parseRefRangeAdvanced(ref: TestRefValue): Range | null {
 }
 
 // Konwersje jednostek dla kluczowych badań
+// 🔁 ZAMIANA: cały obiekt UNIT_CONVERSIONS
 type UnitConv = (v: number) => number;
 const UNIT_CONVERSIONS: Record<string, Record<string, UnitConv>> = {
-  glucose: { "mmol/L->mg/dL": v => v * 18, "mg/dL->mmol/L": v => v / 18 },
-  total_cholesterol: { "mmol/L->mg/dL": v => v * 38.67, "mg/dL->mmol/L": v => v / 38.67 },
-  LDL: { "mmol/L->mg/dL": v => v * 38.67, "mg/dL->mmol/L": v => v / 38.67 },
-  HDL: { "mmol/L->mg/dL": v => v * 38.67, "mg/dL->mmol/L": v => v / 38.67 },
-  triglycerides: { "mmol/L->mg/dL": v => v * 88.57, "mg/dL->mmol/L": v => v / 88.57 }
+  /* === Glukoza === */
+  "Glukoza": { "mmol/L->mg/dL": v => v * 18, "mg/dL->mmol/L": v => v / 18 },
+  glucose:   { "mmol/L->mg/dL": v => v * 18, "mg/dL->mmol/L": v => v / 18 },
+
+  /* === Lipidy (cholesterol) === */
+  "Cholesterol całkowity": { "mmol/L->mg/dL": v => v * 38.67, "mg/dL->mmol/L": v => v / 38.67 },
+  total_cholesterol:       { "mmol/L->mg/dL": v => v * 38.67, "mg/dL->mmol/L": v => v / 38.67 },
+  LDL:                     { "mmol/L->mg/dL": v => v * 38.67, "mg/dL->mmol/L": v => v / 38.67 },
+  HDL:                     { "mmol/L->mg/dL": v => v * 38.67, "mg/dL->mmol/L": v => v / 38.67 },
+
+  /* === Triglicerydy === */
+  "Trójglicerydy":   { "mmol/L->mg/dL": v => v * 88.57, "mg/dL->mmol/L": v => v / 88.57 },
+  trojglicerydy:     { "mmol/L->mg/dL": v => v * 88.57, "mg/dL->mmol/L": v => v / 88.57 }, // znormalizowane bez diakrytyków
+  triglycerides:     { "mmol/L->mg/dL": v => v * 88.57, "mg/dL->mmol/L": v => v / 88.57 },
+
+  /* === Witamina D3 [25(OH)D] === */
+  "Witamina D3 [25(OH)D]": { "nmol/L->ng/mL": v => v / 2.5, "ng/mL->nmol/L": v => v * 2.5 },
+  vitamin_d_25oh:          { "nmol/L->ng/mL": v => v / 2.5, "ng/mL->nmol/L": v => v * 2.5 },
+
+  /* === Kreatynina === */
+  "Kreatynina": {
+    "µmol/L->mg/dL": v => v / 88.4, "umol/L->mg/dL": v => v / 88.4,
+    "mg/dL->µmol/L": v => v * 88.4, "mg/dL->umol/L": v => v * 88.4
+  },
+  creatinine: {
+    "µmol/L->mg/dL": v => v / 88.4, "umol/L->mg/dL": v => v / 88.4,
+    "mg/dL->µmol/L": v => v * 88.4, "mg/dL->umol/L": v => v * 88.4
+  },
+
+  /* === Bilirubina === */
+  "Bilirubina": {
+    "µmol/L->mg/dL": v => v / 17.104, "umol/L->mg/dL": v => v / 17.104,
+    "mg/dL->µmol/L": v => v * 17.104, "mg/dL->umol/L": v => v * 17.104
+  },
+
+  /* === Żelazo (Fe) === */
+  "Żelazo": {
+    "µmol/L->µg/dL": v => v * 5.5845, "umol/L->µg/dL": v => v * 5.5845,
+    "µg/dL->µmol/L": v => v * 0.179,   "ug/dL->µmol/L": v => v * 0.179,
+    "µg/dL->umol/L": v => v * 0.179,   "ug/dL->umol/L": v => v * 0.179
+  },
+  iron: {
+    "µmol/L->µg/dL": v => v * 5.5845, "umol/L->µg/dL": v => v * 5.5845,
+    "µg/dL->µmol/L": v => v * 0.179,   "ug/dL->µmol/L": v => v * 0.179,
+    "µg/dL->umol/L": v => v * 0.179,   "ug/dL->umol/L": v => v * 0.179
+  },
+
+  /* === Wapń / Magnez / Fosfor === */
+  "Wapń":  { "mmol/L->mg/dL": v => v * 4.0,   "mg/dL->mmol/L": v => v * 0.2495 },
+  "Magnez (Mg)": { "mmol/L->mg/dL": v => v * 2.43,  "mg/dL->mmol/L": v => v * 0.4114 },
+  "Fosfor": { "mmol/L->mg/dL": v => v * 3.097, "mg/dL->mmol/L": v => v * 0.3229 },
+
+  /* === CRP (często mg/L ↔ mg/dL) === */
+  CRP: { "mg/dL->mg/L": v => v * 10, "mg/L->mg/dL": v => v / 10 },
+
+  /* === B12 i folian (często miana molowe) === */
+  "Witamina B12": { "pg/mL->pmol/L": v => v * 0.7378, "pmol/L->pg/mL": v => v * 1.355 },
+  "Kwas foliowy": { "ng/mL->nmol/L": v => v * 2.266,  "nmol/L->ng/mL": v => v / 2.266 }
 };
 
 function convertIfNeeded(testKey: string, value: number, fromUnit?: string, toUnit?: string): { value: number; note?: string } {
@@ -164,6 +228,12 @@ function extractKeywords(text: string): string[] {
   const keys = ["arytmia", "szmery", "udar", "zawal", "nadcisnienie", "insulinoopornosc", "cukrzyca", "nerki", "kreatynina", "ekg", "padaczka", "epilepsja"];
   return keys.filter(k => t.includes(k));
 }
+// 🔧 Gdy pole ma postać "Choroba__Test", zwróć samą nazwę testu
+function splitFieldKey(k: string): { condition?: string; test: string } {
+  const parts = String(k).split("__");
+  if (parts.length >= 2) return { condition: parts[0], test: parts.slice(1).join("__") };
+  return { test: String(k) };
+}
 
 /* ------------------------- 🔧 KONIEC HELPERÓW ------------------------- */
 
@@ -193,68 +263,81 @@ export async function medicalLabAgent({
     }
   }
 
-  // 2) Wykryj odchylenia (aliasy + konwersja jednostek + status per badanie)
-  const abnormalities: string[] = [];
-  const labStatus: Record<string, {
-    displayName: string;
-    value: number | null;
-    unit?: string;
-    refMin?: number;
-    refMax?: number;
-    refUnit?: string;
-    class: Class;
-  }> = {};
-  const unmatchedTests: string[] = [];
-  const unitWarnings: string[] = [];
-  const refRangeText = buildRefRangeTextMap();
+// 2) Wykryj odchylenia (obsługa kluczy "Choroba__Test" + aliasy + konwersja)
+const abnormalities: string[] = [];
+const labStatus: Record<string, {
+  displayName: string;
+  value: number | null;
+  unit?: string;
+  refMin?: number;
+  refMax?: number;
+  refUnit?: string;
+  class: Class;
+}> = {};
+const unmatchedTests: string[] = [];
+const unitWarnings: string[] = [];
 
-  for (const [testNameRaw, rawVal] of Object.entries(testResults || {})) {
-    const testKey = canonicalTestKey(testNameRaw);
-    const ref = (testReferenceValues as Record<string, TestRefValue | undefined>)[testKey];
+const refRangeText = buildRefRangeTextMap();
 
-    const { value: parsedValRaw, unit: valUnit } = parseValueUnit(rawVal as any);
-    if (parsedValRaw == null || Number.isNaN(parsedValRaw)) {
-      labStatus[testKey] = {
-        displayName: String(testNameRaw),
-        value: null,
-        unit: valUnit,
-        class: "unknown"
-      };
-      continue;
-    }
+for (const [fieldKey, rawVal] of Object.entries(testResults || {})) {
+  // 1) wyciągnij SAMĄ nazwę testu z "Choroba__Test"
+  const { test: testNameOnly } = splitFieldKey(fieldKey);
 
-    if (!ref) {
-      unmatchedTests.push(String(testNameRaw));
-      labStatus[testKey] = {
-        displayName: String(testNameRaw),
-        value: parsedValRaw,
-        unit: valUnit,
-        class: "unknown"
-      };
-      continue;
-    }
+  // 2) alias/normalizacja + próba użycia DOKŁADNIE takiego klucza jak w testReferenceValues
+  const aliasKey = canonicalTestKey(testNameOnly); // np. "Glukoza" -> "Glukoza" (PL) lub "glucose" (EN)
+  const exactRefExists = (testReferenceValues as any)[testNameOnly] !== undefined;
+  const testKeyRef = exactRefExists ? testNameOnly : aliasKey; // klucz do referencji
+  const ref = (testReferenceValues as Record<string, TestRefValue | undefined>)[testKeyRef];
 
-    const range = parseRefRangeAdvanced(ref) || parseRange(ref);
-    const refText = refRangeText[testKey] || "";
-    const refUnit = range?.unit;
-
-    let { value: parsedVal, note } = convertIfNeeded(testKey, parsedValRaw, valUnit, refUnit);
-    if (note) unitWarnings.push(`${testNameRaw}: ${note}; ref="${refText}"`);
-
-    const cls = range ? classify(parsedVal, range) : "unknown";
-    labStatus[testKey] = {
-      displayName: String(testNameRaw),
-      value: parsedVal,
-      unit: refUnit ?? valUnit,
-      refMin: range?.min,
-      refMax: range?.max,
-      refUnit,
-      class: cls
+  // 3) parsowanie wartości i jednostki podanej przez pacjenta
+  const { value: parsedValRaw, unit: valUnit } = parseValueUnit(rawVal as any);
+  if (parsedValRaw == null || Number.isNaN(parsedValRaw)) {
+    labStatus[testKeyRef] = {
+      displayName: testNameOnly,
+      value: null,
+      unit: valUnit,
+      class: "unknown"
     };
-
-    if (cls === "low") abnormalities.push(`${testNameRaw}: low (${parsedValRaw}${valUnit ? " " + valUnit : ""}, ref ${refText})`);
-    if (cls === "high") abnormalities.push(`${testNameRaw}: high (${parsedValRaw}${valUnit ? " " + valUnit : ""}, ref ${refText})`);
+    continue;
   }
+
+  if (!ref) {
+    // brak referencji po samej nazwie testu → raportuj
+    unmatchedTests.push(String(testNameOnly));
+    labStatus[testKeyRef] = {
+      displayName: testNameOnly,
+      value: parsedValRaw,
+      unit: valUnit,
+      class: "unknown"
+    };
+    continue;
+  }
+
+  const range = parseRefRangeAdvanced(ref) || parseRange(ref);
+  const refText = refRangeText[testKeyRef] || "";
+  const refUnit = range?.unit;
+
+  // 4) konwersja jednostek — użyj klucza konwersji, który istnieje (alias EN lub PL)
+  const convKey = (UNIT_CONVERSIONS as any)[aliasKey] ? aliasKey : testKeyRef;
+  let { value: parsedVal, note } = convertIfNeeded(convKey, parsedValRaw, valUnit, refUnit);
+  if (note) unitWarnings.push(`${testNameOnly}: ${note}; ref="${refText}"`);
+
+  const cls = range ? classify(parsedVal, range) : "unknown";
+
+  labStatus[testKeyRef] = {
+    displayName: testNameOnly,
+    value: parsedVal,
+    unit: refUnit ?? valUnit,
+    refMin: range?.min,
+    refMax: range?.max,
+    refUnit,
+    class: cls
+  };
+
+  if (cls === "low")  abnormalities.push(`${testNameOnly}: low (${parsedValRaw}${valUnit ? " " + valUnit : ""}, ref ${refText})`);
+  if (cls === "high") abnormalities.push(`${testNameOnly}: high (${parsedValRaw}${valUnit ? " " + valUnit : ""}, ref ${refText})`);
+}
+
 
   // 3) Wyciągnij sygnały z opisu (np. BP i słowa-klucze)
   const bpMeasurements = extractBloodPressures(description || "");
