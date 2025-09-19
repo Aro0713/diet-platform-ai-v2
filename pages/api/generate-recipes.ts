@@ -231,13 +231,45 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // 4) Zbieramy wyniki wszystkich dni
     const allPerDay = await Promise.all(perDayJobs);
     const recipes: NormalizedRecipe[] = ([] as NormalizedRecipe[]).concat(...allPerDay);
+    // 4.1) Sanitizery nazw i auto-dopiski przypraw (jeśli są w krokach, a brak na liście)
+    function fixName(s: string) {
+      const x = s.toLowerCase().trim();
+      if (x.includes("olejek rzepak")) return "Olej rzepakowy";
+      if (x.includes("olej z oliw"))   return "Oliwa z oliwek";
+      return s;
+    }
+    function ensureSpiceInList(r: NormalizedRecipe, name: string, amount: number, unit: Unit) {
+      const has = r.ingredients.some(i => i.name.toLowerCase().includes(name.toLowerCase()));
+      if (!has) r.ingredients.push({ name, amount, unit });
+    }
+    for (const r of recipes) {
+      r.ingredients = r.ingredients.map(i => ({ ...i, name: fixName(i.name) }));
+      const stepsText = (r.instructions || []).join(" ").toLowerCase();
+      if (/pieprz/.test(stepsText) && !r.ingredients.some(i => /pieprz/i.test(i.name))) {
+        ensureSpiceInList(r, "Pieprz", 1, "g");
+      }
+      if (/s[óo]l/.test(stepsText) && !r.ingredients.some(i => /s[óo]l/i.test(i.name))) {
+        ensureSpiceInList(r, "Sól", 1, "g");
+      }
+    }
+
+    // 4.2) Porządek dni tygodnia (startWeek: 'monday' | 'sunday')
+    const startWeek = (req.body?.startWeek === 'sunday') ? 'sunday' : 'monday'; // domyślnie poniedziałek
+    const DAY_ORDER_PL_MON_FIRST = ["Poniedziałek","Wtorek","Środa","Czwartek","Piątek","Sobota","Niedziela"];
+    const DAY_ORDER_PL_SUN_FIRST = ["Niedziela","Poniedziałek","Wtorek","Środa","Czwartek","Piątek","Sobota"];
+    const DAY_ORDER = startWeek === 'sunday' ? DAY_ORDER_PL_SUN_FIRST : DAY_ORDER_PL_MON_FIRST;
+    const dayIndex = (d: string) => {
+      const i = DAY_ORDER.findIndex(x => x.toLowerCase() === String(d || "").toLowerCase());
+      return i === -1 ? 999 : i;
+    };
+    recipes.sort((a, b) => dayIndex(a.day) - dayIndex(b.day));
 
     if (!recipes.length) {
       console.error("❌ Brak pola recipes w odpowiedziach generateRecipes (wszystkie dni).");
       return res.status(500).send("Nie udało się wygenerować przepisów.");
     }
 
-    // 5) Transformacja do słownika { day: { meal: RecipeForUI } } – jak wcześniej
+    // 5) Transformacja do słownika { day: { meal: RecipeForUI } }
     const recipesByDay: Record<string, Record<string, RecipeForUI>> = {};
     for (const r of recipes) {
       const dayKey = r.day || "Inne";
