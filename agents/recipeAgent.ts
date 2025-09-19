@@ -1,7 +1,9 @@
 // agents/recipeAgent.ts
 import { Agent, run } from "@openai/agents";
 
-// ✅ Mapa kuchni świata (możesz rozszerzać w jednym miejscu)
+/** —————————————————————————————————————————————
+ *  KONTEKST KUCHNI (możesz rozbudowywać w 1 miejscu)
+ *  ————————————————————————————————————————————— */
 const cuisineContextMap: Record<string, string> = {
   "Polska": "Polish cuisine: soups, fermented vegetables, root vegetables, pork, rye bread",
   "Włoska": "Italian cuisine: pasta, olive oil, tomatoes, basil, cheeses like mozzarella and parmesan",
@@ -21,34 +23,37 @@ const cuisineContextMap: Record<string, string> = {
   "Dieta arktyczna / syberyjska": "Arctic/Siberian: fish, berries, root vegetables, animal fat"
 };
 
-// 🔐 UWAGA: „Agent” NIE przyjmuje tu temperature/response_format — same core pola.
-export const recipeAgent = new Agent({
-  name: "Recipe Agent",
-  model: "gpt-4o",
-  instructions: `
+/** —————————————————————————————————————————————
+ *  WSPÓLNE INSTRUKCJE (JSON-only, szybkie odpowiedzi)
+ *  ————————————————————————————————————————————— */
+const BASE_INSTRUCTIONS = `
 You are a multilingual professional chef and clinical nutritionist.
+Your job is to generate complete, step-by-step cooking recipes for each meal.
 
-Your job is to generate complete, step-by-step cooking recipes for each meal in a 7-day dietary plan.
+STRICT JSON MODE:
+- OUTPUT MUST BE PURE JSON. Do NOT include any prose, explanations, or markdown fences. No \`\`\`.
+- If you cannot produce recipes, return {"recipes": []}.
+- Use only valid JSON (no comments, no trailing commas).
 
-INPUT FORMAT (you receive a single JSON string):
+INPUT FORMAT (single JSON string):
 {
-  "lang": "pl" | "en" | "es" | "fr" | ...,
+  "lang": "pl" | "en" | "es" | "fr" | "...",
   "dietPlan": { /* day/meal keys to REUSE AS-IS */ },
   "nutrientFocus": ["iron","vitaminD",...],
-  "cuisine": "Polska" | "Włoska" | ...,
+  "cuisine": "Polska" | "Włoska" | "...",
   "cuisineNote": "Resolved cuisine profile to follow (authentic)"
 }
 
 CRITICAL RULES:
-- Reuse EXACT day/meal KEYS from input.dietPlan; do NOT rename or translate keys themselves.
-- Translate CONTENT (titles, ingredients, instructions) to input.lang (natural style) only.
+- Reuse EXACT day/meal KEYS from input.dietPlan; do NOT rename or translate the KEYS themselves.
+- Translate CONTENT (titles, ingredients, instructions) into input.lang (natural style).
 - Follow input.cuisineNote strictly (authentic culinary profile).
 - ALWAYS include spices, herbs, fats/oils, and condiments where appropriate.
-- Prefer ingredients supporting input.nutrientFocus (if provided).
-- Units allowed: "g", "ml", "szt". Round amounts sensibly.
-- Healthy, realistic methods; numbered steps where useful.
+- Prefer ingredients supporting input.nutrientFocus if provided.
+- Units allowed: "g", "ml", "szt". Round amounts sensibly to integers.
+- Healthy, realistic methods; short, numbered steps where useful.
 
-OUTPUT: JSON ONLY, with structure:
+OUTPUT SHAPE:
 {
   "recipes": [
     {
@@ -66,45 +71,127 @@ OUTPUT: JSON ONLY, with structure:
 }
 
 Cuisine context map (reference):
-${JSON.stringify(cuisineContextMap, null, 2)}
-`.trim()
-});
+`.trim();
 
-// —————————————————————————————————————————————
-//  Cienki wrapper jak generateDiet()  → generateRecipes()
-//  (bez temperature/response_format w opcjach run — zgodne ze starszym SDK)
-// —————————————————————————————————————————————
+/** —————————————————————————————————————————————
+ *  DWA AGENTY: quality (gpt-4o) i fast (gpt-4o-mini)
+ *  ————————————————————————————————————————————— */
+function buildRecipeAgent(model: string, name: string) {
+  return new Agent({
+    name,
+    model,
+    // Krótsze instrukcje + mapka jako JSON (bezpieczne dla tokenów; agent tworzony raz)
+    instructions: `${BASE_INSTRUCTIONS}\n${JSON.stringify(cuisineContextMap)}`
+  });
+}
 
+const recipeAgentQuality = buildRecipeAgent("gpt-4o", "Recipe Agent (Quality)");
+const recipeAgentFast = buildRecipeAgent("gpt-4o-mini", "Recipe Agent (Fast)");
+
+/** —————————————————————————————————————————————
+ *  Pomocnicze: parser JSON (bez fence’ów) i kompresja wejścia
+ *  ————————————————————————————————————————————— */
 function tryParseJsonLoose(text: string): any | null {
-  // 1) próba normalna
-  try { return JSON.parse(text); } catch {}
-
-  // 2) usuń fence'y
-  const cleaned = text.replace(/```json|```/g, "").trim();
-  try { return JSON.parse(cleaned); } catch {}
-
-  // 3) wyciągnij największy blok { ... }
-  const match = cleaned.match(/\{[\s\S]*\}$/);
+  const t = String(text || "").trim();
+  const noFences = t.replace(/```json|```/g, "").trim();
+  // 1) próba wprost
+  try { return JSON.parse(noFences); } catch {}
+  // 2) wyciągnij największy blok JSON zaczynający się od {
+  const match = noFences.match(/\{[\s\S]*\}/);
   if (match) {
     try { return JSON.parse(match[0]); } catch {}
   }
   return null;
 }
 
-export async function generateRecipes(input: any): Promise<{ recipes: any[] }> {
-  const { lang = "pl", cuisine, dietPlan, nutrientFocus = [] } = input || {};
-  const cuisineNote = cuisineContextMap[cuisine] || "general culinary tradition";
+// Minimalizacja dietPlan -> day/meal/title/ingredients[name,amount,unit]
+function shrinkDietPlan(dietPlan: any): any {
+  if (!dietPlan || typeof dietPlan !== "object") return dietPlan;
+
+  const prIngredient = (i: any) => ({
+    name: String(i?.name ?? i?.product ?? "").trim(),
+    amount: typeof i?.amount === "number" ? Math.round(i.amount)
+          : typeof i?.grams === "number" ? Math.round(i.grams)
+          : typeof i?.weight === "number" ? Math.round(i.weight)
+          : typeof i?.quantity === "number" ? Math.round(i.quantity)
+          : undefined,
+    unit: i?.unit ? String(i.unit) : undefined
+  });
+
+  const prMeal = (m: any) => ({
+    title: String(m?.title ?? m?.dish ?? "").trim() || undefined,
+    ingredients: Array.isArray(m?.ingredients) ? m.ingredients.map(prIngredient) : undefined
+  });
+
+  // Obsłuż 2 typy struktur: słownik { day: { meal: {...} } } lub tablica dni
+  if (Array.isArray(dietPlan)) {
+    return dietPlan.map((day: any) => {
+      const dayKey = String(day?.day || day?.name || day?.title || "").trim() || "Dzień";
+      const mealsSrc = Array.isArray(day?.meals)
+        ? day.meals
+        : Object.entries(day || {})
+            .filter(([k]) => k !== "day")
+            .map(([mealKey, m]) => ({ key: mealKey, ...m as any }));
+
+      const reduced: Record<string, any> = {};
+      for (const m of mealsSrc) {
+        const key = String((m as any)?.meal || (m as any)?.key || (m as any)?.title || "").trim() || "posiłek";
+        reduced[key] = prMeal(m);
+      }
+      return { [dayKey]: reduced };
+    }).reduce((acc: any, o: any) => Object.assign(acc, o), {});
+  } else {
+    const out: Record<string, any> = {};
+    for (const [dayKey, meals] of Object.entries(dietPlan)) {
+      const reduced: Record<string, any> = {};
+      for (const [mealKey, m] of Object.entries(meals as any || {})) {
+        reduced[mealKey] = prMeal(m);
+      }
+      out[dayKey] = reduced;
+    }
+    return out;
+  }
+}
+
+/** —————————————————————————————————————————————
+ *  Publiczny wrapper: generateRecipes()
+ *  ————————————————————————————————————————————— */
+type GenerateRecipesInput = {
+  lang?: string;
+  cuisine?: string;
+  dietPlan: any;
+  nutrientFocus?: string[];
+  modelHint?: "fast" | "quality";
+};
+
+export async function generateRecipes(input: GenerateRecipesInput): Promise<{ recipes: any[] }> {
+  const {
+    lang = "pl",
+    cuisine,
+    dietPlan,
+    nutrientFocus = [],
+    modelHint = "quality"
+  } = input || ({} as GenerateRecipesInput);
+
+  const cuisineNote = cuisineContextMap[cuisine || ""] || "general culinary tradition";
+
+  // DODATKOWA KOMPRESJA (na wypadek wołań spoza batchowanego handlera)
+  const compactDietPlan = shrinkDietPlan(dietPlan);
 
   const userPayload = {
     lang,
     nutrientFocus,
     cuisine,
     cuisineNote,
-    dietPlan // klucze day/meal mają zostać użyte 1:1
+    // Klucze day/meal mają zostać użyte 1:1 — compakt zachowuje klucze
+    dietPlan: compactDietPlan
   };
 
-  // starsze SDK: run(agent, input: string) → wynik może mieć różne pola; bierzemy defensywnie
-  const result: any = await run(recipeAgent, JSON.stringify(userPayload));
+  // Wybór agenta w locie
+  const agent = modelHint === "fast" ? recipeAgentFast : recipeAgentQuality;
+
+  // starsze SDK: run(agent, input: string)
+  const result: any = await run(agent, JSON.stringify(userPayload));
   const text = String(
     result?.finalOutput ??
     result?.output_text ??
@@ -112,11 +199,27 @@ export async function generateRecipes(input: any): Promise<{ recipes: any[] }> {
   ).trim();
 
   const parsed = tryParseJsonLoose(text);
-  if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.recipes)) {
-    return { recipes: [] };
+
+  // Twarde wymuszenie struktury
+  if (!parsed || typeof parsed !== "object") return { recipes: [] };
+
+  if (Array.isArray((parsed as any).recipes)) {
+    return parsed as { recipes: any[] };
   }
-  return parsed as { recipes: any[] };
+
+  // fallback: jeśli agent zwrócił słownik { day: { meal: {...} } }
+  if ((parsed as any).recipes && typeof (parsed as any).recipes === "object") {
+    const arr: any[] = [];
+    for (const [day, meals] of Object.entries((parsed as any).recipes as Record<string, any>)) {
+      for (const [meal, body] of Object.entries(meals || {})) {
+        arr.push({ day, meal, ...(body as any) });
+      }
+    }
+    return { recipes: arr };
+  }
+
+  return { recipes: [] };
 }
 
-// (opcjonalnie) eksport mapy kuchni, gdyby była potrzebna gdzie indziej
+// (opcjonalnie) eksport mapy kuchni
 export { cuisineContextMap };
