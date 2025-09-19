@@ -587,31 +587,48 @@ return;
 };
 const handleGenerateRecipes = async () => {
   if (!mealPlan || Object.keys(mealPlan).length === 0) {
-    alert(tUI('dietGenerationFailed', lang)); // albo dodaj osobny klucz np. 'noDietForRecipes'
+    alert(tUI('dietGenerationFailed', lang)); // używamy istniejącego klucza
     return;
   }
+
   try {
     setRecipesLoading(true);
+
     const res = await fetch('/api/generate-recipes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        dietPlan: mealPlan,       // ⬅️ przekazujemy słownik day -> Meal[]
+        dietPlan: mealPlan,                 // słownik day -> Meal[]
         lang,
         cuisine: interviewData?.cuisine,
-        nutrientFocus: []         // (opcjonalnie) możesz tu podać listę mikro, jeśli masz
+        nutrientFocus: [],
+        startWeek: 'monday'                 // zmień na 'sunday', jeśli chcesz zaczynać od niedzieli
       })
     });
-    const json = await res.json();
-    if (json?.recipes && typeof json.recipes === 'object') {
-      setRecipes(json.recipes as Record<string, Record<string, RecipeUI>>);
+
+    // ⛑️ najpierw sprawdź status; przy 4xx/5xx endpoint zwraca tekst, nie JSON
+    const contentType = res.headers.get('content-type') || '';
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      console.error('❌ /api/generate-recipes failed:', res.status, errText);
+      alert(tUI('dietGenerationError', lang)); // używamy istniejącego klucza
+      return;
+    }
+
+    // ✅ sukces – parsuj bezpiecznie (czasem serwer może mieć inne content-type)
+    const payload = contentType.includes('application/json')
+      ? await res.json()
+      : JSON.parse(await res.text());
+
+    if (payload?.recipes && typeof payload.recipes === 'object') {
+      setRecipes(payload.recipes as Record<string, Record<string, RecipeUI>>);
     } else {
-      console.warn('⚠️ Brak recipes w odpowiedzi:', json);
-      alert(tUI('dietGenerationFailed', lang)); // lub 'recipesGenerationFailed' jeśli masz klucz
+      console.warn('⚠️ Brak recipes w odpowiedzi:', payload);
+      alert(tUI('dietGenerationFailed', lang));
     }
   } catch (e) {
     console.error('❌ Błąd generate-recipes:', e);
-    alert(tUI('dietGenerationError', lang)); // lub 'recipesGenerationError'
+    alert(tUI('dietGenerationError', lang));
   } finally {
     setRecipesLoading(false);
   }
