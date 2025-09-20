@@ -1,6 +1,18 @@
 // agents/recipeAgent.ts
 import { Agent, run } from "@openai/agents";
 
+// — Kanoniczne klucze posiłków (niezależne od języka)
+const MEAL_KEYS_BY_COUNT: Record<number, string[]> = {
+  2: ["breakfast","dinner"],
+  3: ["breakfast","lunch","dinner"],
+  4: ["breakfast","second_breakfast","lunch","dinner"],
+  5: ["breakfast","second_breakfast","lunch","afternoon_snack","dinner"],
+  6: ["breakfast","second_breakfast","lunch","afternoon_snack","dinner","snack"],
+};
+const VALID_MEAL_KEYS = new Set([
+  "breakfast","second_breakfast","lunch","afternoon_snack","dinner","snack"
+]);
+
 /** —————————————————————————————————————————————
  *  KONTEKST KUCHNI (możesz rozbudowywać w 1 miejscu)
  *  ————————————————————————————————————————————— */
@@ -185,49 +197,37 @@ STRICT JSON MODE:
 
 INPUT (single JSON string):
 {
-  "lang": "pl" | "en" | "es" | "fr" | "...",
-  "dietPlan": { /* day/meal keys to REUSE AS-IS */ },
+  "lang": "pl" | "en" | "...",
+  "dietPlan": { /* day -> meals minimal spec */ },
   "nutrientFocus": ["iron","vitaminD",...],
-  "cuisine": "Polska" | "Włoska" | "...",
-  "cuisineNote": "Resolved cuisine profile to follow (authentic)"
+  "cuisine": "…",
+  "cuisineNote": "…"
 }
 
 CRITICAL RULES:
-- Reuse EXACT day/meal KEYS from input.dietPlan; do NOT rename the KEYS.
-- Translate CONTENT (titles, ingredients, instructions) into input.lang.
-- Follow input.cuisineNote strictly (authentic culinary profile).
-- Units: "g", "ml", "szt". Round amounts sensibly to integers.
+- Reuse input day labels as given in dietPlan; do NOT rename day keys.
+- For EACH recipe, set **meal** to one of:
+  ["breakfast","second_breakfast","lunch","afternoon_snack","dinner","snack"]  ← canonical keys
+- Also provide **meal_label**: a natural label for 'meal' in input.lang (e.g., PL: "Śniadanie", "Obiad"…).
+- Choose meal keys by ordering meals within a day (time or logical order):
+  2→[breakfast,dinner], 3→[breakfast,lunch,dinner], 4→[…second_breakfast…], 5→[…afternoon_snack…], 6→[…,snack].
+- Translate CONTENT (titles, ingredient names, instructions) to input.lang.
+- Units allowed: "g", "ml", "pcs". Use **ml for liquids**, **g for herbs/spices**, **pcs for discrete items**. 
+- Do NOT use localized unit codes like "szt", "ud", "шт", etc.
 - Healthy, realistic methods; concise, numbered steps when helpful.
 
-SEASONING DOCTRINE (apply to every savory recipe):
-1) SALT: Season in layers (base → during cooking → finish). Taste and adjust; never oversalt.
-2) FAT: Choose appropriate cooking fat for the cuisine (olive oil, ghee, rapeseed oil, butter, etc.).
-3) ACID: Balance richness with acid (lemon, vinegar, tamarind, rice vinegar). Always add acid for seafood and salads.
-4) UMAMI: Use cuisine-appropriate umami (mushrooms, parmesan, anchovy, miso, soy, fish sauce) when suitable.
-5) HEAT: Chili/pepper level should be moderate by default; avoid extreme heat unless the cuisine expects it.
-6) AROMATICS: Start sautéed dishes with an aromatic base (e.g., onion/garlic/ginger/celery/carrots/leeks).
-7) SPICES: Toast whole spices briefly; bloom ground spices in fat before liquids for depth.
-8) HERBS: Use robust herbs early (e.g., rosemary/thyme bay) and delicate herbs at the end (e.g., basil, dill, parsley).
-9) CONDIMENTS: Dressings, tahini, soy, mustard, yogurt or citrus to finish when appropriate.
-10) TEXTURE: Aim for contrast (creamy/crunchy; fresh/herbaceous vs. rich).
-MANDATORY MINIMUM (savory recipes):
-- Include at least ONE item from herbs/spices,
-- Include at least ONE appropriate cooking fat,
-- Include acid for seafood and raw salads,
-- Include an aromatic base when sautéing.
-DE-DUPLICATION & RESPECT INPUT:
-- Do NOT remove or rename existing ingredients; only add missing seasoning/fat/acid when required.
-- Avoid duplicates: if an ingredient (case-insensitive) is already present, do not add it again.
-- Keep titles concise (max ~65 chars), steps concise (prefer <= 180 chars per step).
-
-If any of the above is missing in the provided ingredients, add it.
+SEASONING DOCTRINE:
+- Include herbs/spices + proper cooking fat; use acid for seafood/salads.
+- **Do NOT add salt/pepper to desserts and smoothies unless explicitly requested.**
+- Salt budget: default ≤ 2 g per savory recipe; salads ≤ 1 g.
 
 OUTPUT SHAPE:
 {
   "recipes": [
     {
-      "day": "<day key from dietPlan>",
-      "meal": "<meal key from dietPlan>",
+      "day": "<day from input>",
+      "meal": "breakfast|second_breakfast|lunch|afternoon_snack|dinner|snack",
+      "meal_label": "<label of 'meal' in input.lang>",
       "title": "<dish title in input.lang>",
       "time": "HH:MM" | "<short time>",
       "ingredients": [
@@ -239,7 +239,6 @@ OUTPUT SHAPE:
   ]
 }
 `.trim();
-
 
 /** —————————————————————————————————————————————
  *  DWA AGENTY: quality (gpt-4o) i fast (gpt-4o-mini)
@@ -404,13 +403,54 @@ export async function generateRecipes(input: GenerateRecipesInput): Promise<{ re
   ).trim();
 
   const parsed = tryParseJsonLoose(text);
+  // — Fallback: uzupełnij/napraw 'meal' na kanoniczne klucze, nie zmieniaj 'meal_label'
+function enforceCanonicalMealKeys(obj: any) {
+  // zbuduj tablicę wyników (obsłuż zarówno recipes: [], jak i recipes: { day: {…} })
+  let arr: any[] = [];
+  if (Array.isArray(obj?.recipes)) arr = obj.recipes;
+  else if (obj?.recipes && typeof obj.recipes === "object") {
+    for (const [day, meals] of Object.entries(obj.recipes as Record<string, any>)) {
+      for (const [meal, body] of Object.entries(meals || {})) {
+        arr.push({ day, meal, ...(body as any) });
+      }
+    }
+  }
+
+  // grupuj po dniu i nadaj klucze wg pozycji, jeśli brak lub spoza zbioru
+  const byDay: Record<string, any[]> = {};
+  for (const r of arr) (byDay[r.day || "Other"] ||= []).push(r);
+
+  for (const day of Object.keys(byDay)) {
+    const list = byDay[day];
+    const total = list.length || 4;
+    const scheme = MEAL_KEYS_BY_COUNT[total] || MEAL_KEYS_BY_COUNT[4];
+    // sortuj wg czasu, jeśli jest
+    list.sort((a,b) => String(a.time||"").localeCompare(String(b.time||"")));
+    list.forEach((r, i) => {
+      const m = String(r.meal || "").trim();
+      if (!VALID_MEAL_KEYS.has(m)) r.meal = scheme[Math.min(i, scheme.length-1)];
+    });
+  }
+
+  // spłaszcz
+  const out: any[] = [];
+  for (const d of Object.keys(byDay)) for (const r of byDay[d]) out.push(r);
+  return { recipes: out };
+}
+
+const canonicalized = enforceCanonicalMealKeys(parsed);
+
   if (!parsed || typeof parsed !== "object") return { recipes: [] };
   // — Sanitizer: ujednolić wynik, odsiać złe wpisy —
 const cleanUnit = (u: any) => {
   const x = String(u || "").toLowerCase();
   if (x === "g" || x.startsWith("gram")) return "g";
   if (x === "ml" || x.startsWith("millil")) return "ml";
-  if (x === "szt" || x === "pcs" || x.startsWith("piece")) return "szt";
+  if (
+    x === "pcs" || x === "pc" || x === "piece" || x === "pieces" ||
+    x.startsWith("szt") || x === "ud" || x === "uds" ||
+    x === "шт" || x === "шт." || x === "stk" || x === "st."
+  ) return "pcs";
   return "g";
 };
 

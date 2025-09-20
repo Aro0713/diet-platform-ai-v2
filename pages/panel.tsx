@@ -1309,7 +1309,7 @@ return (
               {Object.entries(meals).map(([mealName, r]) => (
                 <div key={mealName} className="bg-black/20 dark:bg-white/10 rounded-lg p-3 sm:p-4 mb-3">
                   <div className="font-medium">
-                    {tUI(mealName.toLowerCase() as any, lang) || mealName}: {r.dish}
+                    {(r as any).meal_label || tUI(mealName as any, lang) || mealName}: {r.dish}
                   </div>
                   {!!r.time && <div className="text-sm opacity-80 mt-1">{tUI('time', lang)}: {r.time}</div>}
                   {!!r.description && <div className="text-sm italic mt-1">{r.description}</div>}

@@ -5,7 +5,7 @@ import { generateRecipes } from "@/agents/recipeAgent";
 // (opcjonalnie) mały, bezpieczny limit body
 export const config = { api: { bodyParser: { sizeLimit: "1mb" } } };
 
-type Unit = "g" | "ml" | "szt";
+type Unit = "g" | "ml" | "pcs";
 type NormalizedIngredient = { name: string; amount: number | null; unit: Unit };
 type NormalizedRecipe = {
   day: string;
@@ -19,10 +19,14 @@ type NormalizedRecipe = {
 
 // --- Normalizacje jak w generate-diet.ts (spójny styl) ---
 function normalizeUnit(u: string | null | undefined): Unit {
-  const x = String(u || "").toLowerCase();
+  const x = String(u || "").trim().toLowerCase();
   if (x === "g" || x.startsWith("gram")) return "g";
   if (x === "ml" || x.startsWith("millil")) return "ml";
-  if (x === "szt" || x === "pcs" || x.startsWith("piece")) return "szt";
+  if (
+    x === "pcs" || x === "pc" || x === "piece" || x === "pieces" ||
+    x.startsWith("szt") || x === "ud" || x === "uds" ||
+    x === "шт" || x === "шт." || x === "stk" || x === "st."
+  ) return "pcs";
   return "g";
 }
 
@@ -231,40 +235,86 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // 4) Zbieramy wyniki wszystkich dni
     const allPerDay = await Promise.all(perDayJobs);
     const recipes: NormalizedRecipe[] = ([] as NormalizedRecipe[]).concat(...allPerDay);
-    // 4.1) Sanitizery nazw/jednostek i auto-dopiski przypraw (gdy są w krokach lub wcale)
-// — standaryzacja nazw + korekty jednostek
-function fixNameAndUnits(i: NormalizedIngredient, recipeTitle: string): NormalizedIngredient {
-  let name = String(i.name || "").trim();
-  let amount = i.amount;
-  let unit: Unit = i.unit;
+   // 4.1) MULTI-LANG sanitizers: only units, no language-specific renames
 
+type Unit = "g" | "ml" | "pcs"; // <- upewnij się, że to masz na górze pliku
+
+// ——— wielojęzyczne tokeny (PL/EN/ES/FR/DE/RU/UA/AR/HE/ZH/HI) ———
+const TOKENS = {
+  // zioła i delikatne przyprawy (używane do pcs→g)
+  herbs: [
+    // basil
+    "basil","basilic","albahac","basilikum","базилик","بَازِلّا","בזיל","罗勒","तुलसी","bazyl",
+    // parsley
+    "parsley","persil","perejil","petersil","петруш","بقدونس","פטרוזיל","欧芹","अजमोद","pietrusz",
+    // dill
+    "dill","aneth","eneldo","dill","укроп","شبت","שמיר","莳萝","सोआ","koperek",
+    // cilantro / coriander
+    "cilantro","coriander","coriandr","кинза","кориандр","كزبرة","כוסבר","香菜","धनिया","kolendr",
+    // chive / spring onion
+    "chive","ciboulette","cebollín","schnittlauch","шнитт","بصل أخضر","עירית","细香葱","szczypior",
+    // mint
+    "mint","menthe","menta","minze","мята","نعناع","נענע","薄荷","mięt",
+    // thyme
+    "thyme","thym","tomillo","thymian","тимьян","زعتر","תימין","百里香","tymian",
+    // rosemary
+    "rosemary","romarin","romero","rosmarin","розмарин","إكليل الجبل","רוזמרין","迷迭香","rozmaryn",
+    // oregano
+    "oregano","orégano","oregano","ореган","أوريجانو","אורגנו","牛至","oregano",
+    // marjoram
+    "marjoram","marjolaine","mejorana","majoran","майоран","مردقوش","אזובית","墨角兰","majeran"
+  ],
+  // przyprawy / aromaty (do wykrycia „czy jest przyprawianie” + sól-klamra)
+  seasoning: [
+    // salt
+    "salt","sal","sel","salz","соль","ملح","מלח","盐","नमक","sól",
+    // pepper
+    "pepper","poivre","pfeffer","pimienta","перец","فلفل","פלפל","胡椒","काली मिर्च","pieprz",
+    // garlic
+    "garlic","ail","knoblauch","ajo","чеснок","ثوم","שום","大蒜","czosnek",
+    // paprika / chili
+    "paprika","pimentón","paprika","паприк","فلفل حلو","פפריקה","红椒粉","chili","ají","piment","chil","辣椒",
+    // cumin / turmeric / ginger / oregano / thyme / rosemary (część duplikuje herbs – ok)
+    "cumin","comino","kreuzkümmel","кумин","كمون","כמון","孜然",
+    "turmeric","curcuma","cúrcuma","куркума","كركم","כורכום","姜黄",
+    "ginger","gingembre","jengibre","ingwer","имбир","زنجبيل","ג'ינג'ר","生姜",
+    "oregano","orégano","thyme","thym","tomillo","rosemary","romarin","romero"
+  ],
+  // tłuszcze
+  fats: [
+    "olive oil","huile d'olive","aceite de oliva","olio d'oliva","оливковое масло","زيت الزيتون","שמן זית","橄榄油","oliwa z oliwek",
+    "oil","huile","aceite","olio","масло","زيت","שמן","油",
+    "butter","beurre","mantequilla","burro","масло слив","زبدة","חמאה","黄油","masło",
+    "ghee"
+  ],
+  // płyny (do g→ml)
+  liquids: [
+    "oil","huile","aceite","olio","масло","زيت","שמן","油",
+    "vinegar","vinaigre","vinagre","aceto","уксус","خل","醋",
+    "water","eau","agua","acqua","вода","ماء","水",
+    "milk","lait","leche","latte","молоко","حليب","牛奶",
+    "juice","jus","zumo","succo","сок","عصير","汁",
+    "soy sauce","sauce soja","salsa de soja","salsa di soia","соевый соус","صلصة الصويا","酱油"
+  ]
+};
+
+const hasToken = (text: string, list: string[]) => {
+  const lc = String(text || "").toLowerCase();
+  return list.some(tok => lc.includes(tok));
+};
+
+// — standaryzacja jednostek i drobne sensowne korekty; NIE tłumaczymy nazw
+function fixNameAndUnits(i: NormalizedIngredient, _recipeTitle: string): NormalizedIngredient {
+  let name = String(i?.name ?? "").trim();
+  let amount = typeof i?.amount === "number" ? i.amount : null;
+  let unit: Unit = i?.unit; // "g" | "ml" | "pcs"
   const lc = name.toLowerCase();
 
-  // oleje/oliwy
-  if (lc.includes("olejek rzepak")) name = "Olej rzepakowy";
-  if (lc === "olej") name = "Olej rzepakowy";
-  if (lc.includes("olej z oliw") || lc.includes("oliwa z oliw")) name = "Oliwa z oliwek";
+  // płyny: gdy model zwróci w gramach → zamień na ml
+  if (unit === "g" && hasToken(lc, TOKENS.liquids)) unit = "ml";
 
-  // cytryna w ml → sok
-  if (lc === "cytryna" && unit === "ml") name = "Sok z cytryny";
-
-  // cottage cheese → serek wiejski (PL)
-  if (lc === "cottage cheese") name = "Serek wiejski";
-
-  // bazylia: forma i jednostka
-  if (lc.startsWith("bazyli")) name = "Bazylia świeża";
-
-  // zioła w "szt" → "g"
-  const HERBS = ["bazylia","pietruszka","koper","koperek","kolendra","szczypiorek","mięta","tymianek","rozmaryn","oregano","majeranek","koperek"];
-  if (unit === "szt" && HERBS.some(h => lc.includes(h))) {
-    unit = "g";
-    // ilość zostaje (np. 5 szt → 5 g)
-  }
-
-  // jajka: 150 "szt" to oczywisty błąd → traktuj jako gramy
-  if (lc.startsWith("jaj") && unit === "szt" && (amount ?? 0) > 12) {
-    unit = "g"; // zostaw tę samą liczbę jako gramy
-  }
+  // zioła: nigdy w sztukach → pcs→g
+  if (unit === "pcs" && hasToken(lc, TOKENS.herbs)) unit = "g";
 
   return { name, amount, unit };
 }
@@ -274,48 +324,43 @@ function ensureSpiceInList(r: NormalizedRecipe, name: string, amount: number, un
   if (!has) r.ingredients.push({ name, amount, unit });
 }
 
-const SEASONING_WORDS = ["sól","pieprz","czosnek","papry","kumin","kurkum","bazylia","oregano","tymianek","rozmaryn","imbir","majeranek","kolendra","koperek"];
-const FAT_WORDS = ["oliwa","olej","masło","ghee"];
-
 for (const r of recipes) {
-  // 1) standaryzacja nazw/jednostek
+  // 1) jednostki
   r.ingredients = r.ingredients.map(i => fixNameAndUnits(i, r.title));
 
-  // 2) auto-uzupełnienie soli/pieprzu na podstawie kroków
+  // 2) przyprawy z kroków → jeśli wspomniane, a brakuje na liście (multi-lang)
   const stepsText = (r.instructions || []).join(" ").toLowerCase();
-  if (/pieprz/.test(stepsText) && !r.ingredients.some(i => /pieprz/i.test(i.name))) {
-    ensureSpiceInList(r, "Pieprz", 1, "g");
+  const mentionsPepper = hasToken(stepsText, ["pepper","poivre","pfeffer","pimienta","перец","فلفل","פלפל","胡椒","pieprz"]);
+  const mentionsSalt   = hasToken(stepsText, ["salt","sal","sel","salz","соль","ملح","מלח","盐","sól"]);
+
+  if (mentionsPepper && !r.ingredients.some(i => hasToken(i.name, ["pepper","poivre","pfeffer","pimienta","перец","פלפל","胡椒","pieprz"]))) {
+    ensureSpiceInList(r, "Pepper", 1, "g"); // nazwa neutralna — UI ją przetłumaczy jeśli chcesz
   }
-  if (/s[óo]l/.test(stepsText) && !r.ingredients.some(i => /s[óo]l/i.test(i.name))) {
-    ensureSpiceInList(r, "Sól", 1, "g");
+  if (mentionsSalt && !r.ingredients.some(i => hasToken(i.name, ["salt","sal","sel","salz","соль","מלח","盐","sól"]))) {
+    ensureSpiceInList(r, "Salt", 1, "g");
   }
 
-  // 3) jeżeli brak *jakichkolwiek* przypraw/ziół → dodaj minimalny zestaw
-  const hasSeasoning = r.ingredients.some(i => {
-    const n = i.name.toLowerCase();
-    return SEASONING_WORDS.some(w => n.includes(w));
-  });
-  if (!hasSeasoning) {
-    ensureSpiceInList(r, "Sól", 1, "g");
-    ensureSpiceInList(r, "Pieprz", 1, "g");
+  // 3) brak jakichkolwiek przypraw → dodaj minimalny zestaw do dań wytrawnych (heurystyka: nie dodaj do smoothie/deserów)
+  const looksSweet = hasToken(r.title, ["smoothie","shake","koktajl","batido","奶昔","jogurt","yogurt","dessert","deser","postre","pudding","budyń"]);
+  const hasSeasoning = r.ingredients.some(i => hasToken(i.name, TOKENS.seasoning));
+  if (!looksSweet && !hasSeasoning) {
+    ensureSpiceInList(r, "Salt", 1, "g");
+    ensureSpiceInList(r, "Pepper", 1, "g");
   }
 
-  // 4) limit sodu: zmniejsz Sól do 1 g dla sałatek, 2 g dla dań ciepłych
-  const isSalad = /sałatk/i.test(r.title);
-  const salt = r.ingredients.find(i => /s[óo]l/i.test(i.name));
+  // 4) sól — limit: 1 g dla sałatek/deserów, 2 g dla dań ciepłych
+  const isSalad = hasToken(r.title, ["salad","salade","ensalada","salat","sałat","سلطة","סלט","沙拉"]);
+  const salt = r.ingredients.find(i => hasToken(i.name, ["salt","sal","sel","salz","соль","ملح","מלח","盐","sól"]));
   if (salt && typeof salt.amount === "number") {
-    const max = isSalad ? 1 : 2;
+    const max = (looksSweet || isSalad) ? 1 : 2;
     if (salt.amount > max) salt.amount = max;
   }
 
-  // 5) smażenie bez tłuszczu → oliwa domyślnie
-  const hasFat = r.ingredients.some(i => FAT_WORDS.some(w => i.name.toLowerCase().includes(w)));
-  const frying = /(smaż|podsmaż|patelni)/i.test(stepsText);
-  if (frying && !hasFat) {
-    ensureSpiceInList(r, "Oliwa z oliwek", 10, "ml");
-  }
+  // 5) smażenie bez tłuszczu → dodaj neutralnie „Olive oil 10 ml”
+  const hasFat = r.ingredients.some(i => hasToken(i.name, TOKENS.fats));
+  const frying = /(smaż|podsmaż|patelni|fry|sauté|poêler|sofreír|braten)/i.test(stepsText);
+  if (frying && !hasFat) ensureSpiceInList(r, "Olive oil", 10, "ml");
 }
-
     // 4.2) Porządek dni tygodnia (startWeek: 'monday' | 'sunday')
     const startWeek = (req.body?.startWeek === 'sunday') ? 'sunday' : 'monday'; // domyślnie poniedziałek
     const DAY_ORDER_PL_MON_FIRST = ["Poniedziałek","Wtorek","Środa","Czwartek","Piątek","Sobota","Niedziela"];
