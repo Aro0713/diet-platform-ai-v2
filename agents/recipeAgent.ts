@@ -205,21 +205,16 @@ INPUT (single JSON string):
 }
 
 CRITICAL RULES:
-- Reuse input day labels as given in dietPlan; do NOT rename day keys.
-- For EACH recipe, set **meal** to one of:
-  ["breakfast","second_breakfast","lunch","afternoon_snack","dinner","snack"]  ← canonical keys
-- Also provide **meal_label**: a natural label for 'meal' in input.lang (e.g., PL: "Śniadanie", "Obiad"…).
-- Choose meal keys by ordering meals within a day (time or logical order):
-  2→[breakfast,dinner], 3→[breakfast,lunch,dinner], 4→[…second_breakfast…], 5→[…afternoon_snack…], 6→[…,snack].
-- Translate CONTENT (titles, ingredient names, instructions) to input.lang.
-- Units allowed: "g", "ml", "pcs". Use **ml for liquids**, **g for herbs/spices**, **pcs for discrete items**. 
-- Do NOT use localized unit codes like "szt", "ud", "шт", etc.
+- Reuse input day labels; do NOT rename day keys.
+- For EACH recipe, set meal to one of: ["breakfast","second_breakfast","lunch","afternoon_snack","dinner","snack"] (canonical keys), and provide meal_label in input.lang.
+- All ingredient names MUST be in input.lang. Do NOT mix languages.
+- Units allowed: "g", "ml", "pcs". Use ml for liquids, g for herbs/spices, pcs for discrete items. Do NOT output localized unit codes (no "szt", "ud", "шт").
 - Healthy, realistic methods; concise, numbered steps when helpful.
+- Do NOT add salt/pepper to desserts, yogurts, sweet snacks, or smoothies unless explicitly requested.
+- Salt budget: ≤ 2 g for savory; salads ≤ 1 g.
 
 SEASONING DOCTRINE:
 - Include herbs/spices + proper cooking fat; use acid for seafood/salads.
-- **Do NOT add salt/pepper to desserts and smoothies unless explicitly requested.**
-- Salt budget: default ≤ 2 g per savory recipe; salads ≤ 1 g.
 
 OUTPUT SHAPE:
 {
@@ -231,7 +226,7 @@ OUTPUT SHAPE:
       "title": "<dish title in input.lang>",
       "time": "HH:MM" | "<short time>",
       "ingredients": [
-        { "name": "<string>", "amount": <number>, "unit": "g" | "ml" | "szt" }
+        { "name": "<string>", "amount": <number>, "unit": "g" | "ml" | "pcs" }
       ],
       "instructions": ["step 1", "step 2", "..."],
       "nutrientSummary": { /* optional micronutrients */ }
@@ -275,6 +270,89 @@ function tryParseJsonLoose(text: string): any | null {
   }
 
   return null;
+}
+// — Lokalizacja podstawowych nazw składników (11 języków)
+const LOCALIZE_BASICS: Record<string, Record<string, string>> = {
+  pl: { "Salt":"Sól","Pepper":"Pieprz","Olive oil":"Oliwa z oliwek","Lemon juice":"Sok z cytryny","Cottage cheese":"Serek wiejski" },
+  en: { "Salt":"Salt","Pepper":"Pepper","Olive oil":"Olive oil","Lemon juice":"Lemon juice","Cottage cheese":"Cottage cheese" },
+  de: { "Salt":"Salz","Pepper":"Pfeffer","Olive oil":"Olivenöl","Lemon juice":"Zitronensaft","Cottage cheese":"Hüttenkäse" },
+  fr: { "Salt":"Sel","Pepper":"Poivre","Olive oil":"Huile d'olive","Lemon juice":"Jus de citron","Cottage cheese":"Fromage cottage" },
+  es: { "Salt":"Sal","Pepper":"Pimienta","Olive oil":"Aceite de oliva","Lemon juice":"Zumo de limón","Cottage cheese":"Queso cottage" },
+  ua: { "Salt":"Сіль","Pepper":"Перець","Olive oil":"Оливкова олія","Lemon juice":"Лимонний сік","Cottage cheese":"Зернистий сир" },
+  ru: { "Salt":"Соль","Pepper":"Перец","Olive oil":"Оливковое масло","Lemon juice":"Лимонный сок","Cottage cheese":"Творог" },
+  zh: { "Salt":"盐","Pepper":"胡椒","Olive oil":"橄榄油","Lemon juice":"柠檬汁","Cottage cheese":"茅屋奶酪" },
+  hi: { "Salt":"नमक","Pepper":"काली मिर्च","Olive oil":"जैतून का तेल","Lemon juice":"नींबू का रस","Cottage cheese":"कॉटेज चीज़" },
+  ar: { "Salt":"ملح","Pepper":"فلفل","Olive oil":"زيت الزيتون","Lemon juice":"عصير الليمون","Cottage cheese":"جبن قريش" },
+  he: { "Salt":"מלח","Pepper":"פלפל","Olive oil":"שמן זית","Lemon juice":"מיץ לימון","Cottage cheese":"קוטג׳" }
+};
+
+const SWEET_TOKENS = [
+  "smoothie","shake","koktajl","milkshake","dessert","deser","jogurt","yogurt","pudding","budyń",
+  "granola","oat","owsian","berries","jagod","fruit","owoc"
+];
+
+function looksSweet(title: string, ingredients: any[]): boolean {
+  const t = (title || "").toLowerCase();
+  if (SWEET_TOKENS.some(w => t.includes(w))) return true;
+  const sweets = ["honey","miód","sugar","cukier","banana","banan","berries","jagod","jam","dżem"];
+  return ingredients?.some((i:any)=> sweets.some(w => String(i?.name||"").toLowerCase().includes(w)));
+}
+
+function localizeBasics(recipesObj: any, lang: string) {
+  const map = LOCALIZE_BASICS[lang] || LOCALIZE_BASICS.en;
+  // zbuduj tablicę wyników niezależnie od formatu
+  let arr: any[] = [];
+  if (Array.isArray(recipesObj?.recipes)) arr = recipesObj.recipes;
+  else if (recipesObj?.recipes && typeof recipesObj.recipes === "object") {
+    for (const [day, meals] of Object.entries(recipesObj.recipes as Record<string, any>)) {
+      for (const [meal, body] of Object.entries(meals || {})) {
+        arr.push({ day, meal, ...(body as any) });
+      }
+    }
+  }
+
+  // przejście po przepisach
+  for (const r of arr) {
+    const ing = Array.isArray(r.ingredients) ? r.ingredients : [];
+    const sweet = looksSweet(r.title, ing);
+
+    // 1) lokalizacja podstawowych nazw (tylko gdy nazwa jest w EN)
+    for (const it of ing) {
+      const raw = String(it?.name || "");
+      const key = Object.keys(map).find(k => k.toLowerCase() === raw.toLowerCase());
+      if (key) it.name = map[key];
+      // płyny: jeśli "Lemon juice" (albo zmapowany odpowiednik) i unit "g" → "ml"
+      const lc = raw.toLowerCase();
+      if ((lc.includes("juice") || lc.includes("sok")) && it.unit === "g") it.unit = "ml";
+      if ((lc.includes("olive oil") || lc.includes("huile d'olive")) && it.unit === "g") it.unit = "ml";
+    }
+
+    // 2) usuń sól/pieprz dla deserów/smoothie, jeśli nie ma ich w krokach „na życzenie”
+    if (sweet) {
+      const steps = (r.instructions || []).join(" ").toLowerCase();
+      const explicit = steps.includes("sól") || steps.includes("salt") || steps.includes("pepper") || steps.includes("pieprz");
+      if (!explicit) {
+        r.ingredients = ing.filter((it:any) => {
+          const n = String(it?.name||"").toLowerCase();
+          return !(["salt","sól","pepper","pieprz"].some(w => n.includes(w)));
+        });
+      }
+    }
+
+    // 3) de-duplikacja po (name, unit)
+    const seen = new Map<string, any>();
+    for (const it of r.ingredients) {
+      const k = `${String(it.name).toLowerCase()}|${it.unit||""}`;
+      if (!seen.has(k)) seen.set(k, it);
+      else {
+        const prev = seen.get(k);
+        if (typeof prev.amount === "number" && typeof it.amount === "number") prev.amount += it.amount;
+      }
+    }
+    r.ingredients = Array.from(seen.values());
+  }
+
+  return { recipes: arr };
 }
 
 // Minimalizacja dietPlan -> day/meal/title/ingredients[name,amount,unit]
@@ -403,9 +481,10 @@ export async function generateRecipes(input: GenerateRecipesInput): Promise<{ re
   ).trim();
 
   const parsed = tryParseJsonLoose(text);
-  // — Fallback: uzupełnij/napraw 'meal' na kanoniczne klucze, nie zmieniaj 'meal_label'
+if (!parsed || typeof parsed !== "object") return { recipes: [] };
+
+// — 1) kanonizuj klucze posiłków wg pozycji w dniu
 function enforceCanonicalMealKeys(obj: any) {
-  // zbuduj tablicę wyników (obsłuż zarówno recipes: [], jak i recipes: { day: {…} })
   let arr: any[] = [];
   if (Array.isArray(obj?.recipes)) arr = obj.recipes;
   else if (obj?.recipes && typeof obj.recipes === "object") {
@@ -415,8 +494,6 @@ function enforceCanonicalMealKeys(obj: any) {
       }
     }
   }
-
-  // grupuj po dniu i nadaj klucze wg pozycji, jeśli brak lub spoza zbioru
   const byDay: Record<string, any[]> = {};
   for (const r of arr) (byDay[r.day || "Other"] ||= []).push(r);
 
@@ -424,15 +501,12 @@ function enforceCanonicalMealKeys(obj: any) {
     const list = byDay[day];
     const total = list.length || 4;
     const scheme = MEAL_KEYS_BY_COUNT[total] || MEAL_KEYS_BY_COUNT[4];
-    // sortuj wg czasu, jeśli jest
     list.sort((a,b) => String(a.time||"").localeCompare(String(b.time||"")));
     list.forEach((r, i) => {
       const m = String(r.meal || "").trim();
       if (!VALID_MEAL_KEYS.has(m)) r.meal = scheme[Math.min(i, scheme.length-1)];
     });
   }
-
-  // spłaszcz
   const out: any[] = [];
   for (const d of Object.keys(byDay)) for (const r of byDay[d]) out.push(r);
   return { recipes: out };
@@ -440,8 +514,10 @@ function enforceCanonicalMealKeys(obj: any) {
 
 const canonicalized = enforceCanonicalMealKeys(parsed);
 
-  if (!parsed || typeof parsed !== "object") return { recipes: [] };
-  // — Sanitizer: ujednolić wynik, odsiać złe wpisy —
+// — 2) zlokalizuj bazowe nazwy (Sól/Pieprz/Oliwa/… w lang)
+const localized = localizeBasics(canonicalized, lang);
+
+// — 3) sanity + normalizacja jednostek do g|ml|pcs
 const cleanUnit = (u: any) => {
   const x = String(u || "").toLowerCase();
   if (x === "g" || x.startsWith("gram")) return "g";
@@ -464,7 +540,6 @@ function sanitizeRecipes(obj: any): { recipes: any[] } {
       }
     }
   }
-  // Filtr i normalizacja
   const out = arr
     .filter(r => r && typeof r === "object")
     .map(r => {
@@ -485,15 +560,17 @@ function sanitizeRecipes(obj: any): { recipes: any[] } {
         .map((s:string)=> s.trim().slice(0, 200))
         : [];
       const nutrientSummary = (r.nutrientSummary && typeof r.nutrientSummary === "object") ? r.nutrientSummary : undefined;
-      return { day, meal, title, time, ingredients, instructions, nutrientSummary };
+      const meal_label = typeof r.meal_label === "string" ? r.meal_label : undefined; // ← zachowaj label z agenta
+      return { day, meal, meal_label, title, time, ingredients, instructions, nutrientSummary };
     })
     .filter(r => r.day && r.meal && r.title && r.ingredients.length && r.instructions.length);
   return { recipes: out };
 }
 
-const sanitized = sanitizeRecipes(parsed);
+const sanitized = sanitizeRecipes(localized);
 if (!sanitized.recipes.length) return { recipes: [] };
 return sanitized;
+
 }
 
 // (opcjonalnie) eksport mapy kuchni
