@@ -231,27 +231,90 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // 4) Zbieramy wyniki wszystkich dni
     const allPerDay = await Promise.all(perDayJobs);
     const recipes: NormalizedRecipe[] = ([] as NormalizedRecipe[]).concat(...allPerDay);
-    // 4.1) Sanitizery nazw i auto-dopiski przypraw (jeśli są w krokach, a brak na liście)
-    function fixName(s: string) {
-      const x = s.toLowerCase().trim();
-      if (x.includes("olejek rzepak")) return "Olej rzepakowy";
-      if (x.includes("olej z oliw"))   return "Oliwa z oliwek";
-      return s;
-    }
-    function ensureSpiceInList(r: NormalizedRecipe, name: string, amount: number, unit: Unit) {
-      const has = r.ingredients.some(i => i.name.toLowerCase().includes(name.toLowerCase()));
-      if (!has) r.ingredients.push({ name, amount, unit });
-    }
-    for (const r of recipes) {
-      r.ingredients = r.ingredients.map(i => ({ ...i, name: fixName(i.name) }));
-      const stepsText = (r.instructions || []).join(" ").toLowerCase();
-      if (/pieprz/.test(stepsText) && !r.ingredients.some(i => /pieprz/i.test(i.name))) {
-        ensureSpiceInList(r, "Pieprz", 1, "g");
-      }
-      if (/s[óo]l/.test(stepsText) && !r.ingredients.some(i => /s[óo]l/i.test(i.name))) {
-        ensureSpiceInList(r, "Sól", 1, "g");
-      }
-    }
+    // 4.1) Sanitizery nazw/jednostek i auto-dopiski przypraw (gdy są w krokach lub wcale)
+// — standaryzacja nazw + korekty jednostek
+function fixNameAndUnits(i: NormalizedIngredient, recipeTitle: string): NormalizedIngredient {
+  let name = String(i.name || "").trim();
+  let amount = i.amount;
+  let unit: Unit = i.unit;
+
+  const lc = name.toLowerCase();
+
+  // oleje/oliwy
+  if (lc.includes("olejek rzepak")) name = "Olej rzepakowy";
+  if (lc === "olej") name = "Olej rzepakowy";
+  if (lc.includes("olej z oliw") || lc.includes("oliwa z oliw")) name = "Oliwa z oliwek";
+
+  // cytryna w ml → sok
+  if (lc === "cytryna" && unit === "ml") name = "Sok z cytryny";
+
+  // cottage cheese → serek wiejski (PL)
+  if (lc === "cottage cheese") name = "Serek wiejski";
+
+  // bazylia: forma i jednostka
+  if (lc.startsWith("bazyli")) name = "Bazylia świeża";
+
+  // zioła w "szt" → "g"
+  const HERBS = ["bazylia","pietruszka","koper","koperek","kolendra","szczypiorek","mięta","tymianek","rozmaryn","oregano","majeranek","koperek"];
+  if (unit === "szt" && HERBS.some(h => lc.includes(h))) {
+    unit = "g";
+    // ilość zostaje (np. 5 szt → 5 g)
+  }
+
+  // jajka: 150 "szt" to oczywisty błąd → traktuj jako gramy
+  if (lc.startsWith("jaj") && unit === "szt" && (amount ?? 0) > 12) {
+    unit = "g"; // zostaw tę samą liczbę jako gramy
+  }
+
+  return { name, amount, unit };
+}
+
+function ensureSpiceInList(r: NormalizedRecipe, name: string, amount: number, unit: Unit) {
+  const has = r.ingredients.some(i => i.name.toLowerCase().includes(name.toLowerCase()));
+  if (!has) r.ingredients.push({ name, amount, unit });
+}
+
+const SEASONING_WORDS = ["sól","pieprz","czosnek","papry","kumin","kurkum","bazylia","oregano","tymianek","rozmaryn","imbir","majeranek","kolendra","koperek"];
+const FAT_WORDS = ["oliwa","olej","masło","ghee"];
+
+for (const r of recipes) {
+  // 1) standaryzacja nazw/jednostek
+  r.ingredients = r.ingredients.map(i => fixNameAndUnits(i, r.title));
+
+  // 2) auto-uzupełnienie soli/pieprzu na podstawie kroków
+  const stepsText = (r.instructions || []).join(" ").toLowerCase();
+  if (/pieprz/.test(stepsText) && !r.ingredients.some(i => /pieprz/i.test(i.name))) {
+    ensureSpiceInList(r, "Pieprz", 1, "g");
+  }
+  if (/s[óo]l/.test(stepsText) && !r.ingredients.some(i => /s[óo]l/i.test(i.name))) {
+    ensureSpiceInList(r, "Sól", 1, "g");
+  }
+
+  // 3) jeżeli brak *jakichkolwiek* przypraw/ziół → dodaj minimalny zestaw
+  const hasSeasoning = r.ingredients.some(i => {
+    const n = i.name.toLowerCase();
+    return SEASONING_WORDS.some(w => n.includes(w));
+  });
+  if (!hasSeasoning) {
+    ensureSpiceInList(r, "Sól", 1, "g");
+    ensureSpiceInList(r, "Pieprz", 1, "g");
+  }
+
+  // 4) limit sodu: zmniejsz Sól do 1 g dla sałatek, 2 g dla dań ciepłych
+  const isSalad = /sałatk/i.test(r.title);
+  const salt = r.ingredients.find(i => /s[óo]l/i.test(i.name));
+  if (salt && typeof salt.amount === "number") {
+    const max = isSalad ? 1 : 2;
+    if (salt.amount > max) salt.amount = max;
+  }
+
+  // 5) smażenie bez tłuszczu → oliwa domyślnie
+  const hasFat = r.ingredients.some(i => FAT_WORDS.some(w => i.name.toLowerCase().includes(w)));
+  const frying = /(smaż|podsmaż|patelni)/i.test(stepsText);
+  if (frying && !hasFat) {
+    ensureSpiceInList(r, "Oliwa z oliwek", 10, "ml");
+  }
+}
 
     // 4.2) Porządek dni tygodnia (startWeek: 'monday' | 'sunday')
     const startWeek = (req.body?.startWeek === 'sunday') ? 'sunday' : 'monday'; // domyślnie poniedziałek
