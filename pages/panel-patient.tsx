@@ -72,6 +72,34 @@ async function generateDietStreaming(
     }
   }
 }
+// Etykiety posiłków w 11 językach
+const MEAL_LABELS: Record<LangKey, Record<string,string>> = {
+  pl:{breakfast:'Śniadanie',second_breakfast:'Drugie śniadanie',lunch:'Obiad',afternoon_snack:'Podwieczorek',dinner:'Kolacja',snack:'Przekąska'},
+  en:{breakfast:'Breakfast',second_breakfast:'Second breakfast',lunch:'Lunch',afternoon_snack:'Afternoon snack',dinner:'Dinner',snack:'Snack'},
+  de:{breakfast:'Frühstück',second_breakfast:'Zweites Frühstück',lunch:'Mittagessen',afternoon_snack:'Nachmittagsimbiss',dinner:'Abendessen',snack:'Snack'},
+  fr:{breakfast:'Petit-déjeuner',second_breakfast:'Deuxième petit-déj.',lunch:'Déjeuner',afternoon_snack:'Collation',dinner:'Dîner',snack:'Snack'},
+  es:{breakfast:'Desayuno',second_breakfast:'Segundo desayuno',lunch:'Comida',afternoon_snack:'Merienda',dinner:'Cena',snack:'Snack'},
+  ua:{breakfast:'Сніданок',second_breakfast:'Другий сніданок',lunch:'Обід',afternoon_snack:'Перекуска',dinner:'Вечеря',snack:'Снек'},
+  ru:{breakfast:'Завтрак',second_breakfast:'Второй завтрак',lunch:'Обед',afternoon_snack:'Полдник',dinner:'Ужин',snack:'Перекус'},
+  zh:{breakfast:'早餐',second_breakfast:'加餐(早)',lunch:'午餐',afternoon_snack:'下午加餐',dinner:'晚餐',snack:'小吃'},
+  hi:{breakfast:'नाश्ता',second_breakfast:'दूसरा नाश्ता',lunch:'दोपहर का भोजन',afternoon_snack:'शाम का नाश्ता',dinner:'रात का खाना',snack:'स्नैक'},
+  ar:{breakfast:'فطور',second_breakfast:'فطور ثانٍ',lunch:'غداء',afternoon_snack:'وجبة خفيفة',dinner:'عشاء',snack:'سناك'},
+  he:{breakfast:'ארוחת בוקר',second_breakfast:'בוקר שני',lunch:'ארוחת צהריים',afternoon_snack:'נשנוש אחה״צ',dinner:'ארוחת ערב',snack:'חטיף'}
+};
+const mealLabel = (key:string, lang:LangKey) =>
+  (MEAL_LABELS[lang] && MEAL_LABELS[lang][key]) || key;
+
+// Bezpieczny fallback, gdy w tUI brakuje klucza i zwraca sam klucz
+const stepsLabelText = (lang:LangKey) => {
+  const v = tUI('stepsLabel', lang);
+  if (v === 'stepsLabel') { // brak tłumaczenia
+    if (lang === 'ar') return 'الخطوات';
+    if (lang === 'pl') return 'Kroki';
+    return 'Steps';
+  }
+  return v;
+};
+
 
 function mapIndexToDayName(idx: string | number, lang: string): string {
   const days: Record<string, string[]> = {
@@ -826,7 +854,7 @@ const handleGenerateRecipes = async () => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       dietPlan: editableDiet,
-      lang    // ← DODANE: język platformy
+      lang    
     })
   });
 
@@ -1349,40 +1377,54 @@ const handleShowDoctors = async () => {
    </div>
     )}
 
-{/* 📖 Wyświetlenie przepisów */}
-{selectedSection === 'diet' && recipes && Object.keys(recipes).length > 0 && (
-  <div
-    className="mt-6 space-y-6"
-    dir={['ar','he'].includes(lang) ? 'rtl' : undefined}
-  >
-    {Object.entries(recipes).map(([day, meals]: any) => (
-      <div key={day} className="bg-white dark:bg-slate-800 rounded-xl p-3 sm:p-4 shadow">
-        <h3 className="text-lg font-bold mb-2">
-          {translateDayNameIfKnown(day, lang)}
-        </h3>
-        {Object.entries(meals).map(([mealName, recipe]: any) => (
-          <div key={mealName} className="mb-4">
-            <h4 className="font-semibold">{mealName}: {recipe.dish}</h4>
-            <p className="italic text-sm text-gray-600 dark:text-gray-400 mb-1">{recipe.description}</p>
-            <ul className="list-disc pl-5 text-sm">
-              {recipe.ingredients?.map((ing: any, i: number) => (
-                <li key={i}>{ing.product} – {ing.weight} {ing.unit}</li>
+      {/* 📖 Wyświetlenie przepisów */}
+      {selectedSection === 'diet' && recipes && Object.keys(recipes).length > 0 && (
+        <div
+          className="mt-6 space-y-6"
+          dir={['ar','he'].includes(lang) ? 'rtl' : undefined}
+        >
+          {Object.entries(recipes).map(([day, meals]: any) => (
+            <div key={day} className="bg-white dark:bg-slate-800 rounded-xl p-3 sm:p-4 shadow">
+              <h3 className="text-lg font-bold mb-2">
+                {translateDayNameIfKnown(day, lang)}
+              </h3>
+              {Object.entries(meals).map(([mealName, recipe]: any) => (
+              <div key={mealName} className="mb-4">
+        <h4 className="font-semibold">
+          {(recipe.meal_label && String(recipe.meal_label).trim()) || mealLabel(mealName, lang)}: {recipe.dish}
+        </h4>
+
+        {recipe.description && (
+          <p className="italic text-sm text-gray-600 dark:text-gray-400 mb-1">
+            {recipe.description}
+          </p>
+        )}
+
+        <ul className={`list-disc ${['ar','he'].includes(lang) ? 'pr-5' : 'pl-5'} text-sm`}>
+          {recipe.ingredients?.map((ing: any, i: number) => (
+            <li key={i}>
+              {ing.product}
+              {ing.weight != null && <> – {ing.weight}{ing.unit ? ` ${ing.unit}` : ''}</>}
+            </li>
+          ))}
+        </ul>
+
+        {recipe.steps && (
+          <div className="mt-2 text-sm">
+            <strong>{stepsLabelText(lang)}:</strong>
+            <ol className={`list-decimal ${['ar','he'].includes(lang) ? 'mr-4' : 'ml-4'}`}>
+              {recipe.steps.map((step: string, i: number) => (
+                <li key={i}>{step}</li>
               ))}
-            </ul>
-            {recipe.steps && (
-              <div className="mt-2 text-sm">
-                <strong>{tUI('stepsLabel', lang) || (lang === 'pl' ? 'Kroki' : 'Steps')}:</strong>
-                <ol className="list-decimal ml-4">
-                  {recipe.steps.map((step: string, i: number) => (
-                    <li key={i}>{step}</li>
-                  ))}
-                </ol>
-              </div>
-            )}
-            {recipe.time && (
-              <p className="mt-1 text-sm text-gray-500">⏱️ {recipe.time}</p>
-            )}
+            </ol>
           </div>
+        )}
+
+        {recipe.time && (
+          <p className="mt-1 text-sm text-gray-500">⏱️ {recipe.time}</p>
+        )}
+      </div>
+
         ))}
       </div>
     ))}
