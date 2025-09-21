@@ -197,18 +197,21 @@ STRICT JSON MODE:
 
 INPUT (single JSON string):
 {
-  "lang": "pl" | "en" | "...",
+  "lang": "pl" | "en" | "de" | "fr" | "es" | "ua" | "ru" | "zh" | "hi" | "ar" | "he",
   "dietPlan": { /* day -> meals minimal spec */ },
   "nutrientFocus": ["iron","vitaminD",...],
   "cuisine": "…",
   "cuisineNote": "…"
 }
 
+LANGUAGE DISCIPLINE (CRITICAL):
+- Write ALL text (titles, ingredient names, instructions, meal_label) in input.lang — even if dietPlan text is in another language.
+- Translate ingredient names to input.lang. Do NOT mix languages. Never output "Salt"/"Pepper" if input.lang is not English.
+- Reuse day keys exactly as provided; do not rename or translate the day key itself.
+
 CRITICAL RULES:
-- Reuse input day labels; do NOT rename day keys.
-- For EACH recipe, set meal to one of: ["breakfast","second_breakfast","lunch","afternoon_snack","dinner","snack"] (canonical keys), and provide meal_label in input.lang.
-- All ingredient names MUST be in input.lang. Do NOT mix languages.
-- Units allowed: "g", "ml", "pcs". Use ml for liquids, g for herbs/spices, pcs for discrete items. Do NOT output localized unit codes (no "szt", "ud", "шт").
+- For EACH recipe set "meal" to one of: ["breakfast","second_breakfast","lunch","afternoon_snack","dinner","snack"] and provide human "meal_label" in input.lang.
+- Units allowed: "g", "ml", "pcs". Use ml for liquids, g for herbs/spices, pcs for discrete items. Do NOT localize unit codes.
 - Healthy, realistic methods; concise, numbered steps when helpful.
 - Do NOT add salt/pepper to desserts, yogurts, sweet snacks, or smoothies unless explicitly requested.
 - Salt budget: ≤ 2 g for savory; salads ≤ 1 g.
@@ -220,20 +223,21 @@ OUTPUT SHAPE:
 {
   "recipes": [
     {
-      "day": "<day from input>",
+      "day": "<day from input (unchanged)>",
       "meal": "breakfast|second_breakfast|lunch|afternoon_snack|dinner|snack",
       "meal_label": "<label of 'meal' in input.lang>",
       "title": "<dish title in input.lang>",
       "time": "HH:MM" | "<short time>",
       "ingredients": [
-        { "name": "<string>", "amount": <number>, "unit": "g" | "ml" | "pcs" }
+        { "name": "<string in input.lang>", "amount": <number>, "unit": "g" | "ml" | "pcs" }
       ],
-      "instructions": ["step 1", "step 2", "..."],
+      "instructions": ["step 1 (input.lang)", "step 2 (input.lang)", "..."],
       "nutrientSummary": { /* optional micronutrients */ }
     }
   ]
 }
 `.trim();
+
 
 /** —————————————————————————————————————————————
  *  DWA AGENTY: quality (gpt-4o) i fast (gpt-4o-mini)
@@ -285,6 +289,35 @@ const LOCALIZE_BASICS: Record<string, Record<string, string>> = {
   ar: { "Salt":"ملح","Pepper":"فلفل","Olive oil":"زيت الزيتون","Lemon juice":"عصير الليمون","Cottage cheese":"جبن قريش" },
   he: { "Salt":"מלח","Pepper":"פלפל","Olive oil":"שמן זית","Lemon juice":"מיץ לימון","Cottage cheese":"קוטג׳" }
 };
+// — Normalizacja nazw składników: wiele języków -> EN kanoniczny
+const MULTI_TO_EN: Record<string, string> = {
+  // — PL → EN
+  "sól":"Salt","pieprz":"Pepper","oliwa z oliwek":"Olive oil","sok z cytryny":"Lemon juice",
+  "jogurt":"Yogurt","jogurt naturalny":"Yogurt","serek wiejski":"Cottage cheese",
+  "banan":"Banana","jagody":"Blueberries","płatki owsiane":"Oats","owies":"Oats",
+  "łosoś":"Salmon","kurczak":"Chicken","wołowina":"Beef","indyk":"Turkey",
+  "cukinia":"Zucchini","brokuły":"Broccoli","soczewica":"Lentils","szpinak":"Spinach",
+  "ryż brązowy":"Brown rice","hummus":"Hummus","marchew":"Carrot","migdały":"Almonds",
+  "chleb pełnoziarnisty":"Wholegrain bread","twaróg":"Cottage cheese",
+
+  // — AR → EN (najczęstsze leksemy z Twoich danych)
+  "ملح":"Salt","فلفل":"Pepper","زيت زيتون":"Olive oil","عصير الليمون":"Lemon juice",
+  "زبادي":"Yogurt","زبادي طبيعي":"Yogurt","موز":"Banana","توت بري":"Blueberries",
+  "شوفان":"Oats","سمك السلمون":"Salmon","دجاج":"Chicken","لحم بقري":"Beef","ديك رومي":"Turkey",
+  "كوسة":"Zucchini","بروكلي":"Broccoli","عدس":"Lentils","سبانخ":"Spinach",
+  "أرز بني":"Brown rice","حمص":"Hummus","جزر":"Carrot","لوز":"Almonds",
+  "خبز كامل الحبة":"Wholegrain bread","جبن قريش":"Cottage cheese"
+};
+
+// — kanonizacja do EN (pojedyncza nazwa)
+function canonToEN(name: string): string {
+  const raw = String(name || "").trim();
+  if (!raw) return raw;
+  const lc = raw.toLowerCase();
+  if (MULTI_TO_EN[lc]) return MULTI_TO_EN[lc];
+  // Jeżeli już EN (np. "Olive oil", "Salt") — zostaw
+  return raw;
+}
 
 const SWEET_TOKENS = [
   "smoothie","shake","koktajl","milkshake","dessert","deser","jogurt","yogurt","pudding","budyń",
@@ -316,18 +349,23 @@ function localizeBasics(recipesObj: any, lang: string) {
     const ing = Array.isArray(r.ingredients) ? r.ingredients : [];
     const sweet = looksSweet(r.title, ing);
 
-    // 1) lokalizacja podstawowych nazw (tylko gdy nazwa jest w EN)
-    for (const it of ing) {
-      const raw = String(it?.name || "");
-      const key = Object.keys(map).find(k => k.toLowerCase() === raw.toLowerCase());
-      if (key) it.name = map[key];
-      // płyny: jeśli "Lemon juice" (albo zmapowany odpowiednik) i unit "g" → "ml"
-      const lc = raw.toLowerCase();
-      if ((lc.includes("juice") || lc.includes("sok")) && it.unit === "g") it.unit = "ml";
-      if ((lc.includes("olive oil") || lc.includes("huile d'olive")) && it.unit === "g") it.unit = "ml";
-    }
+    // 1) normalizacja nazw -> EN kanoniczny, potem EN -> lang
+for (const it of ing) {
+  const raw = String(it?.name || "");
+  const canonicalEN = canonToEN(raw); // NEW: multi-lang -> EN
 
-    // 2) usuń sól/pieprz dla deserów/smoothie, jeśli nie ma ich w krokach „na życzenie”
+  // Mapa EN -> target lang
+  const key = Object.keys(map).find(k => k.toLowerCase() === String(canonicalEN).toLowerCase());
+  if (key) it.name = map[key];
+  else it.name = (lang === "en") ? canonicalEN : raw; // jeśli nie znamy tłumaczenia: en=EN, inni zostają w oryginale
+
+  // płyny: juice/oil => ml
+  const lc = canonicalEN.toLowerCase();
+  if ((lc.includes("juice")) && it.unit === "g") it.unit = "ml";
+  if ((lc.includes("olive oil")) && it.unit === "g") it.unit = "ml";
+}
+
+  // 2) usuń sól/pieprz dla deserów/smoothie, jeśli nie ma ich w krokach „na życzenie”
     if (sweet) {
       const steps = (r.instructions || []).join(" ").toLowerCase();
       const explicit = steps.includes("sól") || steps.includes("salt") || steps.includes("pepper") || steps.includes("pieprz");

@@ -189,48 +189,52 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 2, delayMs = 500) {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
 
-  const { dietPlan, lang, modelHint } = req.body || {};
-  if (!dietPlan) return res.status(400).send("Brakuje dietPlan w danych wejściowych.");
+const { dietPlan, lang, modelHint, cuisine, nutrientFocus } = req.body || {};
+if (!dietPlan) return res.status(400).send("Brakuje dietPlan w danych wejściowych.");
 
-  try {
-    // 1) Kompresja i grupowanie po dniach
-    const days: MinimalDay[] = compressDietPlan(dietPlan);
-    if (!days.length) return res.status(400).send("dietPlan nie zawiera posiłków.");
+const allowed = new Set(['pl','en','de','fr','es','ua','ru','zh','hi','ar','he']);
+const platformLang = (typeof lang === 'string' && allowed.has(lang)) ? lang : 'pl';
+const model = (modelHint === 'fast' || modelHint === 'quality') ? modelHint : 'fast';
 
-    // 2) Ograniczona współbieżność (3 równoległe zapytania sprawdzają się najlepiej na Vercel/Pro)
-    const limit = pLimit(3);
+try {
+  // 1) Kompresja i grupowanie po dniach
+  const days: MinimalDay[] = compressDietPlan(dietPlan);
+  if (!days.length) return res.status(400).send("dietPlan nie zawiera posiłków.");
 
-    // 3) Zlecenia per-dzień (małe prompt’y)
-    const perDayJobs = days.map((d) => limit(async () => {
-      const payload = {
-        // wysyłamy JEDEN dzień – minimalny
-        dietPlan: { [d.day]: Object.fromEntries(d.meals.map(m => [m.meal || m.title || 'posiłek', {
-          title: m.title,
-          ingredients: m.ingredients
-        }])) },
-        lang: lang || 'pl',
-        // delikatna podpowiedź dla agenta — jeśli obsłużysz w recipeAgent
-        modelHint: modelHint || 'fast'
-      };
+  // 2) Ograniczona współbieżność
+  const limit = pLimit(3);
 
-      // retry + timeout per dzień
-      const dayResult = await withRetry(
-        () => withTimeout(generateRecipes(payload), 25_000, `recipes:${d.day}`),
-        2, 600
-      );
+  // 3) Zlecenia per-dzień
+  const perDayJobs = days.map((d) => limit(async () => {
+    const payload = {
+      dietPlan: {
+        [d.day]: Object.fromEntries(
+          d.meals.map(m => [
+            m.meal || m.title || 'posiłek',
+            { title: m.title, ingredients: m.ingredients }
+          ])
+        )
+      },
+      lang: platformLang,
+      cuisine,                
+      nutrientFocus,          
+      modelHint: model
+    };
 
-      // Znormalizuj wynik dnia do postaci tablicowej
-      let raw: any[] = [];
-      if (Array.isArray(dayResult?.recipes)) raw = dayResult.recipes;
-      else if (dayResult?.recipes && typeof dayResult.recipes === "object") {
-        for (const [meal, body] of Object.entries(dayResult.recipes as Record<string, any>)) {
-          raw.push({ day: d.day, meal, ...(body as any) });
-        }
+    const dayResult = await withRetry(
+      () => withTimeout(generateRecipes(payload), 25_000, `recipes:${d.day}`),
+      2, 600
+    );
+
+    let raw: any[] = [];
+    if (Array.isArray(dayResult?.recipes)) raw = dayResult.recipes;
+    else if (dayResult?.recipes && typeof dayResult.recipes === "object") {
+      for (const [meal, body] of Object.entries(dayResult.recipes as Record<string, any>)) {
+        raw.push({ day: d.day, meal, ...(body as any) });
       }
-
-      // Zwróć już znormalizowane wpisy
-      return raw.map(normalizeRecipe);
-    }));
+    }
+    return raw.map(normalizeRecipe);
+  }));
 
     // 4) Zbieramy wyniki wszystkich dni
     const allPerDay = await Promise.all(perDayJobs);
