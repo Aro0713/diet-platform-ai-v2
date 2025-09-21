@@ -306,6 +306,25 @@ const hasToken = (text: string, list: string[]) => {
   const lc = String(text || "").toLowerCase();
   return list.some(tok => lc.includes(tok));
 };
+// Minimalna lokalizacja podstawowych dodatków (wystarczy na nasze auto-dopiski)
+const BASIC_MAP: Record<string, Record<string, string>> = {
+  pl: { "Salt":"Sól","Pepper":"Pieprz","Olive oil":"Oliwa z oliwek" },
+  en: { "Salt":"Salt","Pepper":"Pepper","Olive oil":"Olive oil" },
+  de: { "Salt":"Salz","Pepper":"Pfeffer","Olive oil":"Olivenöl" },
+  fr: { "Salt":"Sel","Pepper":"Poivre","Olive oil":"Huile d'olive" },
+  es: { "Salt":"Sal","Pepper":"Pimienta","Olive oil":"Aceite de oliva" },
+  ua: { "Salt":"Сіль","Pepper":"Перець","Olive oil":"Оливкова олія" },
+  ru: { "Salt":"Соль","Pepper":"Перец","Olive oil":"Оливковое масло" },
+  zh: { "Salt":"盐","Pepper":"胡椒","Olive oil":"橄榄油" },
+  hi: { "Salt":"नमक","Pepper":"काली मिर्च","Olive oil":"जैतून का तेल" },
+  ar: { "Salt":"ملح","Pepper":"فلفل","Olive oil":"زيت الزيتون" },
+  he: { "Salt":"מלח","Pepper":"פלפל","Olive oil":"שמן זית" }
+};
+
+function basicName(name: "Salt"|"Pepper"|"Olive oil", lang: string): string {
+  const m = BASIC_MAP[lang] || BASIC_MAP.en;
+  return m[name] || name;
+}
 
 // — standaryzacja jednostek i drobne sensowne korekty; NIE tłumaczymy nazw
 function fixNameAndUnits(i: NormalizedIngredient, _recipeTitle: string): NormalizedIngredient {
@@ -348,8 +367,8 @@ for (const r of recipes) {
   const looksSweet = hasToken(r.title, ["smoothie","shake","koktajl","batido","奶昔","jogurt","yogurt","dessert","deser","postre","pudding","budyń"]);
   const hasSeasoning = r.ingredients.some(i => hasToken(i.name, TOKENS.seasoning));
   if (!looksSweet && !hasSeasoning) {
-    ensureSpiceInList(r, "Salt", 1, "g");
-    ensureSpiceInList(r, "Pepper", 1, "g");
+    ensureSpiceInList(r, basicName("Pepper", platformLang), 1, "g");
+    ensureSpiceInList(r, basicName("Salt",   platformLang), 1, "g");
   }
 
   // 4) sól — limit: 1 g dla sałatek/deserów, 2 g dla dań ciepłych
@@ -385,7 +404,9 @@ for (const r of recipes) {
     const recipesByDay: Record<string, Record<string, RecipeForUI>> = {};
     for (const r of recipes) {
       const dayKey = r.day || "Inne";
-      const mealKey = r.meal || r.title || "posiłek";
+      const mealKey =
+      (typeof (r as any).meal_label === "string" && (r as any).meal_label.trim()) ||
+      r.meal || r.title || "posiłek";
       const uiRecipe: RecipeForUI = {
         dish: r.title,
         description: (r as any).description ?? undefined,
