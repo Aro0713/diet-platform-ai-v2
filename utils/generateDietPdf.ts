@@ -9,8 +9,6 @@ import { getTranslation } from '@/utils/translations/useTranslationAgent';
 import { convertInterviewAnswers } from '@/utils/interviewHelpers';
 import { supabase } from '@/lib/supabaseClient';
 import { translatedTitles } from '@/utils/translatedTitles';
-import { PDFDocument } from 'pdf-lib';
-import fontkit from '@pdf-lib/fontkit';
 
 // ====== PDF FONTS / RTL / EMOJI (pdfmake) ======
 const RTL_LANGS = new Set<LangKey>(['ar','he']);
@@ -46,24 +44,39 @@ async function ensurePdfMakeFonts(pdfMake: any, lang: LangKey): Promise<string> 
   const cfg = FONT_FILES[lang] ?? FONT_FILES.default;
   if (!pdfMake.vfs) pdfMake.vfs = {};
 
-  // doładuj tylko brakujące pliki
-  for (const file of cfg.files.concat(FONT_FILES.default.files)) {
+  // 1) Załaduj do vfs potrzebne pliki (default + językowe)
+  const toLoad = new Set<string>([...FONT_FILES.default.files, ...cfg.files,
+    // spróbujmy też opcjonalnych Bold (jeśli istnieją w /public/fonts/)
+    'NotoNaskhArabic-Bold.ttf','NotoSansHebrew-Bold.ttf','NotoSansSC-Bold.otf','NotoSansDevanagari-Bold.ttf'
+  ]);
+  for (const file of toLoad) {
+    if (!file) continue;
     if (!pdfMake.vfs[file]) {
-      try { pdfMake.vfs[file] = await fetchFontBase64(file); } catch {}
+      try { pdfMake.vfs[file] = await fetchFontBase64(file); } catch { /* pliku może nie być – OK */ }
     }
   }
 
-  // rejestracja rodzin
+  const has = (f?: string) => !!(f && pdfMake.vfs[f]);
+
+  // helper: rejestruj rodzinę; gdy brak bold/italics → fallback do normal
+  const reg = (normal: string, boldMaybe?: string) => ({
+    normal,
+    bold: has(boldMaybe) ? (boldMaybe as string) : normal,
+    italics: normal,
+    bolditalics: has(boldMaybe) ? (boldMaybe as string) : normal
+  });
+
+  // 2) Rejestracja rodzin
   pdfMake.fonts = {
     ...(pdfMake.fonts || {}),
-    NotoSans: { normal: 'NotoSans-Regular.ttf', bold: 'NotoSans-Bold.ttf' },
-    NotoNaskhArabic: { normal: 'NotoNaskhArabic-Regular.ttf' },
-    NotoSansHebrew: { normal: 'NotoSansHebrew-Regular.ttf' },
-    NotoSansSC: { normal: 'NotoSansSC-Regular.otf' },
-    NotoSansDevanagari: { normal: 'NotoSansDevanagari-Regular.ttf' }
+    NotoSans: reg('NotoSans-Regular.ttf', 'NotoSans-Bold.ttf'),
+    NotoNaskhArabic: reg('NotoNaskhArabic-Regular.ttf', 'NotoNaskhArabic-Bold.ttf'), // 👈 bold->normal fallback
+    NotoSansHebrew: reg('NotoSansHebrew-Regular.ttf', 'NotoSansHebrew-Bold.ttf'),
+    NotoSansSC: reg('NotoSansSC-Regular.otf', 'NotoSansSC-Bold.otf'),
+    NotoSansDevanagari: reg('NotoSansDevanagari-Regular.ttf', 'NotoSansDevanagari-Bold.ttf')
   };
 
-  return cfg.family;
+  return cfg.family; // nazwa do defaultStyle.font
 }
 
 /** Rekurencyjne czyszczenie emoji w docDefinition */
