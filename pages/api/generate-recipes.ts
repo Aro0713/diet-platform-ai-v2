@@ -306,6 +306,25 @@ const hasToken = (text: string, list: string[]) => {
   const lc = String(text || "").toLowerCase();
   return list.some(tok => lc.includes(tok));
 };
+// — bogatsze wskazówki dla dań słodkich (wielojęzyczne, także AR)
+const SWEET_HINTS = [
+  // EN/PL/ES/… (słodkie, jogurty, owoce, desery)
+  "smoothie","milkshake","shake",
+  "dessert","deser","postre","pudding","budyń",
+  "yogurt","jogurt","granola",
+  "fruit","owoc","fruta","fruits",
+  "berries","jagod","blueberries","strawberry","strawberries","banana","banan",
+  "honey","miód","jam","dżem",
+  // AR
+  "زبادي","يوغرت","حلو","حلويات","حلوى",
+  "عصير","سموذي","فاكهة","فواكه",
+  "موز","فراولة","توت","تمر","عسل"
+];
+
+const isSweetRecipe = (r: NormalizedRecipe) =>
+  hasToken(r.title, SWEET_HINTS) ||
+  (r.ingredients || []).some(i => hasToken(i.name, SWEET_HINTS));
+
 // Minimalna lokalizacja podstawowych dodatków (wystarczy na nasze auto-dopiski)
 const BASIC_MAP: Record<string, Record<string, string>> = {
   pl: { "Salt":"Sól","Pepper":"Pieprz","Olive oil":"Oliwa z oliwek" },
@@ -357,28 +376,39 @@ for (const r of recipes) {
   const mentionsSalt   = hasToken(stepsText, ["salt","sal","sel","salz","соль","ملح","מלח","盐","sól"]);
 
   if (mentionsPepper && !r.ingredients.some(i => hasToken(i.name, ["pepper","poivre","pfeffer","pimienta","перец","פלפל","胡椒","pieprz"]))) {
-    ensureSpiceInList(r, "Pepper", 1, "g"); // nazwa neutralna — UI ją przetłumaczy jeśli chcesz
+    ensureSpiceInList(r, basicName("Pepper", platformLang), 1, "g");
   }
   if (mentionsSalt && !r.ingredients.some(i => hasToken(i.name, ["salt","sal","sel","salz","соль","מלח","盐","sól"]))) {
-    ensureSpiceInList(r, "Salt", 1, "g");
-  }
-
-  // 3) brak jakichkolwiek przypraw → dodaj minimalny zestaw do dań wytrawnych (heurystyka: nie dodaj do smoothie/deserów)
-  const looksSweet = hasToken(r.title, ["smoothie","shake","koktajl","batido","奶昔","jogurt","yogurt","dessert","deser","postre","pudding","budyń"]);
-  const hasSeasoning = r.ingredients.some(i => hasToken(i.name, TOKENS.seasoning));
-  if (!looksSweet && !hasSeasoning) {
-    ensureSpiceInList(r, basicName("Pepper", platformLang), 1, "g");
     ensureSpiceInList(r, basicName("Salt",   platformLang), 1, "g");
   }
 
-  // 4) sól — limit: 1 g dla sałatek/deserów, 2 g dla dań ciepłych
-  const isSalad = hasToken(r.title, ["salad","salade","ensalada","salat","sałat","سلطة","סלט","沙拉"]);
-  const salt = r.ingredients.find(i => hasToken(i.name, ["salt","sal","sel","salz","соль","ملح","מלח","盐","sól"]));
-  if (salt && typeof salt.amount === "number") {
-    const max = (looksSweet || isSalad) ? 1 : 2;
-    if (salt.amount > max) salt.amount = max;
-  }
+  // 3) brak jakichkolwiek przypraw → dodaj minimalny zestaw do dań wytrawnych (heurystyka: nie dodaj do smoothie/deserów)
+  // 3) brak przypraw → dodaj tylko dla dań wytrawnych (robust sweet detection)
+const sweet = isSweetRecipe(r);
+const hasSeasoning = r.ingredients.some(i => hasToken(i.name, TOKENS.seasoning));
+if (!sweet && !hasSeasoning) {
+  ensureSpiceInList(r, basicName("Pepper", platformLang), 1, "g");
+  ensureSpiceInList(r, basicName("Salt",   platformLang), 1, "g");
+}
 
+// jeśli to danie słodkie, usuń sól/pieprz jeśli zdążyły się wślizgnąć
+if (sweet) {
+  r.ingredients = r.ingredients.filter(i =>
+    !hasToken(i.name, [
+      "salt","sal","sel","salz","соль","ملح","מלח","盐","sól",
+      "pepper","poivre","pfeffer","pimienta","перец","فلفل","פלפל","胡椒","pieprz"
+    ])
+  );
+}
+
+  // 4) sól — limit: 1 g dla sałatek/deserów, 2 g dla dań ciepłych
+ const isSalad = hasToken(r.title, ["salad","salade","ensalada","salat","sałat","سلطة","סלט","沙拉"]);
+const salt = r.ingredients.find(i => hasToken(i.name, ["salt","sal","sel","salz","соль","ملح","מלח","盐","sól"]));
+if (salt && typeof salt.amount === "number") {
+  const max = (sweet || isSalad) ? 1 : 2;
+  if (salt.amount > max) salt.amount = max;
+}
+  
   // 5) smażenie bez tłuszczu → dodaj neutralnie „Olive oil 10 ml”
   const hasFat = r.ingredients.some(i => hasToken(i.name, TOKENS.fats));
   const frying = /(smaż|podsmaż|patelni|fry|sauté|poêler|sofreír|braten)/i.test(stepsText);

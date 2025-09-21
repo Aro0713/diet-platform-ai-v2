@@ -9,6 +9,79 @@ import { getTranslation } from '@/utils/translations/useTranslationAgent';
 import { convertInterviewAnswers } from '@/utils/interviewHelpers';
 import { supabase } from '@/lib/supabaseClient';
 import { translatedTitles } from '@/utils/translatedTitles';
+import { PDFDocument } from 'pdf-lib';
+import fontkit from '@pdf-lib/fontkit';
+
+// ====== PDF FONTS / RTL / EMOJI (pdfmake) ======
+const RTL_LANGS = new Set<LangKey>(['ar','he']);
+
+const EMOJI_REGEX = /\p{Extended_Pictographic}/gu;
+const stripEmoji = (s: any) => {
+  try { return String(s ?? '').replace(EMOJI_REGEX, ''); } catch { return String(s ?? ''); }
+};
+
+const FONT_FILES: Record<string, { family: string; files: string[] }> = {
+  // default: łacina + cyrylica
+  default: { family: 'NotoSans', files: ['NotoSans-Regular.ttf','NotoSans-Bold.ttf'] },
+  ar:      { family: 'NotoNaskhArabic', files: ['NotoNaskhArabic-Regular.ttf'] },
+  he:      { family: 'NotoSansHebrew',  files: ['NotoSansHebrew-Regular.ttf'] },
+  zh:      { family: 'NotoSansSC',      files: ['NotoSansSC-Regular.otf'] },
+  hi:      { family: 'NotoSansDevanagari', files: ['NotoSansDevanagari-Regular.ttf'] }
+};
+
+async function fetchFontBase64(file: string): Promise<string> {
+  const res = await fetch(`/fonts/${file}`); // pliki w public/fonts/
+  if (!res.ok) throw new Error(`Font fetch failed: ${file}`);
+  const buf = await res.arrayBuffer();
+  // ArrayBuffer -> base64
+  let binary = '';
+  const bytes = new Uint8Array(buf);
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  // @ts-ignore
+  return (typeof btoa !== 'undefined' ? btoa(binary) : Buffer.from(binary, 'binary').toString('base64'));
+}
+
+/** Załaduj Noto do pdfMake.vfs i zarejestruj family; zwraca nazwę rodziny do użycia w defaultStyle.font */
+async function ensurePdfMakeFonts(pdfMake: any, lang: LangKey): Promise<string> {
+  const cfg = FONT_FILES[lang] ?? FONT_FILES.default;
+  if (!pdfMake.vfs) pdfMake.vfs = {};
+
+  // doładuj tylko brakujące pliki
+  for (const file of cfg.files.concat(FONT_FILES.default.files)) {
+    if (!pdfMake.vfs[file]) {
+      try { pdfMake.vfs[file] = await fetchFontBase64(file); } catch {}
+    }
+  }
+
+  // rejestracja rodzin
+  pdfMake.fonts = {
+    ...(pdfMake.fonts || {}),
+    NotoSans: { normal: 'NotoSans-Regular.ttf', bold: 'NotoSans-Bold.ttf' },
+    NotoNaskhArabic: { normal: 'NotoNaskhArabic-Regular.ttf' },
+    NotoSansHebrew: { normal: 'NotoSansHebrew-Regular.ttf' },
+    NotoSansSC: { normal: 'NotoSansSC-Regular.otf' },
+    NotoSansDevanagari: { normal: 'NotoSansDevanagari-Regular.ttf' }
+  };
+
+  return cfg.family;
+}
+
+/** Rekurencyjne czyszczenie emoji w docDefinition */
+function sanitizePdfContent(node: any): any {
+  if (Array.isArray(node)) return node.map(sanitizePdfContent);
+  if (node && typeof node === 'object') {
+    const out: any = { ...node };
+    if (typeof out.text === 'string') out.text = stripEmoji(out.text);
+    if (Array.isArray(out.text)) out.text = out.text.map((t: any) => typeof t === 'string' ? stripEmoji(t) : sanitizePdfContent(t));
+    if (Array.isArray(out.ul)) out.ul = out.ul.map((t: any) => typeof t === 'string' ? stripEmoji(t) : sanitizePdfContent(t));
+    if (Array.isArray(out.ol)) out.ol = out.ol.map((t: any) => typeof t === 'string' ? stripEmoji(t) : sanitizePdfContent(t));
+    if (Array.isArray(out.columns)) out.columns = out.columns.map(sanitizePdfContent);
+    if (Array.isArray(out.stack)) out.stack = out.stack.map(sanitizePdfContent);
+    if (out.table?.body) out.table.body = out.table.body.map((row: any[]) => row.map(sanitizePdfContent));
+    return out;
+  }
+  return typeof node === 'string' ? stripEmoji(node) : node;
+}
 
 // ---------- Normalizatory i metryki PDF ----------
 type PdfMetrics = {
@@ -165,8 +238,8 @@ export async function generateDietPdf(
     console.error('❌ Błąd Supabase podczas pobierania danych dietetyka:', err);
   }
 
-  const pdfFonts = (await import('pdfmake/build/vfs_fonts')).default;
-  pdfMake.vfs = pdfFonts.vfs;
+  const selectedFontFamily = await ensurePdfMakeFonts(pdfMake, lang);
+const isRtl = RTL_LANGS.has(lang);
 let finalNarrative = narrativeText;
 
 if (!finalNarrative) {
@@ -645,39 +718,33 @@ function buildNutritionTable(
   content.push({ text: tUI('allergenLegend', lang) + ' ⚠️', italics: true, fontSize: 10, margin: [0, 4, 0, 20] });
 
   // 🔄 Tryb wyjścia
-  const pdfMakeInstance = pdfMake.createPdf({
-    content,
-    styles: {
-      header: { fontSize: 18, bold: true, color: '#1d6f5e', margin: [0, 0, 0, 10] },
-      subheader: { fontSize: 14, bold: true, color: '#1d6f5e' },
-      tableHeader: { bold: true, fillColor: '#d2f4e9', color: '#0b4b3c', alignment: 'center' },
-      footer: { fontSize: 14, color: '#1d6f5e', alignment: 'center', margin: [0, 10, 0, 0] },
-      boldCell: { bold: true },
-      smallCell: { fontSize: 9 },
-      warning: {
-        fontSize: 10,
-        italics: true,
-        color: 'red'
-      }
-    },
-    defaultStyle: {
-      fontSize: 11,
-      alignment: 'justify',
-      lineHeight: 1.4
-    },
-    background: function () {
-      return {
-        canvas: [{ type: 'rect', x: 0, y: 0, w: 595.28, h: 841.89, color: '#e7f2fc' }]
-      };
-    },
-
-    footer: function (currentPage: number, pageCount: number) {
-      return {
-        text: `© Diet Care Platform — ${dietitianSignature || tUI('missingData', lang)} | Strona ${currentPage} z ${pageCount}`,
-        style: 'footer'
-      };
-    }
-  });
+const pdfMakeInstance = pdfMake.createPdf({
+  content: sanitizePdfContent(content), // 👈 usuń emoji w całym drzewie
+  styles: {
+    header: { fontSize: 18, bold: true, color: '#1d6f5e', margin: [0, 0, 0, 10] },
+    subheader: { fontSize: 14, bold: true, color: '#1d6f5e' },
+    tableHeader: { bold: true, fillColor: '#d2f4e9', color: '#0b4b3c', alignment: isRtl ? 'right' : 'center' },
+    footer: { fontSize: 14, color: '#1d6f5e', alignment: 'center', margin: [0, 10, 0, 0] },
+    boldCell: { bold: true },
+    smallCell: { fontSize: 9 },
+    warning: { fontSize: 10, italics: true, color: 'red' }
+  },
+  defaultStyle: {
+    font: selectedFontFamily,            // 👈 tu wskazujemy rodzinę Noto
+    fontSize: 11,
+    alignment: isRtl ? 'right' : 'justify', // 👈 RTL wyrównanie
+    lineHeight: 1.4
+  },
+  background: function () {
+    return { canvas: [{ type: 'rect', x: 0, y: 0, w: 595.28, h: 841.89, color: '#e7f2fc' }] };
+  },
+  footer: function (currentPage: number, pageCount: number) {
+    return {
+      text: `© Diet Care Platform — ${dietitianSignature || tUI('missingData', lang)} | ${tUI('page', lang)} ${currentPage} / ${pageCount}`,
+      style: 'footer'
+    };
+  }
+});
 
   if (mode === 'returnDoc') return pdfMakeInstance;
   pdfMakeInstance.download(`dieta_${safeName}_${formattedDate}.pdf`);
