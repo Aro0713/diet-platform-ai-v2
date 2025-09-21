@@ -87,9 +87,30 @@ function mapIndexToDayName(idx: string | number, lang: string): string {
     hi: ["सोमवार","मंगलवार","बुधवार","गुरुवार","शुक्रवार","शनिवार","रविवार"],
     he: ["יום שני","יום שלישי","יום רביעי","יום חמישי","יום שישי","שבת","יום ראשון"]
   };
-  const arr = days[lang] || days.pl;
+    const arr = days[lang] || days.pl;
   const n = typeof idx === "string" ? parseInt(idx, 10) : idx;
   return Number.isFinite(n) && arr[n] ? arr[n] : String(idx);
+}
+function translateDayNameIfKnown(day: string, targetLang: string): string {
+  const days: Record<string, string[]> = {
+    pl: ["Poniedziałek","Wtorek","Środa","Czwartek","Piątek","Sobota","Niedziela"],
+    en: ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
+    de: ["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"],
+    fr: ["Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi","Dimanche"],
+    es: ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"],
+    ua: ["Понеділок","Вівторок","Середа","Четвер","П’ятниця","Субота","Неділя"],
+    ru: ["Понедельник","Вторник","Среда","Четверг","Пятница","Суббота","Воскресенье"],
+    zh: ["星期一","星期二","星期三","星期四","星期五","星期六","星期日"],
+    ar: ["الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت","الأحد"],
+    hi: ["सोमवार","मंगलवार","बुधवार","गुरुवार","शुक्रवार","शनिवार","रविवार"],
+    he: ["יום שני","יום שלישי","יום רביעי","יום חמישי","יום שישי","שבת","יום ראשון"]
+  };
+  const langs = Object.keys(days);
+  for (const src of langs) {
+    const idx = days[src].indexOf(day);
+    if (idx !== -1) return (days[targetLang] || days.pl)[idx] || day;
+  }
+  return day;
 }
 
 function parseQuantityToNumber(q: any): { weight: number|null, unit?: string } {
@@ -800,11 +821,14 @@ const handleGenerateRecipes = async () => {
     setProgress(10);
     setProgressMessage(tUI('generatingRecipes', lang));
 
-    const res = await fetch('/api/generate-recipes', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ dietPlan: editableDiet })
-    });
+   const res = await fetch('/api/generate-recipes', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      dietPlan: editableDiet,
+      lang    // ← DODANE: język platformy
+    })
+  });
 
     setProgress(60);
     setProgressMessage(tUI('processingRecipes', lang));
@@ -1327,10 +1351,15 @@ const handleShowDoctors = async () => {
 
 {/* 📖 Wyświetlenie przepisów */}
 {selectedSection === 'diet' && recipes && Object.keys(recipes).length > 0 && (
-  <div className="mt-6 space-y-6">
+  <div
+    className="mt-6 space-y-6"
+    dir={['ar','he'].includes(lang) ? 'rtl' : undefined}
+  >
     {Object.entries(recipes).map(([day, meals]: any) => (
       <div key={day} className="bg-white dark:bg-slate-800 rounded-xl p-3 sm:p-4 shadow">
-        <h3 className="text-lg font-bold mb-2">{day}</h3>
+        <h3 className="text-lg font-bold mb-2">
+          {translateDayNameIfKnown(day, lang)}
+        </h3>
         {Object.entries(meals).map(([mealName, recipe]: any) => (
           <div key={mealName} className="mb-4">
             <h4 className="font-semibold">{mealName}: {recipe.dish}</h4>
@@ -1342,7 +1371,7 @@ const handleShowDoctors = async () => {
             </ul>
             {recipe.steps && (
               <div className="mt-2 text-sm">
-                <strong>Kroki:</strong>
+                <strong>{tUI('stepsLabel', lang) || (lang === 'pl' ? 'Kroki' : 'Steps')}:</strong>
                 <ol className="list-decimal ml-4">
                   {recipe.steps.map((step: string, i: number) => (
                     <li key={i}>{step}</li>
