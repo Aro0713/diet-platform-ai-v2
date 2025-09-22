@@ -1754,6 +1754,32 @@ ingredients: {
   ar: "مكونات",
   he: "מרכיבים"
 },
+stepsLabel: {
+  pl: 'Kroki',
+  en: 'Steps',
+  de: 'Schritte',
+  fr: 'Étapes',
+  es: 'Pasos',
+  ua: 'Кроки',
+  ru: 'Шаги',
+  zh: '步骤',
+  hi: 'कदम',
+  ar: 'الخطوات',
+  he: 'שלבים'
+},
+steps: {
+  pl: 'Kroki',
+  en: 'Steps',
+  de: 'Schritte',
+  fr: 'Étapes',
+  es: 'Pasos',
+  ua: 'Кроки',
+  ru: 'Шаги',
+  zh: '步骤',
+  hi: 'कदम',
+  ar: 'الخطوات',
+  he: 'שלבים'
+},
 qrNotice: {
   pl: 'Zeskanuj kod QR, aby odwiedzić Diet Care Platform i pobrać nową dietę',
   en: 'Scan the QR code to visit Diet Care Platform and download your new diet',
@@ -3279,19 +3305,6 @@ recipesTitle: {
   hi: "खाना पकाने की विधियाँ",
   he: "מתכונים"
 },
-steps: {
-  pl: "Kroki",
-  en: "Steps",
-  de: "Schritte",
-  fr: "Étapes",
-  es: "Pasos",
-  ua: "Кроки",
-  ru: "Шаги",
-  zh: "步骤",
-  ar: "الخطوات",
-  hi: "कदम",
-  he: "שלבים"
-},
 servings: {
   pl: "Porcje",
   en: "Servings",
@@ -3344,6 +3357,23 @@ przekąska: {
   hi: "नाश्ता",
   he: "חטיף"
 },
+
+second_breakfast: {
+  pl: 'Drugie śniadanie', en: 'Second breakfast', de: 'Zweites Frühstück', fr: 'Deuxième petit-déj.',
+  es: 'Segundo desayuno', ua: 'Другий сніданок', ru: 'Второй завтрак', zh: '加餐(早)',
+  hi: 'दूसरा नाश्ता', ar: 'فطور ثانٍ', he: 'בוקר שני'
+},
+
+afternoon_snack: {
+  pl: 'Podwieczorek', en: 'Afternoon snack', de: 'Nachmittagsimbiss', fr: 'Collation', es: 'Merienda',
+  ua: 'Перекуска', ru: 'Полдник', zh: '下午加餐', hi: 'शाम का नाश्ता', ar: 'وجبة خفيفة', he: 'נשנוש אחה״צ'
+},
+
+page: {
+  pl: 'Strona', en: 'Page', de: 'Seite', fr: 'Page', es: 'Página',
+  ua: 'Сторінка', ru: 'Страница', zh: '页', hi: 'पृष्ठ', ar: 'صفحة', he: 'עמוד'
+},
+
 errorSavingDiet: {
   pl: "Błąd zapisu diety",
   en: "Error saving diet",
