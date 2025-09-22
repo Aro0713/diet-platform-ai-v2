@@ -96,6 +96,20 @@ function sanitizePdfContent(node: any): any {
   return typeof node === 'string' ? stripEmoji(node) : node;
 }
 
+// —— Force platform language for arbitrary strings (uses your translation agent)
+const FORCE_PLATFORM_LANGUAGE = true;
+
+async function toPlatformText(input: any, lang: LangKey): Promise<string> {
+  const s = stripEmoji(String(input ?? '').trim());
+  if (!s) return '';
+  if (!FORCE_PLATFORM_LANGUAGE) return s;
+  try {
+    return await getTranslation(s, lang);
+  } catch {
+    return s;
+  }
+}
+
 // ---------- Normalizatory i metryki PDF ----------
 type PdfMetrics = {
   bmi: number | null;
@@ -282,23 +296,63 @@ if (!finalNarrative) {
   const sorted = [...safeDiet].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
   const startDate = sorted[0]?.date || new Date().toISOString().slice(0, 10);
   const endDate = sorted[sorted.length - 1]?.date || new Date().toISOString().slice(0, 10);
+  // — platformowe formatowanie dat i pól z DB
+const fmt = new Intl.DateTimeFormat(lang, { year: 'numeric', month: '2-digit', day: '2-digit' });
+const dateRange = `${fmt.format(new Date(startDate))} - ${fmt.format(new Date(endDate))}`;
+
+const namePlatform    = await toPlatformText(patient.name || tUI('missingData', lang), lang);
+const regionPlatform  = patient.region
+  ? await toPlatformText(patient.region, lang)
+  : tUI('missingData', lang);
+
+const conditionsPlatform = Array.isArray(patient.conditions) && patient.conditions.length
+  ? (await Promise.all(patient.conditions.map((c: string) => toPlatformText(c, lang)))).join(', ')
+  : tUI('none', lang);
+
+const allergiesPlatform = patient.allergies
+  ? await toPlatformText(patient.allergies, lang)
+  : tUI('none', lang);
 
   // ✅ Strona tytułowa
-  content.push(
-  { text: `${tUI('fullName', lang)}: ${patient.name}`, style: 'header', alignment: 'center', fontSize: 22, margin: [0, 30, 0, 4] },
-  { text: `${tUI('assignedDoctor', lang)}: ${dietitianSignature || tUI('missingData', lang)}`, alignment: 'center', fontSize: 12, margin: [0, 0, 0, 6] },
-  { text: `${startDate} – ${endDate}`, alignment: 'center', fontSize: 14, margin: [0, 0, 0, 20] },
-  { text: `${tUI('dietitianSignature', lang)}: ${dietitianSignature}`, alignment: 'center', fontSize: 12 },
+ content.push(
   {
-  text: tUI('tagline', lang),
-  alignment: 'center',
-  italics: true,
-  fontSize: 22,
-  color: '#1f2a3c', // Ciemnogranatowy jak na screenie
-  margin: [0, 20, 0, 0]
-},
+    text: [
+      { text: `${tUI('fullName', lang)}: ` },
+      { text: namePlatform }
+    ],
+    style: 'header',
+    alignment: 'center',
+    fontSize: 22,
+    margin: [0, 30, 0, 4]
+  },
+  {
+    text: `${tUI('assignedDoctor', lang)}: ${dietitianSignature || tUI('missingData', lang)}`,
+    alignment: 'center',
+    fontSize: 12,
+    margin: [0, 0, 0, 6]
+  },
+  {
+    text: dateRange,
+    alignment: 'center',
+    fontSize: 14,
+    margin: [0, 0, 0, 20]
+  },
+  {
+    text: `${tUI('dietitianSignature', lang)}: ${dietitianSignature || tUI('missingData', lang)}`,
+    alignment: 'center',
+    fontSize: 12
+  },
+  {
+    text: stripEmoji(tUI('tagline', lang)),
+    alignment: 'center',
+    italics: true,
+    fontSize: 22,
+    color: '#1f2a3c',
+    margin: [0, 20, 0, 0]
+  },
   { text: '', pageBreak: 'after' }
 );
+
 
 if (patient.model === 'Dieta eliminacyjna') {
   content.push({
@@ -311,7 +365,7 @@ if (patient.model === 'Dieta eliminacyjna') {
 }
   // ✅ Dane pacjenta
   content.push({ text: `📋 ${tUI('dietPlanTitle', lang)}`, style: 'header' });
-  content.push({ text: `${tUI('date', lang)}: ${new Date().toLocaleString()}`, margin: [0, 0, 0, 10] });
+  content.push({ text: `${tUI('date', lang)}: ${fmt.format(new Date())}`, margin: [0, 0, 0, 10] });
   content.push({
     text: `${tUI('patientData', lang)}:
 ${tUI('age', lang)}: ${patient.age ?? tUI('missingData', lang)} | ${tUI('sex', lang)}: ${tUI(patient.sex, lang)} | ${tUI('weight', lang)}: ${patient.weight ?? '?'} kg | ${tUI('height', lang)}: ${patient.height ?? '?'} cm | BMI: ${bmi ?? 'n/a'}`,
@@ -319,9 +373,10 @@ ${tUI('age', lang)}: ${patient.age ?? tUI('missingData', lang)} | ${tUI('sex', l
   });
 
   content.push({
-    text: `${tUI('conditions', lang)}: ${patient.conditions?.join(', ') || tUI('none', lang)}
-${tUI('allergies', lang)}: ${patient.allergies || tUI('none', lang)}
-${tUI('region', lang)}: ${patient.region ? await getTranslation(patient.region, lang) : tUI('missingData', lang)}`,
+    text:
+  `${tUI('conditions', lang)}: ${conditionsPlatform}
+  ${tUI('allergies', lang)}: ${allergiesPlatform}
+  ${tUI('region', lang)}: ${regionPlatform}`,
     margin: [0, 0, 0, 10]
   });
 
@@ -361,7 +416,8 @@ ensureMealsArray(safeDiet).forEach((meal, idx) => {
 });
 
   for (const [day, meals] of Object.entries(groupedByDay)) {
-    content.push({ text: `🗓️ ${day}`, style: 'subheader', margin: [0, 10, 0, 4] });
+    const dayPlatform = await toPlatformText(day, lang);
+    content.push({ text: dayPlatform, style: 'subheader', margin: [0, 10, 0, 4] });
 
     const dayTableBody = [
       [
@@ -576,10 +632,10 @@ if (recipes && Object.keys(recipes).length > 0) {
     if (!meals || Object.keys(meals).length === 0) continue;
 
     content.push({
-      text: day,
-      style: 'subheader',
-      margin: [0, 10, 0, 6]
-    });
+  text: await toPlatformText(day, lang),
+  style: 'subheader',
+  margin: [0, 10, 0, 6]
+});
 
     for (const [mealName, recipe] of Object.entries(meals)) {
       if (!recipe || !recipe.dish) continue;
