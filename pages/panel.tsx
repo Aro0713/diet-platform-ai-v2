@@ -317,25 +317,26 @@ const loadLatestDietFromSupabase = async (userId: string) => {
   let metaCuisine = data?.cuisine ?? null;
   let metaMeals = data?.meals_per_day ?? null;
 
-  // Fallback: jeśli kolumn meta nie ma w patient_diets – spróbuj z `patients.interview_data`
-  if (!metaGoal && !metaModel && !metaCuisine && !metaMeals) {
-    const { data: pData, error: pErr } = await supabase
-      .from('patients')
-      .select('interview_data')
-      .eq('user_id', userId)
-      .maybeSingle();
+// Fallback per-field: dociągnij brakujące z `patients.interview_data`
+if (!metaGoal || !metaModel || !metaCuisine || typeof metaMeals !== 'number') {
+  const { data: pData } = await supabase
+    .from('patients')
+    .select('interview_data')
+    .eq('user_id', userId)
+    .maybeSingle();
 
-    if (!pErr && pData?.interview_data) {
-      const i = typeof pData.interview_data === 'string'
-        ? tryParseJSON(pData.interview_data)
-        : pData.interview_data;
+  const I = typeof pData?.interview_data === 'string'
+    ? tryParseJSON(pData.interview_data)
+    : (pData?.interview_data || {});
 
-      metaGoal = i?.goal ?? null;
-      metaModel = i?.model ?? null;
-      metaCuisine = i?.cuisine ?? null;
-      metaMeals = i?.mealsPerDay ?? null;
-    }
-  }
+  metaGoal    = metaGoal    ?? I?.goal ?? null;
+  metaModel   = metaModel   ?? I?.model ?? null;
+  metaCuisine = metaCuisine ?? I?.cuisine ?? null;
+  metaMeals   = typeof metaMeals === 'number'
+    ? metaMeals
+    : (typeof I?.mealsPerDay === 'number' ? I.mealsPerDay : null);
+}
+
 
   // Zapisz do interviewData (nie mutuj w miejscu)
   setInterviewData((prev: any) => ({
