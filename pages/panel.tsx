@@ -240,14 +240,37 @@ const {
 } = usePatientSubmitData(form);
 
 // ⬇ pobierz najnowszą dietę pacjenta z `patient_diets`
+// ⬇ pobierz najnowszą dietę pacjenta z `patient_diets`
 const loadLatestDietFromSupabase = async (userId: string) => {
-  const { data, error } = await supabase
+  // 1) Najpierw spróbuj z metadanymi (jeśli masz kolumny w patient_diets)
+  let data: any = null;
+  let error: any = null;
+
+  // podejście "spróbuj pełny SELECT, a jak się wywróci na nieistniejących kolumnach – fallback"
+  const fullSelect =
+    'diet_plan, status, created_at, goal, model, cuisine, meals_per_day';
+
+  ({ data, error } = await supabase
     .from('patient_diets')
-    .select('diet_plan, status, created_at') // ✅ tylko istniejące kolumny
+    .select(fullSelect)
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(1)
-    .maybeSingle();
+    .maybeSingle());
+
+  if (error) {
+    // najpewniej brak kolumn meta – zrób ponowny SELECT tylko z istniejących
+    console.warn('ℹ️ patient_diets meta select failed, retrying base select:', error.message);
+    const retry = await supabase
+      .from('patient_diets')
+      .select('diet_plan, status, created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    data = retry.data;
+    error = retry.error;
+  }
 
   if (error) {
     console.warn('⚠️ Błąd pobierania diety pacjenta:', error.message);
@@ -260,7 +283,7 @@ const loadLatestDietFromSupabase = async (userId: string) => {
     return;
   }
 
-  // diet_plan bywa JSONB lub string → znormalizuj
+  // 2) Znormalizuj diet_plan (string/JSONB)
   const raw =
     typeof rawJson === 'string'
       ? (tryParseJSON(rawJson) ?? {})
@@ -272,21 +295,59 @@ const loadLatestDietFromSupabase = async (userId: string) => {
     return;
   }
 
-  // Zasil panel
+  // 3) Zasil panel dietą
   setMealPlan(loaded);
   setDiet(loaded);
   setEditableDiet(loaded);
 
-  // Spłaszcz do PDF
+  // spłaszcz do PDF
   const flat: Meal[] = [];
   for (const [day, meals] of Object.entries(loaded)) {
-    const list = Array.isArray(meals) ? meals : Object.values(meals ?? {}) as Meal[];
+    const list = Array.isArray(meals) ? meals : (Object.values(meals ?? {}) as Meal[]);
     for (const m of list) flat.push({ ...m, day });
   }
   setConfirmedDiet(flat);
 
-  // Ustaw status zatwierdzenia wg rekordu
+  // 4) Status zatwierdzenia
   setDietApproved(data?.status === 'confirmed');
+
+  // 5) Uzupełnij meta do chipsów: goal/model/cuisine/mealsPerDay
+  let metaGoal = data?.goal ?? null;
+  let metaModel = data?.model ?? null;
+  let metaCuisine = data?.cuisine ?? null;
+  let metaMeals = data?.meals_per_day ?? null;
+
+  // Fallback: jeśli kolumn meta nie ma w patient_diets – spróbuj z `patients.interview_data`
+  if (!metaGoal && !metaModel && !metaCuisine && !metaMeals) {
+    const { data: pData, error: pErr } = await supabase
+      .from('patients')
+      .select('interview_data')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (!pErr && pData?.interview_data) {
+      const i = typeof pData.interview_data === 'string'
+        ? tryParseJSON(pData.interview_data)
+        : pData.interview_data;
+
+      metaGoal = i?.goal ?? null;
+      metaModel = i?.model ?? null;
+      metaCuisine = i?.cuisine ?? null;
+      metaMeals = i?.mealsPerDay ?? null;
+    }
+  }
+
+  // Zapisz do interviewData (nie mutuj w miejscu)
+  setInterviewData((prev: any) => ({
+    ...prev,
+    goal: metaGoal ?? prev?.goal ?? null,
+    model: metaModel ?? prev?.model ?? null,
+    cuisine: metaCuisine ?? prev?.cuisine ?? null,
+    mealsPerDay:
+      (typeof metaMeals === 'number' ? metaMeals : null) ??
+      prev?.mealsPerDay ??
+      null,
+  }));
 };
 
   useEffect(() => {
@@ -437,7 +498,8 @@ useEffect(() => {
     };
 
     if (!interviewData.mealsPerDay) {
-      interviewData.mealsPerDay = getRecommendedMealsPerDay(form, interviewData);
+      const suggested = getRecommendedMealsPerDay(form, interviewData);
+      setInterviewData((prev:any) => ({ ...prev, mealsPerDay: suggested }));
     }
 
     const recommendation = interviewData.recommendation?.trim();
@@ -1290,7 +1352,8 @@ return (
     }
 
     setConfirmedDiet(out);
-    setDietApproved(true);
+    setDietApproved(false);
+
   }}
   isEditable={!dietApproved}
   lang={lang}
