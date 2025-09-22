@@ -244,14 +244,22 @@ export async function generateDietPdf(
   const pdfMake = (await import('pdfmake/build/pdfmake')).default;
   let dietitianSignature = tUI('missingData', lang);
 
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data, error } = await supabase
-        .from('users')
-        .select('name, title, role')
-        .eq('user_id', user.id)
-        .single();
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data, error } = await supabase
+      .from('users')
+      .select('name, title, role')
+      .eq('user_id', user.id)
+      .limit(1)
+      .maybeSingle();
+    
+      if (error) {
+      console.warn('⚠️ Błąd pobierania danych dietetyka:', error.message);
+    }
+    if (!data) {
+      console.warn('⚠️ Brak jednoznacznego rekordu w users dla user_id:', user.id);
+    }
 
       if (data) {
         const title = data.title && translatedTitles[data.title as 'dr' | 'drhab' | 'prof']?.[lang];
