@@ -81,108 +81,240 @@ export default function Home() {
       </main>
     );
   }
+// ────────────────────────────────────────────────────────────────────────────
+// PRICING — market-aware (PL → PLN, EU → EUR, OTHER → USD)
+// ────────────────────────────────────────────────────────────────────────────
+
+// 1) Cennik per rynek (stałe biznesowe – bez FX)
+const MARKET_PRICING = {
+  PL: {
+    currency: 'PLN',
+    patient: { plan7: 129, plan30: 249, plan90: 599, plan365: 1299 },
+    pro:     { plan30: 390, plan365: 3800 },
+  },
+  EU: {
+    currency: 'EUR',
+    patient: { plan7: 39,  plan30: 79,  plan90: 179, plan365: 349 },
+    pro:     { plan30: 99,  plan365: 899 },
+  },
+  OTHER: {
+    currency: 'USD',
+    patient: { plan7: 39,  plan30: 79,  plan90: 179, plan365: 349 },
+    pro:     { plan30: 99,  plan365: 899 },
+  },
+} as const;
+
+type Market = keyof typeof MARKET_PRICING;
+
+// 2) UE (bez PL – PL ma własny cennik)
+const EU_COUNTRIES = new Set([
+  'AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT',
+  'LV','LT','LU','MT','NL','PT','RO','SK','SI','ES','SE'
+]);
+
+// 3) Stan rynku
+const [market, setMarket] = useState<Market>('PL');
+
+// 4) Detekcja kraju (ipapi.co – używasz już tego API powyżej do języka)
+useEffect(() => {
+  let mounted = true;
+  (async () => {
+    try {
+      const res = await fetch('https://ipapi.co/json/');
+      const data = await res.json();
+      const cc = String(data?.country_code || '').toUpperCase();
+      if (cc === 'PL') {
+        if (mounted) setMarket('PL');
+      } else if (EU_COUNTRIES.has(cc)) {
+        if (mounted) setMarket('EU');
+      } else {
+        if (mounted) setMarket('OTHER');
+      }
+    } catch {
+      // Fallback: PL
+      if (mounted) setMarket('PL');
+    }
+  })();
+  return () => { mounted = false; };
+}, []);
+
+// 5) Formatowanie ceny
+function formatPrice(value: number, currency: string) {
+  return new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(value);
+}
+
+// 6) Pomocnicze aliasy
+const P = MARKET_PRICING[market];
+const cur = P.currency;
+const pp = P.patient;
+const pr = P.pro;
+
+// 7) Sformatowane ceny
+const pricePatient7   = formatPrice(pp.plan7, cur);
+const pricePatient30  = formatPrice(pp.plan30, cur);
+const pricePatient90  = formatPrice(pp.plan90, cur);
+const pricePatient365 = formatPrice(pp.plan365, cur);
+
+const pricePro30  = formatPrice(pr.plan30, cur);
+const pricePro365 = formatPrice(pr.plan365, cur);
 
   // ────────────────────────────────────────────────────────────────────────────
-  // PRICING DATA — Pacjenci: 7/30/90   ·  PRO: 90/365
-  // ────────────────────────────────────────────────────────────────────────────
-  const patientPlans = [
-    {
-      title: tUI('pricing.plan7.title'),
-      price: '129 PLN',
-      popular: false,
-      bullets: [
-        tUI('pricing.plan7.b1'),
-        tUI('pricing.plan7.b2'),
-        tUI('pricing.plan7.b3'),
-        tUI('pricing.plan7.b4'),
-      ],
-    },
-    {
-      title: tUI('pricing.plan30.title'),
-      price: '249 PLN',
-      popular: true,
-      bullets: [
-        tUI('pricing.plan30.b1'),
-        tUI('pricing.plan30.b2'),
-        tUI('pricing.plan30.b3'),
-        tUI('pricing.plan30.b4'),
-      ],
-    },
-    {
-      title: tUI('pricing.plan90.title'),
-      price: '599 PLN',
-      popular: false,
-      bullets: [
-        tUI('pricing.plan90.b1'),
-        tUI('pricing.plan90.b2'),
-        tUI('pricing.plan90.b3'),
-        tUI('pricing.plan90.b4'),
-      ],
-    },
-  ];
+// PRICING DATA — Pacjenci: 7/30/90/365   ·  PRO: 30/365
+// ────────────────────────────────────────────────────────────────────────────
 
-  const proPlans = [
-    {
-      title: tUI('pricing.pro90.title'), // NOWY klucz
-      price: '390 PLN',
-      bullets: [
-        tUI('pricing.pro90.b1'),
-        tUI('pricing.pro90.b2'),
-        tUI('pricing.pro90.b3'),
-        tUI('pricing.pro90.b4'),
-      ],
-    },
-    {
-      title: tUI('pricing.pro365.title'),
-      price: '3800 PLN',
-      bullets: [
-        tUI('pricing.pro365.b1'),
-        tUI('pricing.pro365.b2'),
-        tUI('pricing.pro365.b3'),
-        tUI('pricing.pro365.b4'),
-      ],
-    },
-  ];
+// ────────────────────────────────────────────────────────────────────────────
+// PRICING DATA — Pacjenci: 7/30/90/365   ·  PRO: 30/365  (market-aware)
+// ────────────────────────────────────────────────────────────────────────────
+const patientPlans = [
+  {
+    title: tUI('pricing.plan7.title'),
+    price: pricePatient7,
+    popular: false,
+    bullets: [
+      tUI('pricing.plan7.b1'),
+      tUI('pricing.plan7.b2'),
+      tUI('pricing.plan7.b3'),
+      tUI('pricing.plan7.b4'),
+      tUI('pricing.plan7.b5'),
+      tUI('pricing.plan7.b6'),
+      tUI('pricing.plan7.b7'),
+      tUI('pricing.plan7.b8'),
+      tUI('pricing.plan7.b9'),
+      tUI('pricing.plan7.b10'),
+    ],
+  },
+  {
+    title: tUI('pricing.plan30.title'),
+    price: pricePatient30,
+    popular: true,
+    bullets: [
+      tUI('pricing.plan30.b1'),
+      tUI('pricing.plan30.b2'),
+      tUI('pricing.plan30.b3'),
+      tUI('pricing.plan30.b4'),
+      tUI('pricing.plan30.b5'),
+      tUI('pricing.plan30.b6'),
+      tUI('pricing.plan30.b7'),
+      tUI('pricing.plan30.b8'),
+      tUI('pricing.plan30.b9'),
+      tUI('pricing.plan30.b10'),
+    ],
+  },
+  {
+    title: tUI('pricing.plan90.title'),
+    price: pricePatient90,
+    popular: false,
+    bullets: [
+      tUI('pricing.plan90.b1'),
+      tUI('pricing.plan90.b2'),
+      tUI('pricing.plan90.b3'),
+      tUI('pricing.plan90.b4'),
+      tUI('pricing.plan90.b5'),
+      tUI('pricing.plan90.b6'),
+      tUI('pricing.plan90.b7'),
+      tUI('pricing.plan90.b8'),
+      tUI('pricing.plan90.b9'),
+      tUI('pricing.plan90.b10'),
+    ],
+  },
+  {
+    title: tUI('pricing.plan365.title'),
+    price: pricePatient365,
+    popular: false,
+    bullets: [
+      tUI('pricing.plan365.b1'),
+      tUI('pricing.plan365.b2'),
+      tUI('pricing.plan365.b3'),
+      tUI('pricing.plan365.b4'),
+      tUI('pricing.plan365.b5'),
+      tUI('pricing.plan365.b6'),
+      tUI('pricing.plan365.b7'),
+      tUI('pricing.plan365.b8'),
+      tUI('pricing.plan365.b9'),
+      tUI('pricing.plan365.b10'),
+    ],
+  },
+];
 
-  const steps = [
-    {
-      title: tUI('steps.registration.title'),
-      desc: tUI('steps.registration.desc'),
-      icon: '/icons/registration.svg',
-      alt: tUI('steps.registration.alt'),
-    },
-    {
-      title: tUI('steps.medical.title'),
-      desc: tUI('steps.medical.desc'),
-      icon: '/icons/medical.svg',
-      alt: tUI('steps.medical.alt'),
-    },
-    {
-      title: tUI('steps.interview.title'),
-      desc: tUI('steps.interview.desc'),
-      icon: '/icons/interview.svg',
-      alt: tUI('steps.interview.alt'),
-    },
-    {
-      title: tUI('steps.calculator.title'),
-      desc: tUI('steps.calculator.desc'),
-      icon: '/icons/calculator.svg',
-      alt: tUI('steps.calculator.alt'),
-    },
-    {
-      title: tUI('steps.plan.title'),
-      desc: tUI('steps.plan.desc'),
-      icon: '/icons/plan.svg',
-      alt: tUI('steps.plan.alt'),
-    },
-    {
-      title: tUI('steps.recipes.title'),
-      desc: tUI('steps.recipes.desc'),
-      icon: '/icons/recipes.svg',
-      alt: tUI('steps.recipes.alt'),
-    },
-    ];
-    
+const proPlans = [
+  {
+    title: tUI('pricing.pro30.title'),
+    price: pricePro30,
+    bullets: [
+      tUI('pricing.pro30.b1'),
+      tUI('pricing.pro30.b2'),
+      tUI('pricing.pro30.b3'),
+      tUI('pricing.pro30.b4'),
+      tUI('pricing.pro30.b5'),
+      tUI('pricing.pro30.b6'),
+      tUI('pricing.pro30.b7'),
+      tUI('pricing.pro30.b8'),
+      tUI('pricing.pro30.b9'),
+    ],
+  },
+  {
+    title: tUI('pricing.pro365.title'),
+    price: pricePro365,
+    bullets: [
+      tUI('pricing.pro365.b1'),
+      tUI('pricing.pro365.b2'),
+      tUI('pricing.pro365.b3'),
+      tUI('pricing.pro365.b4'),
+      tUI('pricing.pro365.b5'),
+      tUI('pricing.pro365.b6'),
+      tUI('pricing.pro365.b7'),
+      tUI('pricing.pro365.b8'),
+      tUI('pricing.pro365.b9'),
+    ],
+  },
+];
+
+
+const steps = [
+  {
+    title: tUI('steps.registration.title'),
+    desc: tUI('steps.registration.desc'),
+    icon: '/icons/registration.svg',
+    alt: tUI('steps.registration.alt'),
+    color: 'text-red-500',
+  },
+  {
+    title: tUI('steps.medical.title'),
+    desc: tUI('steps.medical.desc'),
+    icon: '/icons/medical.svg',
+    alt: tUI('steps.medical.alt'),
+    color: 'text-orange-500',
+  },
+  {
+    title: tUI('steps.interview.title'),
+    desc: tUI('steps.interview.desc'),
+    icon: '/icons/interview.svg',
+    alt: tUI('steps.interview.alt'),
+    color: 'text-yellow-500',
+  },
+  {
+    title: tUI('steps.calculator.title'),
+    desc: tUI('steps.calculator.desc'),
+    icon: '/icons/calculator.svg',
+    alt: tUI('steps.calculator.alt'),
+    color: 'text-green-500',
+  },
+  {
+    title: tUI('steps.plan.title'),
+    desc: tUI('steps.plan.desc'),
+    icon: '/icons/plan.svg',
+    alt: tUI('steps.plan.alt'),
+    color: 'text-blue-500',
+  },
+  {
+    title: tUI('steps.recipes.title'),
+    desc: tUI('steps.recipes.desc'),
+    icon: '/icons/recipes.svg',
+    alt: tUI('steps.recipes.alt'),
+    color: 'text-cyan-500',
+  },
+];
+
   return (
     <main
       className="relative min-h-screen
@@ -256,6 +388,12 @@ export default function Home() {
               className="mb-4 drop-shadow-xl"
               priority
             />
+            <p className="text-emerald-200 text-xs md:text-sm tracking-wide mb-1">
+              {tUI('landing.tagline.title')}
+            </p>
+            <p className="mt-1 max-w-xl md:max-w-2xl text-sm md:text-base leading-relaxed opacity-95">
+              {tUI('landing.tagline.desc')}
+            </p>
             <h1 className="text-3xl md:text-5xl font-bold drop-shadow-[0_6px_24px_rgba(0,0,0,0.45)]">
               {tUI('landing.slogan')}
             </h1>
@@ -287,75 +425,78 @@ export default function Home() {
               key={s.title + s.icon}
               className="rounded-2xl bg-white/15 dark:bg-black/20 backdrop-blur p-4 md:p-5 shadow-lg border border-white/10 text-center"
             >
-              <div className="mx-auto h-10 w-10 md:h-12 md:w-12 mb-2 relative">
-                <Image src={s.icon} alt={s.alt} fill className="object-contain" />
-              </div>
-              <h3 className="font-semibold">{s.title}</h3>
+              <div className="mx-auto h-10 w-10 md:h-12 md:w-12 mb-2 relative flex items-center justify-center">
+              {/* kolorowa pastylka w tle */}
+              <span className={`absolute inset-0 rounded-2xl opacity-20 ${s.color} ring-1 ring-current/30`} />
+              {/* ikona */}
+              <Image src={s.icon} alt={s.alt} width={40} height={40} className="relative z-10 object-contain" />
+            </div>
+              <h3 className={`font-semibold ${s.color}`}>{s.title}</h3>
               <p className="text-sm opacity-90 mt-1">{s.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* PRICING */}
-      <section id="pricing" className="mx-auto max-w-6xl px-5 mt-12 md:mt-16">
-        <h2 className="text-center text-2xl md:text-3xl font-bold mb-6">
-          {tUI('pricing.title')}
-        </h2>
+   {/* PRICING */}
+<section id="pricing" className="mx-auto max-w-6xl px-5 mt-12 md:mt-16">
+  <h2 className="text-center text-2xl md:text-3xl font-bold mb-6">
+    {tUI('pricing.title')}
+  </h2>
 
-        <div className="grid lg:grid-cols-2 gap-6">
-          {/* Pacjenci */}
-          <div>
-            <h3 className="text-lg font-semibold mb-3 opacity-90">
-              {tUI('pricing.patientsHeader')}
-            </h3>
-            <div className="grid sm:grid-cols-2 gap-4">
-              {patientPlans.map((p) => (
-                <div
-                  key={p.title}
-                  className="rounded-2xl bg-white/15 dark:bg-black/20 backdrop-blur p-5 border border-white/10 shadow-lg"
-                >
-                  <div className="flex items-baseline justify-between">
-                    <h4 className="font-semibold">{p.title}</h4>
-                    <span className="text-emerald-300 font-semibold">{p.price}</span>
-                  </div>
-                  {p.popular && (
-                    <div className="mt-1 text-xs inline-block px-2 py-0.5 rounded bg-emerald-500/20 border border-emerald-400/40">
-                      {tUI('pricing.popularTag')}
-                    </div>
-                  )}
-                  <ul className="mt-3 space-y-2 text-sm opacity-95">
-                    {p.bullets.map((b, i) => <li key={i}>• {b}</li>)}
-                  </ul>
-                </div>
-              ))}
+  <div className="grid lg:grid-cols-2 gap-6">
+    {/* Pacjenci — 4 plany */}
+    <div>
+      <h3 className="text-lg font-semibold mb-3 opacity-90">
+        {tUI('pricing.patientsHeader')}
+      </h3>
+      <div className="grid sm:grid-cols-2 gap-4">
+        {patientPlans.map((p) => (
+          <div
+            key={p.title}
+            className="rounded-2xl bg-white/15 dark:bg-black/20 backdrop-blur p-5 border border-white/10 shadow-lg"
+          >
+            <div className="flex items-baseline justify-between">
+              <h4 className="font-semibold">{p.title}</h4>
+              <span className="text-emerald-300 font-semibold">{p.price}</span>
             </div>
+            {p.popular && (
+              <div className="mt-1 text-xs inline-block px-2 py-0.5 rounded bg-emerald-500/20 border border-emerald-400/40">
+                {tUI('pricing.popularTag')}
+              </div>
+            )}
+            <ul className="mt-3 space-y-2 text-sm opacity-95">
+              {p.bullets.map((b, i) => <li key={i}>• {b}</li>)}
+            </ul>
           </div>
+        ))}
+      </div>
+    </div>
 
-          {/* PRO */}
-          <div>
-            <h3 className="text-lg font-semibold mb-3 opacity-90">
-              {tUI('pricing.proHeader')}
-            </h3>
-            <div className="grid sm:grid-cols-2 gap-4">
-              {proPlans.map((p) => (
-                <div
-                  key={p.title}
-                  className="rounded-2xl bg-white/15 dark:bg-black/20 backdrop-blur p-5 border border-white/10 shadow-lg"
-                >
-                  <div className="flex items-baseline justify-between">
-                    <h4 className="font-semibold">{p.title}</h4>
-                    <span className="text-emerald-300 font-semibold">{p.price}</span>
-                  </div>
-                  <ul className="mt-3 space-y-2 text-sm opacity-95">
-                    {p.bullets.map((b, i) => <li key={i}>• {b}</li>)}
-                  </ul>
-                </div>
-              ))}
+    {/* Lekarze & dietetycy (PRO) — 2 plany */}
+    <div>
+      <h3 className="text-lg font-semibold mb-3 opacity-90">
+        {tUI('pricing.doctorsHeader')}
+      </h3>
+      <div className="grid sm:grid-cols-2 gap-4">
+        {proPlans.map((p) => (
+          <div
+            key={p.title}
+            className="rounded-2xl bg-white/15 dark:bg-black/20 backdrop-blur p-5 border border-white/10 shadow-lg"
+          >
+            <div className="flex items-baseline justify-between">
+              <h4 className="font-semibold">{p.title}</h4>
+              <span className="text-emerald-300 font-semibold">{p.price}</span>
             </div>
+            <ul className="mt-3 space-y-2 text-sm opacity-95">
+              {p.bullets.map((b, i) => <li key={i}>• {b}</li>)}
+            </ul>
           </div>
-        </div>
-      </section>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
 
       {/* CTA końcowe */}
       <section className="mx-auto max-w-6xl px-5 mt-10 mb-16">
