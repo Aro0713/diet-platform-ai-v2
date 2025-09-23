@@ -8017,4 +8017,70 @@ pricingPro365B4: {
 "cta.patientAria": { pl: "Przycisk: wejdź jako pacjent", en: "Button: enter as patient", es: "Botón: entrar como paciente", fr: "Bouton : entrer comme patient", de: "Button: als Patient einsteigen", ua: "Кнопка: увійти як пацієнт", ru: "Кнопка: войти как пациент", zh: "按钮：以患者身份进入", hi: "बटन: मरीज के रूप में प्रवेश", ar: "زر: الدخول كمريض", he: "כפתור: כניסה כמטופל" },
 "cta.doctorAria": { pl: "Przycisk: wejdź jako lekarz/dietetyk", en: "Button: enter as doctor/dietitian", es: "Botón: entrar como médico/dietista", fr: "Bouton : entrer comme médecin/diététicien", de: "Button: als Arzt/Ernährungsberater einsteigen", ua: "Кнопка: увійти як лікар/дієтолог", ru: "Кнопка: войти как врач/диетолог", zh: "按钮：以医生/营养师身份进入", hi: "बटन: डॉक्टर/डाइटीशियन के रूप में प्रवेश", ar: "زر: الدخول كطبيب/أخصائي تغذية", he: "כפתור: כניסה כרופא/דיאטנית" },
 
+"pricing.pro90.title": {
+  pl: "Plan 90 dni (PRO)",
+  en: "90-day plan (PRO)",
+  es: "Plan de 90 días (PRO)",
+  fr: "Plan 90 jours (PRO)",
+  de: "90-Tage-Plan (PRO)",
+  ua: "План на 90 днів (PRO)",
+  ru: "План на 90 дней (PRO)",
+  zh: "90 天方案（PRO）",
+  hi: "90-दिनीय प्लान (PRO)",
+  ar: "خطة 90 يومًا (PRO)",
+  he: "תוכנית ל-90 יום (PRO)"
+},
+"pricing.pro90.b1": {
+  pl: "Nielimitowana liczba pacjentów",
+  en: "Unlimited patients",
+  es: "Pacientes ilimitados",
+  fr: "Nombre illimité de patients",
+  de: "Unbegrenzte Anzahl von Patienten",
+  ua: "Необмежена кількість пацієнтів",
+  ru: "Неограниченное число пациентов",
+  zh: "病人数量不限",
+  hi: "असीमित मरीज",
+  ar: "عدد غير محدود من المرضى",
+  he: "מספר מטופלים בלתי מוגבל"
+},
+"pricing.pro90.b2": {
+  pl: "Analiza medyczna AI + korekty specjalisty",
+  en: "AI medical analysis + clinician edits",
+  es: "Análisis médico por IA + ajustes del especialista",
+  fr: "Analyse médicale IA + corrections du spécialiste",
+  de: "KI-Analyse + Korrekturen durch Fachkraft",
+  ua: "Меданаліз ШІ + правки спеціаліста",
+  ru: "Меданализ ИИ + правки специалиста",
+  zh: "AI 医学分析 + 专家修订",
+  hi: "AI चिकित्सीय विश्लेषण + विशेषज्ञ संशोधन",
+  ar: "تحليل طبي بالذكاء الاصطناعي + تعديلات المختص",
+  he: "ניתוח רפואי ב-AI + תיקוני מומחה"
+},
+"pricing.pro90.b3": {
+  pl: "Generowanie diet i przepisów",
+  en: "Generate diets and recipes",
+  es: "Generación de dietas y recetas",
+  fr: "Génération de régimes et recettes",
+  de: "Erstellung von Plänen & Rezepten",
+  ua: "Генерація дієт і рецептів",
+  ru: "Генерация диет и рецептов",
+  zh: "生成饮食计划与食谱",
+  hi: "डाइट और रेसिपी जनरेट",
+  ar: "إنشاء أنظمة غذائية ووصفات",
+  he: "יצירת דיאטות ומתכונים"
+},
+"pricing.pro90.b4": {
+  pl: "Eksport do PDF oraz do konta pacjenta",
+  en: "Export to PDF and to patient account",
+  es: "Exportar a PDF y a la cuenta del paciente",
+  fr: "Exporter en PDF et vers le compte du patient",
+  de: "Export als PDF und ins Patientenkonto",
+  ua: "Експорт у PDF та до акаунта пацієнта",
+  ru: "Экспорт в PDF и в аккаунт пациента",
+  zh: "导出为 PDF 并同步至患者账户",
+  hi: "PDF में एक्सपोर्ट और मरीज खाते में",
+  ar: "تصدير إلى PDF وإلى حساب المريض",
+  he: "ייצוא ל-PDF ולחשבון המטופל"
+}
+
 };

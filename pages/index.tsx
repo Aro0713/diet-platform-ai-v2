@@ -6,18 +6,14 @@ import { translationsUI } from '@/utils/translationsUI';
 import { type LangKey, languageLabels } from '@/utils/i18n';
 
 export default function Home() {
-  // 🌍 język + gotowość tłumaczeń
   const [lang, setLang] = useState<LangKey>('pl');
   const [langReady, setLangReady] = useState(false);
 
-  // 🌗 tryb ciemny (jak w register.tsx)
+  // dark mode (jak w register.tsx)
   const [darkMode, setDarkMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('theme') === 'dark';
-    }
+    if (typeof window !== 'undefined') return localStorage.getItem('theme') === 'dark';
     return false;
   });
-
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
@@ -28,18 +24,17 @@ export default function Home() {
     }
   }, [darkMode]);
 
-  // ✅ lokalna funkcja tłumaczeń (jak w register.tsx)
+  // tUI lokalne (jak w register.tsx)
   const tUI = (key: keyof typeof translationsUI): string => {
     const entry = translationsUI[key];
     if (!entry) {
-      // konsola dev: łatwiej łapać brakujące klucze
       console.warn(`🔍 Brak tłumaczenia UI dla klucza: "${key}"`);
       return `[${String(key)}]`;
     }
     return entry[lang] || entry.pl || `[${String(key)}]`;
   };
 
-  // 🌍 Detekcja języka (IP) + localStorage (jak w register.tsx)
+  // detekcja języka (IP) + localStorage
   useEffect(() => {
     const initLang = async () => {
       try {
@@ -51,16 +46,15 @@ export default function Home() {
         }
         const res = await fetch('https://ipapi.co/json/');
         const data = await res.json();
-        const detectedLangRaw = data?.languages?.split(',')[0]?.toLowerCase();
-        if (detectedLangRaw && Object.keys(languageLabels).includes(detectedLangRaw)) {
-          setLang(detectedLangRaw as LangKey);
-          localStorage.setItem('platformLang', detectedLangRaw);
+        const detected = data?.languages?.split(',')[0]?.toLowerCase();
+        if (detected && Object.keys(languageLabels).includes(detected)) {
+          setLang(detected as LangKey);
+          localStorage.setItem('platformLang', detected);
         } else {
           setLang('en');
           localStorage.setItem('platformLang', 'en');
         }
-      } catch (e) {
-        console.warn('🌍 Nie udało się pobrać lokalizacji/języka, fallback → pl', e);
+      } catch {
         setLang('pl');
         localStorage.setItem('platformLang', 'pl');
       } finally {
@@ -70,7 +64,7 @@ export default function Home() {
     initLang();
   }, []);
 
-  // 🔑 Magic link → /reset
+  // Magic link → /reset
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash;
@@ -89,7 +83,7 @@ export default function Home() {
   }
 
   // ────────────────────────────────────────────────────────────────────────────
-  // PRICING DATA (wszystko z tUI)
+  // PRICING DATA — Pacjenci: 7/30/90   ·  PRO: 90/365
   // ────────────────────────────────────────────────────────────────────────────
   const patientPlans = [
     {
@@ -125,28 +119,17 @@ export default function Home() {
         tUI('pricing.plan90.b4'),
       ],
     },
-    {
-      title: tUI('pricing.plan365.title'),
-      price: '1299 PLN',
-      popular: false,
-      bullets: [
-        tUI('pricing.plan365.b1'),
-        tUI('pricing.plan365.b2'),
-        tUI('pricing.plan365.b3'),
-        tUI('pricing.plan365.b4'),
-      ],
-    },
   ];
 
   const proPlans = [
     {
-      title: tUI('pricing.pro30.title'),
+      title: tUI('pricing.pro90.title'), // NOWY klucz
       price: '390 PLN',
       bullets: [
-        tUI('pricing.pro30.b1'),
-        tUI('pricing.pro30.b2'),
-        tUI('pricing.pro30.b3'),
-        tUI('pricing.pro30.b4'),
+        tUI('pricing.pro90.b1'),
+        tUI('pricing.pro90.b2'),
+        tUI('pricing.pro90.b3'),
+        tUI('pricing.pro90.b4'),
       ],
     },
     {
@@ -161,9 +144,6 @@ export default function Home() {
     },
   ];
 
-  // ────────────────────────────────────────────────────────────────────────────
-  // STEPS
-  // ────────────────────────────────────────────────────────────────────────────
   const steps = [
     {
       title: tUI('steps.registration.title'),
@@ -201,8 +181,8 @@ export default function Home() {
       icon: '/icons/recipes.svg',
       alt: tUI('steps.recipes.alt'),
     },
-  ];
-
+    ];
+    
   return (
     <main
       className="relative min-h-screen
@@ -282,6 +262,19 @@ export default function Home() {
             <p className="mt-4 max-w-xl md:max-w-2xl text-base md:text-lg leading-relaxed opacity-95">
               {tUI('landing.subheadline')}
             </p>
+
+            {/* Primary CTA w HERO */}
+            <div className="mt-6">
+              <button
+                onClick={() => {
+                  localStorage.setItem('entryMode', 'patient');
+                  window.location.href = '/register?mode=patient';
+                }}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-lg text-lg shadow"
+              >
+                {tUI('cta.title')} {/* „Zacznij teraz” */}
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -305,7 +298,7 @@ export default function Home() {
       </section>
 
       {/* PRICING */}
-      <section className="mx-auto max-w-6xl px-5 mt-12 md:mt-16">
+      <section id="pricing" className="mx-auto max-w-6xl px-5 mt-12 md:mt-16">
         <h2 className="text-center text-2xl md:text-3xl font-bold mb-6">
           {tUI('pricing.title')}
         </h2>
@@ -364,7 +357,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* CTA końcowe */}
       <section className="mx-auto max-w-6xl px-5 mt-10 mb-16">
         <p className="text-center text-xl md:text-2xl font-semibold mb-4">
           {tUI('cta.title')}
