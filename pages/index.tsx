@@ -4,7 +4,36 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { translationsUI } from '@/utils/translationsUI';
 import { type LangKey, languageLabels } from '@/utils/i18n';
+// ────────────────────────────────────────────────────────────────────────────
+// PRICING — market-aware (PL → PLN, EU → EUR, OTHER → USD)
+// ────────────────────────────────────────────────────────────────────────────
 
+// 1) Cennik per rynek (stałe biznesowe – bez FX)
+const MARKET_PRICING = {
+  PL: {
+    currency: 'PLN',
+    patient: { plan7: 129, plan30: 249, plan90: 599, plan365: 1299 },
+    pro:     { plan30: 390, plan365: 3800 },
+  },
+  EU: {
+    currency: 'EUR',
+    patient: { plan7: 39,  plan30: 79,  plan90: 179, plan365: 349 },
+    pro:     { plan30: 99,  plan365: 899 },
+  },
+  OTHER: {
+    currency: 'USD',
+    patient: { plan7: 39,  plan30: 79,  plan90: 179, plan365: 349 },
+    pro:     { plan30: 99,  plan365: 899 },
+  },
+} as const;
+
+type Market = keyof typeof MARKET_PRICING;
+
+// 2) UE (bez PL – PL ma własny cennik)
+const EU_COUNTRIES = new Set([
+  'AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT',
+  'LV','LT','LU','MT','NL','PT','RO','SK','SI','ES','SE'
+]);
 export default function Home() {
   const [lang, setLang] = useState<LangKey>('pl');
   const [langReady, setLangReady] = useState(false);
@@ -14,6 +43,33 @@ export default function Home() {
     if (typeof window !== 'undefined') return localStorage.getItem('theme') === 'dark';
     return false;
   });
+
+  // ──────────────────────────────────────────────────────────────
+  // MARKET-AWARE PRICING (hooki muszą być wewnątrz komponentu)
+  // ──────────────────────────────────────────────────────────────
+  const [market, setMarket] = useState<Market>('PL');
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await fetch('https://ipapi.co/json/');
+        const data = await res.json();
+        const cc = String(data?.country_code || '').toUpperCase();
+        if (cc === 'PL') {
+          if (mounted) setMarket('PL');
+        } else if (EU_COUNTRIES.has(cc)) {
+          if (mounted) setMarket('EU');
+        } else {
+          if (mounted) setMarket('OTHER');
+        }
+      } catch {
+        if (mounted) setMarket('PL'); // fallback
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
+
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
@@ -81,62 +137,6 @@ export default function Home() {
       </main>
     );
   }
-// ────────────────────────────────────────────────────────────────────────────
-// PRICING — market-aware (PL → PLN, EU → EUR, OTHER → USD)
-// ────────────────────────────────────────────────────────────────────────────
-
-// 1) Cennik per rynek (stałe biznesowe – bez FX)
-const MARKET_PRICING = {
-  PL: {
-    currency: 'PLN',
-    patient: { plan7: 129, plan30: 249, plan90: 599, plan365: 1299 },
-    pro:     { plan30: 390, plan365: 3800 },
-  },
-  EU: {
-    currency: 'EUR',
-    patient: { plan7: 39,  plan30: 79,  plan90: 179, plan365: 349 },
-    pro:     { plan30: 99,  plan365: 899 },
-  },
-  OTHER: {
-    currency: 'USD',
-    patient: { plan7: 39,  plan30: 79,  plan90: 179, plan365: 349 },
-    pro:     { plan30: 99,  plan365: 899 },
-  },
-} as const;
-
-type Market = keyof typeof MARKET_PRICING;
-
-// 2) UE (bez PL – PL ma własny cennik)
-const EU_COUNTRIES = new Set([
-  'AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT',
-  'LV','LT','LU','MT','NL','PT','RO','SK','SI','ES','SE'
-]);
-
-// 3) Stan rynku
-const [market, setMarket] = useState<Market>('PL');
-
-// 4) Detekcja kraju (ipapi.co – używasz już tego API powyżej do języka)
-useEffect(() => {
-  let mounted = true;
-  (async () => {
-    try {
-      const res = await fetch('https://ipapi.co/json/');
-      const data = await res.json();
-      const cc = String(data?.country_code || '').toUpperCase();
-      if (cc === 'PL') {
-        if (mounted) setMarket('PL');
-      } else if (EU_COUNTRIES.has(cc)) {
-        if (mounted) setMarket('EU');
-      } else {
-        if (mounted) setMarket('OTHER');
-      }
-    } catch {
-      // Fallback: PL
-      if (mounted) setMarket('PL');
-    }
-  })();
-  return () => { mounted = false; };
-}, []);
 
 // 5) Formatowanie ceny
 function formatPrice(value: number, currency: string) {
@@ -158,13 +158,6 @@ const pricePatient365 = formatPrice(pp.plan365, cur);
 const pricePro30  = formatPrice(pr.plan30, cur);
 const pricePro365 = formatPrice(pr.plan365, cur);
 
-  // ────────────────────────────────────────────────────────────────────────────
-// PRICING DATA — Pacjenci: 7/30/90/365   ·  PRO: 30/365
-// ────────────────────────────────────────────────────────────────────────────
-
-// ────────────────────────────────────────────────────────────────────────────
-// PRICING DATA — Pacjenci: 7/30/90/365   ·  PRO: 30/365  (market-aware)
-// ────────────────────────────────────────────────────────────────────────────
 const patientPlans = [
   {
     title: tUI('pricing.plan7.title'),
