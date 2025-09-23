@@ -385,7 +385,7 @@ const steps = [
           </div>
 
           {/* TEKST — zaczyna się niżej niż logo, ta sama typografia co akapit „Diet Care Platform …” */}
-          <div className="absolute top-40 md:top-48 lg:top-56 right-0 left-auto flex flex-col items-end px-6 md:pr-12 lg:pr-24 text-right max-w-3xl">
+          <div className="absolute top-40 md:top-48 lg:top-56 right-0 left-auto flex flex-col items-end px-6 md:pr-12 lg:pr-24 text-justify max-w-3xl">
            {/* tagline.title — styl identyczny jak niżej (tekst DCP) */}
             <p className="mt-5 max-w-2xl md:max-w-3xl text-lg md:text-2xl leading-relaxed text-white/95">
               {tUI('landing.tagline.title')}
