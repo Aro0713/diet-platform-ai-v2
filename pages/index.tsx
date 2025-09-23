@@ -362,7 +362,7 @@ const steps = [
       </nav>
 
       <section className="relative w-full">
-        <div className="relative h-[520px] md:h-[640px] lg:h-[720px]">
+        <div className="relative h-[600px] md:h-[640px] lg:h-[720px]">
           <Image
             src="/landing-hero.jpg"
             alt={tUI('landing.heroAlt')}
@@ -385,21 +385,16 @@ const steps = [
           </div>
 
           {/* TEKST — zaczyna się niżej niż logo, ta sama typografia co akapit „Diet Care Platform …” */}
-          <div className="absolute top-40 md:top-48 lg:top-56 right-0 left-auto flex flex-col items-end px-6 md:pr-12 lg:pr-24 text-justify max-w-3xl">
-           {/* tagline.title — styl identyczny jak niżej (tekst DCP) */}
-            <p className="mt-5 max-w-2xl md:max-w-3xl text-lg md:text-2xl leading-relaxed text-white/95">
+          <div className="absolute top-40 md:top-48 lg:top-56 right-0 left-auto flex flex-col items-end px-6 md:pr-12 lg:pr-24 pb-24 text-justify max-w-3xl">
+            <p className="max-w-3xl text-base md:text-lg lg:text-xl font-semibold tracking-tight leading-relaxed text-white/90">
               {tUI('landing.tagline.title')}
             </p>
-            {/* akapit „Diet Care Platform …” */}
-            <p className="mt-5 max-w-2xl md:max-w-3xl text-lg md:text-2xl leading-relaxed text-white/95">
+
+            <p className="mt-4 max-w-2xl md:max-w-3xl text-lg md:text-2xl lg:text-[26px] font-medium tracking-tight leading-relaxed text-white/95">
               {tUI('landing.tagline.desc')}
             </p>
-            {/* subheadline */}
-            <p className="mt-5 max-w-2xl md:max-w-3xl text-lg md:text-2xl leading-relaxed text-white/95">
-              {tUI('landing.subheadline')}
-            </p>
 
-            {/* CTA */}
+            {/* subheadline usunięte */}
             <div className="mt-7">
               <button
                 onClick={() => {
