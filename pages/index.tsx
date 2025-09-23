@@ -361,7 +361,7 @@ const steps = [
         </div>
       </nav>
 
-      {/* HERO */}
+        /* HERO */
       <section className="relative w-full">
         <div className="relative h-[520px] md:h-[640px] lg:h-[720px]">
           <Image
@@ -371,44 +371,57 @@ const steps = [
             priority
             className="object-cover"
           />
-          <div className="absolute inset-0 bg-[#0f271e]/65" />
-          <div className="absolute inset-0 flex flex-col items-end justify-center pr-6 md:pr-12 text-right">
+          {/* przyciemnienie */}
+          <div className="absolute inset-0 bg-[#0f271e]/65 dark:bg-[#0c1f18]/65" />
+
+          {/* LOGO — góra, środek, większe */}
+          <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20">
             <Image
               src="/logo-dietcare.png"
               alt={tUI('landing.logoAlt')}
-              width={220}
-              height={70}
-              className="mb-4 drop-shadow-xl"
+              width={300}   // było ~220
+              height={96}
+              className="drop-shadow-2xl"
               priority
             />
-            <p className="text-emerald-200 text-xs md:text-sm tracking-wide mb-1">
-              {tUI('landing.tagline.title')}
-            </p>
-            <p className="mt-1 max-w-xl md:max-w-2xl text-sm md:text-base leading-relaxed opacity-95">
+          </div>
+
+          {/* COPY */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
+            {/* MOTTO — USUNIĘTE */}
+            {/* <p className="text-emerald-200 ...">{tUI('landing.tagline.title')}</p> */}
+
+            {/* Krótki opis (większy, „ładniejsza” typografia, biały w jasnym kontraście) */}
+            <p className="max-w-2xl md:max-w-3xl text-lg md:text-2xl lg:text-[26px] font-medium tracking-tight leading-relaxed text-white/95 dark:text-white/95">
               {tUI('landing.tagline.desc')}
             </p>
-            <h1 className="text-3xl md:text-5xl font-bold drop-shadow-[0_6px_24px_rgba(0,0,0,0.45)]">
+
+            {/* Główny slogan */}
+            <h1 className="mt-4 text-4xl md:text-6xl font-extrabold tracking-tight drop-shadow-[0_6px_24px_rgba(0,0,0,0.45)] text-white">
               {tUI('landing.slogan')}
             </h1>
-            <p className="mt-4 max-w-xl md:max-w-2xl text-base md:text-lg leading-relaxed opacity-95">
+
+            {/* Subheadline (większa) */}
+            <p className="mt-5 max-w-2xl md:max-w-3xl text-lg md:text-2xl leading-relaxed text-white/95 dark:text-white/95">
               {tUI('landing.subheadline')}
             </p>
 
-            {/* Primary CTA w HERO */}
-            <div className="mt-6">
+            {/* CTA */}
+            <div className="mt-7">
               <button
                 onClick={() => {
                   localStorage.setItem('entryMode', 'patient');
                   window.location.href = '/register?mode=patient';
                 }}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-lg text-lg shadow"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-7 py-3.5 rounded-xl text-lg shadow-lg"
               >
-                {tUI('cta.title')} {/* „Zacznij teraz” */}
+                {tUI('cta.title')}
               </button>
             </div>
           </div>
         </div>
       </section>
+
 
       {/* STEPS */}
       <section className="mx-auto max-w-6xl px-5 -mt-10 md:-mt-14">
@@ -418,13 +431,26 @@ const steps = [
               key={s.title + s.icon}
               className="rounded-2xl bg-white/15 dark:bg-black/20 backdrop-blur p-4 md:p-5 shadow-lg border border-white/10 text-center"
             >
-              <div className="mx-auto h-10 w-10 md:h-12 md:w-12 mb-2 relative flex items-center justify-center">
-              {/* kolorowa pastylka w tle */}
-              <span className={`absolute inset-0 rounded-2xl opacity-20 ${s.color} ring-1 ring-current/30`} />
-              {/* ikona */}
-              <Image src={s.icon} alt={s.alt} width={40} height={40} className="relative z-10 object-contain" />
+            <div className={`mx-auto h-10 w-10 md:h-12 md:w-12 mb-2 relative flex items-center justify-center ${s.color}`}>
+              {/* pastelowa pastylka w tle, obręcz przyjmuje ten sam kolor */}
+              <span className="absolute inset-0 rounded-2xl opacity-20 ring-1 ring-current/30" />
+              {/* ikona „pomalowana” bieżącym kolorem */}
+              <span
+                aria-hidden
+                className="relative z-10 h-8 w-8 md:h-10 md:w-10 bg-current"
+                style={{
+                  WebkitMaskImage: `url(${s.icon})`,
+                  maskImage: `url(${s.icon})`,
+                  WebkitMaskRepeat: 'no-repeat',
+                  maskRepeat: 'no-repeat',
+                  WebkitMaskPosition: 'center',
+                  maskPosition: 'center',
+                  WebkitMaskSize: 'contain',
+                  maskSize: 'contain',
+                }}
+              />
             </div>
-              <h3 className={`font-semibold ${s.color}`}>{s.title}</h3>
+            <h3 className={`font-semibold ${s.color}`}>{s.title}</h3>
               <p className="text-sm opacity-90 mt-1">{s.desc}</p>
             </div>
           ))}
