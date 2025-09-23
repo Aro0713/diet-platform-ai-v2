@@ -361,7 +361,7 @@ const steps = [
         </div>
       </nav>
 
-        /* HERO */
+            /* HERO */
       <section className="relative w-full">
         <div className="relative h-[520px] md:h-[640px] lg:h-[720px]">
           <Image
@@ -371,38 +371,35 @@ const steps = [
             priority
             className="object-cover"
           />
-          {/* przyciemnienie */}
           <div className="absolute inset-0 bg-[#0f271e]/65 dark:bg-[#0c1f18]/65" />
 
-          {/* LOGO — góra, środek, większe */}
+          {/* LOGO — góra, środek */}
           <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20">
             <Image
               src="/logo-dietcare.png"
               alt={tUI('landing.logoAlt')}
-              width={300}   // było ~220
+              width={300}
               height={96}
               className="drop-shadow-2xl"
               priority
             />
           </div>
 
-          {/* COPY */}
+          {/* TEKST — bez h1 (motto usunięte) */}
           <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-            {/* MOTTO — USUNIĘTE */}
-            {/* <p className="text-emerald-200 ...">{tUI('landing.tagline.title')}</p> */}
-
-            {/* Krótki opis (większy, „ładniejsza” typografia, biały w jasnym kontraście) */}
-            <p className="max-w-2xl md:max-w-3xl text-lg md:text-2xl lg:text-[26px] font-medium tracking-tight leading-relaxed text-white/95 dark:text-white/95">
+            {/* Opis platformy */}
+            <p className="max-w-2xl md:max-w-3xl text-lg md:text-2xl lg:text-[26px] font-medium tracking-tight leading-relaxed text-white/95">
               {tUI('landing.tagline.desc')}
             </p>
 
-            {/* Główny slogan */}
-            <h1 className="mt-4 text-4xl md:text-6xl font-extrabold tracking-tight drop-shadow-[0_6px_24px_rgba(0,0,0,0.45)] text-white">
+            {/* ⛔️ USUNIĘTE MOTTO:
+            <h1 className="text-4xl md:text-6xl ...">
               {tUI('landing.slogan')}
             </h1>
+            */}
 
-            {/* Subheadline (większa) */}
-            <p className="mt-5 max-w-2xl md:max-w-3xl text-lg md:text-2xl leading-relaxed text-white/95 dark:text-white/95">
+            {/* Subheadline */}
+            <p className="mt-5 max-w-2xl md:max-w-3xl text-lg md:text-2xl leading-relaxed text-white/95">
               {tUI('landing.subheadline')}
             </p>
 
@@ -421,7 +418,6 @@ const steps = [
           </div>
         </div>
       </section>
-
 
       {/* STEPS */}
       <section className="mx-auto max-w-6xl px-5 -mt-10 md:-mt-14">
