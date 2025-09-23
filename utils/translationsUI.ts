@@ -7872,19 +7872,18 @@ pricingPro365B4: {
   he: "פלטפורמת התזונה הראשונה בעולם המשלבת ניתוח רפואי, יצירת תוכניות תזונה ומתכונים ע״י AI, שיתוף פעולה עם רופאים ודיאטנ/יות, ועוזר AI אישי — הכל באקוסיסטם אחד."
 },
 "landing.tagline.desc": {
-  pl: "Diet Care Platform łączy analizę medyczną, sztuczną inteligencję i wiedzę lekarzy oraz dietetyków, aby dostarczyć kompletny plan diety, listę zakupów, przepisy kulinarne i osobistego asystenta AI — wszystko w jednym ekosystemie.",
-  en: "Diet Care Platform combines medical analysis, artificial intelligence, and the expertise of doctors and dietitians to deliver a complete diet plan, shopping list, culinary recipes, and a personal AI assistant — all in one ecosystem.",
-  es: "Diet Care Platform combina análisis médico, inteligencia artificial y la experiencia de médicos y dietistas para ofrecer un plan de dieta completo, lista de compras, recetas culinarias y un asistente personal de IA, todo en un único ecosistema.",
-  fr: "Diet Care Platform associe analyse médicale, intelligence artificielle et expertise de médecins et diététiciens pour fournir un plan alimentaire complet, une liste d’achats, des recettes culinaires et un assistant IA personnel — le tout dans un écosystème unique.",
-  de: "Die Diet Care Platform verbindet medizinische Analyse, künstliche Intelligenz und die Expertise von Ärzten und Ernährungsberatern, um einen vollständigen Ernährungsplan, eine Einkaufsliste, kulinarische Rezepte und einen persönlichen KI-Assistenten zu liefern — alles in einem Ökosystem.",
-  ua: "Diet Care Platform поєднує медичний аналіз, штучний інтелект і знання лікарів та дієтологів, щоб надати повний план харчування, список покупок, кулінарні рецепти та особистого AI-асистента — все в одній екосистемі.",
-  ru: "Diet Care Platform объединяет медицинский анализ, искусственный интеллект и опыт врачей и диетологов, предоставляя полный план питания, список покупок, кулинарные рецепты и персонального AI-ассистента — всё в одной экосистеме.",
-  zh: "Diet Care Platform 融合医学分析、人工智能以及医生和营养师的专业知识，提供完整的饮食计划、购物清单、烹饪食谱和个人 AI 助手 —— 一切尽在一个生态系统中。",
-  hi: "Diet Care Platform चिकित्सीय विश्लेषण, कृत्रिम बुद्धिमत्ता और डॉक्टरों व डायटीशियनों की विशेषज्ञता को जोड़कर एक संपूर्ण डाइट प्लान, शॉपिंग सूची, कुकिंग रेसिपी और एक व्यक्तिगत AI सहायक प्रदान करता है — सब कुछ एक ही इकोसिस्टम में।",
-  ar: "منصّة رعاية النظام الغذائي تجمع بين التحليل الطبي، والذكاء الاصطناعي، وخبرة الأطباء وأخصائيي التغذية لتقديم خطة غذائية كاملة، وقائمة تسوّق، ووصفات طهي، ومساعد شخصي بالذكاء الاصطناعي — كل ذلك في نظام بيئي واحد.",
-  he: "Diet Care Platform משלבת ניתוח רפואי, בינה מלאכותית ומומחיות של רופאים ודיאטנ/יות כדי לספק תכנית תזונה מלאה, רשימת קניות, מתכונים קולינריים ועוזר AI אישי — הכל באקוסיסטם אחד."
+  pl: "Po zalogowaniu otrzymasz dostęp do spersonalizowanej analizy zdrowia, indywidualnego planu diety z przepisami i listą zakupów oraz wsparcia asystenta AI dostępnego 24/7. Twoje dane są bezpieczne, a plan możesz w każdej chwili skonsultować i zatwierdzić u specjalisty.",
+  en: "By logging in, you gain access to a personalized health analysis, a tailored diet plan with recipes and a shopping list, and the support of a 24/7 AI assistant. Your data is secure, and you can consult and have your plan approved by a specialist at any time.",
+  es: "Al iniciar sesión, tendrás acceso a un análisis de salud personalizado, un plan de dieta adaptado con recetas y lista de compras, y el apoyo de un asistente de IA disponible 24/7. Tus datos están seguros y podrás consultar y validar tu plan con un especialista en cualquier momento.",
+  fr: "En vous connectant, vous accédez à une analyse de santé personnalisée, un plan diététique adapté avec recettes et liste de courses, ainsi qu’au soutien d’un assistant IA disponible 24h/24. Vos données sont sécurisées et vous pouvez à tout moment consulter un spécialiste pour valider votre plan.",
+  de: "Mit der Anmeldung erhalten Sie Zugang zu einer personalisierten Gesundheitsanalyse, einem individuellen Ernährungsplan mit Rezepten und Einkaufsliste sowie zur Unterstützung durch einen 24/7 verfügbaren KI-Assistenten. Ihre Daten sind sicher, und Sie können Ihren Plan jederzeit mit einem Spezialisten besprechen und freigeben lassen.",
+  ua: "Після входу ви отримаєте доступ до персоналізованого аналізу здоров’я, індивідуального плану харчування з рецептами та списком покупок, а також підтримку AI-асистента 24/7. Ваші дані у безпеці, а план можна у будь-який час обговорити й затвердити у спеціаліста.",
+  ru: "После входа вы получите доступ к персонализированному анализу здоровья, индивидуальному плану питания с рецептами и списком покупок, а также поддержку AI-ассистента 24/7. Ваши данные в безопасности, и план можно в любое время обсудить и утвердить у специалиста.",
+  zh: "登录后，您将获得个性化的健康分析、包含食谱和购物清单的饮食计划，以及 24/7 的 AI 助手支持。您的数据是安全的，您可以随时咨询并让专家审核您的计划。",
+  hi: "लॉगिन करने पर आपको व्यक्तिगत स्वास्थ्य विश्लेषण, रेसिपी और शॉपिंग सूची के साथ डाइट प्लान और 24/7 उपलब्ध AI असिस्टेंट का समर्थन मिलेगा। आपका डेटा सुरक्षित है और आप कभी भी अपने प्लान को विशेषज्ञ से परामर्श और स्वीकृत करा सकते हैं।",
+  ar: "بعد تسجيل الدخول، ستحصل على تحليل صحي مخصص، وخطة غذائية فردية مع وصفات وقائمة تسوّق، إضافة إلى دعم مساعد بالذكاء الاصطناعي متاح 24/7. بياناتك آمنة، ويمكنك في أي وقت استشارة أخصائي لاعتماد خطتك.",
+  he: "לאחר ההתחברות תקבלו גישה לניתוח בריאות מותאם אישית, תכנית תזונה אישית עם מתכונים ורשימת קניות, ותמיכת עוזר AI זמין 24/7. הנתונים שלכם מאובטחים, ותוכלו בכל עת להתייעץ עם מומחה ולאשר את התכנית."
 },
-
 // ─────────────────────────────────────────────────────────────────────────────
 // NAV
 // ─────────────────────────────────────────────────────────────────────────────
@@ -7942,19 +7941,6 @@ pricingPro365B4: {
   hi: "आपका आहार, आपका स्वास्थ्य — एक प्लेटफ़ॉर्म।",
   ar: "نظامك الغذائي. صحتك. منصة واحدة.",
   he: "התזונה שלך. הבריאות שלך. פלטפורמה אחת."
-},
-"landing.subheadline": {
-  pl: "Spersonalizowany plan z analizą medyczną, wywiadem i przepisami — gotowy do zatwierdzenia przez specjalistę.",
-  en: "A personalized plan with medical analysis, interview, and recipes — ready for clinician review.",
-  es: "Plan personalizado con análisis médico, entrevista y recetas — listo para aprobación del especialista.",
-  fr: "Plan personnalisé avec analyse médicale, entretien et recettes — prêt pour validation par un spécialiste.",
-  de: "Personalisierter Plan mit medizinischer Analyse, Anamnese und Rezepten — bereit zur Freigabe.",
-  ua: "Персоналізований план з медичним аналізом, опитуванням і рецептами — готовий до затвердження.",
-  ru: "Персональный план с меданализом, опросом и рецептами — готов к утверждению специалистом.",
-  zh: "含医学分析、问诊与食谱的个性化方案——可供医生审核。",
-  hi: "चिकित्सीय विश्लेषण, इंटरव्यू और रेसिपी के साथ व्यक्तिगत योजना — विशेषज्ञ अनुमोदन हेतु तैयार।",
-  ar: "خطة مخصّصة مع تحليل طبي، مقابلة ووصفات — جاهزة لاعتماد المختص.",
-  he: "תוכנית מותאמת עם ניתוח רפואי, ראיון ומתכונים — מוכנה לאישור מומחה."
 },
 
 // ─────────────────────────────────────────────────────────────────────────────
