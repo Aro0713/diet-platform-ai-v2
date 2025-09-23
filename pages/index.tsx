@@ -2,25 +2,23 @@
 import Head from 'next/head';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { tUI, LangKey, languageLabels } from '@/utils/i18n';
+import { translationsUI } from '@/utils/translationsUI';
+import { type LangKey, languageLabels } from '@/utils/i18n';
 
 export default function Home() {
+  // 🌍 język + gotowość tłumaczeń
   const [lang, setLang] = useState<LangKey>('pl');
-  const [darkMode, setDarkMode] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [langReady, setLangReady] = useState(false);
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // MOUNT + THEME
-  // ─────────────────────────────────────────────────────────────────────────────
-  useEffect(() => {
-    const theme = localStorage.getItem('theme');
-    setDarkMode(theme === 'dark');
-    setMounted(true);
-  }, []);
+  // 🌗 tryb ciemny (jak w register.tsx)
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('theme') === 'dark';
+    }
+    return false;
+  });
 
   useEffect(() => {
-    if (!mounted) return;
     if (darkMode) {
       document.documentElement.classList.add('dark');
       localStorage.setItem('theme', 'dark');
@@ -28,29 +26,51 @@ export default function Home() {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
     }
-  }, [darkMode, mounted]);
+  }, [darkMode]);
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // LANGUAGE (localStorage + autodetect)
-  // ─────────────────────────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const existing = localStorage.getItem('platformLang');
-      if (existing && Object.keys(languageLabels).includes(existing)) {
-        setLang(existing as LangKey);
-      } else {
-        const supported: LangKey[] = ['pl','en','ua','es','fr','de','ru','zh','hi','ar','he'];
-        const browser = (navigator.language || 'en').slice(0, 2) as LangKey;
-        const detected = supported.includes(browser) ? browser : 'en';
-        setLang(detected);
-        localStorage.setItem('platformLang', detected);
-      }
+  // ✅ lokalna funkcja tłumaczeń (jak w register.tsx)
+  const tUI = (key: keyof typeof translationsUI): string => {
+    const entry = translationsUI[key];
+    if (!entry) {
+      // konsola dev: łatwiej łapać brakujące klucze
+      console.warn(`🔍 Brak tłumaczenia UI dla klucza: "${key}"`);
+      return `[${String(key)}]`;
     }
+    return entry[lang] || entry.pl || `[${String(key)}]`;
+  };
+
+  // 🌍 Detekcja języka (IP) + localStorage (jak w register.tsx)
+  useEffect(() => {
+    const initLang = async () => {
+      try {
+        const stored = localStorage.getItem('platformLang');
+        if (stored && Object.keys(languageLabels).includes(stored)) {
+          setLang(stored as LangKey);
+          setLangReady(true);
+          return;
+        }
+        const res = await fetch('https://ipapi.co/json/');
+        const data = await res.json();
+        const detectedLangRaw = data?.languages?.split(',')[0]?.toLowerCase();
+        if (detectedLangRaw && Object.keys(languageLabels).includes(detectedLangRaw)) {
+          setLang(detectedLangRaw as LangKey);
+          localStorage.setItem('platformLang', detectedLangRaw);
+        } else {
+          setLang('en');
+          localStorage.setItem('platformLang', 'en');
+        }
+      } catch (e) {
+        console.warn('🌍 Nie udało się pobrać lokalizacji/języka, fallback → pl', e);
+        setLang('pl');
+        localStorage.setItem('platformLang', 'pl');
+      } finally {
+        setLangReady(true);
+      }
+    };
+    initLang();
   }, []);
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // Password reset (magic link)
-  // ─────────────────────────────────────────────────────────────────────────────
+  // 🔑 Magic link → /reset
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash;
@@ -60,120 +80,126 @@ export default function Home() {
     }
   }, []);
 
-  if (!mounted) return null;
+  if (!langReady) {
+    return (
+      <main className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-500 text-sm">⏳ Ładowanie języka...</p>
+      </main>
+    );
+  }
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // PRICING DATA (tytuły i opisy z tUI)
-  // ─────────────────────────────────────────────────────────────────────────────
+  // ────────────────────────────────────────────────────────────────────────────
+  // PRICING DATA (wszystko z tUI)
+  // ────────────────────────────────────────────────────────────────────────────
   const patientPlans = [
     {
-      title: tUI('pricing.plan7.title', lang),
+      title: tUI('pricing.plan7.title'),
       price: '129 PLN',
       popular: false,
       bullets: [
-        tUI('pricing.plan7.b1', lang),
-        tUI('pricing.plan7.b2', lang),
-        tUI('pricing.plan7.b3', lang),
-        tUI('pricing.plan7.b4', lang),
+        tUI('pricing.plan7.b1'),
+        tUI('pricing.plan7.b2'),
+        tUI('pricing.plan7.b3'),
+        tUI('pricing.plan7.b4'),
       ],
     },
     {
-      title: tUI('pricing.plan30.title', lang),
+      title: tUI('pricing.plan30.title'),
       price: '249 PLN',
       popular: true,
       bullets: [
-        tUI('pricing.plan30.b1', lang),
-        tUI('pricing.plan30.b2', lang),
-        tUI('pricing.plan30.b3', lang),
-        tUI('pricing.plan30.b4', lang),
+        tUI('pricing.plan30.b1'),
+        tUI('pricing.plan30.b2'),
+        tUI('pricing.plan30.b3'),
+        tUI('pricing.plan30.b4'),
       ],
     },
     {
-      title: tUI('pricing.plan90.title', lang),
+      title: tUI('pricing.plan90.title'),
       price: '599 PLN',
       popular: false,
       bullets: [
-        tUI('pricing.plan90.b1', lang),
-        tUI('pricing.plan90.b2', lang),
-        tUI('pricing.plan90.b3', lang),
-        tUI('pricing.plan90.b4', lang),
+        tUI('pricing.plan90.b1'),
+        tUI('pricing.plan90.b2'),
+        tUI('pricing.plan90.b3'),
+        tUI('pricing.plan90.b4'),
       ],
     },
     {
-      title: tUI('pricing.plan365.title', lang),
+      title: tUI('pricing.plan365.title'),
       price: '1299 PLN',
       popular: false,
       bullets: [
-        tUI('pricing.plan365.b1', lang),
-        tUI('pricing.plan365.b2', lang),
-        tUI('pricing.plan365.b3', lang),
-        tUI('pricing.plan365.b4', lang),
+        tUI('pricing.plan365.b1'),
+        tUI('pricing.plan365.b2'),
+        tUI('pricing.plan365.b3'),
+        tUI('pricing.plan365.b4'),
       ],
     },
   ];
 
   const proPlans = [
     {
-      title: tUI('pricing.pro30.title', lang),
+      title: tUI('pricing.pro30.title'),
       price: '390 PLN',
       bullets: [
-        tUI('pricing.pro30.b1', lang),
-        tUI('pricing.pro30.b2', lang),
-        tUI('pricing.pro30.b3', lang),
-        tUI('pricing.pro30.b4', lang),
+        tUI('pricing.pro30.b1'),
+        tUI('pricing.pro30.b2'),
+        tUI('pricing.pro30.b3'),
+        tUI('pricing.pro30.b4'),
       ],
     },
     {
-      title: tUI('pricing.pro365.title', lang),
+      title: tUI('pricing.pro365.title'),
       price: '3800 PLN',
       bullets: [
-        tUI('pricing.pro365.b1', lang),
-        tUI('pricing.pro365.b2', lang),
-        tUI('pricing.pro365.b3', lang),
-        tUI('pricing.pro365.b4', lang),
+        tUI('pricing.pro365.b1'),
+        tUI('pricing.pro365.b2'),
+        tUI('pricing.pro365.b3'),
+        tUI('pricing.pro365.b4'),
       ],
     },
   ];
 
-  // ─────────────────────────────────────────────────────────────────────────────
+  // ────────────────────────────────────────────────────────────────────────────
   // STEPS
-  // ─────────────────────────────────────────────────────────────────────────────
+  // ────────────────────────────────────────────────────────────────────────────
   const steps = [
     {
-      title: tUI('steps.registration.title', lang),
-      desc: tUI('steps.registration.desc', lang),
+      title: tUI('steps.registration.title'),
+      desc: tUI('steps.registration.desc'),
       icon: '/icons/registration.svg',
-      alt: tUI('steps.registration.alt', lang),
+      alt: tUI('steps.registration.alt'),
     },
     {
-      title: tUI('steps.medical.title', lang),
-      desc: tUI('steps.medical.desc', lang),
+      title: tUI('steps.medical.title'),
+      desc: tUI('steps.medical.desc'),
       icon: '/icons/medical.svg',
-      alt: tUI('steps.medical.alt', lang),
+      alt: tUI('steps.medical.alt'),
     },
     {
-      title: tUI('steps.interview.title', lang),
-      desc: tUI('steps.interview.desc', lang),
+      title: tUI('steps.interview.title'),
+      desc: tUI('steps.interview.desc'),
       icon: '/icons/interview.svg',
-      alt: tUI('steps.interview.alt', lang),
+      alt: tUI('steps.interview.alt'),
     },
     {
-      title: tUI('steps.calculator.title', lang),
-      desc: tUI('steps.calculator.desc', lang),
+      title: tUI('steps.calculator.title'),
+      desc: tUI('steps.calculator.desc'),
       icon: '/icons/calculator.svg',
-      alt: tUI('steps.calculator.alt', lang),
+      alt: tUI('steps.calculator.alt'),
     },
     {
-      title: tUI('steps.plan.title', lang),
-      desc: tUI('steps.plan.desc', lang),
+      title: tUI('steps.plan.title'),
+      desc: tUI('steps.plan.desc'),
       icon: '/icons/plan.svg',
-      alt: tUI('steps.plan.alt', lang),
+      alt: tUI('steps.plan.alt'),
     },
     {
-      title: tUI('steps.recipes.title', lang),
-      desc: tUI('steps.recipes.desc', lang),
+      title: tUI('steps.recipes.title'),
+      desc: tUI('steps.recipes.desc'),
       icon: '/icons/recipes.svg',
-      alt: tUI('steps.recipes.alt', lang),
+      alt: tUI('steps.recipes.alt'),
     },
   ];
 
@@ -185,16 +211,16 @@ export default function Home() {
       text-gray-900 dark:text-white transition-all duration-300"
     >
       <Head>
-        <title>{tUI('app.title', lang) || 'Diet Care Platform'}</title>
+        <title>{tUI('app.title')}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="description" content={tUI('app.metaDescription', lang)} />
+        <meta name="description" content={tUI('app.metaDescription')} />
       </Head>
 
       {/* NAV */}
       <nav className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between px-2 md:px-4">
         <div className="flex items-center gap-2">
           <label htmlFor="language-select" className="sr-only">
-            {tUI('nav.languageLabel', lang)}
+            {tUI('nav.languageLabel')}
           </label>
           <select
             id="language-select"
@@ -205,7 +231,7 @@ export default function Home() {
               localStorage.setItem('platformLang', selected);
             }}
             className="border rounded px-3 py-1 shadow bg-white/80 text-black backdrop-blur dark:bg-gray-800 dark:text-white"
-            aria-label={tUI('nav.languageAria', lang)}
+            aria-label={tUI('nav.languageAria')}
           >
             {Object.entries(languageLabels).map(([key, label]) => (
               <option key={key} value={key}>{label}</option>
@@ -213,15 +239,15 @@ export default function Home() {
           </select>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 group" title={darkMode ? tUI('nav.lightMode') : tUI('nav.darkMode')}>
           <span className="text-xs text-black/80 dark:text-white/80 hidden sm:block">
-            {darkMode ? tUI('nav.lightMode', lang) : tUI('nav.darkMode', lang)}
+            {darkMode ? tUI('nav.lightMode') : tUI('nav.darkMode')}
           </span>
           <button
             onClick={() => setDarkMode(!darkMode)}
             className={`relative inline-flex items-center h-6 w-11 rounded-full transition-colors ${darkMode ? 'bg-gray-700' : 'bg-yellow-400'}`}
-            aria-label={tUI('nav.toggleContrast', lang)}
-            title={tUI('nav.toggleContrast', lang)}
+            aria-label={tUI('nav.toggleContrast')}
+            title={tUI('nav.toggleContrast')}
           >
             <span className={`absolute left-1 text-sm ${darkMode ? 'opacity-0' : 'opacity-100'}`}>☀️</span>
             <span className={`absolute right-1 text-sm ${darkMode ? 'opacity-100' : 'opacity-0'}`}>🌙</span>
@@ -235,7 +261,7 @@ export default function Home() {
         <div className="relative h-[520px] md:h-[640px] lg:h-[720px]">
           <Image
             src="/landing-hero.jpg"
-            alt={tUI('landing.heroAlt', lang)}
+            alt={tUI('landing.heroAlt')}
             fill
             priority
             className="object-cover"
@@ -244,17 +270,17 @@ export default function Home() {
           <div className="absolute inset-0 flex flex-col items-end justify-center pr-6 md:pr-12 text-right">
             <Image
               src="/logo-dietcare.png"
-              alt={tUI('landing.logoAlt', lang)}
+              alt={tUI('landing.logoAlt')}
               width={220}
               height={70}
               className="mb-4 drop-shadow-xl"
               priority
             />
             <h1 className="text-3xl md:text-5xl font-bold drop-shadow-[0_6px_24px_rgba(0,0,0,0.45)]">
-              {tUI('landing.slogan', lang)}
+              {tUI('landing.slogan')}
             </h1>
             <p className="mt-4 max-w-xl md:max-w-2xl text-base md:text-lg leading-relaxed opacity-95">
-              {tUI('landing.subheadline', lang)}
+              {tUI('landing.subheadline')}
             </p>
           </div>
         </div>
@@ -281,14 +307,14 @@ export default function Home() {
       {/* PRICING */}
       <section className="mx-auto max-w-6xl px-5 mt-12 md:mt-16">
         <h2 className="text-center text-2xl md:text-3xl font-bold mb-6">
-          {tUI('pricing.title', lang)}
+          {tUI('pricing.title')}
         </h2>
 
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Pacjenci */}
           <div>
             <h3 className="text-lg font-semibold mb-3 opacity-90">
-              {tUI('pricing.patientsHeader', lang)}
+              {tUI('pricing.patientsHeader')}
             </h3>
             <div className="grid sm:grid-cols-2 gap-4">
               {patientPlans.map((p) => (
@@ -302,7 +328,7 @@ export default function Home() {
                   </div>
                   {p.popular && (
                     <div className="mt-1 text-xs inline-block px-2 py-0.5 rounded bg-emerald-500/20 border border-emerald-400/40">
-                      {tUI('pricing.popularTag', lang)}
+                      {tUI('pricing.popularTag')}
                     </div>
                   )}
                   <ul className="mt-3 space-y-2 text-sm opacity-95">
@@ -316,7 +342,7 @@ export default function Home() {
           {/* PRO */}
           <div>
             <h3 className="text-lg font-semibold mb-3 opacity-90">
-              {tUI('pricing.proHeader', lang)}
+              {tUI('pricing.proHeader')}
             </h3>
             <div className="grid sm:grid-cols-2 gap-4">
               {proPlans.map((p) => (
@@ -341,7 +367,7 @@ export default function Home() {
       {/* CTA */}
       <section className="mx-auto max-w-6xl px-5 mt-10 mb-16">
         <p className="text-center text-xl md:text-2xl font-semibold mb-4">
-          {tUI('cta.title', lang)}
+          {tUI('cta.title')}
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
@@ -350,10 +376,10 @@ export default function Home() {
               window.location.href = '/register?mode=patient';
             }}
             className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-lg text-lg shadow"
-            aria-label={tUI('cta.patientAria', lang)}
-            title={tUI('cta.patientAria', lang)}
+            aria-label={tUI('cta.patientAria')}
+            title={tUI('cta.patientAria')}
           >
-            {tUI('cta.enterAsPatient', lang)}
+            {tUI('cta.enterAsPatient')}
           </button>
 
           <button
@@ -362,10 +388,10 @@ export default function Home() {
               window.location.href = '/register?mode=doctor';
             }}
             className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-lg shadow"
-            aria-label={tUI('cta.doctorAria', lang)}
-            title={tUI('cta.doctorAria', lang)}
+            aria-label={tUI('cta.doctorAria')}
+            title={tUI('cta.doctorAria')}
           >
-            {tUI('cta.enterAsDoctor', lang)}
+            {tUI('cta.enterAsDoctor')}
           </button>
         </div>
       </section>

@@ -7816,6 +7816,18 @@ pricingPro365B4: {
   ar: 'تصدير إلى PDF وإلى حساب المريض',
   he: 'ייצוא ל-PDF ולחשבון המטופל',
 },
-
+"emailConfirmed": {
+  pl: "E-mail potwierdzony. Możesz się zalogować.",
+  en: "Email confirmed. You can log in.",
+  es: "Correo confirmado. Ya puedes iniciar sesión.",
+  fr: "E-mail confirmé. Vous pouvez vous connecter.",
+  de: "E-Mail bestätigt. Du kannst dich anmelden.",
+  ua: "Е-пошту підтверджено. Можна входити.",
+  ru: "E-mail подтвержден. Можно войти.",
+  zh: "邮箱已验证。你可以登录了。",
+  hi: "ईमेल पुष्टि हो गया। अब आप लॉगिन कर सकते हैं।",
+  ar: "تم تأكيد البريد الإلكتروني. يمكنك تسجيل الدخول.",
+  he: "האימייל אושר. ניתן להתחבר."
+},
 
 };
