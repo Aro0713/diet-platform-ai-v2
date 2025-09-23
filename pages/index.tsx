@@ -361,63 +361,63 @@ const steps = [
         </div>
       </nav>
 
-            /* HERO */
-      <section className="relative w-full">
-        <div className="relative h-[520px] md:h-[640px] lg:h-[720px]">
-          <Image
-            src="/landing-hero.jpg"
-            alt={tUI('landing.heroAlt')}
-            fill
-            priority
-            className="object-cover"
-          />
-          <div className="absolute inset-0 bg-[#0f271e]/65 dark:bg-[#0c1f18]/65" />
+<section className="relative w-full">
+  <div className="relative h-[520px] md:h-[640px] lg:h-[720px]">
+    <Image
+      src="/landing-hero.jpg"
+      alt={tUI('landing.heroAlt')}
+      fill
+      priority
+      className="object-cover"
+    />
+    <div className="absolute inset-0 bg-[#0f271e]/65 dark:bg-[#0c1f18]/65" />
 
-          {/* LOGO — góra, środek */}
-          <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20">
-            <Image
-              src="/logo-dietcare.png"
-              alt={tUI('landing.logoAlt')}
-              width={300}
-              height={96}
-              className="drop-shadow-2xl"
-              priority
-            />
-          </div>
+    {/* LOGO — na samej górze, wyśrodkowane */}
+    <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20">
+      <Image
+        src="/logo-dietcare.png"
+        alt={tUI('landing.logoAlt')}
+        width={300}
+        height={96}
+        className="drop-shadow-2xl"
+        priority
+      />
+    </div>
 
-          {/* TEKST — bez h1 (motto usunięte) */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-            {/* Opis platformy */}
-            <p className="max-w-2xl md:max-w-3xl text-lg md:text-2xl lg:text-[26px] font-medium tracking-tight leading-relaxed text-white/95">
-              {tUI('landing.tagline.desc')}
-            </p>
+    {/* TEKST */}
+    <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
+      {/* tagline.title */}
+      <p className="max-w-3xl text-base md:text-lg lg:text-xl font-semibold tracking-tight leading-relaxed text-white/90">
+        {tUI('landing.tagline.title')}
+      </p>
 
-            {/* ⛔️ USUNIĘTE MOTTO:
-            <h1 className="text-4xl md:text-6xl ...">
-              {tUI('landing.slogan')}
-            </h1>
-            */}
+      {/* Opis platformy */}
+      <p className="mt-4 max-w-2xl md:max-w-3xl text-lg md:text-2xl lg:text-[26px] font-medium tracking-tight leading-relaxed text-white/95">
+        {tUI('landing.tagline.desc')}
+      </p>
 
-            {/* Subheadline */}
-            <p className="mt-5 max-w-2xl md:max-w-3xl text-lg md:text-2xl leading-relaxed text-white/95">
-              {tUI('landing.subheadline')}
-            </p>
+      {/* ⛔️ landing.slogan USUNIĘTY */}
 
-            {/* CTA */}
-            <div className="mt-7">
-              <button
-                onClick={() => {
-                  localStorage.setItem('entryMode', 'patient');
-                  window.location.href = '/register?mode=patient';
-                }}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white px-7 py-3.5 rounded-xl text-lg shadow-lg"
-              >
-                {tUI('cta.title')}
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Subheadline */}
+      <p className="mt-5 max-w-2xl md:max-w-3xl text-lg md:text-2xl leading-relaxed text-white/95">
+        {tUI('landing.subheadline')}
+      </p>
+
+      {/* CTA */}
+      <div className="mt-7">
+        <button
+          onClick={() => {
+            localStorage.setItem('entryMode', 'patient');
+            window.location.href = '/register?mode=patient';
+          }}
+          className="bg-emerald-600 hover:bg-emerald-700 text-white px-7 py-3.5 rounded-xl text-lg shadow-lg"
+        >
+          {tUI('cta.title')}
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
 
       {/* STEPS */}
       <section className="mx-auto max-w-6xl px-5 -mt-10 md:-mt-14">
