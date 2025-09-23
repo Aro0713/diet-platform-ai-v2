@@ -373,7 +373,7 @@ const steps = [
           <div className="absolute inset-0 bg-[#0f271e]/65 dark:bg-[#0c1f18]/65" />
 
           {/* LOGO — absolutnie przy samej górze, wyśrodkowane */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 z-20 pt-2">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 z-20 pt-3">
             <Image
               src="/logo-dietcare.png"
               alt={tUI('landing.logoAlt')}
@@ -384,23 +384,16 @@ const steps = [
             />
           </div>
 
-          {/* (opcjonalnie) znacznik „Hero!” w narożniku */}
-          <div className="absolute top-3 right-3 z-30 text-white/90 font-semibold text-sm drop-shadow">
-            Hero!
-          </div>
-
           {/* TEKST — zaczyna się niżej niż logo, ta sama typografia co akapit „Diet Care Platform …” */}
-          <div className="absolute inset-x-0 top-28 md:top-32 lg:top-36 flex flex-col items-center px-6 text-center">
-            {/* tagline.title — styl identyczny jak niżej (tekst DCP) */}
-            <p className="max-w-2xl md:max-w-3xl text-lg md:text-2xl lg:text-[26px] font-medium tracking-tight leading-relaxed text-white/95">
+          <div className="absolute top-40 md:top-48 lg:top-56 right-0 left-auto flex flex-col items-end px-6 md:pr-12 lg:pr-24 text-right max-w-3xl">
+           {/* tagline.title — styl identyczny jak niżej (tekst DCP) */}
+            <p className="mt-5 max-w-2xl md:max-w-3xl text-lg md:text-2xl leading-relaxed text-white/95">
               {tUI('landing.tagline.title')}
             </p>
-
             {/* akapit „Diet Care Platform …” */}
-            <p className="mt-4 max-w-2xl md:max-w-3xl text-lg md:text-2xl lg:text-[26px] font-medium tracking-tight leading-relaxed text-white/95">
+            <p className="mt-5 max-w-2xl md:max-w-3xl text-lg md:text-2xl leading-relaxed text-white/95">
               {tUI('landing.tagline.desc')}
             </p>
-
             {/* subheadline */}
             <p className="mt-5 max-w-2xl md:max-w-3xl text-lg md:text-2xl leading-relaxed text-white/95">
               {tUI('landing.subheadline')}
