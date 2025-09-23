@@ -7829,5 +7829,192 @@ pricingPro365B4: {
   ar: "تم تأكيد البريد الإلكتروني. يمكنك تسجيل الدخول.",
   he: "האימייל אושר. ניתן להתחבר."
 },
+// ─────────────────────────────────────────────────────────────────────────────
+// APP
+// ─────────────────────────────────────────────────────────────────────────────
+"app.title": {
+  pl: "Diet Care Platform",
+  en: "Diet Care Platform",
+  es: "Diet Care Platform",
+  fr: "Diet Care Platform",
+  de: "Diet Care Platform",
+  ua: "Diet Care Platform",
+  ru: "Diet Care Platform",
+  zh: "Diet Care Platform",
+  hi: "Diet Care Platform",
+  ar: "منصّة رعاية النظام الغذائي",
+  he: "פלטפורמת Diet Care"
+},
+"app.metaDescription": {
+  pl: "Spersonalizowane plany żywieniowe z analizą medyczną, wywiadem i przepisami — w 11 językach.",
+  en: "Personalized nutrition plans with medical analysis, interview, and recipes — in 11 languages.",
+  es: "Planes de nutrición personalizados con análisis médico, entrevista y recetas — en 11 idiomas.",
+  fr: "Plans nutritionnels personnalisés avec analyse médicale, entretien et recettes — en 11 langues.",
+  de: "Personalisierte Ernährungspläne mit medizinischer Analyse, Anamnese und Rezepten — in 11 Sprachen.",
+  ua: "Персоналізовані плани харчування з медичним аналізом, опитуванням і рецептами — 11 мов.",
+  ru: "Персонализированные планы питания с меданализом, опросом и рецептами — на 11 языках.",
+  zh: "个性化营养方案，含医学分析、问诊与食谱——支持 11 种语言。",
+  hi: "व्यक्तिगत पोषण योजनाएँ—चिकित्सीय विश्लेषण, इंटरव्यू और रेसिपी—11 भाषाओं में।",
+  ar: "خطط تغذية مخصّصة مع تحليل طبي، مقابلة ووصفات — بـ 11 لغة.",
+  he: "תוכניות תזונה מותאמות עם ניתוח רפואי, ראיון ומתכונים — ב־11 שפות."
+},
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NAV
+// ─────────────────────────────────────────────────────────────────────────────
+"nav.languageLabel": {
+  pl: "Wybierz język", en: "Choose language", es: "Elige idioma", fr: "Choisir la langue",
+  de: "Sprache wählen", ua: "Виберіть мову", ru: "Выберите язык",
+  zh: "选择语言", hi: "भाषा चुनें", ar: "اختر اللغة", he: "בחר שפה"
+},
+"nav.languageAria": {
+  pl: "Selektor języka", en: "Language selector", es: "Selector de idioma", fr: "Sélecteur de langue",
+  de: "Sprachauswahl", ua: "Вибір мови", ru: "Выбор языка",
+  zh: "语言选择器", hi: "भाषा चयन", ar: "مُحدِّد اللغة", he: "בורר שפה"
+},
+"nav.darkMode": {
+  pl: "Tryb ciemny", en: "Dark mode", es: "Modo oscuro", fr: "Mode sombre",
+  de: "Dunkelmodus", ua: "Темний режим", ru: "Тёмный режим",
+  zh: "深色模式", hi: "डार्क मोड", ar: "الوضع الداكن", he: "מצב כהה"
+},
+"nav.lightMode": {
+  pl: "Tryb jasny", en: "Light mode", es: "Modo claro", fr: "Mode clair",
+  de: "Hellmodus", ua: "Світлий режим", ru: "Светлый режим",
+  zh: "浅色模式", hi: "लाइट मोड", ar: "الوضع الفاتح", he: "מצב בהיר"
+},
+"nav.toggleContrast": {
+  pl: "Przełącz kontrast", en: "Toggle contrast", es: "Cambiar contraste", fr: "Basculer le contraste",
+  de: "Kontrast umschalten", ua: "Перемкнути контраст", ru: "Переключить контраст",
+  zh: "切换对比度", hi: "कॉन्ट्रास्ट बदलें", ar: "تبديل التباين", he: "החלף ניגודיות"
+},
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HERO
+// ─────────────────────────────────────────────────────────────────────────────
+"landing.heroAlt": {
+  pl: "Zdrowe produkty – Diet Care Platform", en: "Healthy foods — Diet Care Platform",
+  es: "Alimentos saludables — Diet Care Platform", fr: "Aliments sains — Diet Care Platform",
+  de: "Gesunde Lebensmittel — Diet Care Platform", ua: "Здорові продукти — Diet Care Platform",
+  ru: "Здоровые продукты — Diet Care Platform", zh: "健康食物 — Diet Care Platform",
+  hi: "हेल्दी फ़ूड्स — Diet Care Platform", ar: "أطعمة صحية — منصّة رعاية النظام الغذائي", he: "מזון בריא — פלטפורמת Diet Care"
+},
+"landing.logoAlt": {
+  pl: "Logo Diet Care Platform", en: "Diet Care Platform logo", es: "Logotipo de Diet Care Platform",
+  fr: "Logo de Diet Care Platform", de: "Diet Care Platform Logo", ua: "Логотип Diet Care Platform",
+  ru: "Логотип Diet Care Platform", zh: "Diet Care Platform 标志",
+  hi: "Diet Care Platform लोगो", ar: "شعار منصّة رعاية النظام الغذائي", he: "לוגו Diet Care Platform"
+},
+"landing.slogan": {
+  pl: "Twoja dieta. Twoje zdrowie. Jedna platforma.",
+  en: "Your diet. Your health. One platform.",
+  es: "Tu dieta. Tu salud. Una plataforma.",
+  fr: "Votre alimentation. Votre santé. Une plateforme.",
+  de: "Deine Ernährung. Deine Gesundheit. Eine Plattform.",
+  ua: "Твоя дієта. Твоє здоров’я. Одна платформа.",
+  ru: "Твоя диета. Твоё здоровье. Одна платформа.",
+  zh: "你的饮食，你的健康，一个平台。",
+  hi: "आपका आहार, आपका स्वास्थ्य — एक प्लेटफ़ॉर्म।",
+  ar: "نظامك الغذائي. صحتك. منصة واحدة.",
+  he: "התזונה שלך. הבריאות שלך. פלטפורמה אחת."
+},
+"landing.subheadline": {
+  pl: "Spersonalizowany plan z analizą medyczną, wywiadem i przepisami — gotowy do zatwierdzenia przez specjalistę.",
+  en: "A personalized plan with medical analysis, interview, and recipes — ready for clinician review.",
+  es: "Plan personalizado con análisis médico, entrevista y recetas — listo para aprobación del especialista.",
+  fr: "Plan personnalisé avec analyse médicale, entretien et recettes — prêt pour validation par un spécialiste.",
+  de: "Personalisierter Plan mit medizinischer Analyse, Anamnese und Rezepten — bereit zur Freigabe.",
+  ua: "Персоналізований план з медичним аналізом, опитуванням і рецептами — готовий до затвердження.",
+  ru: "Персональный план с меданализом, опросом и рецептами — готов к утверждению специалистом.",
+  zh: "含医学分析、问诊与食谱的个性化方案——可供医生审核。",
+  hi: "चिकित्सीय विश्लेषण, इंटरव्यू और रेसिपी के साथ व्यक्तिगत योजना — विशेषज्ञ अनुमोदन हेतु तैयार।",
+  ar: "خطة مخصّصة مع تحليل طبي، مقابلة ووصفات — جاهزة لاعتماد المختص.",
+  he: "תוכנית מותאמת עם ניתוח רפואי, ראיון ומתכונים — מוכנה לאישור מומחה."
+},
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STEPS (6 kafelków)
+// ─────────────────────────────────────────────────────────────────────────────
+"steps.registration.title": { pl: "Rejestracja", en: "Registration", es: "Registro", fr: "Inscription", de: "Registrierung", ua: "Реєстрація", ru: "Регистрация", zh: "注册", hi: "पंजीकरण", ar: "التسجيل", he: "הרשמה" },
+"steps.registration.desc": { pl: "Prywatne konto. Dane chronione.", en: "Private account. Data protected.", es: "Cuenta privada. Datos protegidos.", fr: "Compte privé. Données protégées.", de: "Privates Konto. Daten geschützt.", ua: "Приватний акаунт. Дані захищені.", ru: "Приватный аккаунт. Данные защищены.", zh: "私密账户。数据受保护。", hi: "निजी खाता। डेटा सुरक्षित।", ar: "حساب خاص. البيانات محمية.", he: "חשבון פרטי. הנתונים מוגנים." },
+"steps.registration.alt": { pl: "Ikona rejestracji", en: "Registration icon", es: "Icono de registro", fr: "Icône d’inscription", de: "Registrierungsicon", ua: "Іконка реєстрації", ru: "Иконка регистрации", zh: "注册图标", hi: "पंजीकरण आइकन", ar: "أيقونة التسجيل", he: "סמל הרשמה" },
+
+"steps.medical.title": { pl: "Analiza medyczna", en: "Medical analysis", es: "Análisis médico", fr: "Analyse médicale", de: "Medizinische Analyse", ua: "Медичний аналіз", ru: "Медицинский анализ", zh: "医学分析", hi: "चिकित्सीय विश्लेषण", ar: "تحليل طبي", he: "ניתוח רפואי" },
+"steps.medical.desc": { pl: "Wpiszesz wyniki, jeśli posiadasz.", en: "Enter test results if you have them.", es: "Introduce resultados si los tienes.", fr: "Saisissez vos résultats si vous en avez.", de: "Tragen Sie Werte ein, falls vorhanden.", ua: "Введіть результати за наявності.", ru: "Введите результаты, если есть.", zh: "如有化验结果，请填写。", hi: "यदि आपके पास परिणाम हैं तो दर्ज करें।", ar: "أدخل النتائج إن وجدت.", he: "הזן תוצאות אם יש." },
+"steps.medical.alt": { pl: "Ikona analizy medycznej", en: "Medical analysis icon", es: "Icono de análisis médico", fr: "Icône d’analyse médicale", de: "Symbol medizinische Analyse", ua: "Іконка медичного аналізу", ru: "Иконка меданализа", zh: "医学分析图标", hi: "मेडिकल विश्लेषण आइकन", ar: "أيقونة التحليل الطبي", he: "סמל ניתוח רפואי" },
+
+"steps.interview.title": { pl: "Wywiad", en: "Interview", es: "Entrevista", fr: "Entretien", de: "Anamnese", ua: "Опитування", ru: "Опрос", zh: "问诊", hi: "इंटरव्यू", ar: "مقابلة", he: "ראיון" },
+"steps.interview.desc": { pl: "Preferencje, nietolerancje, styl życia.", en: "Preferences, intolerances, lifestyle.", es: "Preferencias, intolerancias, estilo de vida.", fr: "Préférences, intolérances, mode de vie.", de: "Präferenzen, Unverträglichkeiten, Lebensstil.", ua: "Уподобання, непереносимості, спосіб життя.", ru: "Предпочтения, непереносимости, образ жизни.", zh: "偏好、不耐受与生活方式。", hi: "पसंद, असहिष्णुताएँ, जीवनशैली।", ar: "تفضيلات، عدم تحمّل ونمط حياة.", he: "העדפות, חוסר סבילות ואורח חיים." },
+"steps.interview.alt": { pl: "Ikona wywiadu", en: "Interview icon", es: "Icono de entrevista", fr: "Icône d’entretien", de: "Symbol Anamnese", ua: "Іконка опитування", ru: "Иконка опроса", zh: "问诊图标", hi: "इंटरव्यू आइकन", ar: "أيقونة المقابلة", he: "סמל ראיון" },
+
+"steps.calculator.title": { pl: "Kalkulator", en: "Calculator", es: "Calculadora", fr: "Calculateur", de: "Rechner", ua: "Калькулятор", ru: "Калькулятор", zh: "计算器", hi: "कैलकुलेटर", ar: "حاسبة", he: "מחשבון" },
+"steps.calculator.desc": { pl: "BMI i wskaźniki liczone automatycznie.", en: "BMI and metrics calculated automatically.", es: "IMC y métricas calculadas automáticamente.", fr: "IMC et indicateurs calculés automatiquement.", de: "BMI und Kennzahlen automatisch berechnet.", ua: "ІМТ та показники обчислюються автоматично.", ru: "ИМТ и показатели считаются автоматически.", zh: "自动计算 BMI 与指标。", hi: "बीएमआई व अन्य मेट्रिक्स स्वतः गणना।", ar: "حساب مؤشر كتلة الجسم والمؤشرات تلقائياً.", he: "חישוב BMI ומדדים אוטומטית." },
+"steps.calculator.alt": { pl: "Ikona kalkulatora", en: "Calculator icon", es: "Icono de calculadora", fr: "Icône de calculatrice", de: "Rechnersymbol", ua: "Іконка калькулятора", ru: "Иконка калькулятора", zh: "计算器图标", hi: "कैलकुलेटर आइकन", ar: "أيقونة الحاسبة", he: "סמל מחשבון" },
+
+"steps.plan.title": { pl: "Plan diety", en: "Diet plan", es: "Plan de dieta", fr: "Plan de régime", de: "Ernährungsplan", ua: "План дієти", ru: "План питания", zh: "饮食计划", hi: "डाइट प्लान", ar: "خطة غذائية", he: "תוכנית תזונה" },
+"steps.plan.desc": { pl: "7-dniowy plan zatwierdzisz Ty lub lekarz.", en: "7-day plan approved by you or your doctor.", es: "Plan de 7 días aprobado por ti o por tu médico.", fr: "Plan de 7 jours validé par vous ou votre médecin.", de: "7-Tage-Plan — Freigabe durch dich oder Arzt.", ua: "7-денний план затверджуєш ти або лікар.", ru: "7-дневный план утверждаете вы или врач.", zh: "7 天计划，可由您或医生确认。", hi: "7-दिवसीय योजना—आप/चिकित्सक स्वीकृत।", ar: "خطة 7 أيام يعتمدها أنت أو طبيبك.", he: "תוכנית ל-7 ימים — באישורך או הרופא." },
+"steps.plan.alt": { pl: "Ikona planu diety", en: "Diet plan icon", es: "Icono de plan de dieta", fr: "Icône de plan de régime", de: "Symbol Ernährungsplan", ua: "Іконка плану дієти", ru: "Иконка плана питания", zh: "饮食计划图标", hi: "डाइट प्लान आइकन", ar: "أيقونة خطة غذائية", he: "סמל תוכנית תזונה" },
+
+"steps.recipes.title": { pl: "Przepisy / Look", en: "Recipes / Look", es: "Recetas / Look", fr: "Recettes / Look", de: "Rezepte / Look", ua: "Рецепти / Look", ru: "Рецепты / Look", zh: "食谱 / Look", hi: "रेसिपी / Look", ar: "وصفات / Look", he: "מתכונים / Look" },
+"steps.recipes.desc": { pl: "Lista zakupów, przepisy, pomoc 24/7.", en: "Shopping list, recipes, 24/7 help.", es: "Lista de compras, recetas y ayuda 24/7.", fr: "Liste d’achats, recettes et aide 24/7.", de: "Einkaufsliste, Rezepte, Hilfe 24/7.", ua: "Список покупок, рецепти, допомога 24/7.", ru: "Список покупок, рецепты, помощь 24/7.", zh: "购物清单、食谱与 24/7 支持。", hi: "शॉपिंग सूची, रेसिपी और 24/7 सहायता।", ar: "قائمة تسوّق، وصفات ودعم 24/7.", he: "רשימת קניות, מתכונים ותמיכה 24/7." },
+"steps.recipes.alt": { pl: "Ikona przepisów", en: "Recipes icon", es: "Icono de recetas", fr: "Icône de recettes", de: "Rezept-Symbol", ua: "Іконка рецептів", ru: "Иконка рецептов", zh: "食谱图标", hi: "रेसिपी आइकन", ar: "أيقونة الوصفات", he: "סמל מתכונים" },
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PRICING
+// ─────────────────────────────────────────────────────────────────────────────
+"pricing.title": { pl: "Wybierz plan dopasowany do Twoich potrzeb", en: "Choose a plan that fits your needs", es: "Elige el plan que se adapta a tus necesidades", fr: "Choisissez le plan adapté à vos besoins", de: "Wähle den passenden Tarif", ua: "Обери план під свої потреби", ru: "Выберите план под ваши задачи", zh: "选择适合你的方案", hi: "अपनी ज़रूरत के अनुसार प्लान चुनें", ar: "اختر الخطة المناسبة لاحتياجاتك", he: "בחרו תוכנית שמתאימה לכם" },
+"pricing.patientsHeader": { pl: "Pacjenci", en: "Patients", es: "Pacientes", fr: "Patients", de: "Patienten", ua: "Пацієнти", ru: "Пациенты", zh: "患者", hi: "मरीज", ar: "المرضى", he: "מטופלים" },
+"pricing.proHeader": { pl: "Lekarze i dietetycy", en: "Doctors & Dietitians", es: "Médicos y dietistas", fr: "Médecins & diététiciens", de: "Ärzte & Ernährungsberater", ua: "Лікарі та дієтологи", ru: "Врачи и диетологи", zh: "医生与营养师", hi: "डॉक्टर और डाइटीशियन", ar: "الأطباء وأخصائيو التغذية", he: "רופאים ותזונאים" },
+"pricing.popularTag": { pl: "Najczęściej wybierany", en: "Most popular", es: "Más popular", fr: "Le plus populaire", de: "Am beliebtesten", ua: "Найпопулярніший", ru: "Самый популярный", zh: "最受欢迎", hi: "सबसे लोकप्रिय", ar: "الأكثر شيوعًا", he: "הפופולרית ביותר" },
+
+// Pacjent — 7 dni
+"pricing.plan7.title": { pl: "Plan 7 dni", en: "7-day plan", es: "Plan de 7 días", fr: "Plan 7 jours", de: "7-Tage-Plan", ua: "План на 7 днів", ru: "План на 7 дней", zh: "7 天方案", hi: "7-दिनीय प्लान", ar: "خطة 7 أيام", he: "תוכנית ל-7 ימים" },
+"pricing.plan7.b1": { pl: "Spersonalizowana dieta AI + specjalista", en: "Personalized AI diet + clinician input", es: "Dieta personalizada por IA + especialista", fr: "Régime personnalisé par IA + spécialiste", de: "Personalisierte KI-Diät + Fachinput", ua: "Персональна дієта від ШІ + фахівець", ru: "Персональная ИИ-диета + специалист", zh: "AI 个性化饮食 + 专家审核", hi: "व्यक्तिगत AI डाइट + विशेषज्ञ", ar: "حمية مخصّصة بالذكاء الاصطناعي + مختص", he: "דיאטה מותאמת ב-AI + מומחה" },
+"pricing.plan7.b2": { pl: "17 kuchni świata • 24 modele diet • 15 celów", en: "17 cuisines • 24 diet models • 15 goals", es: "17 cocinas • 24 modelos de dieta • 15 objetivos", fr: "17 cuisines • 24 modèles de régime • 15 objectifs", de: "17 Küchen • 24 Diätmodelle • 15 Ziele", ua: "17 кухонь • 24 моделі дієт • 15 цілей", ru: "17 кухонь • 24 модели диет • 15 целей", zh: "17 种菜系 • 24 种饮食模型 • 15 个目标", hi: "17 व्यंजन • 24 डाइट मॉडल • 15 लक्ष्य", ar: "‏17 مطابخ • 24 نماذج حمية • 15 أهداف", he: "17 מטבחים • 24 מודלי דיאטה • 15 יעדים" },
+"pricing.plan7.b3": { pl: "Lista zakupów i przepisy", en: "Shopping list and recipes", es: "Lista de compras y recetas", fr: "Liste d’achats et recettes", de: "Einkaufsliste und Rezepte", ua: "Список покупок і рецепти", ru: "Список покупок и рецепты", zh: "购物清单与食谱", hi: "शॉपिंग सूची और रेसिपी", ar: "قائمة تسوّق ووصفات", he: "רשימת קניות ומתכונים" },
+"pricing.plan7.b4": { pl: "Eksport do PDF", en: "Export to PDF", es: "Exportar a PDF", fr: "Exporter en PDF", de: "Export als PDF", ua: "Експорт у PDF", ru: "Экспорт в PDF", zh: "导出为 PDF", hi: "PDF में एक्सपोर्ट", ar: "تصدير إلى PDF", he: "ייצוא ל-PDF" },
+
+// Pacjent — 30 dni
+"pricing.plan30.title": { pl: "Plan 30 dni", en: "30-day plan", es: "Plan de 30 días", fr: "Plan 30 jours", de: "30-Tage-Plan", ua: "План на 30 днів", ru: "План на 30 дней", zh: "30 天方案", hi: "30-दिनीय प्लान", ar: "خطة 30 يومًا", he: "תוכנית ל-30 יום" },
+"pricing.plan30.b1": { pl: "Pełny miesiąc planów 7-dniowych", en: "A full month of 7-day plans", es: "Un mes completo de planes de 7 días", fr: "Un mois complet de plans de 7 jours", de: "Ein ganzer Monat 7-Tage-Pläne", ua: "Повний місяць 7-денних планів", ru: "Полный месяц 7-дневных планов", zh: "整整一个月的 7 天方案", hi: "पूरा महीना 7-दिनीय प्लान", ar: "شهر كامل من خطط 7 أيام", he: "חודש מלא של תוכניות ל-7 ימים" },
+"pricing.plan30.b2": { pl: "Analiza medyczna + podsumowanie wywiadu", en: "Medical analysis + interview summary", es: "Análisis médico + resumen de entrevista", fr: "Analyse médicale + résumé d’entretien", de: "Medizinische Analyse + Anamnesekurzfassung", ua: "Медичний аналіз + підсумок опитування", ru: "Меданализ + сводка опроса", zh: "医学分析 + 问诊摘要", hi: "चिकित्सीय विश्लेषण + इंटरव्यू सार", ar: "تحليل طبي + ملخص مقابلة", he: "ניתוח רפואי + תקציר ראיון" },
+"pricing.plan30.b3": { pl: "Lista zakupów i przepisy", en: "Shopping list and recipes", es: "Lista de compras y recetas", fr: "Liste d’achats et recettes", de: "Einkaufsliste und Rezepte", ua: "Список покупок і рецепти", ru: "Список покупок и рецепты", zh: "购物清单与食谱", hi: "शॉपिंग सूची और रेसिपी", ar: "قائمة تسوّق ووصفات", he: "רשימת קניות ומתכונים" },
+"pricing.plan30.b4": { pl: "Eksport do PDF", en: "Export to PDF", es: "Exportar a PDF", fr: "Exporter en PDF", de: "Export als PDF", ua: "Експорт у PDF", ru: "Экспорт в PDF", zh: "导出为 PDF", hi: "PDF में एक्सपोर्ट", ar: "تصدير إلى PDF", he: "ייצוא ל-PDF" },
+
+// Pacjent — 90 dni
+"pricing.plan90.title": { pl: "Plan 90 dni", en: "90-day plan", es: "Plan de 90 días", fr: "Plan 90 jours", de: "90-Tage-Plan", ua: "План на 90 днів", ru: "План на 90 дней", zh: "90 天方案", hi: "90-दिनीय प्लान", ar: "خطة 90 يومًا", he: "תוכנית ל-90 יום" },
+"pricing.plan90.b1": { pl: "3 miesiące planów 7-dniowych", en: "3 months of 7-day plans", es: "3 meses de planes de 7 días", fr: "3 mois de plans de 7 jours", de: "3 Monate 7-Tage-Pläne", ua: "3 місяці 7-денних планів", ru: "3 месяца 7-дневных планов", zh: "3 个月的 7 天方案", hi: "3 महीने के 7-दिनीय प्लान", ar: "3 أشهر من خطط 7 أيام", he: "3 חודשי תוכניות ל-7 ימים" },
+"pricing.plan90.b2": { pl: "Analiza medyczna + wywiad", en: "Medical analysis + interview", es: "Análisis médico + entrevista", fr: "Analyse médicale + entretien", de: "Medizinische Analyse + Anamnese", ua: "Медичний аналіз + опитування", ru: "Меданализ + опрос", zh: "医学分析 + 问诊", hi: "चिकित्सीय विश्लेषण + इंटरव्यू", ar: "تحليل طبي + مقابلة", he: "ניתוח רפואי + ראיון" },
+"pricing.plan90.b3": { pl: "Lista zakupów i przepisy", en: "Shopping list and recipes", es: "Lista de compras y recetas", fr: "Liste d’achats et recettes", de: "Einkaufsliste und Rezepte", ua: "Список покупок і рецепти", ru: "Список покупок и рецепты", zh: "购物清单与食谱", hi: "शॉपिंग सूची और रेसिपी", ar: "قائمة تسوّق ووصفات", he: "רשימת קניות ומתכונים" },
+"pricing.plan90.b4": { pl: "Eksport do PDF", en: "Export to PDF", es: "Exportar a PDF", fr: "Exporter en PDF", de: "Export als PDF", ua: "Експорт у PDF", ru: "Экспорт в PDF", zh: "导出为 PDF", hi: "PDF में एक्सपोर्ट", ar: "تصدير إلى PDF", he: "ייצוא ל-PDF" },
+
+// Pacjent — 365 dni
+"pricing.plan365.title": { pl: "Plan 365 dni", en: "365-day plan", es: "Plan de 365 días", fr: "Plan 365 jours", de: "365-Tage-Plan", ua: "План на 365 днів", ru: "План на 365 дней", zh: "365 天方案", hi: "365-दिनीय प्लान", ar: "خطة 365 يومًا", he: "תוכנית ל-365 יום" },
+"pricing.plan365.b1": { pl: "Rok planów 7-dniowych", en: "A year of 7-day plans", es: "Un año de planes de 7 días", fr: "Une année de plans de 7 jours", de: "Ein Jahr 7-Tage-Pläne", ua: "Рік 7-денних планів", ru: "Год 7-дневных планов", zh: "整整一年的 7 天方案", hi: "पूरे साल के 7-दिनीय प्लान", ar: "عام كامل من خطط 7 أيام", he: "שנה של תוכניות ל-7 ימים" },
+"pricing.plan365.b2": { pl: "Analiza medyczna + wywiad", en: "Medical analysis + interview", es: "Análisis médico + entrevista", fr: "Analyse médicale + entretien", de: "Medizinische Analyse + Anamnese", ua: "Медичний аналіз + опитування", ru: "Меданализ + опрос", zh: "医学分析 + 问诊", hi: "चिकित्सीय विश्लेषण + इंटरव्यू", ar: "تحليل طبي + مقابلة", he: "ניתוח רפואי + ראיון" },
+"pricing.plan365.b3": { pl: "Lista zakupów i przepisy", en: "Shopping list and recipes", es: "Lista de compras y recetas", fr: "Liste d’achats et recettes", de: "Einkaufsliste und Rezepte", ua: "Список покупок і рецепти", ru: "Список покупок и рецепты", zh: "购物清单与食谱", hi: "शॉपिंग सूची और रेसिपी", ar: "قائمة تسوّق ووصفات", he: "רשימת קניות ומתכונים" },
+"pricing.plan365.b4": { pl: "Eksport do PDF", en: "Export to PDF", es: "Exportar a PDF", fr: "Exporter en PDF", de: "Export als PDF", ua: "Експорт у PDF", ru: "Экспорт в PDF", zh: "导出为 PDF", hi: "PDF में एक्सपोर्ट", ar: "تصدير إلى PDF", he: "ייצוא ל-PDF" },
+
+// PRO — 30 dni
+"pricing.pro30.title": { pl: "Plan  30 dni (PRO)", en: "30-day plan (PRO)", es: "Plan de 30 días (PRO)", fr: "Plan 30 jours (PRO)", de: "30-Tage-Plan (PRO)", ua: "План на 30 днів (PRO)", ru: "План на 30 дней (PRO)", zh: "30 天方案（PRO）", hi: "30-दिनीय प्लान (PRO)", ar: "خطة 30 يومًا (PRO)", he: "תוכנית ל-30 יום (PRO)" },
+"pricing.pro30.b1": { pl: "Nielimitowana liczba pacjentów", en: "Unlimited patients", es: "Pacientes ilimitados", fr: "Nombre illimité de patients", de: "Unbegrenzte Anzahl von Patienten", ua: "Необмежена кількість пацієнтів", ru: "Неограниченное число пациентов", zh: "病人数量不限", hi: "असीमित मरीज", ar: "عدد غير محدود من المرضى", he: "מספר מטופלים בלתי מוגבל" },
+"pricing.pro30.b2": { pl: "Analiza medyczna AI + korekty specjalisty", en: "AI medical analysis + clinician edits", es: "Análisis médico por IA + ajustes del especialista", fr: "Analyse médicale IA + corrections du spécialiste", de: "KI-Analyse + Korrekturen durch Fachkraft", ua: "Меданаліз ШІ + правки спеціаліста", ru: "Меданализ ИИ + правки специалиста", zh: "AI 医学分析 + 专家修订", hi: "AI चिकित्सीय विश्लेषण + विशेषज्ञ संशोधन", ar: "تحليل طبي بالذكاء الاصطناعي + تعديلات المختص", he: "ניתוח רפואי ב-AI + תיקוני מומחה" },
+"pricing.pro30.b3": { pl: "Generowanie diet i przepisów", en: "Generate diets and recipes", es: "Generación de dietas y recetas", fr: "Génération de régimes et recettes", de: "Erstellung von Plänen & Rezepten", ua: "Генерація дієт і рецептів", ru: "Генерация диет и рецептов", zh: "生成饮食计划与食谱", hi: "डाइट और रेसिपी जनरेट", ar: "إنشاء أنظمة غذائية ووصفات", he: "יצירת דיאטות ומתכונים" },
+"pricing.pro30.b4": { pl: "Eksport do PDF oraz do konta pacjenta", en: "Export to PDF and to patient account", es: "Exportar a PDF y a la cuenta del paciente", fr: "Exporter en PDF et vers le compte du patient", de: "Export als PDF und ins Patientenkonto", ua: "Експорт у PDF та до акаунта пацієнта", ru: "Экспорт в PDF и в аккаунт пациента", zh: "导出为 PDF 并同步至患者账户", hi: "PDF में एक्सपोर्ट और मरीज खाते में", ar: "تصدير إلى PDF وإلى حساب المريض", he: "ייצוא ל-PDF ולחשבון המטופל" },
+
+// PRO — 365 dni
+"pricing.pro365.title": { pl: "Plan 365 dni (PRO)", en: "365-day plan (PRO)", es: "Plan de 365 días (PRO)", fr: "Plan 365 jours (PRO)", de: "365-Tage-Plan (PRO)", ua: "План на 365 днів (PRO)", ru: "План на 365 дней (PRO)", zh: "365 天方案（PRO）", hi: "365-दिनीय प्लान (PRO)", ar: "خطة 365 يومًا (PRO)", he: "תוכנית ל-365 יום (PRO)" },
+"pricing.pro365.b1": { pl: "Nielimitowana liczba pacjentów", en: "Unlimited patients", es: "Pacientes ilimitados", fr: "Nombre illimité de patients", de: "Unbegrenzte Anzahl von Patienten", ua: "Необмежена кількість пацієнтів", ru: "Неограниченное число пациентов", zh: "病人数量不限", hi: "असीमित मरीज", ar: "عدد غير محدود من المرضى", he: "מספר מטופלים בלתי מוגבל" },
+"pricing.pro365.b2": { pl: "Analiza medyczna AI + korekty specjalisty", en: "AI medical analysis + clinician edits", es: "Análisis médico por IA + ajustes del especialista", fr: "Analyse médicale IA + corrections du spécialiste", de: "KI-Analyse + Korrekturen durch Fachkraft", ua: "Меданаліз ШІ + правки спеціаліста", ru: "Меданализ ИИ + правки специалиста", zh: "AI 医学分析 + 专家修订", hi: "AI चिकित्सीय विश्लेषण + विशेषज्ञ संशोधन", ar: "تحليل طبي بالذكاء الاصطناعي + تعديلات المختص", he: "ניתוח רפואי ב-AI + תיקוני מומחה" },
+"pricing.pro365.b3": { pl: "Generowanie diet i przepisów", en: "Generate diets and recipes", es: "Generación de dietas y recetas", fr: "Génération de régimes et recettes", de: "Erstellung von Plänen & Rezepten", ua: "Генерація дієт і рецептів", ru: "Генерация диет и рецептов", zh: "生成饮食计划与食谱", hi: "डाइट और रेसिपी जनरेट", ar: "إنشاء أنظمة غذائية ووصفات", he: "יצירת דיאטות ומתכונים" },
+"pricing.pro365.b4": { pl: "Eksport do PDF oraz do konta pacjenta", en: "Export to PDF and to patient account", es: "Exportar a PDF y a la cuenta del paciente", fr: "Exporter en PDF et vers le compte du patient", de: "Export als PDF und ins Patientenkonto", ua: "Експорт у PDF та до акаунта пацієнта", ru: "Экспорт в PDF и в аккаунт пациента", zh: "导出为 PDF 并同步至患者账户", hi: "PDF में एक्सपोर्ट और मरीज खाते में", ar: "تصدير إلى PDF وإلى حساب المريض", he: "ייצוא ל-PDF ולחשבון המטופל" },
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CTA
+// ─────────────────────────────────────────────────────────────────────────────
+"cta.title": { pl: "Zacznij teraz", en: "Start now", es: "Empieza ahora", fr: "Commencez maintenant", de: "Jetzt starten", ua: "Почни зараз", ru: "Начать сейчас", zh: "立即开始", hi: "अभी शुरू करें", ar: "ابدأ الآن", he: "התחילו עכשיו" },
+"cta.enterAsPatient": { pl: "Wejdź jako pacjent", en: "Enter as patient", es: "Entrar como paciente", fr: "Entrer en tant que patient", de: "Als Patient einsteigen", ua: "Увійти як пацієнт", ru: "Войти как пациент", zh: "以患者身份进入", hi: "रोगी के रूप में प्रवेश", ar: "الدخول كمريض", he: "כניסה כמטופל" },
+"cta.enterAsDoctor": { pl: "Wejdź jako lekarz/dietetyk", en: "Enter as doctor/dietitian", es: "Entrar como médico/dietista", fr: "Entrer comme médecin/diététicien", de: "Als Arzt/Ernährungsberater einsteigen", ua: "Увійти як лікар/дієтолог", ru: "Войти как врач/диетолог", zh: "以医生/营养师身份进入", hi: "डॉक्टर/डाइटीशियन के रूप में प्रवेश", ar: "الدخول كطبيب/أخصائي تغذية", he: "כניסה כרופא/דיאטנית" },
+"cta.patientAria": { pl: "Przycisk: wejdź jako pacjent", en: "Button: enter as patient", es: "Botón: entrar como paciente", fr: "Bouton : entrer comme patient", de: "Button: als Patient einsteigen", ua: "Кнопка: увійти як пацієнт", ru: "Кнопка: войти как пациент", zh: "按钮：以患者身份进入", hi: "बटन: मरीज के रूप में प्रवेश", ar: "زر: الدخول كمريض", he: "כפתור: כניסה כמטופל" },
+"cta.doctorAria": { pl: "Przycisk: wejdź jako lekarz/dietetyk", en: "Button: enter as doctor/dietitian", es: "Botón: entrar como médico/dietista", fr: "Bouton : entrer comme médecin/diététicien", de: "Button: als Arzt/Ernährungsberater einsteigen", ua: "Кнопка: увійти як лікар/дієтолог", ru: "Кнопка: войти как врач/диетолог", zh: "按钮：以医生/营养师身份进入", hi: "बटन: डॉक्टर/डाइटीशियन के रूप में प्रवेश", ar: "زر: الدخول كطبيب/أخصائي تغذية", he: "כפתור: כניסה כרופא/דיאטנית" },
 
 };
