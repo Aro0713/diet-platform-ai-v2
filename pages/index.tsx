@@ -362,7 +362,7 @@ const steps = [
       </nav>
 
       <section className="relative w-full">
-        <div className="relative h-[600px] md:h-[640px] lg:h-[720px]">
+        <div className="relative h-[680px] md:h-[700px] lg:h-[720px]">
           <Image
             src="/landing-hero.jpg"
             alt={tUI('landing.heroAlt')}
@@ -385,23 +385,23 @@ const steps = [
           </div>
 
           {/* TEKST — zaczyna się niżej niż logo, ta sama typografia co akapit „Diet Care Platform …” */}
-          <div className="absolute top-40 md:top-48 lg:top-56 right-0 left-auto flex flex-col items-end px-6 md:pr-12 lg:pr-24 pb-24 text-justify max-w-3xl">
-            <p className="max-w-3xl text-base md:text-lg lg:text-xl font-semibold tracking-tight leading-relaxed text-white/90">
+          <div className="absolute top-40 md:top-48 lg:top-56 right-0 left-auto flex flex-col items-end px-6 md:pr-12 lg:pr-24 pb-32 md:pb-36 text-justify max-w-3xl">
+            <p className="max-w-3xl text-base md:text-lg lg:text-xl font-semibold tracking-tight leading-[1.6] text-white/95">
               {tUI('landing.tagline.title')}
             </p>
 
-            <p className="mt-4 max-w-2xl md:max-w-3xl text-lg md:text-2xl lg:text-[26px] font-medium tracking-tight leading-relaxed text-white/95">
+            <p className="max-w-3xl text-base md:text-lg lg:text-xl font-semibold tracking-tight leading-[1.6] text-white/95">
               {tUI('landing.tagline.desc')}
             </p>
 
             {/* subheadline usunięte */}
-            <div className="mt-7">
+            <div className="mt-6 w-full flex justify-end">
               <button
                 onClick={() => {
                   localStorage.setItem('entryMode', 'patient');
                   window.location.href = '/register?mode=patient';
                 }}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white px-7 py-3.5 rounded-xl text-lg shadow-lg"
+                className="w-full sm:w-auto max-w-[260px] bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl text-base sm:text-lg shadow-lg"
               >
                 {tUI('cta.title')}
               </button>
@@ -411,7 +411,7 @@ const steps = [
       </section>
 
       {/* STEPS */}
-      <section className="mx-auto max-w-6xl px-5 -mt-10 md:-mt-14">
+      <section className="mx-auto max-w-6xl px-5 mt-8 md:mt-12">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-5">
           {steps.map((s) => (
             <div
