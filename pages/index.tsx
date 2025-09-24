@@ -551,6 +551,7 @@ const steps = [
         </div>
       </section>
       {/* FOOTER */}
+
 <footer className="mt-12 md:mt-16 border-t border-white/10 bg-white/5 dark:bg-black/20 backdrop-blur">
   <div className="mx-auto max-w-6xl px-5 py-8 md:py-10 grid gap-8 md:grid-cols-2">
     {/* Kontakt (bez adresu) */}
@@ -567,29 +568,44 @@ const steps = [
       </p>
     </div>
 
-    {/* Social + strona www */}
-    <div className="md:text-right">
-      <h3 className="text-lg font-semibold">{tUI('footer.followUs')}</h3>
-      <div className="mt-3 flex gap-4 md:justify-end items-center">
-        <a href="https://www.dcp.care" target="_blank" rel="noopener noreferrer" aria-label="Website">
-          <Image src="/icons/globe-color.svg" alt="Website" width={28} height={28} priority />
-        </a>
-        <a href="https://www.facebook.com/DietCarePlatform" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
-          <Image src="/icons/facebook-color.svg" alt="Facebook" width={28} height={28} />
-        </a>
-        <a href="https://www.youtube.com/@DietCarePlatform" target="_blank" rel="noopener noreferrer" aria-label="YouTube">
-          <Image src="/icons/youtube-color.svg" alt="YouTube" width={28} height={28} />
-        </a>
+          {/* Social + strona www */}
+          <div className="md:text-right">
+        <h3 className="text-lg font-semibold">{tUI('footer.followUs')}</h3>
+
+        <div className="mt-3 flex gap-4 md:justify-end items-center">
+          
+          {/* WWW */}
+          <a href="https://www.alsolution.pl" target="_blank" rel="noopener noreferrer" aria-label="Website" className="opacity-90 hover:opacity-100 transition">
+            <svg width="28" height="28" viewBox="0 0 24 24" role="img" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" fill="#10B981"/>
+              <path d="M4 12h16M12 2a16 16 0 0 1 0 20M12 2a16 16 0 0 0 0 20" stroke="#fff" strokeWidth="1.6" fill="none" strokeLinecap="round"/>
+            </svg>
+          </a>
+
+          {/* Facebook */}
+          <a href="https://www.facebook.com/DietCarePlatform" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="opacity-90 hover:opacity-100 transition">
+            <svg width="28" height="28" viewBox="0 0 24 24" role="img" aria-hidden="true">
+              <rect x="2" y="2" width="20" height="20" rx="4" fill="#1877F2"/>
+              <path d="M13.4 8.7h2V6.2c-.4-.1-1.2-.2-2.1-.2-2.1 0-3.5 1.3-3.5 3.6v2H7.9v2.5h1.9V21h2.6v-6h2.1l.4-2.5H12.4v-1.7c0-.7.2-1.1 1-1.1z" fill="#fff"/>
+            </svg>
+          </a>
+
+          {/* YouTube */}
+          <a href="https://www.youtube.com/@DietCarePlatform" target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="opacity-90 hover:opacity-100 transition">
+            <svg width="28" height="28" viewBox="0 0 24 24" role="img" aria-hidden="true">
+              <rect x="2" y="6" width="20" height="12" rx="3" fill="#FF0000"/>
+              <path d="M10 9l5 3-5 3V9z" fill="#fff"/>
+            </svg>
+          </a>
+        </div>
       </div>
-    </div>
-  </div>
+        </div>
 
-  <div className="mx-auto max-w-6xl px-5 pb-6 text-xs opacity-70 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-    <span>© {new Date().getFullYear()} Diet Care Platform</span>
-    <span>{tUI('footer.rights')}</span>
-  </div>
-</footer>
-
+        <div className="mx-auto max-w-6xl px-5 pb-6 text-xs opacity-70 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+          <span>© {new Date().getFullYear()} Diet Care Platform</span>
+          <span>{tUI('footer.rights')}</span>
+        </div>
+      </footer>
     </main>
   );
 }
