@@ -598,7 +598,22 @@ const steps = [
               <path d="M13.4 8.7h2V6.2c-.4-.1-1.2-.2-2.1-.2-2.1 0-3.5 1.3-3.5 3.6v2H7.9v2.5h1.9V21h2.6v-6h2.1l.4-2.5H12.4v-1.7c0-.7.2-1.1 1-1.1z" fill="#fff"/>
             </svg>
           </a>
-
+          {/* Instagram */}
+            <a
+              href="https://www.instagram.com/diet.care88"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagram"
+              className="opacity-90 hover:opacity-100 transition"
+              title="Instagram"
+            >
+              <Image
+                src="/icons/instagram-color.svg"
+                alt="Instagram"
+                width={36}
+                height={36}
+              />
+            </a>
           {/* YouTube */}
           <a href="https://www.youtube.com/@DietCarePlatform" target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="opacity-90 hover:opacity-100 transition">
             <svg width="36" height="36" viewBox="0 0 24 24" role="img" aria-hidden="true">
