@@ -8152,6 +8152,13 @@ pricingPro365B4: {
   hi: "डॉक्टर व डाइटीशियन (PRO)",
   ar: "الأطباء وأخصائيو التغذية (PRO)",
   he: "רופאים ודיאטנ/יות (PRO)"
-}
+},
+"footer.contact":   { pl: "Kontakt", en: "Contact", es: "Contacto", fr: "Contact", de: "Kontakt", ua: "Контакт", ru: "Контакты", zh: "联系方式", hi: "संपर्क", ar: "تواصل", he: "יצירת קשר" },
+"footer.email":     { pl: "E-mail", en: "E-mail", es: "E-mail", fr: "E-mail", de: "E-Mail", ua: "E-mail", ru: "E-mail", zh: "电子邮箱", hi: "ई-मेल", ar: "البريد الإلكتروني", he: "דוא״ל" },
+"footer.admin":     { pl: "Administrator serwisu", en: "Site administrator", es: "Administrador del sitio", fr: "Administrateur du site", de: "Website-Administrator", ua: "Адміністратор сайту", ru: "Администратор сайта", zh: "网站管理员", hi: "साइट प्रशासक", ar: "مسؤول الموقع", he: "מנהל האתר" },
+"footer.address":   { pl: "Adres", en: "Address", es: "Dirección", fr: "Adresse", de: "Adresse", ua: "Адреса", ru: "Адрес", zh: "地址", hi: "पता", ar: "العنوان", he: "כתובת" },
+"footer.followUs":  { pl: "Obserwuj nas", en: "Follow us", es: "Síguenos", fr: "Suivez-nous", de: "Folgen Sie uns", ua: "Слідкуйте за нами", ru: "Подписывайтесь на нас", zh: "关注我们", hi: "हमें फ़ॉलो करें", ar: "تابعنا", he: "עקבו אחרינו" },
+"footer.rights":    { pl: "Wszelkie prawa zastrzeżone.", en: "All rights reserved.", es: "Todos los derechos reservados.", fr: "Tous droits réservés.", de: "Alle Rechte vorbehalten.", ua: "Усі права захищено.", ru: "Все права защищены.", zh: "版权所有。", hi: "सर्वाधिकार सुरक्षित।", ar: "جميع الحقوق محفوظة.", he: "כל הזכויות שמורות." },
+
 
 };

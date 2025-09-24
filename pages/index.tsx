@@ -4,6 +4,15 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { translationsUI } from '@/utils/translationsUI';
 import { type LangKey, languageLabels } from '@/utils/i18n';
+
+// KONTAKT / SOCIAL
+const FOOTER = {
+  email: 'contact@dcp.care', 
+  facebook: 'https://www.facebook.com/profile.php?id=61580694946237',
+  youtube: 'https://www.youtube.com/@DietCarePlatform',
+  adminName: 'ALS sp. z o.o.',
+};
+
 // ────────────────────────────────────────────────────────────────────────────
 // PRICING — market-aware (PL → PLN, EU → EUR, OTHER → USD)
 // ────────────────────────────────────────────────────────────────────────────
@@ -542,6 +551,65 @@ const steps = [
           </button>
         </div>
       </section>
+      {/* FOOTER */}
+<footer className="mt-12 md:mt-16 border-t border-white/10 bg-white/5 dark:bg-black/20 backdrop-blur">
+  <div className="mx-auto max-w-6xl px-5 py-8 md:py-10 grid gap-8 md:grid-cols-2">
+    {/* Kontakt + adres */}
+    <div>
+      <h3 className="text-lg font-semibold">{tUI('footer.contact')}</h3>
+      <p className="mt-2 text-sm opacity-90">
+        <span className="font-medium">{tUI('footer.admin')}:</span> {FOOTER.adminName}
+      </p>
+      <p className="mt-1 text-sm opacity-90">
+        <span className="font-medium">{tUI('footer.address')}:</span>
+        <br />
+      </p>
+      <p className="mt-2 text-sm">
+        <span className="font-medium">{tUI('footer.email')}:</span>{' '}
+        <a href={`mailto:${FOOTER.email}`} className="underline decoration-white/40 hover:decoration-white">
+          {FOOTER.email}
+        </a>
+      </p>
+    </div>
+
+    {/* Social media */}
+    <div className="md:text-right">
+      <h3 className="text-lg font-semibold">{tUI('footer.followUs')}</h3>
+      <div className="mt-3 flex gap-4 md:justify-end text-white/90">
+        {/* Facebook */}
+        <a href={FOOTER.facebook} target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="opacity-80 hover:opacity-100 transition">
+          <span
+            className="inline-block h-6 w-6 bg-current"
+            style={{
+              WebkitMaskImage: 'url(/icons/facebook.svg)', maskImage: 'url(/icons/facebook.svg)',
+              WebkitMaskSize: 'contain', maskSize: 'contain',
+              WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat',
+              WebkitMaskPosition: 'center', maskPosition: 'center',
+            }}
+          />
+        </a>
+        {/* YouTube */}
+        <a href={FOOTER.youtube} target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="opacity-80 hover:opacity-100 transition">
+          <span
+            className="inline-block h-6 w-6 bg-current"
+            style={{
+              WebkitMaskImage: 'url(/icons/youtube.svg)', maskImage: 'url(/icons/youtube.svg)',
+              WebkitMaskSize: 'contain', maskSize: 'contain',
+              WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat',
+              WebkitMaskPosition: 'center', maskPosition: 'center',
+            }}
+          />
+        </a>
+      </div>
+    </div>
+  </div>
+
+  {/* Linia prawna */}
+  <div className="mx-auto max-w-6xl px-5 pb-6 text-xs opacity-70 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+    <span>© {new Date().getFullYear()} Diet Care Platform</span>
+    <span>{tUI('footer.rights')}</span>
+  </div>
+</footer>
     </main>
   );
 }
