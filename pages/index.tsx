@@ -361,6 +361,7 @@ const steps = [
         </div>
       </nav>
 
+            /* HERO */
       <section className="relative w-full">
         <div className="relative h-[680px] md:h-[700px] lg:h-[720px]">
           <Image
@@ -372,44 +373,49 @@ const steps = [
           />
           <div className="absolute inset-0 bg-[#0f271e]/65 dark:bg-[#0c1f18]/65" />
 
-          {/* LOGO — absolutnie przy samej górze, wyśrodkowane */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 z-20 pt-2">
-            <Image
-              src="/logo-dietcare.png"
-              alt={tUI('landing.logoAlt')}
-              width={300}
-              height={96}
-              className="drop-shadow-2xl w-40 sm:w-56 md:w-[300px] h-auto"  // ⟵ NOWE
-              priority
-            />
-          </div>
-          {/* TEKST — zaczyna się niżej niż logo, ta sama typografia co akapit „Diet Care Platform …” */}
-          <div className="absolute top-60 sm:top-72 md:top-48 lg:top-56 right-0 left-auto
-                flex flex-col items-end px-6 md:pr-12 lg:pr-24 pb-32 md:pb-36
-                text-justify max-w-[520px] md:max-w-3xl">
-            <p className="max-w-3xl text-base md:text-lg lg:text-xl font-semibold tracking-tight leading-[1.6] text-white/95">
-              {tUI('landing.tagline.title')}
-            </p>
+          {/* OVERLAY: grid → logo w 1. wierszu, treść w 2. */}
+          <div className="absolute inset-0">
+            <div className="h-full grid grid-rows-[auto,1fr] gap-y-4 sm:gap-y-6">
+              {/* LOGO — zawsze nad treścią, wyśrodkowane */}
+              <div className="flex justify-center pt-2">
+                <Image
+                  src="/logo-dietcare.png"
+                  alt={tUI('landing.logoAlt')}
+                  width={300}
+                  height={96}
+                  className="drop-shadow-2xl w-40 sm:w-56 md:w-64 lg:w-[300px] h-auto"
+                  priority
+                />
+              </div>
 
-            <p className="max-w-3xl text-base md:text-lg lg:text-xl font-semibold tracking-tight leading-[1.6] text-white/95">
-              {tUI('landing.tagline.desc')}
-            </p>
+              {/* TEKST + CTA — prawa strona, bez nakładania na logo */}
+              <div className="flex items-start justify-end px-6 md:pr-12 lg:pr-24">
+                <div className="max-w-[560px] md:max-w-[640px] text-justify">
+                  <p className="text-base md:text-lg lg:text-xl font-semibold tracking-tight leading-[1.6] text-white/95">
+                    {tUI('landing.tagline.title')}
+                  </p>
+                  <p className="mt-4 text-base md:text-lg lg:text-xl font-semibold tracking-tight leading-[1.6] text-white/95">
+                    {tUI('landing.tagline.desc')}
+                  </p>
 
-            {/* subheadline usunięte */}
-            <div className="mt-6 w-full flex justify-end">
-              <button
-                onClick={() => {
-                  localStorage.setItem('entryMode', 'patient');
-                  window.location.href = '/register?mode=patient';
-                }}
-                className="w-full sm:w-auto max-w-[260px] bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl text-base sm:text-lg shadow-lg"
-              >
-                {tUI('cta.title')}
-              </button>
+                  <div className="mt-6 w-full flex justify-end pb-6 md:pb-10">
+                    <button
+                      onClick={() => {
+                        localStorage.setItem('entryMode', 'patient');
+                        window.location.href = '/register?mode=patient';
+                      }}
+                      className="w-full sm:w-auto max-w-[260px] bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl text-base sm:text-lg shadow-lg"
+                    >
+                      {tUI('cta.title')}
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
+
 
       {/* STEPS */}
       <section className="mx-auto max-w-6xl px-5 mt-8 md:mt-12">
