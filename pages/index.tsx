@@ -573,7 +573,48 @@ const steps = [
         <h3 className="text-lg font-semibold">{tUI('footer.followUs')}</h3>
 
         <div className="mt-4 flex gap-6 md:gap-8 justify-center md:justify-end items-center">
-          {/* ALS – strona administratora */}
+         
+          {/* Facebook */}
+          <a href="https://www.facebook.com/profile.php?id=61580694946237" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="opacity-90 hover:opacity-100 transition">
+            <svg width="36" height="36" viewBox="0 0 24 24" role="img" aria-hidden="true">
+              <rect x="2" y="2" width="20" height="20" rx="4" fill="#1877F2"/>
+              <path d="M13.4 8.7h2V6.2c-.4-.1-1.2-.2-2.1-.2-2.1 0-3.5 1.3-3.5 3.6v2H7.9v2.5h1.9V21h2.6v-6h2.1l.4-2.5H12.4v-1.7c0-.7.2-1.1 1-1.1z" fill="#fff"/>
+            </svg>
+           </a>
+                      {/* Instagram */}
+            <a
+              href="https://www.instagram.com/diet.care88"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagram"
+              title="Instagram"
+              className="opacity-90 hover:opacity-100 transition"
+            >
+              <svg width="36" height="36" viewBox="0 0 24 24" role="img" aria-hidden="true">
+                <defs>
+                  <linearGradient id="ig" x1="0" y1="1" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#F58529"/>
+                    <stop offset="25%" stopColor="#FEDA77"/>
+                    <stop offset="50%" stopColor="#DD2A7B"/>
+                    <stop offset="75%" stopColor="#8134AF"/>
+                    <stop offset="100%" stopColor="#515BD4"/>
+                  </linearGradient>
+                </defs>
+                <rect x="2" y="2" width="20" height="20" rx="5" fill="url(#ig)"/>
+                <rect x="6.5" y="6.5" width="11" height="11" rx="3.2" fill="none" stroke="#fff" strokeWidth="1.7"/>
+                <circle cx="12" cy="12" r="3.2" fill="none" stroke="#fff" strokeWidth="1.7"/>
+                <circle cx="16.5" cy="7.5" r="1.2" fill="#fff"/>
+              </svg>
+            </a>
+
+          {/* YouTube */}
+          <a href="https://www.youtube.com/@DietCarePlatform" target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="opacity-90 hover:opacity-100 transition">
+            <svg width="36" height="36" viewBox="0 0 24 24" role="img" aria-hidden="true">
+              <rect x="2" y="6" width="20" height="12" rx="3" fill="#FF0000"/>
+              <path d="M10 9l5 3-5 3V9z" fill="#fff"/>
+            </svg>
+          </a>
+           {/* ALS – strona administratora */}
           <a
             href="https://alsolution.pl/produkty-1/diet-care-platfrom"
             target="_blank"
@@ -590,36 +631,6 @@ const steps = [
               className="rounded-md shadow-sm"
               priority
             />
-          </a>
-          {/* Facebook */}
-          <a href="https://www.facebook.com/profile.php?id=61580694946237" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="opacity-90 hover:opacity-100 transition">
-            <svg width="36" height="36" viewBox="0 0 24 24" role="img" aria-hidden="true">
-              <rect x="2" y="2" width="20" height="20" rx="4" fill="#1877F2"/>
-              <path d="M13.4 8.7h2V6.2c-.4-.1-1.2-.2-2.1-.2-2.1 0-3.5 1.3-3.5 3.6v2H7.9v2.5h1.9V21h2.6v-6h2.1l.4-2.5H12.4v-1.7c0-.7.2-1.1 1-1.1z" fill="#fff"/>
-            </svg>
-          </a>
-          {/* Instagram */}
-            <a
-              href="https://www.instagram.com/diet.care88"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Instagram"
-              className="opacity-90 hover:opacity-100 transition"
-              title="Instagram"
-            >
-              <Image
-                src="/icons/instagram-color.svg"
-                alt="Instagram"
-                width={36}
-                height={36}
-              />
-            </a>
-          {/* YouTube */}
-          <a href="https://www.youtube.com/@DietCarePlatform" target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="opacity-90 hover:opacity-100 transition">
-            <svg width="36" height="36" viewBox="0 0 24 24" role="img" aria-hidden="true">
-              <rect x="2" y="6" width="20" height="12" rx="3" fill="#FF0000"/>
-              <path d="M10 9l5 3-5 3V9z" fill="#fff"/>
-            </svg>
           </a>
         </div>
       </div>
