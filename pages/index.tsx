@@ -570,42 +570,15 @@ const steps = [
     {/* Social + strona www */}
     <div className="md:text-right">
       <h3 className="text-lg font-semibold">{tUI('footer.followUs')}</h3>
-      <div className="mt-3 flex gap-4 md:justify-end text-white/90">
-        {/* WWW */}
-        <a href="https://www.dcp.care" target="_blank" rel="noopener noreferrer" aria-label="Website" className="opacity-80 hover:opacity-100 transition">
-          <span
-            className="inline-block h-6 w-6 bg-current"
-            style={{
-              WebkitMaskImage: 'url(/icons/globe.svg)', maskImage: 'url(/icons/globe.svg)',
-              WebkitMaskSize: 'contain', maskSize: 'contain',
-              WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat',
-              WebkitMaskPosition: 'center', maskPosition: 'center',
-            }}
-          />
+      <div className="mt-3 flex gap-4 md:justify-end items-center">
+        <a href="https://www.dcp.care" target="_blank" rel="noopener noreferrer" aria-label="Website">
+          <Image src="/icons/globe-color.svg" alt="Website" width={28} height={28} priority />
         </a>
-        {/* Facebook */}
-        <a href="https://www.facebook.com/DietCarePlatform" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="opacity-80 hover:opacity-100 transition">
-          <span
-            className="inline-block h-6 w-6 bg-current"
-            style={{
-              WebkitMaskImage: 'url(/icons/facebook.svg)', maskImage: 'url(/icons/facebook.svg)',
-              WebkitMaskSize: 'contain', maskSize: 'contain',
-              WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat',
-              WebkitMaskPosition: 'center', maskPosition: 'center',
-            }}
-          />
+        <a href="https://www.facebook.com/DietCarePlatform" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+          <Image src="/icons/facebook-color.svg" alt="Facebook" width={28} height={28} />
         </a>
-        {/* YouTube */}
-        <a href="https://www.youtube.com/@DietCarePlatform" target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="opacity-80 hover:opacity-100 transition">
-          <span
-            className="inline-block h-6 w-6 bg-current"
-            style={{
-              WebkitMaskImage: 'url(/icons/youtube.svg)', maskImage: 'url(/icons/youtube.svg)',
-              WebkitMaskSize: 'contain', maskSize: 'contain',
-              WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat',
-              WebkitMaskPosition: 'center', maskPosition: 'center',
-            }}
-          />
+        <a href="https://www.youtube.com/@DietCarePlatform" target="_blank" rel="noopener noreferrer" aria-label="YouTube">
+          <Image src="/icons/youtube-color.svg" alt="YouTube" width={28} height={28} />
         </a>
       </div>
     </div>
