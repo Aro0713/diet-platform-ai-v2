@@ -373,19 +373,20 @@ const steps = [
           <div className="absolute inset-0 bg-[#0f271e]/65 dark:bg-[#0c1f18]/65" />
 
           {/* LOGO — absolutnie przy samej górze, wyśrodkowane */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 z-20 pt-3">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 z-20 pt-2">
             <Image
               src="/logo-dietcare.png"
               alt={tUI('landing.logoAlt')}
               width={300}
               height={96}
-              className="drop-shadow-2xl"
+              className="drop-shadow-2xl w-40 sm:w-56 md:w-[300px] h-auto"  // ⟵ NOWE
               priority
             />
           </div>
-
           {/* TEKST — zaczyna się niżej niż logo, ta sama typografia co akapit „Diet Care Platform …” */}
-          <div className="absolute top-40 md:top-48 lg:top-56 right-0 left-auto flex flex-col items-end px-6 md:pr-12 lg:pr-24 pb-32 md:pb-36 text-justify max-w-3xl">
+          <div className="absolute top-60 sm:top-72 md:top-48 lg:top-56 right-0 left-auto
+                flex flex-col items-end px-6 md:pr-12 lg:pr-24 pb-32 md:pb-36
+                text-justify max-w-[520px] md:max-w-3xl">
             <p className="max-w-3xl text-base md:text-lg lg:text-xl font-semibold tracking-tight leading-[1.6] text-white/95">
               {tUI('landing.tagline.title')}
             </p>
