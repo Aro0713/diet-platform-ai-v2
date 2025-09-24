@@ -573,14 +573,24 @@ const steps = [
         <h3 className="text-lg font-semibold">{tUI('footer.followUs')}</h3>
 
         <div className="mt-4 flex gap-6 md:gap-8 justify-center md:justify-end items-center">
-          {/* WWW */}
-          <a href="https://alsolution.pl/produkty-1/diet-care-platfrom" target="_blank" rel="noopener noreferrer" aria-label="Website" className="opacity-90 hover:opacity-100 transition">
-            <svg width="36" height="36" viewBox="0 0 24 24" role="img" aria-hidden="true">
-              <circle cx="12" cy="12" r="10" fill="#10B981"/>
-              <path d="M4 12h16M12 2a16 16 0 0 1 0 20M12 2a16 16 0 0 0 0 20" stroke="#fff" strokeWidth="1.6" fill="none" strokeLinecap="round"/>
-            </svg>
+          {/* ALS – strona administratora */}
+          <a
+            href="https://alsolution.pl/produkty-1/diet-care-platfrom"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="ALS – strona administratora"
+            className="opacity-90 hover:opacity-100 transition"
+            title="ALS – administrator serwisu"
+          >
+            <Image
+              src="/als-512.png"
+              alt="ALS sp. z o.o."
+              width={36}
+              height={36}
+              className="rounded-md shadow-sm"
+              priority
+            />
           </a>
-
           {/* Facebook */}
           <a href="https://www.facebook.com/DietCarePlatform" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="opacity-90 hover:opacity-100 transition">
             <svg width="36" height="36" viewBox="0 0 24 24" role="img" aria-hidden="true">
