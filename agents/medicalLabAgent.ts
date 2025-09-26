@@ -344,10 +344,10 @@ for (const [fieldKey, rawVal] of Object.entries(testResults || {})) {
   const keywords = extractKeywords(description || "");
 
   // 4) Prompt – zero twardych map; model generuje rekomendacje dla dowolnych chorób/odchyleń
-  const fenceJson = "```json";
-  const fenceEnd = "```";
+const fenceJson = "```json";
+const fenceEnd = "```";
 
-  const prompt = `
+const prompt = `
 You are a professional medical lab assistant AI working **inside a digital dietetics platform**.
 
 INPUT DATA (structured):
@@ -366,33 +366,37 @@ INPUT DATA (structured):
 - Unit warnings: ${JSON.stringify(unitWarnings)}
 
 STRICT RULES:
-1) If ANY "labStatus" entry has class "low" or "high", your **first sentence MUST state that abnormalities are present** in ${lang}. Never claim "all normal" in that case.
-2) Keep the narrative **consistent** with "labStatus", BP readings, and listed conditions. Do not contradict them.
-3) Produce **specific, clinically coherent dietary recommendations for ANY abnormality/condition** (no closed catalog):
-   - **macros** (fiber/protein/carbs/fats/sodium/potassium, etc.) with clear direction (increase/decrease/moderate),
-   - **micros** (vitamins/minerals/omega-3 etc.) with direction,
+1) IF any item in "labStatus" has class "low" or "high", the very first sentence in "sections.clinicalSummary" MUST explicitly state that abnormalities are present in ${lang}. Do not claim "all normal" in that case.
+2) Keep the narrative and recommendations fully consistent with "labStatus", BP readings, and "selectedConditions".
+3) Generate specific, clinically coherent dietary recommendations for ANY abnormality/condition (no closed catalog):
+   - **macros** (fiber/protein/carbs/fats/sodium/potassium, etc.) with a direction (increase|decrease|moderate),
+   - **micros** (vitamins/minerals/omega-3, etc.) with a direction,
    - **food groups** to emphasize/limit with 2–5 concrete examples each.
-   For every item include a short **rationale** and **linksTo** (e.g., ["glucose", "Nadciśnienie tętnicze"]).
-4) Reflect comorbidity conflicts: if a plausible recommendation may conflict with "enforceRanges" or another condition, put it into **"conflicts"** with an explanation and **do not** add it to recommendations.
-5) Deduplicate items; prefer precise terms in ${lang}. No generic advice like "eat healthy".
-6) Return at least:
-   - 3 macro recommendations (if relevant),
-   - 4 micro recommendations across different nutrients (if relevant),
-   - 3 food groups to emphasize and 3 to limit (if relevant). If not applicable, explain why in "clinicalRules.notes".
-7) The JSON must follow the exact schema below.
+   For every item include a short **rationale** and **linksTo** (e.g., ["glucose","Hypertension"]).
+4) Reflect comorbidity conflicts: if a plausible recommendation may conflict with "enforceRanges" or another condition, put it into **"conflicts"** with an explanation and do **not** add it to "recommendations".
+5) Deduplicate content; use precise terminology in ${lang}. Avoid generic advice such as "eat healthy".
+6) Minimum requirements:
+   - At least 3 macro recommendations (if relevant),
+   - At least 4 micro recommendations across different nutrients (if relevant),
+   - At least 3 food groups to emphasize and 3 to limit (if relevant). If not applicable, explain why in "clinicalRules.notes".
+7) **OUTPUT = a single fenced JSON only** exactly matching the schema below. No text outside the JSON block.
 
-OUTPUT FORMAT (two parts):
-A) First: a concise clinical narrative in ${lang} (no headings).
-B) Immediately after: a fenced JSON with this exact top-level structure:
+OUTPUT FORMAT (single fenced JSON):
 
 ${fenceJson}
 {
+  "sections": {
+    "clinicalSummary": "",
+    "conclusionsPriorities": [],
+    "recommendationsCard": [],
+    "followUpChecklist": []
+  },
   "labStatus": ${JSON.stringify(labStatus, null, 2)},
   "recommendations": {
     "macros": [
       { "name": "", "direction": "increase|decrease|moderate", "rationale": "", "linksTo": ["<testKey or condition>"], "confidence": 0.0 }
     ],
-    "micros": [
+      "micros": [
       { "name": "", "direction": "increase|decrease", "rationale": "", "linksTo": ["<testKey or condition>"], "confidence": 0.0 }
     ],
     "foods": {
@@ -426,10 +430,14 @@ ${fenceJson}
 }
 ${fenceEnd}
 
-FILLING GUIDANCE (not a fixed mapping, just expectations):
-- Base all proposals on the exact abnormalities (e.g., high glucose, dyslipidemia, high creatinine) and any conditions (e.g., CKD, celiac, epilepsy, pregnancy, heart failure, thyroid disorders).
-- Use explicit Polish names for foods/nutrients when ${lang} is "pl". 
-- Be specific (e.g., "zwiększ błonnik rozpuszczalny" zamiast "jedz więcej błonnika", "ogranicz sód <2 g/d").
+FILLING GUIDANCE:
+- Fill "sections" in ${lang} concisely:
+  * "clinicalSummary": 2–5 sentences; the first sentence must confirm presence/absence of abnormalities per rule #1.
+  * "conclusionsPriorities": 3–6 bullets ordered by clinical priority (e.g., HTN, dyslipidemia, IR).
+  * "recommendationsCard": 5–10 short bullets suitable for a patient-facing advice card (merge macros/micros/foods).
+  * "followUpChecklist": 5–10 items (tests/consults/control points + short rationale).
+- Ensure "recommendations" logically corresponds to "recommendationsCard".
+- When ${lang} = "pl", use Polish names of foods/nutrients; otherwise use the target language.
 `;
 
   // 5) Wywołanie modelu

@@ -581,31 +581,11 @@ const steps = [
               <path d="M13.4 8.7h2V6.2c-.4-.1-1.2-.2-2.1-.2-2.1 0-3.5 1.3-3.5 3.6v2H7.9v2.5h1.9V21h2.6v-6h2.1l.4-2.5H12.4v-1.7c0-.7.2-1.1 1-1.1z" fill="#fff"/>
             </svg>
            </a>
-                      {/* Instagram */}
-            <a
-              href="https://www.instagram.com/diet.care88"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Instagram"
-              title="Instagram"
-              className="opacity-90 hover:opacity-100 transition"
-            >
-              <svg width="36" height="36" viewBox="0 0 24 24" role="img" aria-hidden="true">
-                <defs>
-                  <linearGradient id="ig" x1="0" y1="1" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#F58529"/>
-                    <stop offset="25%" stopColor="#FEDA77"/>
-                    <stop offset="50%" stopColor="#DD2A7B"/>
-                    <stop offset="75%" stopColor="#8134AF"/>
-                    <stop offset="100%" stopColor="#515BD4"/>
-                  </linearGradient>
-                </defs>
-                <rect x="2" y="2" width="20" height="20" rx="5" fill="url(#ig)"/>
-                <rect x="6.5" y="6.5" width="11" height="11" rx="3.2" fill="none" stroke="#fff" strokeWidth="1.7"/>
-                <circle cx="12" cy="12" r="3.2" fill="none" stroke="#fff" strokeWidth="1.7"/>
-                <circle cx="16.5" cy="7.5" r="1.2" fill="#fff"/>
-              </svg>
-            </a>
+            {/* Instagram */}
+            <a href="https://www.instagram.com/diet.care88" target="_blank" rel="noopener noreferrer"
+            aria-label="Instagram" title="Instagram" className="opacity-90 hover:opacity-100 transition">
+            <img src="/icons/instagram-color.svg" alt="Instagram" width="36" height="36" loading="lazy" />
+          </a>
 
           {/* YouTube */}
           <a href="https://www.youtube.com/@DietCarePlatform" target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="opacity-90 hover:opacity-100 transition">
