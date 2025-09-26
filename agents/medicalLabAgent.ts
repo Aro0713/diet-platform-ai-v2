@@ -465,38 +465,43 @@ const fenceJson = "```json";
 const fenceEnd = "```";
 
 const prompt = `
-You are a professional medical lab assistant AI working inside a digital dietetics platform.
+You are a professional medical lab assistant AI working **inside a digital dietetics platform**.
 
 INPUT DATA (structured):
 - Output language: ${lang}
 - Diagnosed/selected conditions: ${selectedConditions?.length ? selectedConditions.join(", ") : "None"}
 - Lab test results (raw as entered): ${JSON.stringify(testResults)}
-- Parsed lab status (normalized): ${JSON.stringify(labStatus)}
+- Parsed lab status (normalized, slim): ${JSON.stringify(labStatus)}
 - Out-of-range findings (computed): ${abnormalities.length ? abnormalities.join("; ") : "None"}
 - Reference ranges (for UI): ${JSON.stringify(refRangesUsed)}
 - Merged nutrient ranges to ENFORCE (hard constraints for diet generator): ${JSON.stringify(mergedRequirements)}
 - Clinical description (free text): "${description}"
-- Derived signals from description:
+- Derived signals:
   - Blood pressure readings: ${JSON.stringify(bpMeasurements)}
   - Keywords: ${JSON.stringify(keywords)}
-- Unmatched tests (no reference found): ${JSON.stringify(unmatchedTests)}
+- Unmatched tests: ${JSON.stringify(unmatchedTests)}
 - Unit warnings: ${JSON.stringify(unitWarnings)}
 
 STRICT RULES:
-1) IF any item in "labStatus" has class "low" or "high", the very first sentence in "sections.clinicalSummary" MUST state that abnormalities are present in ${lang}.
-2) Keep content consistent with labStatus/BP/selectedConditions.
-3) Generate specific diet advice (macros/micros/foods) with rationale + linksTo; avoid conflicts (put them in "conflicts").
-4) No generic advice. Deduplicate. Use precise terms in ${lang}.
-5) Minimum: ≥3 macros, ≥4 micros, ≥3 foods.emphasize & ≥3 foods.limit when relevant.
-6) OUTPUT = a single JSON object matching the schema below. No extra text.
-7) Do NOT introduce diagnoses or conditions beyond "selectedConditions". If a lab abnormality suggests an unlisted condition, describe it generically (e.g., "hyperglycemia") without adding a new diagnosis.
-8) For EACH item in "selectedConditions", include at least:
-   - one priority bullet in "sections.conclusionsPriorities",
-   - one patient-facing bullet in "sections.recommendationsCard",
-   - one actionable item in "sections.followUpChecklist".
-9) Make all narrative parts condition-driven: tie statements to conditions from "selectedConditions" and to concrete abnormalities in "labStatus".
+1) If ANY "labStatus" item is "low" or "high", the first sentence of the clinical summary MUST explicitly state that abnormalities are present in ${lang}.
+2) Be fully consistent with labStatus/BP/selectedConditions; do not invent new diagnoses.
+3) Recommendations must be specific (macros/micros/foods with rationale + linksTo).
+4) If a plausible recommendation conflicts with other conditions or enforceRanges, put it into "conflicts" and do NOT add it to recommendations.
+5) No generic advice like "eat healthy"; deduplicate similar items.
+6) Output language is ${lang} for ALL narrative text and headings.
+7) Do NOT include any text outside the specified two-part format.
 
-REQUIRED JSON SCHEMA (object keys and shapes must match):
+OUTPUT FORMAT (two parts):
+A) First, plain text in ${lang} with EXACTLY these 4 sections (use the target language for headings):
+- "Clinical Summary (expert, concise)"
+- "Conclusions & Priorities"
+- "Recommendations (advice card – summary)"
+- "Further Diagnostics / Follow-Up (Checklist)"
+Each section should be concise and clinically coherent.
+
+B) Immediately after the text, output ONE fenced JSON block matching EXACTLY the schema below:
+
+${fenceJson}
 {
   "sections": {
     "clinicalSummary": "",
@@ -506,11 +511,19 @@ REQUIRED JSON SCHEMA (object keys and shapes must match):
   },
   "labStatus": ${JSON.stringify(labStatus)},
   "recommendations": {
-    "macros": [ { "name": "", "direction": "increase|decrease|moderate", "rationale": "", "linksTo": [""], "confidence": 0 } ],
-    "micros": [ { "name": "", "direction": "increase|decrease", "rationale": "", "linksTo": [""], "confidence": 0 } ],
+    "macros": [
+      { "name": "", "direction": "increase|decrease|moderate", "rationale": "", "linksTo": ["<testKey or condition>"], "confidence": 0 }
+    ],
+    "micros": [
+      { "name": "", "direction": "increase|decrease", "rationale": "", "linksTo": ["<testKey or condition>"], "confidence": 0 }
+    ],
     "foods": {
-      "emphasize": [ { "group": "", "examples": [], "rationale": "", "linksTo": [""], "confidence": 0 } ],
-      "limit":     [ { "group": "", "examples": [], "rationale": "", "linksTo": [""], "confidence": 0 } ]
+      "emphasize": [
+        { "group": "", "examples": [], "rationale": "", "linksTo": ["<testKey or condition>"], "confidence": 0 }
+      ],
+      "limit": [
+        { "group": "", "examples": [], "rationale": "", "linksTo": ["<testKey or condition>"], "confidence": 0 }
+      ]
     }
   },
   "dietHints": { "avoid": [], "recommend": [] },
@@ -530,18 +543,20 @@ REQUIRED JSON SCHEMA (object keys and shapes must match):
   "unmatchedTests": ${JSON.stringify(unmatchedTests)},
   "unitWarnings": ${JSON.stringify(unitWarnings)}
 }
+${fenceEnd}
 `;
 
+
 const completion = await openai.chat.completions.create({
-  model: "gpt-4o-mini",              // szybszy, tańszy; do tego zadania wystarcza
-  response_format: { type: "json_object" }, // twardy JSON-mode
+  model: "gpt-4o-mini",
   temperature: 0.1,
   max_tokens: 1200,
   messages: [
-    { role: "system", content: "You are a clinical assistant that MUST return a single valid JSON object exactly matching the required schema. No extra text." },
+    { role: "system", content: "You are a clinical assistant. Return TWO parts: 1) narrative text in target language; 2) ONE fenced JSON block that matches the required schema." },
     { role: "user", content: prompt }
-  ],
+  ]
 });
+
 
   return completion.choices[0].message.content || "Brak odpowiedzi.";
 }
