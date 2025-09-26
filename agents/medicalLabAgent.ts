@@ -30,14 +30,21 @@ function parseRange(ref: TestRefValue): { min: number; max: number; unit?: strin
 }
 
 /** Mapa: badanie -> tekst referencji (do UI) */
-function buildRefRangeTextMap(): Record<string, string> {
+function buildRefRangeTextMapForTests(testKeys: string[]): Record<string, string> {
   const out: Record<string, string> = {};
-  for (const [k, vRaw] of Object.entries(testReferenceValues as Record<string, TestRefValue>)) {
-    const v = vRaw as TestRefValue;
-    out[k] = typeof v === "string" ? v : [v.normalRange, v.unit].filter(Boolean).join(" ").trim();
+  const seen = new Set<string>();
+  for (const rawKey of testKeys) {
+    const { test } = splitFieldKey(rawKey);
+    const key = canonicalTestKey(test);
+    if (seen.has(key)) continue;
+    const v = (testReferenceValues as any)[key] as TestRefValue | undefined;
+    if (!v) continue;
+    out[key] = typeof v === "string" ? v : [v.normalRange, v.unit].filter(Boolean).join(" ").trim();
+    seen.add(key);
   }
   return out;
 }
+
 
 /* ------------------------- 🔧 HELPERY (aliasy/jednostki/sygnały) ------------------------- */
 
@@ -277,7 +284,7 @@ const labStatus: Record<string, {
 const unmatchedTests: string[] = [];
 const unitWarnings: string[] = [];
 
-const refRangeText = buildRefRangeTextMap();
+const refRangesUsed = buildRefRangeTextMapForTests(Object.keys(testResults || {}));
 
 for (const [fieldKey, rawVal] of Object.entries(testResults || {})) {
   // 1) wyciągnij SAMĄ nazwę testu z "Choroba__Test"
@@ -314,28 +321,64 @@ for (const [fieldKey, rawVal] of Object.entries(testResults || {})) {
   }
 
   const range = parseRefRangeAdvanced(ref) || parseRange(ref);
-  const refText = refRangeText[testKeyRef] || "";
+  const refRangesUsed: Record<string, string> =  buildRefRangeTextMapForTests(Object.keys(testResults || {}));
   const refUnit = range?.unit;
+  const refText: string =
+  (refRangesUsed as Record<string, string>)[testKeyRef] ??
+  (typeof ref === "string"
+    ? ref
+    : [ref?.normalRange, ref?.unit].filter(Boolean).join(" ").trim()) ??
+  "";
+  
+// 4) konwersja jednostek — użyj klucza konwersji, który istnieje (alias EN lub PL)
+//    + normalizacja zapisu jednostek (mg/dl -> mg/dL, mmol/l -> mmol/L itd.)
+const UNIT_ALIASES: Record<string, string> = {
+  "mg/dl": "mg/dL",
+  "mmol/l": "mmol/L",
+  "µmol/l": "µmol/L",
+  "umol/l": "umol/L",
+  "ng/ml": "ng/mL",
+  "pg/ml": "pg/mL",
+  "iu/ml": "IU/mL",
+  "miu/l": "mIU/L",
+  "µg/dl": "µg/dL",
+  "ug/dl": "µg/dL",
+  "nmol/l": "nmol/L",
+  "pmol/l": "pmol/L",
+  "mg/l": "mg/L"
+};
+const canonUnit = (u?: string) => (u ? (UNIT_ALIASES[u] ?? u) : undefined);
 
-  // 4) konwersja jednostek — użyj klucza konwersji, który istnieje (alias EN lub PL)
-  const convKey = (UNIT_CONVERSIONS as any)[aliasKey] ? aliasKey : testKeyRef;
-  let { value: parsedVal, note } = convertIfNeeded(convKey, parsedValRaw, valUnit, refUnit);
-  if (note) unitWarnings.push(`${testNameOnly}: ${note}; ref="${refText}"`);
+const fromU = canonUnit(valUnit);
+const toU   = canonUnit(refUnit);
 
-  const cls = range ? classify(parsedVal, range) : "unknown";
+// wybierz klucz konwersji, który faktycznie istnieje w mapie
+const convKey =
+  (UNIT_CONVERSIONS as any)[aliasKey]
+    ? aliasKey
+    : ((UNIT_CONVERSIONS as any)[testKeyRef] ? testKeyRef : aliasKey);
 
-  labStatus[testKeyRef] = {
-    displayName: testNameOnly,
-    value: parsedVal,
-    unit: refUnit ?? valUnit,
-    refMin: range?.min,
-    refMax: range?.max,
-    refUnit,
-    class: cls
-  };
+let { value: convertedVal, note } = convertIfNeeded(convKey, parsedValRaw, fromU, toU);
+if (note) unitWarnings.push(`${testNameOnly}: ${note}; ref="${refText}"`);
 
-  if (cls === "low")  abnormalities.push(`${testNameOnly}: low (${parsedValRaw}${valUnit ? " " + valUnit : ""}, ref ${refText})`);
-  if (cls === "high") abnormalities.push(`${testNameOnly}: high (${parsedValRaw}${valUnit ? " " + valUnit : ""}, ref ${refText})`);
+// zawężenie typu range (może być null)
+const cls: Class = range ? classify(convertedVal, range as Range) : "unknown";
+
+labStatus[testKeyRef] = {
+  displayName: testNameOnly,
+  value: convertedVal,
+  unit: toU ?? fromU,
+  refMin: range?.min,
+  refMax: range?.max,
+  refUnit: toU,
+  class: cls
+};
+
+// komunikaty o odchyleniach pokazujemy po konwersji (w jednostce referencyjnej, jeśli jest)
+const shownVal = `${convertedVal}${(toU ?? fromU) ? " " + (toU ?? fromU) : ""}`;
+if (cls === "low")  abnormalities.push(`${testNameOnly}: low (${shownVal}, ref ${refText})`);
+if (cls === "high") abnormalities.push(`${testNameOnly}: high (${shownVal}, ref ${refText})`);
+
 }
 
 
@@ -348,16 +391,16 @@ const fenceJson = "```json";
 const fenceEnd = "```";
 
 const prompt = `
-You are a professional medical lab assistant AI working **inside a digital dietetics platform**.
+You are a professional medical lab assistant AI working inside a digital dietetics platform.
 
 INPUT DATA (structured):
 - Output language: ${lang}
 - Diagnosed/selected conditions: ${selectedConditions?.length ? selectedConditions.join(", ") : "None"}
-- Lab test results (raw as entered): ${JSON.stringify(testResults, null, 2)}
-- Parsed lab status (normalized): ${JSON.stringify(labStatus, null, 2)}
+- Lab test results (raw as entered): ${JSON.stringify(testResults)}
+- Parsed lab status (normalized): ${JSON.stringify(labStatus)}
 - Out-of-range findings (computed): ${abnormalities.length ? abnormalities.join("; ") : "None"}
-- Reference ranges (for UI): ${JSON.stringify(refRangeText, null, 2)}
-- Merged nutrient ranges to ENFORCE (hard constraints for diet generator): ${JSON.stringify(mergedRequirements, null, 2)}
+- Reference ranges (for UI): ${JSON.stringify(refRangesUsed)}
+- Merged nutrient ranges to ENFORCE (hard constraints for diet generator): ${JSON.stringify(mergedRequirements)}
 - Clinical description (free text): "${description}"
 - Derived signals from description:
   - Blood pressure readings: ${JSON.stringify(bpMeasurements)}
@@ -366,24 +409,14 @@ INPUT DATA (structured):
 - Unit warnings: ${JSON.stringify(unitWarnings)}
 
 STRICT RULES:
-1) IF any item in "labStatus" has class "low" or "high", the very first sentence in "sections.clinicalSummary" MUST explicitly state that abnormalities are present in ${lang}. Do not claim "all normal" in that case.
-2) Keep the narrative and recommendations fully consistent with "labStatus", BP readings, and "selectedConditions".
-3) Generate specific, clinically coherent dietary recommendations for ANY abnormality/condition (no closed catalog):
-   - **macros** (fiber/protein/carbs/fats/sodium/potassium, etc.) with a direction (increase|decrease|moderate),
-   - **micros** (vitamins/minerals/omega-3, etc.) with a direction,
-   - **food groups** to emphasize/limit with 2–5 concrete examples each.
-   For every item include a short **rationale** and **linksTo** (e.g., ["glucose","Hypertension"]).
-4) Reflect comorbidity conflicts: if a plausible recommendation may conflict with "enforceRanges" or another condition, put it into **"conflicts"** with an explanation and do **not** add it to "recommendations".
-5) Deduplicate content; use precise terminology in ${lang}. Avoid generic advice such as "eat healthy".
-6) Minimum requirements:
-   - At least 3 macro recommendations (if relevant),
-   - At least 4 micro recommendations across different nutrients (if relevant),
-   - At least 3 food groups to emphasize and 3 to limit (if relevant). If not applicable, explain why in "clinicalRules.notes".
-7) **OUTPUT = a single fenced JSON only** exactly matching the schema below. No text outside the JSON block.
+1) IF any item in "labStatus" has class "low" or "high", the very first sentence in "sections.clinicalSummary" MUST state that abnormalities are present in ${lang}.
+2) Keep content consistent with labStatus/BP/selectedConditions.
+3) Generate specific diet advice (macros/micros/foods) with rationale + linksTo; avoid conflicts (put them in "conflicts").
+4) No generic advice. Deduplicate. Use precise terms in ${lang}.
+5) Minimum: ≥3 macros, ≥4 micros, ≥3 foods.emphasize & ≥3 foods.limit when relevant.
+6) OUTPUT = a single JSON object matching the schema below. No extra text.
 
-OUTPUT FORMAT (single fenced JSON):
-
-${fenceJson}
+REQUIRED JSON SCHEMA (object keys and shapes must match):
 {
   "sections": {
     "clinicalSummary": "",
@@ -391,21 +424,13 @@ ${fenceJson}
     "recommendationsCard": [],
     "followUpChecklist": []
   },
-  "labStatus": ${JSON.stringify(labStatus, null, 2)},
+  "labStatus": ${JSON.stringify(labStatus)},
   "recommendations": {
-    "macros": [
-      { "name": "", "direction": "increase|decrease|moderate", "rationale": "", "linksTo": ["<testKey or condition>"], "confidence": 0.0 }
-    ],
-      "micros": [
-      { "name": "", "direction": "increase|decrease", "rationale": "", "linksTo": ["<testKey or condition>"], "confidence": 0.0 }
-    ],
+    "macros": [ { "name": "", "direction": "increase|decrease|moderate", "rationale": "", "linksTo": [""], "confidence": 0 } ],
+    "micros": [ { "name": "", "direction": "increase|decrease", "rationale": "", "linksTo": [""], "confidence": 0 } ],
     "foods": {
-      "emphasize": [
-        { "group": "", "examples": [], "rationale": "", "linksTo": ["<testKey or condition>"], "confidence": 0.0 }
-      ],
-      "limit": [
-        { "group": "", "examples": [], "rationale": "", "linksTo": ["<testKey or condition>"], "confidence": 0.0 }
-      ]
+      "emphasize": [ { "group": "", "examples": [], "rationale": "", "linksTo": [""], "confidence": 0 } ],
+      "limit":     [ { "group": "", "examples": [], "rationale": "", "linksTo": [""], "confidence": 0 } ]
     }
   },
   "dietHints": { "avoid": [], "recommend": [] },
@@ -418,34 +443,25 @@ ${fenceJson}
     "recommendMicros": [],
     "avoidMicros": []
   },
-  "clinicalRules": {
-    "hydration": { "minFluidsMlPerDay": 0, "oralRehydrationPreferred": false },
-    "notes": []
-  },
-  "refRanges": ${JSON.stringify(refRangeText, null, 2)},
-  "enforceRanges": ${JSON.stringify(mergedRequirements, null, 2)},
+  "clinicalRules": { "hydration": { "minFluidsMlPerDay": 0, "oralRehydrationPreferred": false }, "notes": [] },
+  "refRanges": ${JSON.stringify(refRangesUsed)},
+  "enforceRanges": ${JSON.stringify(mergedRequirements)},
   "conflicts": [],
   "unmatchedTests": ${JSON.stringify(unmatchedTests)},
   "unitWarnings": ${JSON.stringify(unitWarnings)}
 }
-${fenceEnd}
-
-FILLING GUIDANCE:
-- Fill "sections" in ${lang} concisely:
-  * "clinicalSummary": 2–5 sentences; the first sentence must confirm presence/absence of abnormalities per rule #1.
-  * "conclusionsPriorities": 3–6 bullets ordered by clinical priority (e.g., HTN, dyslipidemia, IR).
-  * "recommendationsCard": 5–10 short bullets suitable for a patient-facing advice card (merge macros/micros/foods).
-  * "followUpChecklist": 5–10 items (tests/consults/control points + short rationale).
-- Ensure "recommendations" logically corresponds to "recommendationsCard".
-- When ${lang} = "pl", use Polish names of foods/nutrients; otherwise use the target language.
 `;
 
-  // 5) Wywołanie modelu
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o",
-    messages: [{ role: "user", content: prompt }],
-    temperature: 0.2
-  });
+const completion = await openai.chat.completions.create({
+  model: "gpt-4o-mini",              // szybszy, tańszy; do tego zadania wystarcza
+  response_format: { type: "json_object" }, // twardy JSON-mode
+  temperature: 0.1,
+  max_tokens: 1200,
+  messages: [
+    { role: "system", content: "You are a clinical assistant that MUST return a single valid JSON object exactly matching the required schema. No extra text." },
+    { role: "user", content: prompt }
+  ],
+});
 
   return completion.choices[0].message.content || "Brak odpowiedzi.";
 }
