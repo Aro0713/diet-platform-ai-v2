@@ -241,6 +241,72 @@ function splitFieldKey(k: string): { condition?: string; test: string } {
   if (parts.length >= 2) return { condition: parts[0], test: parts.slice(1).join("__") };
   return { test: String(k) };
 }
+// ─────────────────────────────────────────────────────────────────────────────
+// Generic expansion of inline measurements + narrative guard
+// Parsuje ciągi typu: "Na 147 mmol/L, K 3.2 mmol/L", "LDL 165 mg/dL; HDL 38 mg/dL"
+// Działa dla DOWOLNYCH badań, jeśli ich nazwy (lub aliasy) są w testReferenceValues/TEST_ALIASES.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const NARRATIVE_KEYS = ["pomiar cisnienia", "holter rr", "ekg", "usg", "opis choroby"];
+
+/** Czy klucz wygląda na opis narracyjny (chyba że w wartościach znajdziemy znane etykiety testów) */
+function isNarrativeKey(key: string) {
+  const nk = norm(key);
+  return NARRATIVE_KEYS.some(s => nk.includes(s));
+}
+
+/** Rozszerz wpisy, jeśli w tekście znajdziemy segmenty "etykieta wartość [jedn.]" odpowiadające znanym testom */
+function expandGenericPairs(raw: Record<string, string | number>): Record<string, string | number> {
+  const out: Record<string, string | number> = {};
+  for (const [k, v] of Object.entries(raw || {})) {
+    if (typeof v === "number") { out[k] = v; continue; }
+
+    const s = String(v ?? "");
+    // segmenty oddzielone ; lub przecinkiem poprzedzającym etykietę (np. ", LDL 160")
+    const segments = s.split(/;+/).flatMap(seg => seg.split(/,(?=\s*[A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż])/));
+    let expanded = 0;
+
+    for (const segRaw of segments) {
+      const seg = segRaw.trim();
+      // Wzorzec: [etykieta] [:=]? [porównanie?] [liczba] [jednostka?]
+      const m = seg.match(/^\s*([A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż0-9\-\.\(\)\/\[\] %]+?)\s*[:=]?\s*(?:[<>]=?|≤|≥)?\s*(-?\d+(?:[.,]\d+)?)\s*([A-Za-z%µ\/\.\^\d]+)?\s*$/);
+      if (!m) continue;
+
+      const label = m[1].trim();
+      const num   = m[2].replace(",", ".");
+      const unit  = m[3]?.trim();
+
+      // Mapuj etykietę na kanoniczny klucz znany w testReferenceValues
+      const canon = canonicalTestKey(label);
+      if ((testReferenceValues as any)[canon] !== undefined) {
+        out[canon] = unit ? `${num} ${unit}` : num;
+        expanded++;
+      }
+    }
+
+    // Jeśli nie udało się nic rozbić — zostaw oryginalny wpis
+    if (expanded === 0) out[k] = v;
+  }
+  return out;
+}
+
+/** Gdy klucz jest narracyjny i NIE znaleziono żadnych znanych etykiet w wartości — nie parsujemy tam liczb */
+function isProbablyNarrative(key: string, val: string | number): boolean {
+  if (!isNarrativeKey(key)) return false;
+  if (typeof val !== "string") return true;
+  const s = String(val);
+  const segments = s.split(/;+/).flatMap(seg => seg.split(/,(?=\s*[A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż])/));
+  for (const segRaw of segments) {
+    const seg = segRaw.trim();
+    const m = seg.match(/^\s*([A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż0-9\-\.\(\)\/\[\] %]+?)\s*[:=]?/);
+    const label = m?.[1]?.trim();
+    if (label) {
+      const canon = canonicalTestKey(label);
+      if ((testReferenceValues as any)[canon] !== undefined) return false; // jednak zawiera znane testy → nie traktuj jako narracyjne
+    }
+  }
+  return true;
+}
 
 /* ------------------------- 🔧 KONIEC HELPERÓW ------------------------- */
 
@@ -284,9 +350,17 @@ const labStatus: Record<string, {
 const unmatchedTests: string[] = [];
 const unitWarnings: string[] = [];
 
-const refRangesUsed = buildRefRangeTextMapForTests(Object.keys(testResults || {}));
+const expandedResults = expandGenericPairs(testResults || {});
+const refRangesUsed: Record<string, string> =
+  buildRefRangeTextMapForTests(Object.keys(expandedResults));
 
-for (const [fieldKey, rawVal] of Object.entries(testResults || {})) {
+
+for (const [fieldKey, rawVal] of Object.entries(expandedResults)) {
+  if (isProbablyNarrative(fieldKey, rawVal)) {
+    labStatus[fieldKey] = { displayName: fieldKey, value: null, unit: undefined, class: "unknown" };
+    continue;
+  }
+
   // 1) wyciągnij SAMĄ nazwę testu z "Choroba__Test"
   const { test: testNameOnly } = splitFieldKey(fieldKey);
 
@@ -329,7 +403,7 @@ for (const [fieldKey, rawVal] of Object.entries(testResults || {})) {
     ? ref
     : [ref?.normalRange, ref?.unit].filter(Boolean).join(" ").trim()) ??
   "";
-  
+
 // 4) konwersja jednostek — użyj klucza konwersji, który istnieje (alias EN lub PL)
 //    + normalizacja zapisu jednostek (mg/dl -> mg/dL, mmol/l -> mmol/L itd.)
 const UNIT_ALIASES: Record<string, string> = {
@@ -415,6 +489,12 @@ STRICT RULES:
 4) No generic advice. Deduplicate. Use precise terms in ${lang}.
 5) Minimum: ≥3 macros, ≥4 micros, ≥3 foods.emphasize & ≥3 foods.limit when relevant.
 6) OUTPUT = a single JSON object matching the schema below. No extra text.
+7) Do NOT introduce diagnoses or conditions beyond "selectedConditions". If a lab abnormality suggests an unlisted condition, describe it generically (e.g., "hyperglycemia") without adding a new diagnosis.
+8) For EACH item in "selectedConditions", include at least:
+   - one priority bullet in "sections.conclusionsPriorities",
+   - one patient-facing bullet in "sections.recommendationsCard",
+   - one actionable item in "sections.followUpChecklist".
+9) Make all narrative parts condition-driven: tie statements to conditions from "selectedConditions" and to concrete abnormalities in "labStatus".
 
 REQUIRED JSON SCHEMA (object keys and shapes must match):
 {
