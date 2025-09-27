@@ -593,7 +593,23 @@ const steps = [
             {/* Instagram */}
             <a href="https://www.instagram.com/diet.care88" target="_blank" rel="noopener noreferrer"
             aria-label="Instagram" title="Instagram" className="opacity-90 hover:opacity-100 transition">
-            <img src="/icons/instagram-color.svg" alt="Instagram" width="36" height="36" loading="lazy" />
+            <svg width="36" height="36" viewBox="0 0 24 24" role="img" aria-hidden="true">
+            <defs>
+              <linearGradient id="igGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#F58529"/>
+                <stop offset="50%" stopColor="#DD2A7B"/>
+                <stop offset="100%" stopColor="#8134AF"/>
+              </linearGradient>
+            </defs>
+            <rect x="2" y="2" width="20" height="20" rx="5" fill="url(#igGrad)"/>
+            {/* obramowanie „korpusu” aparatu */}
+            <rect x="6" y="6" width="12" height="12" rx="4" ry="4"
+                  fill="none" stroke="rgba(255,255,255,.85)" strokeWidth="1"/>
+            {/* obiektyw */}
+            <circle cx="12" cy="12" r="3.5" fill="none" stroke="#fff" strokeWidth="2"/>
+            {/* „dioda” w prawym górnym rogu */}
+            <circle cx="16.6" cy="7.4" r="1.2" fill="#fff"/>
+          </svg>
           </a>
 
           {/* YouTube */}
