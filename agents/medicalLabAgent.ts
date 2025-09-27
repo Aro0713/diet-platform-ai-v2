@@ -492,11 +492,13 @@ STRICT RULES:
 7) Do NOT include any text outside the specified two-part format.
 8) Do not print any labels like "A)" or "B)"; never number the sections.
 9) Do not wrap the four section headings in quotes; print them as plain lines exactly as shown below.
+10) Headings must NOT start with '-', '*', or '#'; print them as plain lines.
+11) Do not echo meta lines like "OUTPUT FORMAT" or any labels outside the two parts.
 
 OUTPUT FORMAT (two parts):
 
-First output PLAIN TEXT in ${lang} with EXACTLY these four headings (no quotes, no numbering, no extra labels):
-Clinical Summary (expert, concise)
+First output PLAIN TEXT in ${lang}. Translate the four headings below into ${lang} and use them exactly as headings (no quotes, no numbering, no extra labels):
+Clinical Summary
 Conclusions & Priorities
 Recommendations (advice card – summary)
 Further Diagnostics / Follow-Up (Checklist)
@@ -550,7 +552,6 @@ ${fenceJson}
 ${fenceEnd}
 `;
 
-
 const completion = await openai.chat.completions.create({
   model: "gpt-4o-mini",
   temperature: 0.1,
@@ -561,6 +562,5 @@ const completion = await openai.chat.completions.create({
   ]
 });
 
-
-  return completion.choices[0].message.content || "Brak odpowiedzi.";
+return completion.choices[0].message.content || "Brak odpowiedzi.";
 }
