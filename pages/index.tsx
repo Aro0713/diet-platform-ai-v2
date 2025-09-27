@@ -400,8 +400,17 @@ const steps = [
               <div className="flex items-start justify-end px-6 md:pr-12 lg:pr-24">
                 <div className="max-w-[560px] md:max-w-[640px] text-justify">
                   <p className="text-base md:text-lg lg:text-xl font-semibold tracking-tight leading-[1.6] text-white/95">
-                    {tUI('landing.tagline.title')}
-                  </p>
+                    <span>{tUI('landing.tagline.title')}</span>
+                    <sup className="align-super text-xs ml-1">
+                    <a
+                    href="#claim-footnote"
+                    aria-describedby="claim-footnote"
+                    className="no-underline hover:underline focus:outline-none focus:ring-2 focus:ring-emerald-400 rounded-sm"
+                    >
+                    *
+                    </a>
+                    </sup>
+                    </p>
                   <p className="mt-4 text-base md:text-lg lg:text-xl font-semibold tracking-tight leading-[1.6] text-white/95">
                     {tUI('landing.tagline.desc')}
                   </p>
@@ -615,7 +624,9 @@ const steps = [
         </div>
       </div>
         </div>
-
+        <div id="claim-footnote" className="mx-auto max-w-6xl px-5 pt-1 pb-3 text-[11px] md:text-xs opacity-80 leading-snug">
+          * {tUI('hero.claimFootnote')}
+          </div>    
         <div className="mx-auto max-w-6xl px-5 pb-6 text-xs opacity-70 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
           <span>© {new Date().getFullYear()} Diet Care Platform</span>
           <span>{tUI('footer.rights')}</span>
