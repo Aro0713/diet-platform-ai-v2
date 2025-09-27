@@ -490,16 +490,20 @@ STRICT RULES:
 5) No generic advice like "eat healthy"; deduplicate similar items.
 6) Output language is ${lang} for ALL narrative text and headings.
 7) Do NOT include any text outside the specified two-part format.
+8) Do not print any labels like "A)" or "B)"; never number the sections.
+9) Do not wrap the four section headings in quotes; print them as plain lines exactly as shown below.
 
 OUTPUT FORMAT (two parts):
-A) First, plain text in ${lang} with EXACTLY these 4 sections (use the target language for headings):
-- "Clinical Summary (expert, concise)"
-- "Conclusions & Priorities"
-- "Recommendations (advice card – summary)"
-- "Further Diagnostics / Follow-Up (Checklist)"
-Each section should be concise and clinically coherent.
 
-B) Immediately after the text, output ONE fenced JSON block matching EXACTLY the schema below:
+First output PLAIN TEXT in ${lang} with EXACTLY these four headings (no quotes, no numbering, no extra labels):
+Clinical Summary (expert, concise)
+Conclusions & Priorities
+Recommendations (advice card – summary)
+Further Diagnostics / Follow-Up (Checklist)
+
+Put the content for each heading directly below it as short paragraphs or bullet points.
+
+Immediately after the text, output ONE fenced JSON block (${fenceJson} … ${fenceEnd}), matching EXACTLY the schema below. Do not print any other labels before or after the JSON.
 
 ${fenceJson}
 {
