@@ -60,7 +60,7 @@ import { usePatientFetchData } from '@/hooks/usePatientFetchData';
 import { usePatientSubmitData } from '@/hooks/usePatientSubmitData';
 
 // 📊 Typy
-import type { Meal } from '@/types';
+import type { Meal, PatientData } from '@/types';
 
 // Przepis w formacie używanym w UI i PDF
 type RecipeUI = {
@@ -238,6 +238,12 @@ const {
   saveDietPlan,
   confirmDietPlan 
 } = usePatientSubmitData(form);
+
+// ⬇️ efektywny formularz: zawsze PatientData dla zgodności z props
+const effectiveForm: PatientData =
+patientMode === 'unregistered'
+? { ...form, ...formUnregistered } as PatientData
+: form;
 
 // ⬇ pobierz najnowszą dietę pacjenta z `patient_diets`
 // ⬇ pobierz najnowszą dietę pacjenta z `patient_diets`
@@ -460,23 +466,23 @@ useEffect(() => {
  const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
-  const missing: string[] = [];
-  if (!form.age) missing.push(t('age'));
-  if (!form.sex) missing.push(t('sex'));
-  if (!form.weight) missing.push(t('weight'));
-  if (!form.height) missing.push(t('height'));
-  if (!interviewData.goal) missing.push(t('goal'));
-  if (!interviewData.cuisine) missing.push(t('cuisine'));
+const missing: string[] = [];
+if (!effectiveForm.age) missing.push(t('age'));
+if (!effectiveForm.sex) missing.push(t('sex'));
+if (!effectiveForm.weight) missing.push(t('weight'));
+if (!effectiveForm.height) missing.push(t('height'));
+if (!interviewData.goal) missing.push(t('goal'));
+if (!interviewData.cuisine) missing.push(t('cuisine'));
 
-  if (missing.length > 0) {
-    setMissingFields(missing);
-    setShowConfirmModal(true);
-    setSubmitPending(() => () => handleSubmit(e));
-    return;
-  }
+if (missing.length > 0) {
+setMissingFields(missing);
+setShowConfirmModal(true);
+setSubmitPending(() => () => handleSubmit(e));
+return;
+}
 
-  const bmiCalc = form.weight / ((form.height / 100) ** 2);
-  setBmi(parseFloat(bmiCalc.toFixed(1)));
+const bmiCalc = effectiveForm.weight! / ((effectiveForm.height! / 100) ** 2);
+setBmi(parseFloat(bmiCalc.toFixed(1)));
   setIsGenerating(true);
   setStreamingText('');
   setDietApproved(false);
@@ -499,8 +505,8 @@ useEffect(() => {
     };
 
     if (!interviewData.mealsPerDay) {
-      const suggested = getRecommendedMealsPerDay(form, interviewData);
-      setInterviewData((prev:any) => ({ ...prev, mealsPerDay: suggested }));
+    const suggested = getRecommendedMealsPerDay(effectiveForm, interviewData);
+    setInterviewData((prev:any) => ({ ...prev, mealsPerDay: suggested }));
     }
 
     const recommendation = interviewData.recommendation?.trim();
@@ -510,12 +516,12 @@ useEffect(() => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        form,
-        interviewData,
-        lang,
-        goalExplanation,
-        recommendation,
-        medical: medicalData
+      form: effectiveForm,
+      interviewData,
+      lang,
+      goalExplanation,
+      recommendation,
+      medical: medicalData
       })
     });
 
@@ -557,7 +563,9 @@ if (json.dietPlan && typeof json.dietPlan === 'object') {
   setMealPlan(parsedDiet);
   setDiet(parsedDiet);
   setEditableDiet(parsedDiet);
+  if (patientMode === 'registered') {
   await saveDietPlan(parsedDiet);
+  }
   setIsGenerating(false);
   return;
 }
@@ -595,12 +603,14 @@ if (json.weekPlan && Array.isArray(json.weekPlan)) {
     setIsGenerating(false);
     return;
   }
-  setMealPlan(converted);
-  setDiet(converted);
-  setEditableDiet(converted);
-  await saveDietPlan(converted);
-  setIsGenerating(false);
-  return;
+    setMealPlan(converted);
+    setDiet(converted);
+    setEditableDiet(converted);
+    if (patientMode === 'registered') {
+    await saveDietPlan(converted);
+    }
+    setIsGenerating(false);
+    return;
 }
 
 // --- priorytet 3: mealPlan (drugi fallback) ---
@@ -1045,12 +1055,12 @@ return (
       {/* Sekcja 3: Wywiad pacjenta */}
               <PanelCard title={`🧠 ${tUI('interviewTitle', lang)}`}>
           <InterviewWizard
-            key={JSON.stringify(initialInterviewData)}
-            form={form}
-            initialData={initialInterviewData}
-            lang={lang}
-            onFinish={saveInterviewData}
-            onUpdateNarrative={(text) => setNarrativeText(text)}
+          key={JSON.stringify(initialInterviewData)}
+          form={effectiveForm as any}
+          initialData={initialInterviewData}
+          lang={lang}
+          onFinish={saveInterviewData}
+          onUpdateNarrative={(text) => setNarrativeText(text)}
           />
         </PanelCard>
   
@@ -1122,10 +1132,10 @@ return (
     
       <PanelCard title={`🧮 ${tUI('patientInNumbers', lang)}`} className="h-full">
         <CalculationBlock
-          form={form}
-          interview={extractMappedInterview(interviewData)}
-          lang={lang}
-          onResult={handleCalculationResult}
+        form={effectiveForm}
+        interview={extractMappedInterview(interviewData)}
+        lang={lang}
+        onResult={handleCalculationResult}
         />
       </PanelCard>
     
@@ -1186,27 +1196,27 @@ return (
           setIsGenerating(true);
           const { generateDietPdf } = await import('@/utils/generateDietPdf');
         await generateDietPdf(
-          form,
-          bmi,
-          confirmedDiet!,
-          dietApproved,
-          notes,
-          lang,
-          interviewData,
-          {
-            bmi: interviewData.bmi,
-            ppm: interviewData.ppm,
-            cpm: interviewData.cpm,
-            pal: interviewData.pal,
-            kcalMaintain: interviewData.kcalMaintain,
-            kcalReduce: interviewData.kcalReduce,
-            kcalGain: interviewData.kcalGain,
-            nmcBroca: interviewData.nmcBroca,
-            nmcLorentz: interviewData.nmcLorentz
-          },
-          'download',            // 👈 brakujący argument `mode`
-          narrativeText,
-          toPdfRecipes(recipes)
+        effectiveForm,
+        bmi,
+        confirmedDiet!,
+        dietApproved,
+        notes,
+        lang,
+        interviewData,
+        {
+        bmi: interviewData.bmi,
+        ppm: interviewData.ppm,
+        cpm: interviewData.cpm,
+        pal: interviewData.pal,
+        kcalMaintain: interviewData.kcalMaintain,
+        kcalReduce: interviewData.kcalReduce,
+        kcalGain: interviewData.kcalGain,
+        nmcBroca: interviewData.nmcBroca,
+        nmcLorentz: interviewData.nmcLorentz
+        },
+        'download',
+        narrativeText,
+        toPdfRecipes(recipes)
         );
 
         } catch (e) {
@@ -1244,18 +1254,18 @@ return (
 <PanelCard>
   {/* 🔹 Opis nad tabelą: Cel / Model / Kuchnia / Liczba posiłków (z tłumaczeniami) */}
   {(() => {
-    const goalVal =
-      interviewData?.goal ?? initialInterviewData?.goal ?? (form as any)?.goal ?? '';
+   const goalVal =
+    interviewData?.goal ?? initialInterviewData?.goal ?? (effectiveForm as any)?.goal ?? '';
     const modelVal =
-      interviewData?.model ?? initialInterviewData?.model ?? (form as any)?.model ?? '';
+    interviewData?.model ?? initialInterviewData?.model ?? (effectiveForm as any)?.model ?? '';
     const cuisineVal =
-      interviewData?.cuisine ?? initialInterviewData?.cuisine ?? (form as any)?.cuisine ?? '';
+    interviewData?.cuisine ?? initialInterviewData?.cuisine ?? (effectiveForm as any)?.cuisine ?? '';
     const meals =
-      interviewData?.mealsPerDay ??
-      initialInterviewData?.mealsPerDay ??
-      getRecommendedMealsPerDay(form, interviewData);
+    interviewData?.mealsPerDay ??
+    initialInterviewData?.mealsPerDay ??
+      getRecommendedMealsPerDay(effectiveForm, interviewData);
 
-    const safe = (v: any) => (v === null || v === undefined || v === '' ? '—' : v);
+      const safe = (v: any) => (v === null || v === undefined || v === '' ? '—' : v);
 
     return (
       <div className="mb-3">
@@ -1400,10 +1410,26 @@ return (
             </div>
           ))}
         </PanelCard>
-                )}
-            </div>
-          </main>
-        );
-        }
+          )}
 
-        export default Panel;
+          {/* ⬇⬇⬇ WSTAWKA: ConfirmationModal render */}
+          {showConfirmModal && (
+          <ConfirmationModal
+          open={showConfirmModal}
+          missingFields={missingFields}
+          onCancel={() => setShowConfirmModal(false)}
+          onConfirm={() => {
+          setShowConfirmModal(false);
+          // submitPending?.();
+          }}
+          />
+          )}
+          {/* ⬆⬆⬆ KONIEC WSTAWKI */}
+
+          </div>
+          </main>
+          );
+          }
+
+
+          export default Panel;
