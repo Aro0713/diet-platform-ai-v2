@@ -6420,6 +6420,19 @@ model_lowcarb: {
   hi: "लो-कार्ब आहार",
   he: "דיאטה דלת פחמימות"
 },
+highcal: {
+  pl: "Wysokokaloryczna",
+  en: "High‑calorie",
+  es: "Hipercalórica",
+  fr: "Hypercalorique",
+  de: "Kalorienreich",
+  ua: "Висококалорійна",
+  ru: "Высококалорийная",
+  zh: "高热量",
+  hi: "उच्च‑कैलोरी",
+  ar: "عالية السعرات",
+  he: "עתירת קלוריות"
+},
 model_highprotein: {
   pl: "Dieta wysokobiałkowa",
   en: "High-protein diet",

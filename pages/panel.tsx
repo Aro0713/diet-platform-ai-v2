@@ -447,9 +447,13 @@ useEffect(() => {
     testResults: { [testName: string]: string };
     medicalSummary?: string;
     structuredOutput?: any;
-  }) => {
+    }) => {
+    if (patientMode === 'registered') {
     saveMedicalData(data);
-  };
+    } else {
+    setMedicalData(data); // lokalnie, bez zapisu do Supabase
+    }
+    };
 
   const handleCalculationResult = ({ suggestedModel, ...rest }: any) => {
     setInterviewData((prev: any) => ({ ...prev, ...rest, model: suggestedModel }));
@@ -1042,14 +1046,14 @@ return (
       {/* Sekcja 2: Dane medyczne */}
       <PanelCard className="z-30">
           <MedicalForm
-            key={JSON.stringify(initialMedicalData)}
-            initialData={initialMedicalData}
-            existingMedical={medicalData}
-            onChange={handleMedicalChange}
-            onUpdateMedical={(summary) => setMedicalData((prev: any) => ({ ...prev, summary }))}
-            userId={form.user_id}
-            lang={lang}
-          />
+        key={JSON.stringify(initialMedicalData)}
+        initialData={initialMedicalData}
+        existingMedical={medicalData}
+        onChange={handleMedicalChange}
+        onUpdateMedical={(summary) => setMedicalData((prev: any) => ({ ...prev, summary }))}
+        userId={patientMode === 'registered' ? form.user_id : undefined}
+        lang={lang}
+        />
         </PanelCard>
 
       {/* Sekcja 3: Wywiad pacjenta */}
@@ -1059,7 +1063,7 @@ return (
           form={effectiveForm as any}
           initialData={initialInterviewData}
           lang={lang}
-          onFinish={saveInterviewData}
+          onFinish={patientMode === 'registered' ? saveInterviewData : (d: any) => setInterviewData(d)}
           onUpdateNarrative={(text) => setNarrativeText(text)}
           />
         </PanelCard>
