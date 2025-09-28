@@ -302,7 +302,30 @@ export async function generateDiet(input: any): Promise<any> {
   const mealsPerDay = iv.mealsPerDay ?? "not provided";
   const interviewSummary = buildInterviewSummary(iv);
   const medicalSummary = buildMedicalSummary(md);
+    // ——— Hard constraints extracted from interview and medical data
+const allergyText = String(form?.allergies ?? iv?.allergies ?? "");
+const dislikedItems: string[] = Array.isArray(iv?.disliked) ? iv.disliked : [];
+const preferredItems: string[] = [
+...(Array.isArray(iv?.preferred) ? iv.preferred : []),
+...(Array.isArray(md?.dietHints?.recommend) ? md.dietHints.recommend : [])
+];
+const forbiddenItems: string[] = [
+...(Array.isArray(md?.dietHints?.avoid) ? md.dietHints.avoid : []),
+...(Array.isArray(md?.dqChecks?.avoidIngredients) ? md.dqChecks.avoidIngredients : []),
+...dislikedItems
+].filter(Boolean);
 
+
+// Sodium target if applicable (generic):
+const conditionsText = [
+...(Array.isArray(form?.conditions) ? form.conditions : []),
+...(Array.isArray(form?.conditionGroups) ? form.conditionGroups : [])
+].join(" | ");
+const sodiumLimit = (
+modelKey === "very low sodium" ? 1500 :
+(modelKey === "low sodium" || /nadciśn|hypertens/i.test(conditionsText)) ? 2000 :
+null
+);
 
   const modelDefinition = dietModelMap[modelKey || ""] || {};
   const modelMacroStr = modelDefinition.macros
@@ -326,62 +349,68 @@ ${modelNotes ? `\n📌 Notes:\n${modelNotes}` : ""}
 
   const jsonFormatPreview = daysInLang.map(day => `    \"${day}\": { ... }`).join(',\n');
 
-  const prompt = `
-You are a clinical dietitian AI.
+const prompt = `
+- If model is "insulin resistance" or "diabetes" or goal mentions glycemia control → keep low glycemic load per meal; avoid refined sugar.
+- Honor cuisine context strictly: ${cuisineContext}.
 
-${modelDetails}
-
-Generate a complete 7-day diet plan. DO NOT stop after 1 or 2 days.
+HARD CONSTRAINTS (must be satisfied in every meal and day):
+- FORBIDDEN_INGREDIENTS (exact words or whole families): ${JSON.stringify(forbiddenItems)}
+- ALLERGENS_FREE_TEXT (parse broadly; exclude the whole family if any allergy matches, e.g., "nut" → exclude all nuts): ${allergyText || "none"}
+- DISLIKED (avoid unless absolutely necessary; prefer replacements): ${JSON.stringify(dislikedItems)}
+- PREFERRED (use when reasonable): ${JSON.stringify(preferredItems)}
+${sodiumLimit ? `- DAILY_SODIUM_LIMIT_MG: ${sodiumLimit}` : ""}
+- Respect mealsPerDay = ${mealsPerDay} if provided.
 
 You MUST include:
 - All 7 days in the target language (${lang}):
 ${daysList}
 - The number of meals per day must be:
-  - If mealsPerDay is provided: use exactly that number → ${mealsPerDay}
-  - If not provided: intelligently determine the best number of meals (between 2–6)
+- If mealsPerDay is provided: use exactly that number → ${mealsPerDay}
+- If not provided: intelligently determine the best number of meals (between 2–6)
+
 
 - Use meal names localized to language "${lang}".
 - You MUST include full nutritional data for every meal.
 - Each meal must include:
+- "mealName": string
+- "time": string (e.g. "07:00")
+- "ingredients": array of { "name": string, "quantity": number in grams }
+- "macros": {
+"kcal": number,
+"protein": number,
+"fat": number,
+"carbs": number,
+"fiber": number,
+"sodium": number,
+"potassium": number,
+"calcium": number,
+"magnesium": number,
+"iron": number,
+"zinc": number,
+"vitaminD": number,
+"vitaminB12": number,
+"vitaminC": number,
+"vitaminA": number,
+"vitaminE": number,
+"vitaminK": number
+}
 
-  - "mealName": string
-  - "time": string (e.g. "07:00")
-  - "ingredients": array of:
-      { "name": "string", "quantity": number in grams }
 
-  - "macros": {
-      "kcal": number,
-      "protein": number,
-      "fat": number,
-      "carbs": number,
-      "fiber": number,
-      "sodium": number,
-      "potassium": number,
-      "calcium": number,
-      "magnesium": number,
-      "iron": number,
-      "zinc": number,
-      "vitaminD": number,
-      "vitaminB12": number,
-      "vitaminC": number,
-      "vitaminA": number,
-      "vitaminE": number,
-      "vitaminK": number
-    }
+⚠️ All numeric values must be per whole meal, not per 100g. Round to 1 decimal.
+⚠️ Do NOT skip any nutrient field.
 
-⚠️ All numeric values must be per whole meal, not per 100g. Use realistic values and round to 1 decimal point.
-⚠️ Do not skip any nutrient field. All macros, micros and vitamins must be present and realistic.
 
 ✔ Patient profile from interview:
 ${interviewSummary}
 
+
 ✔ Clinical risks and suggestions:
 ${medicalSummary || "ℹ️ No clinical data provided."}
+
 
 ✔ Required nutrient ranges:
 ${nutrientRequirementsText}
 
-${hasMedicalData ? `✔ Adjust for patient diseases: ${form.conditions?.join(", ") || "unknown"}` : ""}
 
 ✔ Diet model: ${modelKey}, Cuisine: ${cuisine}
 ✔ CPM: ${cpm}, BMI: ${bmi}, PAL: ${pal}
@@ -389,20 +418,31 @@ ${hasMedicalData ? `✔ Adjust for patient diseases: ${form.conditions?.join(", 
 ✔ Doctor's recommendation: ${interviewData.recommendation}
 ✔ Allergies: ${form.allergies || "none"}
 
+
 Use ONLY trusted sources:
 ${dataSources}
 
+
+COMPLIANCE (self-check before you answer):
+- Replace any forbidden/allergen ingredient with safe, cuisine-appropriate alternatives (e.g., nuts → seeds like pumpkin/sunflower/chia; shellfish → fish; lactose → lactose-free/fermented dairy or plant-based).
+- Examples of safe replacements: nuts → pumpkin/sunflower/chia seeds; almond milk → oat milk or lactose‑free dairy; shellfish → white fish; smoked fish → baked/poached low‑sodium fish.
+- Ensure daily sodium ≤ DAILY_SODIUM_LIMIT_MG if provided.
+- Ensure low glycemic load when required by model/goal.
+- Produce a short internal checklist and FIX violations before returning final JSON.
+
+
 Return JSON:
 {
-  "dietPlan": {
+"dietPlan": {
 ${jsonFormatPreview}
-  },
-  "weeklyOverview": { ... },
-  "shoppingList": [ ... ],
-  "nutritionalSummary": {
-    "macros": { "protein": ..., "fat": ..., "carbs": ... },
-    "micros": { "sodium": ..., "magnesium": ..., "vitamin D": ... }
-  }
+},
+"weeklyOverview": { ... },
+"shoppingList": [ ... ],
+"nutritionalSummary": {
+"macros": { "protein": ..., "fat": ..., "carbs": ... },
+"micros": { "sodium": ..., "magnesium": ..., "vitamin D": ... }
+},
+"complianceReport": { "violations": [], "notes": [] }
 }
 `;
 
@@ -460,18 +500,37 @@ if (
   throw new Error("❌ JSON nie zawiera pola 'dietPlan'.");
 }
 
+// 🔹 Normalizacja formatu składników (spójna z execute)
+function normalizeIngredients(ingredients: any[]) {
+return (ingredients || []).map(i => ({
+product: i.product ?? i.name ?? "",
+weight: i.weight ?? i.quantity ?? null,
+unit: i.unit || "g"
+}));
+}
+for (const day of Object.keys(rawDietPlan)) {
+const mealsForDay = rawDietPlan[day];
+const normalizedMeals: Record<string, Meal> = {};
+for (const mealKey of Object.keys(mealsForDay)) {
+const meal = mealsForDay[mealKey];
+normalizedMeals[mealKey] = { ...meal, ingredients: normalizeIngredients(meal.ingredients) };
+}
+rawDietPlan[day] = normalizedMeals;
+}
+const confirmedPlan: Record<string, Record<string, Meal>> = rawDietPlan;
+
 try {
-  const result = await import("@/agents/dqAgent").then(m =>
-    m.dqAgent.run({
-      dietPlan: rawDietPlan,
-      model: modelKey,
-      goal: goalExplanation,
-      cpm,
-      weightKg: form.weight ?? null,
-      conditions: form.conditions ?? [],
-      dqChecks: form?.medical_data?.dqChecks ?? {}
-    })
-  );
+const result = await import("@/agents/dqAgent").then(m =>
+m.dqAgent.run({
+dietPlan: confirmedPlan,
+model: modelKey,
+goal: goalExplanation,
+cpm,
+weightKg: form.weight ?? null,
+conditions: form.conditions ?? [],
+dqChecks: form?.medical_data?.dqChecks ?? {}
+})
+);
 
 if (!result || !result.plan) {
   console.error("❌ dqAgent.run zwrócił pusty wynik:", result);
@@ -490,7 +549,6 @@ return {
 catch (err) {
   console.warn("⚠️ dqAgent błąd:", err);
 }
-
 }
 
 export const generateDietTool = tool({
@@ -545,7 +603,28 @@ export const generateDietTool = tool({
     const mealsPerDay = iv.mealsPerDay ?? "not provided";
     const interviewSummary = buildInterviewSummary(iv);
     const medicalSummary = buildMedicalSummary(md);
+    const allergyText = String(form?.allergies ?? iv?.allergies ?? "");
+    const dislikedItems: string[] = Array.isArray(iv?.disliked) ? iv.disliked : [];
+    const preferredItems: string[] = [
+    ...(Array.isArray(iv?.preferred) ? iv.preferred : []),
+    ...(Array.isArray(md?.dietHints?.recommend) ? md.dietHints.recommend : [])
+    ];
+    const forbiddenItems: string[] = [
+    ...(Array.isArray(md?.dietHints?.avoid) ? md.dietHints.avoid : []),
+    ...(Array.isArray(md?.dqChecks?.avoidIngredients) ? md.dqChecks.avoidIngredients : []),
+    ...dislikedItems
+    ].filter(Boolean);
 
+
+    const conditionsText = [
+    ...(Array.isArray(form?.conditions) ? form.conditions : []),
+    ...(Array.isArray(form?.conditionGroups) ? form.conditionGroups : [])
+    ].join(" | ");
+    const sodiumLimit = (
+    modelKey === "very low sodium" ? 1500 :
+    (modelKey === "low sodium" || /nadciśn|hypertens/i.test(conditionsText)) ? 2000 :
+    null
+);
     const modelDefinition = dietModelMap[modelKey || ""] || {};
     const modelMacroStr = modelDefinition.macros
       ? Object.entries(modelDefinition.macros).map(([k, v]) => `- ${k}: ${v}`).join('\n')
@@ -573,6 +652,17 @@ You are a clinical dietitian AI.
 ${modelDetails}
 
 Generate a complete 7-day diet plan. DO NOT stop after 1 or 2 days.
+
+
+HARD CONSTRAINTS (must be satisfied in every meal and day):
+- FORBIDDEN_INGREDIENTS (exact words or whole families): ${JSON.stringify(forbiddenItems)}
+- ALLERGENS_FREE_TEXT (parse broadly; exclude the whole family if any allergy matches, e.g., "nut" → exclude all nuts): ${allergyText || "none"}
+- DISLIKED (avoid unless absolutely necessary; prefer replacements): ${JSON.stringify(dislikedItems)}
+- PREFERRED (use when reasonable): ${JSON.stringify(preferredItems)}
+${sodiumLimit ? `- DAILY_SODIUM_LIMIT_MG: ${sodiumLimit}` : ""}
+- Respect mealsPerDay = ${mealsPerDay} if provided.
+- If model is "insulin resistance" or "diabetes" or goal mentions glycemia control → keep low glycemic load per meal; avoid refined sugar.
+- Honor cuisine context strictly: ${cuisineContext}.
 
 You MUST include:
 - All 7 days in the target language (${lang}):
@@ -661,6 +751,14 @@ ${nutrientRequirementsText}
 Use ONLY trusted sources:
 ${dataSources}
 
+
+COMPLIANCE (self-check before you answer):
+- Replace any forbidden/allergen ingredient with safe, cuisine-appropriate alternatives (e.g., nuts → seeds like pumpkin/sunflower/chia; shellfish → fish; lactose → lactose-free/fermented dairy or plant-based).
+- Examples of safe replacements: nuts → pumpkin/sunflower/chia seeds; almond milk → oat milk or lactose‑free dairy; shellfish → white fish; smoked fish → baked/poached low‑sodium fish.
+- Ensure daily sodium ≤ DAILY_SODIUM_LIMIT_MG if provided.
+- Ensure low glycemic load when required by model/goal.
+- Produce a short internal checklist and FIX violations before returning final JSON.
+
 Return JSON:
 {
   "dietPlan": {
@@ -669,10 +767,11 @@ ${jsonFormatPreview}
   "weeklyOverview": { ... },
   "shoppingList": [ ... ],
   "nutritionalSummary": {
-    "macros": { "protein": ..., "fat": ..., "carbs": ... },
-    "micros": { "sodium": ..., "magnesium": ..., "vitaminD": ... }
+  "macros": { "protein": ..., "fat": ..., "carbs": ... },
+  "micros": { "sodium": ..., "magnesium": ..., "vitaminD": ... }
+  },
+  "complianceReport": { "violations": [], "notes": [] }
   }
-}
 `;
 
 try {
