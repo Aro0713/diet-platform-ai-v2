@@ -670,9 +670,19 @@ function buildPatientConstraints(
 }
 
 export async function generateDiet(input: any): Promise<any> {
-  // Proxy – jedna spójna ścieżka generacji przez narzędzie
-  return await (generateDietTool as any).execute({ input });
+  try {
+    const out = await (generateDietTool as any).execute({ input });
+    // jeżeli tool mimo wszystko zwrócił wrapper, odpakuj:
+    if (out && typeof out === "object" && "type" in out) {
+      if ((out as any).type === "json") return (out as any).content;
+      if ((out as any).type === "text") return { error: String((out as any).content ?? "Unknown error") };
+    }
+    return out; // spodziewane: { ... , dietPlan, ... } lub { error }
+  } catch (e: any) {
+    return { error: `Błąd generowania diety: ${e?.message ?? "unknown"}` };
+  }
 }
+
 
 export const generateDietTool = tool({
   name: "generate_diet_plan",
@@ -742,7 +752,12 @@ export const generateDietTool = tool({
   const modelNotes = (modelDefinition as any).notes?.join("\n") || "";
 
   // ranges (jak dotąd: tylko z modelu – bez większej przebudowy)
-  const nutrientRequirements = nutrientRequirementsMap[form?.model] || null;
+  const nutrientRequirements =
+  (nutrientRequirementsMap as any)[modelKey] ??
+  (nutrientRequirementsMap as any)[normalize(form?.model || "")] ??
+  (nutrientRequirementsMap as any)[form?.model] ??
+  null;
+
   const nutrientRequirementsText = nutrientRequirements
     ? Object.entries(nutrientRequirements).map(([k, v]: any) => `- ${k}: ${v.min} – ${v.max}`).join("\n")
     : "⚠️ No specific micronutrient ranges found for this model.";
@@ -902,7 +917,7 @@ ${jsonFormatPreview}
       Object.keys(rawDietPlan).length === 0 ||
       Object.values(rawDietPlan).every(v => !v || typeof v !== "object")
     ) {
-      return { type: "text", content: "❌ JSON nie zawiera pola 'dietPlan'." };
+      throw new Error("JSON output from model does not include 'dietPlan'.");
     }
 
     // ── 4) normalizacja składników
@@ -969,19 +984,13 @@ if (sodiumLimit) {
     const finalPlan = dq?.dietPlan && Object.keys(dq.dietPlan || {}).length ? dq.dietPlan : confirmedPlan;
 
     return {
-      type: "json",
-      content: {
-        ...parsed,
-        dietPlan: finalPlan,
-        complianceReport: dq?.complianceReport ?? parsed?.complianceReport ?? { violations: [], notes: [] }
-      }
-    };
+  ...parsed,
+  dietPlan: finalPlan,
+  complianceReport: dq?.complianceReport ?? parsed?.complianceReport ?? { violations: [], notes: [] }
+};
   } catch (error: any) {
-    return {
-      type: "text",
-      content: `❌ Błąd generowania diety: ${error?.message || "Nieznany błąd"}`
-    };
-  }
+  return { error: `Błąd generowania diety: ${error?.message ?? "nieznany błąd"}` };
+}
 }
 });
 
