@@ -918,6 +918,20 @@ export const translationsUI: Record<string, Record<LangKey, string>> = {
     es: 'Merienda',
     fr: 'Goûter'
   },
+  "meal.snackLight": {
+  pl: "Przekąska (lekka)",
+  en: "Snack (light)",
+  es: "Tentempié (ligero)",
+  fr: "En-cas (léger)",
+  de: "Snack (leicht)",
+  ua: "Перекус (легкий)",
+  ru: "Перекус (лёгкий)",
+  zh: "加餐（清淡）",
+  hi: "स्नैक (हल्का)",
+  ar: "وجبة خفيفة (خفيفة)",
+  he: "חטיף (קל)"
+},
+
   dinner: {
     pl: 'Kolacja',
     en: 'Dinner',
