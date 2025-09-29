@@ -205,6 +205,7 @@ const cuisineMap: Record<string, string> = {
 };
 // --- HELPERS: bierz tylko WYWIAD + MED z Supabase i sklej krótkie podsumowania ---
 
+
 function extractInterview(form: any, interviewData: any) {
   const sup = form?.interview_data ?? null;
   const mpdRaw = interviewData?.mealsPerDay ?? sup?.step6_q6 ?? null; // w Twojej próbce step6_q6 = "3"
@@ -259,6 +260,45 @@ function buildInterviewSummary(iv: ReturnType<typeof extractInterview>) {
     `Allergies: ${allergiesLine}`,
   ].join(", ");
 }
+// --- CONSTRAINTS (alergie, preferencje, zalecenia lekarza) ---
+function collectConstraints(form: any, interviewData: any) {
+  const iv = extractInterview(form, interviewData);
+  const md = extractMedical(form);
+
+  const forbidden: string[] = [
+    ...(Array.isArray(md?.dietHints?.avoid) ? md.dietHints.avoid : []),
+    ...(Array.isArray(md?.dqChecks?.avoidIngredients) ? md.dqChecks.avoidIngredients : []),
+    ...(Array.isArray(iv?.disliked) ? iv.disliked : []),
+  ].filter(Boolean).map(x => String(x).toLowerCase().trim());
+
+  const preferred: string[] = [
+    ...(Array.isArray(iv?.preferred) ? iv.preferred : []),
+    ...(Array.isArray(md?.dietHints?.recommend) ? md.dietHints.recommend : []),
+  ].filter(Boolean).map(x => String(x).toLowerCase().trim());
+
+  const allergiesText = String(iv?.allergies ?? form?.allergies ?? "").trim();
+  const doctorNotes   = String(interviewData?.recommendation ?? form?.doctorRecommendation ?? "").trim();
+
+  return { forbidden, preferred, allergiesText, doctorNotes };
+}
+
+// Minimalna egzekucja na gotowym planie – usuń zakazane składniki (case-insensitive)
+function enforceConstraintsOnPlan(
+  plan: Record<string, Record<string, Meal>>,
+  forbidden: string[]
+) {
+  const forb = forbidden.map(f => f.toLowerCase());
+  for (const day of Object.keys(plan)) {
+    for (const mk of Object.keys(plan[day])) {
+      const meal: any = plan[day][mk];
+      meal.ingredients = (meal?.ingredients || []).filter((ing: any) => {
+        const name = String(ing.product ?? ing.name ?? "").toLowerCase();
+        if (!name) return false;
+        return !forb.some(f => name.includes(f));
+      });
+    }
+  }
+}
 
 function buildMedicalSummary(md: ReturnType<typeof extractMedical>) {
   return [
@@ -302,7 +342,18 @@ export async function generateDiet(input: any): Promise<any> {
   const mealsPerDay = iv.mealsPerDay ?? "not provided";
   const interviewSummary = buildInterviewSummary(iv);
   const medicalSummary = buildMedicalSummary(md);
+  
+// Zbierz ograniczenia z wywiadu i danych medycznych
+const { forbidden, preferred, allergiesText, doctorNotes } = collectConstraints(form, interviewData);
 
+// Prosta tokenizacja alergii → dorzuć do FORBIDDEN
+const allergyTokens = allergiesText
+  ? allergiesText.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean)
+  : [];
+
+// TE STAŁE MUSZĄ BYĆ W TYM ZAKRESIE (funkcji), bo za chwilę użyjesz ich w promptcie i filtrze:
+const FORBIDDEN = Array.from(new Set([...forbidden, ...allergyTokens]));
+const PREFERRED = preferred;
 
   const modelDefinition = dietModelMap[modelKey || ""] || {};
   const modelMacroStr = modelDefinition.macros
@@ -326,12 +377,18 @@ ${modelNotes ? `\n📌 Notes:\n${modelNotes}` : ""}
 
   const jsonFormatPreview = daysInLang.map(day => `    \"${day}\": { ... }`).join(',\n');
 
-  const prompt = `
+const prompt = `
 You are a clinical dietitian AI.
 
 ${modelDetails}
 
 Generate a complete 7-day diet plan. DO NOT stop after 1 or 2 days.
+
+HARD CONSTRAINTS (must be respected in EVERY meal and day):
+- FORBIDDEN_INGREDIENTS: ${JSON.stringify(FORBIDDEN)}
+- PREFERRED_INGREDIENTS: ${JSON.stringify(PREFERRED)}
+- ALLERGENS_FREE_TEXT: ${allergiesText || "none"}
+- DOCTOR_NOTES (MANDATORY): ${doctorNotes || "none"}
 
 You MUST include:
 - All 7 days in the target language (${lang}):
@@ -459,6 +516,31 @@ if (
   console.error("❌ Nie znaleziono prawidłowego dietPlan:", parsed);
   throw new Error("❌ JSON nie zawiera pola 'dietPlan'.");
 }
+// 🔹 Normalizacja formatu składników (name/quantity → product/weight)
+function normalizeIngredients(ingredients: any[]) {
+  return (ingredients || []).map(i => ({
+    product: i.product ?? i.name ?? "",
+    weight: i.weight ?? i.quantity ?? null,
+    unit: i.unit || "g"
+  }));
+}
+for (const day of Object.keys(rawDietPlan)) {
+  const mealsForDay = rawDietPlan[day];
+  const normalizedMeals: Record<string, Meal> = {};
+  for (const mealKey of Object.keys(mealsForDay)) {
+    const meal = mealsForDay[mealKey];
+    normalizedMeals[mealKey] = {
+      ...meal,
+      ingredients: normalizeIngredients(meal.ingredients)
+    };
+  }
+  rawDietPlan[day] = normalizedMeals;
+}
+
+// 🔒 Egzekwuj zakazy jeszcze po generacji, zanim puścisz przez dqAgent
+enforceConstraintsOnPlan(rawDietPlan, FORBIDDEN);
+
+const confirmedPlan: Record<string, Record<string, Meal>> = rawDietPlan;
 
 try {
   const result = await import("@/agents/dqAgent").then(m =>
@@ -545,7 +627,13 @@ export const generateDietTool = tool({
     const mealsPerDay = iv.mealsPerDay ?? "not provided";
     const interviewSummary = buildInterviewSummary(iv);
     const medicalSummary = buildMedicalSummary(md);
-
+    // Zbierz ograniczenia z wywiadu i danych medycznych (W TYM ZAKRESIE funkcji)
+      const { forbidden, preferred, allergiesText, doctorNotes } = collectConstraints(form, interviewData);
+      const allergyTokens = allergiesText
+        ? allergiesText.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean)
+        : [];
+      const FORBIDDEN = Array.from(new Set([...forbidden, ...allergyTokens]));
+      const PREFERRED = preferred;
     const modelDefinition = dietModelMap[modelKey || ""] || {};
     const modelMacroStr = modelDefinition.macros
       ? Object.entries(modelDefinition.macros).map(([k, v]) => `- ${k}: ${v}`).join('\n')
@@ -567,12 +655,18 @@ export const generateDietTool = tool({
 
   const jsonFormatPreview = `"Monday": { "breakfast": { ... }, ... }, ...`;
 
-    const prompt = `
+   const prompt = `
 You are a clinical dietitian AI.
 
 ${modelDetails}
 
 Generate a complete 7-day diet plan. DO NOT stop after 1 or 2 days.
+
+HARD CONSTRAINTS (must be respected in EVERY meal and day):
+- FORBIDDEN_INGREDIENTS: ${JSON.stringify(FORBIDDEN)}
+- PREFERRED_INGREDIENTS: ${JSON.stringify(PREFERRED)}
+- ALLERGENS_FREE_TEXT: ${allergiesText || "none"}
+- DOCTOR_NOTES (MANDATORY): ${doctorNotes || "none"}
 
 You MUST include:
 - All 7 days in the target language (${lang}):
@@ -582,15 +676,15 @@ ${daysList}
   - If not provided: intelligently determine the best number of meals (between 2–6)
 
 - Use meal names localized to language "${lang}".
+- You MUST include full nutritional data for every meal.
+- Each meal must include:
 
-⚠️ Each meal must include:
-- "mealName": string
-- "time": string (e.g. "07:00")
-- "ingredients": array of:
-    { "name": string, "quantity": number in grams }
+  - "mealName": string
+  - "time": string (e.g. "07:00")
+  - "ingredients": array of:
+      { "name": "string", "quantity": number in grams }
 
-- "macros": object with:
-    {
+  - "macros": {
       "kcal": number,
       "protein": number,
       "fat": number,
@@ -610,38 +704,8 @@ ${daysList}
       "vitaminK": number
     }
 
-Example:
-{
-  "mealName": "Jajecznica z pomidorami",
-  "time": "07:00",
-  "ingredients": [
-    { "name": "Jajko", "quantity": 120 },
-    { "name": "Pomidor", "quantity": 100 },
-    { "name": "Olej rzepakowy", "quantity": 5 }
-  ],
-  "macros": {
-    "kcal": 320,
-    "protein": 18.5,
-    "fat": 25.2,
-    "carbs": 6.1,
-    "fiber": 1.1,
-    "sodium": 420,
-    "potassium": 440,
-    "calcium": 65,
-    "magnesium": 22,
-    "iron": 1.2,
-    "zinc": 0.9,
-    "vitaminD": 2.1,
-    "vitaminB12": 0.6,
-    "vitaminC": 3.8,
-    "vitaminA": 210,
-    "vitaminE": 3.2,
-    "vitaminK": 32
-  }
-}
-
-⚠️ All numeric values must be per entire meal (not per 100g) and must be rounded to 1 decimal place.
-⚠️ Do NOT skip any field — all fields above must be filled with realistic values.
+⚠️ All numeric values must be per whole meal, not per 100g. Use realistic values and round to 1 decimal point.
+⚠️ Do not skip any nutrient field. All macros, micros and vitamins must be present and realistic.
 
 ✔ Patient profile from interview:
 ${interviewSummary}
@@ -651,6 +715,8 @@ ${medicalSummary || "ℹ️ No clinical data provided."}
 
 ✔ Required nutrient ranges:
 ${nutrientRequirementsText}
+
+${hasMedicalData ? `✔ Adjust for patient diseases: ${form.conditions?.join(", ") || "unknown"}` : ""}
 
 ✔ Diet model: ${modelKey}, Cuisine: ${cuisine}
 ✔ CPM: ${cpm}, BMI: ${bmi}, PAL: ${pal}
@@ -670,10 +736,11 @@ ${jsonFormatPreview}
   "shoppingList": [ ... ],
   "nutritionalSummary": {
     "macros": { "protein": ..., "fat": ..., "carbs": ... },
-    "micros": { "sodium": ..., "magnesium": ..., "vitaminD": ... }
+    "micros": { "sodium": ..., "magnesium": ..., "vitamin D": ... }
   }
 }
 `;
+
 
 try {
   const stream = await openai.chat.completions.create({
@@ -777,7 +844,6 @@ function normalizeIngredients(ingredients: any[]) {
 for (const day of Object.keys(rawDietPlan)) {
   const mealsForDay = rawDietPlan[day];
   const normalizedMeals: Record<string, Meal> = {};
-
   for (const mealKey of Object.keys(mealsForDay)) {
     const meal = mealsForDay[mealKey];
     normalizedMeals[mealKey] = {
@@ -785,9 +851,11 @@ for (const day of Object.keys(rawDietPlan)) {
       ingredients: normalizeIngredients(meal.ingredients)
     };
   }
-
   rawDietPlan[day] = normalizedMeals;
 }
+
+// Egzekwuj zakazy jeszcze po generacji, zanim puścisz przez dqAgent
+enforceConstraintsOnPlan(rawDietPlan, FORBIDDEN);
 
 // ✅ TS teraz wie: confirmedPlan nie może być null
 const confirmedPlan: Record<string, Record<string, Meal>> = rawDietPlan;
@@ -804,11 +872,19 @@ const result = await import("@/agents/dqAgent").then(m =>
   })
 );
 
+
   // ✅ Zwróć poprawioną lub oryginalną wersję
+const finalPlan =
+  result?.plan && Object.keys(result.plan || {}).length
+    ? result.plan
+    : confirmedPlan;
+
 return {
-  type: "json",
-  content: parsed
+  dietPlan: finalPlan,
+  notes: {},
+  translatedRecommendation: interviewData.recommendation
 };
+
 
 } catch (error: any) {
   return {
