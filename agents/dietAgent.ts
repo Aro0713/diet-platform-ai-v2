@@ -302,6 +302,40 @@ function enforceConstraintsOnPlan(
     }
   }
 }
+// ─── Day shape coercion: { meals:[...] } → keyed meals object ─────────────────
+const MEAL_KEYS_BY_COUNT: Record<number, string[]> = {
+  2: ["breakfast","dinner"],
+  3: ["breakfast","lunch","dinner"],
+  4: ["breakfast","second_breakfast","lunch","dinner"],
+  5: ["breakfast","second_breakfast","lunch","afternoon_snack","dinner"],
+  6: ["breakfast","second_breakfast","lunch","afternoon_snack","dinner","snack"],
+};
+
+function coerceDayObject(dayValue: any, mealsPerDayHint?: number): Record<string, any> {
+  // already an object of meals (not {meals:[]})
+  if (dayValue && !Array.isArray(dayValue) && typeof dayValue === "object" && !dayValue.meals) {
+    return dayValue as Record<string, any>;
+  }
+  // { meals: [...] }
+  if (dayValue && typeof dayValue === "object" && Array.isArray(dayValue.meals)) {
+    const arr = dayValue.meals as any[];
+    const count = arr.length || mealsPerDayHint || 3;
+    const keys = MEAL_KEYS_BY_COUNT[count] || arr.map((_, i) => `meal_${i+1}`);
+    const obj: Record<string, any> = {};
+    for (let i = 0; i < arr.length; i++) obj[keys[i] ?? `meal_${i+1}`] = arr[i];
+    return obj;
+  }
+  // bare array
+  if (Array.isArray(dayValue)) {
+    const arr = dayValue as any[];
+    const count = arr.length || mealsPerDayHint || 3;
+    const keys = MEAL_KEYS_BY_COUNT[count] || arr.map((_, i) => `meal_${i+1}`);
+    const obj: Record<string, any> = {};
+    for (let i = 0; i < arr.length; i++) obj[keys[i] ?? `meal_${i+1}`] = arr[i];
+    return obj;
+  }
+  return {};
+}
 
 function buildMedicalSummary(md: ReturnType<typeof extractMedical>) {
   return [
@@ -475,32 +509,58 @@ ${jsonFormatPreview}
 }
 `;
 
-const completion = await openai.chat.completions.create({
-  model: OPENAI_MODEL,
-  response_format: { type: "json_object" },
-  messages: [
-    { role: "system", content: "You are a clinical dietitian AI." },
-    { role: "user", content: prompt }
-  ],
-  temperature: 0.2,
-  max_tokens: MAX_TOKENS
-});
-const fullContent = completion.choices?.[0]?.message?.content ?? "";
+async function callModelJSON(promptText: string, maxTok = MAX_TOKENS) {
+  const resp = await openai.chat.completions.create({
+    model: OPENAI_MODEL,
+    response_format: { type: "json_object" },
+    messages: [
+      { role: "system", content: "You are a clinical dietitian AI." },
+      { role: "user", content: promptText }
+    ],
+    temperature: 0.2,
+    max_tokens: maxTok
+  });
+  const choice = resp.choices?.[0];
+  return {
+    content: choice?.message?.content ?? "",
+    finish: choice?.finish_reason ?? "unknown"
+  };
+}
 
-let parsed;
+// 1st try — pełny prompt
+let { content: fullContent, finish } = await callModelJSON(prompt, MAX_TOKENS);
+
+// Retry gdy obcięte (finish === 'length') lub filtr
+if (finish !== "stop") {
+  // „compact prompt” — tylko dietPlan bez shoppingList/weeklyOverview, żeby na pewno się zmieściło
+  const compactPrompt = `${prompt}
+
+IMPORTANT: If you are running out of space, RETURN ONLY:
+{
+  "dietPlan": { ... 7 days with meals ... }
+}
+No shoppingList, no weeklyOverview, no nutritionalSummary.`;
+  ({ content: fullContent, finish } = await callModelJSON(compactPrompt, Math.min(MAX_TOKENS * 2, 12000)));
+}
+
+
+function tryParseJsonFromContent(raw: string) {
+  const clean = raw
+    .replace(/^\s*```json\s*/i, "")
+    .replace(/^\s*```\s*/i, "")
+    .replace(/\s*```\s*$/i, "")
+    .trim();
+  return JSON.parse(clean);
+}
+
+let parsed: any;
 try {
-  const match = fullContent.match(/({[\s\S]+})/);
-  if (!match) throw new Error("Brak JSON w odpowiedzi GPT.");
-  parsed = JSON.parse(match[1]);
-
-  if (typeof parsed === "string") {
-    parsed = JSON.parse(parsed); // optional double-parse
-  }
+  parsed = tryParseJsonFromContent(fullContent);
+  if (typeof parsed === "string") parsed = JSON.parse(parsed);
 } catch (err) {
   console.error("❌ JSON parse error →", fullContent);
   throw new Error("GPT response is not valid JSON.");
 }
-
 
 let rawDietPlan: Record<string, Record<string, Meal>> = {};
 
@@ -512,7 +572,10 @@ if (parsed?.CORRECTED_JSON?.dietPlan) {
 } else if (parsed?.dietPlan) {
   rawDietPlan = parsed.dietPlan;
 }
-
+const mealsPerDayHint = typeof iv?.mealsPerDay === "number" ? iv.mealsPerDay : undefined;
+for (const d of Object.keys(rawDietPlan)) {
+  rawDietPlan[d] = coerceDayObject(rawDietPlan[d], mealsPerDayHint) as any;
+}
 if (
   !rawDietPlan ||
   typeof rawDietPlan !== "object" ||
@@ -522,6 +585,7 @@ if (
   console.error("❌ Nie znaleziono prawidłowego dietPlan:", parsed);
   throw new Error("❌ JSON nie zawiera pola 'dietPlan'.");
 }
+
 // 🔹 Normalizacja formatu składników (name/quantity → product/weight)
 function normalizeIngredients(ingredients: any[]) {
   return (ingredients || []).map(i => ({
@@ -758,42 +822,31 @@ const completion = await openai.chat.completions.create({
 });
 const fullContent = completion.choices?.[0]?.message?.content ?? "";
 
-
- // 🔍 Spróbuj sparsować JSON z odpowiedzi GPT
-let parsed;
-try {
-  const cleanContent = fullContent
-    .replace(/```json/g, "")
-    .replace(/```/g, "")
+function tryParseJsonFromContent(raw: string) {
+  const clean = raw
+    .replace(/^\s*```json\s*/i, "")
+    .replace(/^\s*```\s*/i, "")
+    .replace(/\s*```\s*$/i, "")
     .trim();
+  return JSON.parse(clean);
+}
 
-  const firstBrace = cleanContent.indexOf("{");
-  const lastBrace = cleanContent.lastIndexOf("}") + 1;
-
-  if (firstBrace === -1 || lastBrace === -1) {
-    throw new Error("Nie znaleziono nawiasów JSON.");
-  }
-
-  const jsonString = cleanContent.slice(firstBrace, lastBrace);
-
-  parsed = JSON.parse(jsonString);
-
-  // 🧪 Dodatkowe zabezpieczenie dla stringified JSON
+// 🔍 Spróbuj sparsować JSON z odpowiedzi GPT (bez wycinania klamer)
+let parsed: any;
+try {
+  parsed = tryParseJsonFromContent(fullContent);
+  // (opcjonalnie) jeśli ktoś zwrócił zserializowany JSON jako string
   if (typeof parsed === "string") {
-    try {
-      parsed = JSON.parse(parsed);
-    } catch {
-      console.warn("⚠️ Podwójne parsowanie nie powiodło się – kontynuuję z pojedynczym.");
-    }
+    parsed = JSON.parse(parsed);
   }
-
 } catch (err) {
-  console.error("❌ Nie można sparsować JSON ze streamu:\n", fullContent);
+  console.error("❌ JSON parse error →", fullContent);
   return {
     type: "text",
     content: "❌ GPT zwrócił niepoprawny JSON — nie można sparsować."
   };
 }
+
 
   // ✅ Wybór najlepszego dietPlan
  function isValidDietPlan(obj: any): boolean {
@@ -812,6 +865,13 @@ if (isValidDietPlan(parsed?.dietPlan)) {
   rawDietPlan = parsed.CORRECTED_JSON.dietPlan;
 } else if (isValidDietPlan(parsed?.CORRECTED_JSON)) {
   rawDietPlan = parsed.CORRECTED_JSON;
+}
+// ▶▶ UJEDNOLICENIE DNIA: { meals:[...] } → obiekt posiłków
+const mealsPerDayHint = typeof iv?.mealsPerDay === "number" ? iv.mealsPerDay : undefined;
+if (rawDietPlan) {
+  for (const d of Object.keys(rawDietPlan)) {
+    (rawDietPlan as any)[d] = coerceDayObject((rawDietPlan as any)[d], mealsPerDayHint);
+  }
 }
 
 if (
