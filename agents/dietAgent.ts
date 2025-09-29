@@ -5,6 +5,9 @@ import type { Ingredient } from "@/utils/nutrition/calculateMealMacros";
 import type { Meal } from "@/types";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// — perf knobs —
+const OPENAI_MODEL = process.env.DIET_AGENT_MODEL || "gpt-4o-mini";
+const MAX_TOKENS   = Number(process.env.DIET_AGENT_MAX_TOKENS ?? 6500);
 
 const languageMap: Record<string, string> = {
   pl: "polski", en: "English", es: "español", fr: "français", de: "Deutsch",
@@ -313,6 +316,15 @@ function buildMedicalSummary(md: ReturnType<typeof extractMedical>) {
     md.dqChecks?.avoidIngredients?.length ? `Avoid ingredients: ${md.dqChecks.avoidIngredients.join(", ")}` : null,
   ].filter(Boolean).join("\n");
 }
+const SOFT_TIMEOUT_MS = Number(process.env.DIET_AGENT_SOFT_TIMEOUT_MS ?? 25000);
+const SKIP_DQ = process.env.DIET_AGENT_SKIP_DQ === "1";
+
+function withTimeout<T>(p: Promise<T>, ms: number, label = "timeout"): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>((_, rej) => setTimeout(() => rej(new Error(label)), ms))
+  ]) as Promise<T>;
+}
 
 export async function generateDiet(input: any): Promise<any> {
   const {
@@ -464,22 +476,16 @@ ${jsonFormatPreview}
 `;
 
 const completion = await openai.chat.completions.create({
-  model: "gpt-4o",
+  model: OPENAI_MODEL,
   response_format: { type: "json_object" },
   messages: [
     { role: "system", content: "You are a clinical dietitian AI." },
     { role: "user", content: prompt }
   ],
-  temperature: 0.7,
-  stream: true
+  temperature: 0.2,
+  max_tokens: MAX_TOKENS
 });
-
-// 📥 Zbieranie treści z chunków
-let fullContent = "";
-for await (const chunk of completion) {
-  const delta = chunk.choices[0]?.delta?.content;
-  if (delta) fullContent += delta;
-}
+const fullContent = completion.choices?.[0]?.message?.content ?? "";
 
 let parsed;
 try {
@@ -542,10 +548,11 @@ enforceConstraintsOnPlan(rawDietPlan, FORBIDDEN);
 
 const confirmedPlan: Record<string, Record<string, Meal>> = rawDietPlan;
 
+let finalPlan = confirmedPlan; // domyślnie bierzemy nasz plan
 try {
-  const result = await import("@/agents/dqAgent").then(m =>
+  const dq: any = await import("@/agents/dqAgent").then(m =>
     m.dqAgent.run({
-      dietPlan: rawDietPlan,
+      dietPlan: confirmedPlan,
       model: modelKey,
       goal: goalExplanation,
       cpm,
@@ -555,26 +562,23 @@ try {
     })
   );
 
-if (!result || !result.plan) {
-  console.error("❌ dqAgent.run zwrócił pusty wynik:", result);
-  throw new Error("Brak poprawionej diety z dqAgent.");
+  if (dq?.plan && Object.keys(dq.plan || {}).length) {
+    finalPlan = dq.plan;
+  } else {
+    console.warn("dqAgent: pusty wynik – używam confirmedPlan");
+  }
+} catch (e: any) {
+  console.warn("dqAgent błąd:", e?.message || e);
 }
-
-parsed.correctedDietPlan = result.plan;
 
 // ✅ ZWROT poprawionej lub oryginalnej diety:
 return {
-  dietPlan: parsed.correctedDietPlan || rawDietPlan,
+  dietPlan: finalPlan,
   notes: {},
   translatedRecommendation: interviewData.recommendation
 };
-}
-catch (err) {
-  console.warn("⚠️ dqAgent błąd:", err);
-}
 
 }
-
 export const generateDietTool = tool({
   name: "generate_diet_plan",
   description: "Generates a 7-day clinical diet plan based on patient data and AI-driven insights.",
@@ -741,25 +745,19 @@ ${jsonFormatPreview}
 }
 `;
 
-
 try {
-  const stream = await openai.chat.completions.create({
-    model: "gpt-4o",
-    response_format: { type: "json_object" },
-    messages: [
-      { role: "system", content: "You are a clinical dietitian AI." },
-      { role: "user", content: prompt }
-    ],
-    temperature: 0.7,
-    stream: true
-  });
+const completion = await openai.chat.completions.create({
+  model: OPENAI_MODEL,
+  response_format: { type: "json_object" },
+  messages: [
+    { role: "system", content: "You are a clinical dietitian AI." },
+    { role: "user", content: prompt }
+  ],
+  temperature: 0.2,
+  max_tokens: MAX_TOKENS
+});
+const fullContent = completion.choices?.[0]?.message?.content ?? "";
 
-  // 📥 Zbieranie treści z chunków
-  let fullContent = "";
-  for await (const chunk of stream) {
-    const delta = chunk.choices?.[0]?.delta?.content;
-    if (delta) fullContent += delta;
-  }
 
  // 🔍 Spróbuj sparsować JSON z odpowiedzi GPT
 let parsed;
