@@ -29,89 +29,6 @@ const cuisineContextMap: Record<string, string> = {
   "Afrykańska": "African: grains like millet, legumes, stews, bold spices",
   "Dieta arktyczna / syberyjska": "Arctic/Siberian: fish, berries, root vegetables, minimal spices"
 };
-// ─── Helpers: meal-keys + walidacja ───────────────────────────────────────────
-const MEAL_KEYS_BY_COUNT: Record<number, string[]> = {
-  2: ["breakfast","dinner"],
-  3: ["breakfast","lunch","dinner"],
-  4: ["breakfast","lunch","dinner","snack"],
-  5: ["breakfast","second_breakfast","lunch","afternoon_snack","dinner"],
-  6: ["breakfast","second_breakfast","lunch","afternoon_snack","dinner","snack"]
-};
-
-function getMealKeys(mpd: number) {
-  const n = Math.min(6, Math.max(2, Number.isFinite(mpd) ? mpd : 4));
-  return MEAL_KEYS_BY_COUNT[n];
-}
-
-const REQUIRED_NUTRIENTS = [
-  "kcal","protein","fat","carbs","fiber",
-  "sodium","potassium","calcium","magnesium","iron","zinc",
-  "vitaminD","vitaminB12","vitaminC","vitaminA","vitaminE","vitaminK"
-];
-
-function isValidMeal(meal: any): boolean {
-  if (!meal || typeof meal !== "object") return false;
-  if (!meal.mealName || !meal.time) return false;
-  if (!Array.isArray(meal.ingredients) || meal.ingredients.length < 3) return false;
-  const m = meal.macros;
-  if (!m || typeof m !== "object") return false;
-  for (const k of REQUIRED_NUTRIENTS) {
-    if (typeof m[k] !== "number" || !isFinite(m[k]) || m[k] <= 0) return false;
-  }
-  return true;
-}
-
-function validatePlan(
-  plan: Record<string, Record<string, any>>,
-  requiredMealKeys: string[]
-) {
-  if (!plan || typeof plan !== "object") return { ok: false, reason: "plan-not-object" };
-  const days = Object.keys(plan);
-  if (days.length < 7) return { ok: false, reason: "less-than-7-days" };
-
-  for (const day of days) {
-    const mealsObj = plan[day];
-    if (!mealsObj || typeof mealsObj !== "object") {
-      return { ok: false, reason: `day-${day}-not-object` };
-    }
-    // dokładnie wymagane klucze
-    for (const key of requiredMealKeys) {
-      if (!(key in mealsObj)) return { ok: false, reason: `missing-meal-${key}-on-${day}` };
-      if (!isValidMeal(mealsObj[key])) return { ok: false, reason: `invalid-meal-${key}-on-${day}` };
-    }
-    // bez dodatkowych/złych kluczy
-    const extraneous = Object.keys(mealsObj).filter(k => !requiredMealKeys.includes(k));
-    if (extraneous.length) return { ok: false, reason: `extra-keys-on-${day}:${extraneous.join(",")}` };
-  }
-  return { ok: true, reason: "ok" };
-}
-
-async function repairDietPlanJSON(
-  parsedObj: any,
-  requiredMealKeys: string[],
-  lang: string
-) {
-  const sys = `You repair a JSON diet plan. Return ONLY valid JSON (json_object), no prose. 
-Rules:
-- Keep the same days.
-- For EACH day include EXACTLY these meal keys (and only these): ${requiredMealKeys.map(k=>`"${k}"`).join(", ")}.
-- Each meal MUST have: mealName, time, >=3 ingredients [{name, quantity(g)}], and macros with ALL fields strictly > 0 (${REQUIRED_NUTRIENTS.join(", ")}). 
-- Language: ${lang}.`;
-  const usr = `Here is the current object to fix (may be invalid/incomplete):\n${JSON.stringify(parsedObj)}`;
-
-  const resp = await openai.chat.completions.create({
-    model: "gpt-4o",
-    response_format: { type: "json_object" },
-    temperature: 0,
-    messages: [
-      { role: "system", content: sys },
-      { role: "user", content: usr }
-    ]
-  });
-  const content = resp.choices?.[0]?.message?.content ?? "";
-  const clean = content.replace(/```json|```/g, "").trim();
-  return JSON.parse(clean);
-}
 
 const dataSources = `
 Nutrient databases:
@@ -381,33 +298,7 @@ export async function generateDiet(input: any): Promise<any> {
   const pal = form.pal ?? 1.6;
   const cpm = form.cpm ?? (form.weight && pal ? Math.round(form.weight * 24 * pal) : null);
   const iv = extractInterview(form, interviewData);
-    const md = extractMedical(form);
-
-    // ——— RESTRYKCJE: budowa listy zakazanych i preferowanych składników ———
-    const interviewAllergies = String(form?.allergies ?? "")
-      .split(/[,;|\n]/).map(s => s.trim()).filter(Boolean);
-
-    const disliked = Array.isArray(iv?.disliked) ? iv.disliked.filter(Boolean) : [];
-    const avoidFromMed = [
-      ...(md?.dietHints?.avoid ?? []),
-      ...(md?.dqChecks?.avoidIngredients ?? [])
-    ].filter(Boolean);
-
-    const recommendFromMed = [
-      ...(md?.dietHints?.recommend ?? []),
-      ...(md?.dqChecks?.recommendIngredients ?? [])
-    ].filter(Boolean);
-
-    // Zestawienia końcowe (unikalne, case-insensitive bez zmiany oryginałów)
-    const FORBIDDEN_INGREDIENTS = Array.from(new Set([
-      ...interviewAllergies,
-      ...disliked,
-      ...avoidFromMed
-    ])).filter(Boolean);
-
-    const RECOMMENDED_INGREDIENTS = Array.from(new Set([
-      ...recommendFromMed
-    ])).filter(Boolean);
+  const md = extractMedical(form);
   const mealsPerDay = iv.mealsPerDay ?? "not provided";
   const interviewSummary = buildInterviewSummary(iv);
   const medicalSummary = buildMedicalSummary(md);
@@ -433,42 +324,14 @@ ${modelNotes ? `\n📌 Notes:\n${modelNotes}` : ""}
         .join('\n')
     : "⚠️ No specific micronutrient ranges found for this model.";
 
-const mpdNumTool = typeof mealsPerDay === "number" ? mealsPerDay : 4;
-const mealKeysTool = getMealKeys(mpdNumTool);
-
-
-// JSON preview z dokładnymi kluczami posiłków (podgląd dla modelu)
-const jsonFormatPreview =
-  daysInLang.map((day: string) => {
-    const mealStubs = mealKeysTool
-      .map((mk: string) => `"${mk}": { "mealName": "…", "time": "07:00", "ingredients": [ { "name": "…", "quantity": 100 } ], "macros": { "kcal": 0, "protein": 0, "fat": 0, "carbs": 0, "fiber": 0, "sodium": 0, "potassium": 0, "calcium": 0, "magnesium": 0, "iron": 0, "zinc": 0, "vitaminD": 0, "vitaminB12": 0, "vitaminC": 0, "vitaminA": 0, "vitaminE": 0, "vitaminK": 0 } }`)
-      .join(", ");
-    return `    "${day}": { ${mealStubs} }`;
-  })
-  .join(",\n");
+  const jsonFormatPreview = daysInLang.map(day => `    \"${day}\": { ... }`).join(',\n');
 
   const prompt = `
 You are a clinical dietitian AI.
 
 ${modelDetails}
-HARD CONSTRAINTS (NON-NEGOTIABLE):
-1) Clinical data OVERRULES interview preferences on conflicts.
-2) Do NOT use ANY item from FORBIDDEN_INGREDIENTS (allergies, disliked, medical avoid).
-3) Prefer items from RECOMMENDED_INGREDIENTS (medical recommend) when suitable.
-4) Do NOT invent tolerances or preferences; rely ONLY on provided data.
-5) If an ingredient is ambiguous and could violate constraints, replace it with a safe alternative.
 
-FORBIDDEN_INGREDIENTS:
-- ${FORBIDDEN_INGREDIENTS.length ? FORBIDDEN_INGREDIENTS.join("\n- ") : "(none provided)"}
-
-RECOMMENDED_INGREDIENTS:
-- ${RECOMMENDED_INGREDIENTS.length ? RECOMMENDED_INGREDIENTS.join("\n- ") : "(none provided)"}
 Generate a complete 7-day diet plan. DO NOT stop after 1 or 2 days.
-
-For EACH DAY you MUST include EXACTLY ${mpdNumTool} meals using these keys in this exact order:
-${mealKeysTool.map((mk: string) => `"${mk}"`).join(", ")}.
-
-Do not invent other keys. Do not leave any day empty.
 
 You MUST include:
 - All 7 days in the target language (${lang}):
@@ -547,15 +410,7 @@ const completion = await openai.chat.completions.create({
   model: "gpt-4o",
   response_format: { type: "json_object" },
   messages: [
-    { role: "system", content: `You are a clinical dietitian AI.
-Follow STRICT POLICY:
-- Clinical data (medical) OVERRIDES patient preferences on conflicts.
-- NEVER include any item from FORBIDDEN_INGREDIENTS.
-- Prefer items from RECOMMENDED_INGREDIENTS when reasonable.
-- If a requirement is missing, do not invent data — keep within provided constraints.
-- Never return empty meals, zeroed macros, or placeholders.
-- Output must be valid JSON only.` },
-
+    { role: "system", content: "You are a clinical dietitian AI." },
     { role: "user", content: prompt }
   ],
   temperature: 0.7,
@@ -687,33 +542,6 @@ export const generateDietTool = tool({
     const iv = extractInterview(form, interviewData);
     const md = extractMedical(form);
 
-    // ——— RESTRYKCJE: budowa listy zakazanych i preferowanych składników ———
-    const interviewAllergies = String(form?.allergies ?? "")
-      .split(/[,;|\n]/).map(s => s.trim()).filter(Boolean);
-
-    const disliked = Array.isArray(iv?.disliked) ? iv.disliked.filter(Boolean) : [];
-    const avoidFromMed = [
-      ...(md?.dietHints?.avoid ?? []),
-      ...(md?.dqChecks?.avoidIngredients ?? [])
-    ].filter(Boolean);
-
-    const recommendFromMed = [
-      ...(md?.dietHints?.recommend ?? []),
-      ...(md?.dqChecks?.recommendIngredients ?? [])
-    ].filter(Boolean);
-
-    // Zestawienia końcowe (unikalne, case-insensitive bez zmiany oryginałów)
-    const FORBIDDEN_INGREDIENTS = Array.from(new Set([
-      ...interviewAllergies,
-      ...disliked,
-      ...avoidFromMed
-    ])).filter(Boolean);
-
-    const RECOMMENDED_INGREDIENTS = Array.from(new Set([
-      ...recommendFromMed
-    ])).filter(Boolean);
-
-
     const mealsPerDay = iv.mealsPerDay ?? "not provided";
     const interviewSummary = buildInterviewSummary(iv);
     const medicalSummary = buildMedicalSummary(md);
@@ -737,44 +565,14 @@ export const generateDietTool = tool({
           .join('\n')
       : "⚠️ No specific micronutrient ranges found for this model.";
 
-const mpdNumTool = typeof mealsPerDay === "number" ? mealsPerDay : 4;
-const mealKeysTool = getMealKeys(mpdNumTool);
-
-
-// JSON preview z dokładnymi kluczami posiłków (podgląd dla modelu)
-const jsonFormatPreview =
-  daysInLang.map((day: string) => {
-    const mealStubs = mealKeysTool
-      .map((mk: string) => `"${mk}": { "mealName": "…", "time": "07:00", "ingredients": [ { "name": "…", "quantity": 100 } ], "macros": { "kcal": 0, "protein": 0, "fat": 0, "carbs": 0, "fiber": 0, "sodium": 0, "potassium": 0, "calcium": 0, "magnesium": 0, "iron": 0, "zinc": 0, "vitaminD": 0, "vitaminB12": 0, "vitaminC": 0, "vitaminA": 0, "vitaminE": 0, "vitaminK": 0 } }`)
-      .join(", ");
-    return `    "${day}": { ${mealStubs} }`;
-  })
-  .join(",\n");
-
+  const jsonFormatPreview = `"Monday": { "breakfast": { ... }, ... }, ...`;
 
     const prompt = `
 You are a clinical dietitian AI.
 
 ${modelDetails}
+
 Generate a complete 7-day diet plan. DO NOT stop after 1 or 2 days.
-
-For EACH DAY you MUST include EXACTLY ${mpdNumTool} meals using these keys in this exact order:
-${mealKeysTool.map((mk: string) => `"${mk}"`).join(", ")}.
-
-Do not invent other keys. Do not leave any day empty.
-
-HARD CONSTRAINTS (NON-NEGOTIABLE):
-1) Clinical data OVERRULES interview preferences on conflicts.
-2) Do NOT use ANY item from FORBIDDEN_INGREDIENTS (allergies, disliked, medical avoid).
-3) Prefer items from RECOMMENDED_INGREDIENTS (medical recommend) when suitable.
-4) Do NOT invent tolerances or preferences; rely ONLY on provided data.
-5) If an ingredient is ambiguous and could violate constraints, replace it with a safe alternative.
-
-FORBIDDEN_INGREDIENTS:
-- ${FORBIDDEN_INGREDIENTS.length ? FORBIDDEN_INGREDIENTS.join("\n- ") : "(none provided)"}
-
-RECOMMENDED_INGREDIENTS:
-- ${RECOMMENDED_INGREDIENTS.length ? RECOMMENDED_INGREDIENTS.join("\n- ") : "(none provided)"}
 
 You MUST include:
 - All 7 days in the target language (${lang}):
@@ -933,17 +731,11 @@ try {
 }
 
   // ✅ Wybór najlepszego dietPlan
-function isValidDietPlan(obj: any): boolean {
+ function isValidDietPlan(obj: any): boolean {
   if (!obj || typeof obj !== "object") return false;
   const days = Object.keys(obj);
-  return (
-    days.length >= 5 &&
-    Object.values(obj).every(
-      v =>
-        v &&
-        typeof v === "object" &&
-        Object.keys(v).length > 0 // 🔥 musi być co najmniej 1 posiłek
-    )
+  return days.length >= 5 && Object.values(obj).every(
+    v => typeof v === "object" && v !== null
   );
 }
 
@@ -1012,12 +804,7 @@ const result = await import("@/agents/dqAgent").then(m =>
   })
 );
 
-// 🔧 patch: podmień w parsed na plan z dqAgenta (jeśli jest)
-if (result?.plan) {
-  parsed.dietPlan = result.plan;
-}
-
-// ✅ Zwróć poprawioną lub oryginalną wersję
+  // ✅ Zwróć poprawioną lub oryginalną wersję
 return {
   type: "json",
   content: parsed
