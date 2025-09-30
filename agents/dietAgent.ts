@@ -5,9 +5,6 @@ import type { Ingredient } from "@/utils/nutrition/calculateMealMacros";
 import type { Meal } from "@/types";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-// — perf knobs —
-const OPENAI_MODEL = process.env.DIET_AGENT_MODEL || "gpt-4o-mini";
-const MAX_TOKENS   = Number(process.env.DIET_AGENT_MAX_TOKENS ?? 8500);
 
 const languageMap: Record<string, string> = {
   pl: "polski", en: "English", es: "español", fr: "français", de: "Deutsch",
@@ -208,7 +205,6 @@ const cuisineMap: Record<string, string> = {
 };
 // --- HELPERS: bierz tylko WYWIAD + MED z Supabase i sklej krótkie podsumowania ---
 
-
 function extractInterview(form: any, interviewData: any) {
   const sup = form?.interview_data ?? null;
   const mpdRaw = interviewData?.mealsPerDay ?? sup?.step6_q6 ?? null; // w Twojej próbce step6_q6 = "3"
@@ -263,79 +259,6 @@ function buildInterviewSummary(iv: ReturnType<typeof extractInterview>) {
     `Allergies: ${allergiesLine}`,
   ].join(", ");
 }
-// --- CONSTRAINTS (alergie, preferencje, zalecenia lekarza) ---
-function collectConstraints(form: any, interviewData: any) {
-  const iv = extractInterview(form, interviewData);
-  const md = extractMedical(form);
-
-  const forbidden: string[] = [
-    ...(Array.isArray(md?.dietHints?.avoid) ? md.dietHints.avoid : []),
-    ...(Array.isArray(md?.dqChecks?.avoidIngredients) ? md.dqChecks.avoidIngredients : []),
-    ...(Array.isArray(iv?.disliked) ? iv.disliked : []),
-  ].filter(Boolean).map(x => String(x).toLowerCase().trim());
-
-  const preferred: string[] = [
-    ...(Array.isArray(iv?.preferred) ? iv.preferred : []),
-    ...(Array.isArray(md?.dietHints?.recommend) ? md.dietHints.recommend : []),
-  ].filter(Boolean).map(x => String(x).toLowerCase().trim());
-
-  const allergiesText = String(iv?.allergies ?? form?.allergies ?? "").trim();
-  const doctorNotes   = String(interviewData?.recommendation ?? form?.doctorRecommendation ?? "").trim();
-
-  return { forbidden, preferred, allergiesText, doctorNotes };
-}
-
-// Minimalna egzekucja na gotowym planie – usuń zakazane składniki (case-insensitive)
-function enforceConstraintsOnPlan(
-  plan: Record<string, Record<string, Meal>>,
-  forbidden: string[]
-) {
-  const forb = forbidden.map(f => f.toLowerCase());
-  for (const day of Object.keys(plan)) {
-    for (const mk of Object.keys(plan[day])) {
-      const meal: any = plan[day][mk];
-      meal.ingredients = (meal?.ingredients || []).filter((ing: any) => {
-        const name = String(ing.product ?? ing.name ?? "").toLowerCase();
-        if (!name) return false;
-        return !forb.some(f => name.includes(f));
-      });
-    }
-  }
-}
-// ─── Day shape coercion: { meals:[...] } → keyed meals object ─────────────────
-const MEAL_KEYS_BY_COUNT: Record<number, string[]> = {
-  2: ["breakfast","dinner"],
-  3: ["breakfast","lunch","dinner"],
-  4: ["breakfast","second_breakfast","lunch","dinner"],
-  5: ["breakfast","second_breakfast","lunch","afternoon_snack","dinner"],
-  6: ["breakfast","second_breakfast","lunch","afternoon_snack","dinner","snack"],
-};
-
-function coerceDayObject(dayValue: any, mealsPerDayHint?: number): Record<string, any> {
-  // already an object of meals (not {meals:[]})
-  if (dayValue && !Array.isArray(dayValue) && typeof dayValue === "object" && !dayValue.meals) {
-    return dayValue as Record<string, any>;
-  }
-  // { meals: [...] }
-  if (dayValue && typeof dayValue === "object" && Array.isArray(dayValue.meals)) {
-    const arr = dayValue.meals as any[];
-    const count = arr.length || mealsPerDayHint || 3;
-    const keys = MEAL_KEYS_BY_COUNT[count] || arr.map((_, i) => `meal_${i+1}`);
-    const obj: Record<string, any> = {};
-    for (let i = 0; i < arr.length; i++) obj[keys[i] ?? `meal_${i+1}`] = arr[i];
-    return obj;
-  }
-  // bare array
-  if (Array.isArray(dayValue)) {
-    const arr = dayValue as any[];
-    const count = arr.length || mealsPerDayHint || 3;
-    const keys = MEAL_KEYS_BY_COUNT[count] || arr.map((_, i) => `meal_${i+1}`);
-    const obj: Record<string, any> = {};
-    for (let i = 0; i < arr.length; i++) obj[keys[i] ?? `meal_${i+1}`] = arr[i];
-    return obj;
-  }
-  return {};
-}
 
 function buildMedicalSummary(md: ReturnType<typeof extractMedical>) {
   return [
@@ -349,15 +272,6 @@ function buildMedicalSummary(md: ReturnType<typeof extractMedical>) {
     md.dqChecks?.recommendMicros?.length ? `Prefer micros: ${md.dqChecks.recommendMicros.join(", ")}` : null,
     md.dqChecks?.avoidIngredients?.length ? `Avoid ingredients: ${md.dqChecks.avoidIngredients.join(", ")}` : null,
   ].filter(Boolean).join("\n");
-}
-const SOFT_TIMEOUT_MS = Number(process.env.DIET_AGENT_SOFT_TIMEOUT_MS ?? 25000);
-const SKIP_DQ = process.env.DIET_AGENT_SKIP_DQ === "1";
-
-function withTimeout<T>(p: Promise<T>, ms: number, label = "timeout"): Promise<T> {
-  return Promise.race([
-    p,
-    new Promise<T>((_, rej) => setTimeout(() => rej(new Error(label)), ms))
-  ]) as Promise<T>;
 }
 
 export async function generateDiet(input: any): Promise<any> {
@@ -384,22 +298,37 @@ export async function generateDiet(input: any): Promise<any> {
   const pal = form.pal ?? 1.6;
   const cpm = form.cpm ?? (form.weight && pal ? Math.round(form.weight * 24 * pal) : null);
   const iv = extractInterview(form, interviewData);
-  const md = extractMedical(form);
+    const md = extractMedical(form);
+
+    // ——— RESTRYKCJE: budowa listy zakazanych i preferowanych składników ———
+    const interviewAllergies = String(form?.allergies ?? "")
+      .split(/[,;|\n]/).map(s => s.trim()).filter(Boolean);
+
+    const disliked = Array.isArray(iv?.disliked) ? iv.disliked.filter(Boolean) : [];
+    const avoidFromMed = [
+      ...(md?.dietHints?.avoid ?? []),
+      ...(md?.dqChecks?.avoidIngredients ?? [])
+    ].filter(Boolean);
+
+    const recommendFromMed = [
+      ...(md?.dietHints?.recommend ?? []),
+      ...(md?.dqChecks?.recommendIngredients ?? [])
+    ].filter(Boolean);
+
+    // Zestawienia końcowe (unikalne, case-insensitive bez zmiany oryginałów)
+    const FORBIDDEN_INGREDIENTS = Array.from(new Set([
+      ...interviewAllergies,
+      ...disliked,
+      ...avoidFromMed
+    ])).filter(Boolean);
+
+    const RECOMMENDED_INGREDIENTS = Array.from(new Set([
+      ...recommendFromMed
+    ])).filter(Boolean);
   const mealsPerDay = iv.mealsPerDay ?? "not provided";
   const interviewSummary = buildInterviewSummary(iv);
   const medicalSummary = buildMedicalSummary(md);
-  
-// Zbierz ograniczenia z wywiadu i danych medycznych
-const { forbidden, preferred, allergiesText, doctorNotes } = collectConstraints(form, interviewData);
 
-// Prosta tokenizacja alergii → dorzuć do FORBIDDEN
-const allergyTokens = allergiesText
-  ? allergiesText.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean)
-  : [];
-
-// TE STAŁE MUSZĄ BYĆ W TYM ZAKRESIE (funkcji), bo za chwilę użyjesz ich w promptcie i filtrze:
-const FORBIDDEN = Array.from(new Set([...forbidden, ...allergyTokens]));
-const PREFERRED = preferred;
 
   const modelDefinition = dietModelMap[modelKey || ""] || {};
   const modelMacroStr = modelDefinition.macros
@@ -423,18 +352,24 @@ ${modelNotes ? `\n📌 Notes:\n${modelNotes}` : ""}
 
   const jsonFormatPreview = daysInLang.map(day => `    \"${day}\": { ... }`).join(',\n');
 
-const prompt = `
+  const prompt = `
 You are a clinical dietitian AI.
 
 ${modelDetails}
+HARD CONSTRAINTS (NON-NEGOTIABLE):
+1) Clinical data OVERRULES interview preferences on conflicts.
+2) Do NOT use ANY item from FORBIDDEN_INGREDIENTS (allergies, disliked, medical avoid).
+3) Prefer items from RECOMMENDED_INGREDIENTS (medical recommend) when suitable.
+4) Do NOT invent tolerances or preferences; rely ONLY on provided data.
+5) If an ingredient is ambiguous and could violate constraints, replace it with a safe alternative.
+
+FORBIDDEN_INGREDIENTS:
+- ${FORBIDDEN_INGREDIENTS.length ? FORBIDDEN_INGREDIENTS.join("\n- ") : "(none provided)"}
+
+RECOMMENDED_INGREDIENTS:
+- ${RECOMMENDED_INGREDIENTS.length ? RECOMMENDED_INGREDIENTS.join("\n- ") : "(none provided)"}
 
 Generate a complete 7-day diet plan. DO NOT stop after 1 or 2 days.
-
-HARD CONSTRAINTS (must be respected in EVERY meal and day):
-- FORBIDDEN_INGREDIENTS: ${JSON.stringify(FORBIDDEN)}
-- PREFERRED_INGREDIENTS: ${JSON.stringify(PREFERRED)}
-- ALLERGENS_FREE_TEXT: ${allergiesText || "none"}
-- DOCTOR_NOTES (MANDATORY): ${doctorNotes || "none"}
 
 You MUST include:
 - All 7 days in the target language (${lang}):
@@ -508,82 +443,46 @@ ${jsonFormatPreview}
   }
 }
 `;
-// Helper lokalny dla execute(): jednolite wywołanie OpenAI z JSON response (zachowuje identyczną logikę danych)
-async function callModelJSONExec(promptText: string, maxTok = MAX_TOKENS) {
-  const resp = await openai.chat.completions.create({
-    model: OPENAI_MODEL,
-    response_format: { type: "json_object" },
-    messages: [
-      { role: "system", content: "You are a clinical dietitian AI." },
-      { role: "user", content: promptText }
-    ],
-    temperature: 0.2,
-    max_tokens: maxTok
-  });
-  const choice = resp.choices?.[0];
-  return {
-    content: choice?.message?.content ?? "",
-    finish: choice?.finish_reason ?? "unknown"
-  };
+
+const completion = await openai.chat.completions.create({
+  model: "gpt-4o",
+  response_format: { type: "json_object" },
+  messages: [
+    { role: "system", content: `You are a clinical dietitian AI.
+Follow STRICT POLICY:
+- Clinical data (medical) OVERRIDES patient preferences on conflicts.
+- NEVER include any item from FORBIDDEN_INGREDIENTS.
+- Prefer items from RECOMMENDED_INGREDIENTS when reasonable.
+- If a requirement is missing, do not invent data — keep within provided constraints.
+- Output must be valid JSON only.` },
+
+    { role: "user", content: prompt }
+  ],
+  temperature: 0.7,
+  stream: true
+});
+
+// 📥 Zbieranie treści z chunków
+let fullContent = "";
+for await (const chunk of completion) {
+  const delta = chunk.choices[0]?.delta?.content;
+  if (delta) fullContent += delta;
 }
 
-async function callModelJSON(promptText: string, maxTok = MAX_TOKENS) {
-  const resp = await openai.chat.completions.create({
-    model: OPENAI_MODEL,
-    response_format: { type: "json_object" },
-    messages: [
-      { role: "system", content: "You are a clinical dietitian AI." },
-      { role: "user", content: promptText }
-    ],
-    temperature: 0.2,
-    max_tokens: maxTok
-  });
-  const choice = resp.choices?.[0];
-  return {
-    content: choice?.message?.content ?? "",
-    finish: choice?.finish_reason ?? "unknown"
-  };
-}
-
-// 1st try — pełny prompt
-let { content: fullContent, finish } =
-  await withTimeout(callModelJSON(prompt, MAX_TOKENS), SOFT_TIMEOUT_MS, "openai-timeout-1");
-
-// Retry gdy obcięte (finish === 'length') lub filtr
-if (finish !== "stop") {
-  // „compact prompt” — tylko dietPlan bez shoppingList/weeklyOverview, żeby na pewno się zmieściło
-  const compactPrompt = `${prompt}
-
-IMPORTANT: If you are running out of space, RETURN ONLY:
-{
-  "dietPlan": { ... 7 days with meals ... }
-}
-No shoppingList, no weeklyOverview, no nutritionalSummary.`;
-  ({ content: fullContent, finish } =
-  await withTimeout(
-    callModelJSON(compactPrompt, Math.min(MAX_TOKENS * 2, 12000)),
-    SOFT_TIMEOUT_MS,
-    "openai-timeout-2"
-  ));
-}
-
-function tryParseJsonFromContent(raw: string) {
-  const clean = raw
-    .replace(/^\s*```json\s*/i, "")
-    .replace(/^\s*```\s*/i, "")
-    .replace(/\s*```\s*$/i, "")
-    .trim();
-  return JSON.parse(clean);
-}
-
-let parsed: any;
+let parsed;
 try {
-  parsed = tryParseJsonFromContent(fullContent);
-  if (typeof parsed === "string") parsed = JSON.parse(parsed);
+  const match = fullContent.match(/({[\s\S]+})/);
+  if (!match) throw new Error("Brak JSON w odpowiedzi GPT.");
+  parsed = JSON.parse(match[1]);
+
+  if (typeof parsed === "string") {
+    parsed = JSON.parse(parsed); // optional double-parse
+  }
 } catch (err) {
   console.error("❌ JSON parse error →", fullContent);
   throw new Error("GPT response is not valid JSON.");
 }
+
 
 let rawDietPlan: Record<string, Record<string, Meal>> = {};
 
@@ -595,10 +494,7 @@ if (parsed?.CORRECTED_JSON?.dietPlan) {
 } else if (parsed?.dietPlan) {
   rawDietPlan = parsed.dietPlan;
 }
-const mealsPerDayHint = typeof iv?.mealsPerDay === "number" ? iv.mealsPerDay : undefined;
-for (const d of Object.keys(rawDietPlan)) {
-  rawDietPlan[d] = coerceDayObject(rawDietPlan[d], mealsPerDayHint) as any;
-}
+
 if (
   !rawDietPlan ||
   typeof rawDietPlan !== "object" ||
@@ -609,67 +505,39 @@ if (
   throw new Error("❌ JSON nie zawiera pola 'dietPlan'.");
 }
 
-// 🔹 Normalizacja formatu składników (name/quantity → product/weight)
-function normalizeIngredients(ingredients: any[]) {
-  return (ingredients || []).map(i => ({
-    product: i.product ?? i.name ?? "",
-    weight: i.weight ?? i.quantity ?? null,
-    unit: i.unit || "g"
-  }));
-}
-for (const day of Object.keys(rawDietPlan)) {
-  const mealsForDay = rawDietPlan[day];
-  const normalizedMeals: Record<string, Meal> = {};
-  for (const mealKey of Object.keys(mealsForDay)) {
-    const meal = mealsForDay[mealKey];
-    normalizedMeals[mealKey] = {
-      ...meal,
-      ingredients: normalizeIngredients(meal.ingredients)
-    };
-  }
-  rawDietPlan[day] = normalizedMeals;
-}
-
-// 🔒 Egzekwuj zakazy jeszcze po generacji, zanim puścisz przez dqAgent
-enforceConstraintsOnPlan(rawDietPlan, FORBIDDEN);
-
-const confirmedPlan: Record<string, Record<string, Meal>> = rawDietPlan;
-
-let finalPlan = confirmedPlan; // domyślnie bierzemy nasz plan
 try {
-const dq: any = await import("@/agents/dqAgent").then(m =>
-  withTimeout(
+  const result = await import("@/agents/dqAgent").then(m =>
     m.dqAgent.run({
-      dietPlan: confirmedPlan,
+      dietPlan: rawDietPlan,
       model: modelKey,
       goal: goalExplanation,
       cpm,
       weightKg: form.weight ?? null,
       conditions: form.conditions ?? [],
       dqChecks: form?.medical_data?.dqChecks ?? {}
-    }),
-    SOFT_TIMEOUT_MS,
-    "dqAgent-timeout"
-  )
-);
+    })
+  );
 
-  if (dq?.plan && Object.keys(dq.plan || {}).length) {
-    finalPlan = dq.plan;
-  } else {
-    console.warn("dqAgent: pusty wynik – używam confirmedPlan");
-  }
-} catch (e: any) {
-  console.warn("dqAgent błąd:", e?.message || e);
+if (!result || !result.plan) {
+  console.error("❌ dqAgent.run zwrócił pusty wynik:", result);
+  throw new Error("Brak poprawionej diety z dqAgent.");
 }
+
+parsed.correctedDietPlan = result.plan;
 
 // ✅ ZWROT poprawionej lub oryginalnej diety:
 return {
-  dietPlan: finalPlan,
+  dietPlan: parsed.correctedDietPlan || rawDietPlan,
   notes: {},
   translatedRecommendation: interviewData.recommendation
 };
+}
+catch (err) {
+  console.warn("⚠️ dqAgent błąd:", err);
+}
 
 }
+
 export const generateDietTool = tool({
   name: "generate_diet_plan",
   description: "Generates a 7-day clinical diet plan based on patient data and AI-driven insights.",
@@ -719,16 +587,37 @@ export const generateDietTool = tool({
     const iv = extractInterview(form, interviewData);
     const md = extractMedical(form);
 
+    // ——— RESTRYKCJE: budowa listy zakazanych i preferowanych składników ———
+    const interviewAllergies = String(form?.allergies ?? "")
+      .split(/[,;|\n]/).map(s => s.trim()).filter(Boolean);
+
+    const disliked = Array.isArray(iv?.disliked) ? iv.disliked.filter(Boolean) : [];
+    const avoidFromMed = [
+      ...(md?.dietHints?.avoid ?? []),
+      ...(md?.dqChecks?.avoidIngredients ?? [])
+    ].filter(Boolean);
+
+    const recommendFromMed = [
+      ...(md?.dietHints?.recommend ?? []),
+      ...(md?.dqChecks?.recommendIngredients ?? [])
+    ].filter(Boolean);
+
+    // Zestawienia końcowe (unikalne, case-insensitive bez zmiany oryginałów)
+    const FORBIDDEN_INGREDIENTS = Array.from(new Set([
+      ...interviewAllergies,
+      ...disliked,
+      ...avoidFromMed
+    ])).filter(Boolean);
+
+    const RECOMMENDED_INGREDIENTS = Array.from(new Set([
+      ...recommendFromMed
+    ])).filter(Boolean);
+
+
     const mealsPerDay = iv.mealsPerDay ?? "not provided";
     const interviewSummary = buildInterviewSummary(iv);
     const medicalSummary = buildMedicalSummary(md);
-    // Zbierz ograniczenia z wywiadu i danych medycznych (W TYM ZAKRESIE funkcji)
-      const { forbidden, preferred, allergiesText, doctorNotes } = collectConstraints(form, interviewData);
-      const allergyTokens = allergiesText
-        ? allergiesText.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean)
-        : [];
-      const FORBIDDEN = Array.from(new Set([...forbidden, ...allergyTokens]));
-      const PREFERRED = preferred;
+
     const modelDefinition = dietModelMap[modelKey || ""] || {};
     const modelMacroStr = modelDefinition.macros
       ? Object.entries(modelDefinition.macros).map(([k, v]) => `- ${k}: ${v}`).join('\n')
@@ -750,18 +639,24 @@ export const generateDietTool = tool({
 
   const jsonFormatPreview = `"Monday": { "breakfast": { ... }, ... }, ...`;
 
-   const prompt = `
+    const prompt = `
 You are a clinical dietitian AI.
 
 ${modelDetails}
 
 Generate a complete 7-day diet plan. DO NOT stop after 1 or 2 days.
+HARD CONSTRAINTS (NON-NEGOTIABLE):
+1) Clinical data OVERRULES interview preferences on conflicts.
+2) Do NOT use ANY item from FORBIDDEN_INGREDIENTS (allergies, disliked, medical avoid).
+3) Prefer items from RECOMMENDED_INGREDIENTS (medical recommend) when suitable.
+4) Do NOT invent tolerances or preferences; rely ONLY on provided data.
+5) If an ingredient is ambiguous and could violate constraints, replace it with a safe alternative.
 
-HARD CONSTRAINTS (must be respected in EVERY meal and day):
-- FORBIDDEN_INGREDIENTS: ${JSON.stringify(FORBIDDEN)}
-- PREFERRED_INGREDIENTS: ${JSON.stringify(PREFERRED)}
-- ALLERGENS_FREE_TEXT: ${allergiesText || "none"}
-- DOCTOR_NOTES (MANDATORY): ${doctorNotes || "none"}
+FORBIDDEN_INGREDIENTS:
+- ${FORBIDDEN_INGREDIENTS.length ? FORBIDDEN_INGREDIENTS.join("\n- ") : "(none provided)"}
+
+RECOMMENDED_INGREDIENTS:
+- ${RECOMMENDED_INGREDIENTS.length ? RECOMMENDED_INGREDIENTS.join("\n- ") : "(none provided)"}
 
 You MUST include:
 - All 7 days in the target language (${lang}):
@@ -771,15 +666,15 @@ ${daysList}
   - If not provided: intelligently determine the best number of meals (between 2–6)
 
 - Use meal names localized to language "${lang}".
-- You MUST include full nutritional data for every meal.
-- Each meal must include:
 
-  - "mealName": string
-  - "time": string (e.g. "07:00")
-  - "ingredients": array of:
-      { "name": "string", "quantity": number in grams }
+⚠️ Each meal must include:
+- "mealName": string
+- "time": string (e.g. "07:00")
+- "ingredients": array of:
+    { "name": string, "quantity": number in grams }
 
-  - "macros": {
+- "macros": object with:
+    {
       "kcal": number,
       "protein": number,
       "fat": number,
@@ -799,8 +694,38 @@ ${daysList}
       "vitaminK": number
     }
 
-⚠️ All numeric values must be per whole meal, not per 100g. Use realistic values and round to 1 decimal point.
-⚠️ Do not skip any nutrient field. All macros, micros and vitamins must be present and realistic.
+Example:
+{
+  "mealName": "Jajecznica z pomidorami",
+  "time": "07:00",
+  "ingredients": [
+    { "name": "Jajko", "quantity": 120 },
+    { "name": "Pomidor", "quantity": 100 },
+    { "name": "Olej rzepakowy", "quantity": 5 }
+  ],
+  "macros": {
+    "kcal": 320,
+    "protein": 18.5,
+    "fat": 25.2,
+    "carbs": 6.1,
+    "fiber": 1.1,
+    "sodium": 420,
+    "potassium": 440,
+    "calcium": 65,
+    "magnesium": 22,
+    "iron": 1.2,
+    "zinc": 0.9,
+    "vitaminD": 2.1,
+    "vitaminB12": 0.6,
+    "vitaminC": 3.8,
+    "vitaminA": 210,
+    "vitaminE": 3.2,
+    "vitaminK": 32
+  }
+}
+
+⚠️ All numeric values must be per entire meal (not per 100g) and must be rounded to 1 decimal place.
+⚠️ Do NOT skip any field — all fields above must be filled with realistic values.
 
 ✔ Patient profile from interview:
 ${interviewSummary}
@@ -810,8 +735,6 @@ ${medicalSummary || "ℹ️ No clinical data provided."}
 
 ✔ Required nutrient ranges:
 ${nutrientRequirementsText}
-
-${hasMedicalData ? `✔ Adjust for patient diseases: ${form.conditions?.join(", ") || "unknown"}` : ""}
 
 ✔ Diet model: ${modelKey}, Cuisine: ${cuisine}
 ✔ CPM: ${cpm}, BMI: ${bmi}, PAL: ${pal}
@@ -831,54 +754,65 @@ ${jsonFormatPreview}
   "shoppingList": [ ... ],
   "nutritionalSummary": {
     "macros": { "protein": ..., "fat": ..., "carbs": ... },
-    "micros": { "sodium": ..., "magnesium": ..., "vitamin D": ... }
+    "micros": { "sodium": ..., "magnesium": ..., "vitaminD": ... }
   }
 }
 `;
 
 try {
-const completion = await withTimeout(
-  openai.chat.completions.create({
-    model: OPENAI_MODEL,
+  const stream = await openai.chat.completions.create({
+    model: "gpt-4o",
     response_format: { type: "json_object" },
     messages: [
       { role: "system", content: "You are a clinical dietitian AI." },
       { role: "user", content: prompt }
     ],
-    temperature: 0.2,
-    max_tokens: MAX_TOKENS
-  }),
-  SOFT_TIMEOUT_MS,
-  "openai-timeout-exec"
-);
+    temperature: 0.7,
+    stream: true
+  });
 
-const fullContent = completion.choices?.[0]?.message?.content ?? "";
-
-function tryParseJsonFromContent(raw: string) {
-  const clean = raw
-    .replace(/^\s*```json\s*/i, "")
-    .replace(/^\s*```\s*/i, "")
-    .replace(/\s*```\s*$/i, "")
-    .trim();
-  return JSON.parse(clean);
-}
-
-// 🔍 Spróbuj sparsować JSON z odpowiedzi GPT (bez wycinania klamer)
-let parsed: any;
-try {
-  parsed = tryParseJsonFromContent(fullContent);
-  // (opcjonalnie) jeśli ktoś zwrócił zserializowany JSON jako string
-  if (typeof parsed === "string") {
-    parsed = JSON.parse(parsed);
+  // 📥 Zbieranie treści z chunków
+  let fullContent = "";
+  for await (const chunk of stream) {
+    const delta = chunk.choices?.[0]?.delta?.content;
+    if (delta) fullContent += delta;
   }
+
+ // 🔍 Spróbuj sparsować JSON z odpowiedzi GPT
+let parsed;
+try {
+  const cleanContent = fullContent
+    .replace(/```json/g, "")
+    .replace(/```/g, "")
+    .trim();
+
+  const firstBrace = cleanContent.indexOf("{");
+  const lastBrace = cleanContent.lastIndexOf("}") + 1;
+
+  if (firstBrace === -1 || lastBrace === -1) {
+    throw new Error("Nie znaleziono nawiasów JSON.");
+  }
+
+  const jsonString = cleanContent.slice(firstBrace, lastBrace);
+
+  parsed = JSON.parse(jsonString);
+
+  // 🧪 Dodatkowe zabezpieczenie dla stringified JSON
+  if (typeof parsed === "string") {
+    try {
+      parsed = JSON.parse(parsed);
+    } catch {
+      console.warn("⚠️ Podwójne parsowanie nie powiodło się – kontynuuję z pojedynczym.");
+    }
+  }
+
 } catch (err) {
-  console.error("❌ JSON parse error →", fullContent);
+  console.error("❌ Nie można sparsować JSON ze streamu:\n", fullContent);
   return {
     type: "text",
     content: "❌ GPT zwrócił niepoprawny JSON — nie można sparsować."
   };
 }
-
 
   // ✅ Wybór najlepszego dietPlan
  function isValidDietPlan(obj: any): boolean {
@@ -897,13 +831,6 @@ if (isValidDietPlan(parsed?.dietPlan)) {
   rawDietPlan = parsed.CORRECTED_JSON.dietPlan;
 } else if (isValidDietPlan(parsed?.CORRECTED_JSON)) {
   rawDietPlan = parsed.CORRECTED_JSON;
-}
-// ▶▶ UJEDNOLICENIE DNIA: { meals:[...] } → obiekt posiłków
-const mealsPerDayHint = typeof iv?.mealsPerDay === "number" ? iv.mealsPerDay : undefined;
-if (rawDietPlan) {
-  for (const d of Object.keys(rawDietPlan)) {
-    (rawDietPlan as any)[d] = coerceDayObject((rawDietPlan as any)[d], mealsPerDayHint);
-  }
 }
 
 if (
@@ -934,6 +861,7 @@ function normalizeIngredients(ingredients: any[]) {
 for (const day of Object.keys(rawDietPlan)) {
   const mealsForDay = rawDietPlan[day];
   const normalizedMeals: Record<string, Meal> = {};
+
   for (const mealKey of Object.keys(mealsForDay)) {
     const meal = mealsForDay[mealKey];
     normalizedMeals[mealKey] = {
@@ -941,44 +869,30 @@ for (const day of Object.keys(rawDietPlan)) {
       ingredients: normalizeIngredients(meal.ingredients)
     };
   }
+
   rawDietPlan[day] = normalizedMeals;
 }
-
-// Egzekwuj zakazy jeszcze po generacji, zanim puścisz przez dqAgent
-enforceConstraintsOnPlan(rawDietPlan, FORBIDDEN);
 
 // ✅ TS teraz wie: confirmedPlan nie może być null
 const confirmedPlan: Record<string, Record<string, Meal>> = rawDietPlan;
 
 const result = await import("@/agents/dqAgent").then(m =>
-  withTimeout(
-    m.dqAgent.run({
-      dietPlan: confirmedPlan,
-      model: modelKey,
-      goal: goalExplanation,
-      cpm,
-      weightKg: form.weight ?? null,
-      conditions: form.conditions ?? [],
-      dqChecks: form?.medical_data?.dqChecks ?? {}
-    }),
-    SOFT_TIMEOUT_MS,
-    "dqAgent-timeout-exec"
-  )
+  m.dqAgent.run({
+    dietPlan: confirmedPlan,
+    model: modelKey,
+    goal: goalExplanation,
+    cpm,
+    weightKg: form.weight ?? null,
+    conditions: form.conditions ?? [],
+    dqChecks: form?.medical_data?.dqChecks ?? {}
+  })
 );
 
-
   // ✅ Zwróć poprawioną lub oryginalną wersję
-const finalPlan =
-  result?.plan && Object.keys(result.plan || {}).length
-    ? result.plan
-    : confirmedPlan;
-
 return {
-  dietPlan: finalPlan,
-  notes: {},
-  translatedRecommendation: interviewData.recommendation
+  type: "json",
+  content: parsed
 };
-
 
 } catch (error: any) {
   return {
