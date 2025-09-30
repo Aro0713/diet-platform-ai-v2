@@ -29,6 +29,89 @@ const cuisineContextMap: Record<string, string> = {
   "Afrykańska": "African: grains like millet, legumes, stews, bold spices",
   "Dieta arktyczna / syberyjska": "Arctic/Siberian: fish, berries, root vegetables, minimal spices"
 };
+// ─── Helpers: meal-keys + walidacja ───────────────────────────────────────────
+const MEAL_KEYS_BY_COUNT: Record<number, string[]> = {
+  2: ["breakfast","dinner"],
+  3: ["breakfast","lunch","dinner"],
+  4: ["breakfast","lunch","dinner","snack"],
+  5: ["breakfast","second_breakfast","lunch","afternoon_snack","dinner"],
+  6: ["breakfast","second_breakfast","lunch","afternoon_snack","dinner","snack"]
+};
+
+function getMealKeys(mpd: number) {
+  const n = Math.min(6, Math.max(2, Number.isFinite(mpd) ? mpd : 4));
+  return MEAL_KEYS_BY_COUNT[n];
+}
+
+const REQUIRED_NUTRIENTS = [
+  "kcal","protein","fat","carbs","fiber",
+  "sodium","potassium","calcium","magnesium","iron","zinc",
+  "vitaminD","vitaminB12","vitaminC","vitaminA","vitaminE","vitaminK"
+];
+
+function isValidMeal(meal: any): boolean {
+  if (!meal || typeof meal !== "object") return false;
+  if (!meal.mealName || !meal.time) return false;
+  if (!Array.isArray(meal.ingredients) || meal.ingredients.length < 3) return false;
+  const m = meal.macros;
+  if (!m || typeof m !== "object") return false;
+  for (const k of REQUIRED_NUTRIENTS) {
+    if (typeof m[k] !== "number" || !isFinite(m[k]) || m[k] <= 0) return false;
+  }
+  return true;
+}
+
+function validatePlan(
+  plan: Record<string, Record<string, any>>,
+  requiredMealKeys: string[]
+) {
+  if (!plan || typeof plan !== "object") return { ok: false, reason: "plan-not-object" };
+  const days = Object.keys(plan);
+  if (days.length < 7) return { ok: false, reason: "less-than-7-days" };
+
+  for (const day of days) {
+    const mealsObj = plan[day];
+    if (!mealsObj || typeof mealsObj !== "object") {
+      return { ok: false, reason: `day-${day}-not-object` };
+    }
+    // dokładnie wymagane klucze
+    for (const key of requiredMealKeys) {
+      if (!(key in mealsObj)) return { ok: false, reason: `missing-meal-${key}-on-${day}` };
+      if (!isValidMeal(mealsObj[key])) return { ok: false, reason: `invalid-meal-${key}-on-${day}` };
+    }
+    // bez dodatkowych/złych kluczy
+    const extraneous = Object.keys(mealsObj).filter(k => !requiredMealKeys.includes(k));
+    if (extraneous.length) return { ok: false, reason: `extra-keys-on-${day}:${extraneous.join(",")}` };
+  }
+  return { ok: true, reason: "ok" };
+}
+
+async function repairDietPlanJSON(
+  parsedObj: any,
+  requiredMealKeys: string[],
+  lang: string
+) {
+  const sys = `You repair a JSON diet plan. Return ONLY valid JSON (json_object), no prose. 
+Rules:
+- Keep the same days.
+- For EACH day include EXACTLY these meal keys (and only these): ${requiredMealKeys.map(k=>`"${k}"`).join(", ")}.
+- Each meal MUST have: mealName, time, >=3 ingredients [{name, quantity(g)}], and macros with ALL fields strictly > 0 (${REQUIRED_NUTRIENTS.join(", ")}). 
+- Language: ${lang}.`;
+  const usr = `Here is the current object to fix (may be invalid/incomplete):\n${JSON.stringify(parsedObj)}`;
+
+  const resp = await openai.chat.completions.create({
+    model: "gpt-4o",
+    response_format: { type: "json_object" },
+    temperature: 0,
+    messages: [
+      { role: "system", content: sys },
+      { role: "user", content: usr }
+    ]
+  });
+  const content = resp.choices?.[0]?.message?.content ?? "";
+  const clean = content.replace(/```json|```/g, "").trim();
+  return JSON.parse(clean);
+}
 
 const dataSources = `
 Nutrient databases:
@@ -350,21 +433,9 @@ ${modelNotes ? `\n📌 Notes:\n${modelNotes}` : ""}
         .join('\n')
     : "⚠️ No specific micronutrient ranges found for this model.";
 
-// —— meal keys per day (tool.execute scope) ——
-const MEAL_KEYS_BY_COUNT_TOOL: Record<number, string[]> = {
-  2: ["breakfast","dinner"],
-  3: ["breakfast","lunch","dinner"],
-  4: ["breakfast","lunch","dinner","snack"],
-  5: ["breakfast","second_breakfast","lunch","afternoon_snack","dinner"],
-  6: ["breakfast","second_breakfast","lunch","afternoon_snack","dinner","snack"]
-};
-// mealsPerDay masz już wyżej; zabezpiecz i znormalizuj do 2–6
-const mpdNumTool =
-  typeof mealsPerDay === "number"
-    ? Math.min(6, Math.max(2, mealsPerDay))
-    : 4;
+const mpdNumTool = typeof mealsPerDay === "number" ? mealsPerDay : 4;
+const mealKeysTool = getMealKeys(mpdNumTool);
 
-const mealKeysTool = MEAL_KEYS_BY_COUNT_TOOL[mpdNumTool];
 
 // JSON preview z dokładnymi kluczami posiłków (podgląd dla modelu)
 const jsonFormatPreview =
@@ -666,21 +737,9 @@ export const generateDietTool = tool({
           .join('\n')
       : "⚠️ No specific micronutrient ranges found for this model.";
 
-  // —— meal keys per day (tool.execute scope) ——
-const MEAL_KEYS_BY_COUNT_TOOL: Record<number, string[]> = {
-  2: ["breakfast","dinner"],
-  3: ["breakfast","lunch","dinner"],
-  4: ["breakfast","lunch","dinner","snack"],
-  5: ["breakfast","second_breakfast","lunch","afternoon_snack","dinner"],
-  6: ["breakfast","second_breakfast","lunch","afternoon_snack","dinner","snack"]
-};
-// mealsPerDay masz już wyżej; zabezpiecz i znormalizuj do 2–6
-const mpdNumTool =
-  typeof mealsPerDay === "number"
-    ? Math.min(6, Math.max(2, mealsPerDay))
-    : 4;
+const mpdNumTool = typeof mealsPerDay === "number" ? mealsPerDay : 4;
+const mealKeysTool = getMealKeys(mpdNumTool);
 
-const mealKeysTool = MEAL_KEYS_BY_COUNT_TOOL[mpdNumTool];
 
 // JSON preview z dokładnymi kluczami posiłków (podgląd dla modelu)
 const jsonFormatPreview =
