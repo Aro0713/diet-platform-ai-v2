@@ -355,19 +355,6 @@ ${modelNotes ? `\n📌 Notes:\n${modelNotes}` : ""}
   const prompt = `
 You are a clinical dietitian AI.
 
-${modelDetails}
-HARD CONSTRAINTS (NON-NEGOTIABLE):
-1) Clinical data OVERRULES interview preferences on conflicts.
-2) Do NOT use ANY item from FORBIDDEN_INGREDIENTS (allergies, disliked, medical avoid).
-3) Prefer items from RECOMMENDED_INGREDIENTS (medical recommend) when suitable.
-4) Do NOT invent tolerances or preferences; rely ONLY on provided data.
-5) If an ingredient is ambiguous and could violate constraints, replace it with a safe alternative.
-
-FORBIDDEN_INGREDIENTS:
-- ${FORBIDDEN_INGREDIENTS.length ? FORBIDDEN_INGREDIENTS.join("\n- ") : "(none provided)"}
-
-RECOMMENDED_INGREDIENTS:
-- ${RECOMMENDED_INGREDIENTS.length ? RECOMMENDED_INGREDIENTS.join("\n- ") : "(none provided)"}
 
 Generate a complete 7-day diet plan. DO NOT stop after 1 or 2 days.
 
@@ -642,21 +629,6 @@ export const generateDietTool = tool({
     const prompt = `
 You are a clinical dietitian AI.
 
-${modelDetails}
-
-Generate a complete 7-day diet plan. DO NOT stop after 1 or 2 days.
-HARD CONSTRAINTS (NON-NEGOTIABLE):
-1) Clinical data OVERRULES interview preferences on conflicts.
-2) Do NOT use ANY item from FORBIDDEN_INGREDIENTS (allergies, disliked, medical avoid).
-3) Prefer items from RECOMMENDED_INGREDIENTS (medical recommend) when suitable.
-4) Do NOT invent tolerances or preferences; rely ONLY on provided data.
-5) If an ingredient is ambiguous and could violate constraints, replace it with a safe alternative.
-
-FORBIDDEN_INGREDIENTS:
-- ${FORBIDDEN_INGREDIENTS.length ? FORBIDDEN_INGREDIENTS.join("\n- ") : "(none provided)"}
-
-RECOMMENDED_INGREDIENTS:
-- ${RECOMMENDED_INGREDIENTS.length ? RECOMMENDED_INGREDIENTS.join("\n- ") : "(none provided)"}
 
 You MUST include:
 - All 7 days in the target language (${lang}):
