@@ -350,7 +350,31 @@ ${modelNotes ? `\n📌 Notes:\n${modelNotes}` : ""}
         .join('\n')
     : "⚠️ No specific micronutrient ranges found for this model.";
 
-  const jsonFormatPreview = daysInLang.map(day => `    \"${day}\": { ... }`).join(',\n');
+// —— meal keys per day (tool.execute scope) ——
+const MEAL_KEYS_BY_COUNT_TOOL: Record<number, string[]> = {
+  2: ["breakfast","dinner"],
+  3: ["breakfast","lunch","dinner"],
+  4: ["breakfast","lunch","dinner","snack"],
+  5: ["breakfast","second_breakfast","lunch","afternoon_snack","dinner"],
+  6: ["breakfast","second_breakfast","lunch","afternoon_snack","dinner","snack"]
+};
+// mealsPerDay masz już wyżej; zabezpiecz i znormalizuj do 2–6
+const mpdNumTool =
+  typeof mealsPerDay === "number"
+    ? Math.min(6, Math.max(2, mealsPerDay))
+    : 4;
+
+const mealKeysTool = MEAL_KEYS_BY_COUNT_TOOL[mpdNumTool];
+
+// JSON preview z dokładnymi kluczami posiłków (podgląd dla modelu)
+const jsonFormatPreview =
+  daysInLang.map((day: string) => {
+    const mealStubs = mealKeysTool
+      .map((mk: string) => `"${mk}": { "mealName": "…", "time": "07:00", "ingredients": [ { "name": "…", "quantity": 100 } ], "macros": { "kcal": 0, "protein": 0, "fat": 0, "carbs": 0, "fiber": 0, "sodium": 0, "potassium": 0, "calcium": 0, "magnesium": 0, "iron": 0, "zinc": 0, "vitaminD": 0, "vitaminB12": 0, "vitaminC": 0, "vitaminA": 0, "vitaminE": 0, "vitaminK": 0 } }`)
+      .join(", ");
+    return `    "${day}": { ${mealStubs} }`;
+  })
+  .join(",\n");
 
   const prompt = `
 You are a clinical dietitian AI.
@@ -369,6 +393,11 @@ FORBIDDEN_INGREDIENTS:
 RECOMMENDED_INGREDIENTS:
 - ${RECOMMENDED_INGREDIENTS.length ? RECOMMENDED_INGREDIENTS.join("\n- ") : "(none provided)"}
 Generate a complete 7-day diet plan. DO NOT stop after 1 or 2 days.
+
+For EACH DAY you MUST include EXACTLY ${mpdNumTool} meals using these keys in this exact order:
+${mealKeysTool.map((mk: string) => `"${mk}"`).join(", ")}.
+
+Do not invent other keys. Do not leave any day empty.
 
 You MUST include:
 - All 7 days in the target language (${lang}):
@@ -637,14 +666,44 @@ export const generateDietTool = tool({
           .join('\n')
       : "⚠️ No specific micronutrient ranges found for this model.";
 
-  const jsonFormatPreview = `"Monday": { "breakfast": { ... }, ... }, ...`;
+  // —— meal keys per day (tool.execute scope) ——
+const MEAL_KEYS_BY_COUNT_TOOL: Record<number, string[]> = {
+  2: ["breakfast","dinner"],
+  3: ["breakfast","lunch","dinner"],
+  4: ["breakfast","lunch","dinner","snack"],
+  5: ["breakfast","second_breakfast","lunch","afternoon_snack","dinner"],
+  6: ["breakfast","second_breakfast","lunch","afternoon_snack","dinner","snack"]
+};
+// mealsPerDay masz już wyżej; zabezpiecz i znormalizuj do 2–6
+const mpdNumTool =
+  typeof mealsPerDay === "number"
+    ? Math.min(6, Math.max(2, mealsPerDay))
+    : 4;
+
+const mealKeysTool = MEAL_KEYS_BY_COUNT_TOOL[mpdNumTool];
+
+// JSON preview z dokładnymi kluczami posiłków (podgląd dla modelu)
+const jsonFormatPreview =
+  daysInLang.map((day: string) => {
+    const mealStubs = mealKeysTool
+      .map((mk: string) => `"${mk}": { "mealName": "…", "time": "07:00", "ingredients": [ { "name": "…", "quantity": 100 } ], "macros": { "kcal": 0, "protein": 0, "fat": 0, "carbs": 0, "fiber": 0, "sodium": 0, "potassium": 0, "calcium": 0, "magnesium": 0, "iron": 0, "zinc": 0, "vitaminD": 0, "vitaminB12": 0, "vitaminC": 0, "vitaminA": 0, "vitaminE": 0, "vitaminK": 0 } }`)
+      .join(", ");
+    return `    "${day}": { ${mealStubs} }`;
+  })
+  .join(",\n");
+
 
     const prompt = `
 You are a clinical dietitian AI.
 
 ${modelDetails}
-
 Generate a complete 7-day diet plan. DO NOT stop after 1 or 2 days.
+
+For EACH DAY you MUST include EXACTLY ${mpdNumTool} meals using these keys in this exact order:
+${mealKeysTool.map((mk: string) => `"${mk}"`).join(", ")}.
+
+Do not invent other keys. Do not leave any day empty.
+
 HARD CONSTRAINTS (NON-NEGOTIABLE):
 1) Clinical data OVERRULES interview preferences on conflicts.
 2) Do NOT use ANY item from FORBIDDEN_INGREDIENTS (allergies, disliked, medical avoid).
