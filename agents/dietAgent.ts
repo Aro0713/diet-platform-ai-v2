@@ -7,7 +7,7 @@ import type { Meal } from "@/types";
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 // — perf knobs —
 const OPENAI_MODEL = process.env.DIET_AGENT_MODEL || "gpt-4o-mini";
-const MAX_TOKENS   = Number(process.env.DIET_AGENT_MAX_TOKENS ?? 6500);
+const MAX_TOKENS   = Number(process.env.DIET_AGENT_MAX_TOKENS ?? 8500);
 
 const languageMap: Record<string, string> = {
   pl: "polski", en: "English", es: "español", fr: "français", de: "Deutsch",
@@ -508,6 +508,24 @@ ${jsonFormatPreview}
   }
 }
 `;
+// Helper lokalny dla execute(): jednolite wywołanie OpenAI z JSON response (zachowuje identyczną logikę danych)
+async function callModelJSONExec(promptText: string, maxTok = MAX_TOKENS) {
+  const resp = await openai.chat.completions.create({
+    model: OPENAI_MODEL,
+    response_format: { type: "json_object" },
+    messages: [
+      { role: "system", content: "You are a clinical dietitian AI." },
+      { role: "user", content: promptText }
+    ],
+    temperature: 0.2,
+    max_tokens: maxTok
+  });
+  const choice = resp.choices?.[0];
+  return {
+    content: choice?.message?.content ?? "",
+    finish: choice?.finish_reason ?? "unknown"
+  };
+}
 
 async function callModelJSON(promptText: string, maxTok = MAX_TOKENS) {
   const resp = await openai.chat.completions.create({
@@ -528,7 +546,8 @@ async function callModelJSON(promptText: string, maxTok = MAX_TOKENS) {
 }
 
 // 1st try — pełny prompt
-let { content: fullContent, finish } = await callModelJSON(prompt, MAX_TOKENS);
+let { content: fullContent, finish } =
+  await withTimeout(callModelJSON(prompt, MAX_TOKENS), SOFT_TIMEOUT_MS, "openai-timeout-1");
 
 // Retry gdy obcięte (finish === 'length') lub filtr
 if (finish !== "stop") {
@@ -540,9 +559,13 @@ IMPORTANT: If you are running out of space, RETURN ONLY:
   "dietPlan": { ... 7 days with meals ... }
 }
 No shoppingList, no weeklyOverview, no nutritionalSummary.`;
-  ({ content: fullContent, finish } = await callModelJSON(compactPrompt, Math.min(MAX_TOKENS * 2, 12000)));
+  ({ content: fullContent, finish } =
+  await withTimeout(
+    callModelJSON(compactPrompt, Math.min(MAX_TOKENS * 2, 12000)),
+    SOFT_TIMEOUT_MS,
+    "openai-timeout-2"
+  ));
 }
-
 
 function tryParseJsonFromContent(raw: string) {
   const clean = raw
@@ -614,7 +637,8 @@ const confirmedPlan: Record<string, Record<string, Meal>> = rawDietPlan;
 
 let finalPlan = confirmedPlan; // domyślnie bierzemy nasz plan
 try {
-  const dq: any = await import("@/agents/dqAgent").then(m =>
+const dq: any = await import("@/agents/dqAgent").then(m =>
+  withTimeout(
     m.dqAgent.run({
       dietPlan: confirmedPlan,
       model: modelKey,
@@ -623,8 +647,11 @@ try {
       weightKg: form.weight ?? null,
       conditions: form.conditions ?? [],
       dqChecks: form?.medical_data?.dqChecks ?? {}
-    })
-  );
+    }),
+    SOFT_TIMEOUT_MS,
+    "dqAgent-timeout"
+  )
+);
 
   if (dq?.plan && Object.keys(dq.plan || {}).length) {
     finalPlan = dq.plan;
@@ -810,16 +837,21 @@ ${jsonFormatPreview}
 `;
 
 try {
-const completion = await openai.chat.completions.create({
-  model: OPENAI_MODEL,
-  response_format: { type: "json_object" },
-  messages: [
-    { role: "system", content: "You are a clinical dietitian AI." },
-    { role: "user", content: prompt }
-  ],
-  temperature: 0.2,
-  max_tokens: MAX_TOKENS
-});
+const completion = await withTimeout(
+  openai.chat.completions.create({
+    model: OPENAI_MODEL,
+    response_format: { type: "json_object" },
+    messages: [
+      { role: "system", content: "You are a clinical dietitian AI." },
+      { role: "user", content: prompt }
+    ],
+    temperature: 0.2,
+    max_tokens: MAX_TOKENS
+  }),
+  SOFT_TIMEOUT_MS,
+  "openai-timeout-exec"
+);
+
 const fullContent = completion.choices?.[0]?.message?.content ?? "";
 
 function tryParseJsonFromContent(raw: string) {
@@ -919,15 +951,19 @@ enforceConstraintsOnPlan(rawDietPlan, FORBIDDEN);
 const confirmedPlan: Record<string, Record<string, Meal>> = rawDietPlan;
 
 const result = await import("@/agents/dqAgent").then(m =>
-  m.dqAgent.run({
-    dietPlan: confirmedPlan,
-    model: modelKey,
-    goal: goalExplanation,
-    cpm,
-    weightKg: form.weight ?? null,
-    conditions: form.conditions ?? [],
-    dqChecks: form?.medical_data?.dqChecks ?? {}
-  })
+  withTimeout(
+    m.dqAgent.run({
+      dietPlan: confirmedPlan,
+      model: modelKey,
+      goal: goalExplanation,
+      cpm,
+      weightKg: form.weight ?? null,
+      conditions: form.conditions ?? [],
+      dqChecks: form?.medical_data?.dqChecks ?? {}
+    }),
+    SOFT_TIMEOUT_MS,
+    "dqAgent-timeout-exec"
+  )
 );
 
 
