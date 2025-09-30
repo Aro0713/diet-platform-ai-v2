@@ -815,11 +815,17 @@ try {
 }
 
   // ✅ Wybór najlepszego dietPlan
- function isValidDietPlan(obj: any): boolean {
+function isValidDietPlan(obj: any): boolean {
   if (!obj || typeof obj !== "object") return false;
   const days = Object.keys(obj);
-  return days.length >= 5 && Object.values(obj).every(
-    v => typeof v === "object" && v !== null
+  return (
+    days.length >= 5 &&
+    Object.values(obj).every(
+      v =>
+        v &&
+        typeof v === "object" &&
+        Object.keys(v).length > 0 // 🔥 musi być co najmniej 1 posiłek
+    )
   );
 }
 
