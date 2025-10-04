@@ -299,6 +299,33 @@ export async function generateDiet(input: any): Promise<any> {
   const cpm = form.cpm ?? (form.weight && pal ? Math.round(form.weight * 24 * pal) : null);
   const iv = extractInterview(form, interviewData);
   const md = extractMedical(form);
+  // ── Interview constraints: allergies + disliked (+ med hints)
+const interviewAllergies = String(iv?.allergies ?? "")
+  .split(/[,;|/\n]+/g).map(s => s.trim()).filter(Boolean);
+
+const disliked = Array.isArray(iv?.disliked) ? iv.disliked.filter(Boolean) : [];
+
+const avoidFromMed = [
+  ...(md?.dietHints?.avoid ?? []),
+  ...(md?.dqChecks?.avoidIngredients ?? [])
+].filter(Boolean);
+
+const recommendFromMed = [
+  ...(md?.dietHints?.recommend ?? []),
+  ...(md?.dqChecks?.recommendIngredients ?? [])
+].filter(Boolean);
+
+const FORBIDDEN_INGREDIENTS = Array.from(new Set([
+  ...interviewAllergies,
+  ...disliked,
+  ...avoidFromMed
+]));
+
+const PREFERRED_INGREDIENTS = Array.from(new Set([
+  ...(Array.isArray(iv?.preferred) ? iv.preferred.filter(Boolean) : []),
+  ...recommendFromMed
+]));
+
   const mealsPerDay = iv.mealsPerDay ?? "not provided";
   const interviewSummary = buildInterviewSummary(iv);
   const medicalSummary = buildMedicalSummary(md);
@@ -328,6 +355,19 @@ ${modelNotes ? `\n📌 Notes:\n${modelNotes}` : ""}
 
   const prompt = `
 You are a clinical dietitian AI.
+Follow these STRICT RULES before you start:
+
+1. Use ONLY information explicitly provided in patient interview, medical data, selected diet model, goal, and cuisine context.
+2. NEVER invent diseases, conditions, ingredients, or meals that were not mentioned.
+3. Respect all allergy and intolerance information from interview — exclude any forbidden foods or allergens.
+4. All meal choices MUST be clinically consistent with:
+   - patient's conditions and risks,
+   - chosen diet model (${modelKey}),
+   - chosen goal (${goalExplanation}),
+   - and chosen cuisine (${cuisineContext}).
+5. You MUST NOT propose foods outside the selected cuisine or model (for example, no Asian ingredients in Polish cuisine).
+6. Use only ingredients that realistically fit within the cuisine and model.
+7. The plan must be nutritionally realistic, matching ${lang} language and day names.
 
 ${modelDetails}
 
@@ -569,6 +609,19 @@ export const generateDietTool = tool({
 
     const prompt = `
 You are a clinical dietitian AI.
+Follow these STRICT RULES before you start:
+
+1. Use ONLY information explicitly provided in patient interview, medical data, selected diet model, goal, and cuisine context.
+2. NEVER invent diseases, conditions, ingredients, or meals that were not mentioned.
+3. Respect all allergy and intolerance information from interview — exclude any forbidden foods or allergens.
+4. All meal choices MUST be clinically consistent with:
+   - patient's conditions and risks,
+   - chosen diet model (${modelKey}),
+   - chosen goal (${goalExplanation}),
+   - and chosen cuisine (${cuisineContext}).
+5. You MUST NOT propose foods outside the selected cuisine or model (for example, no Asian ingredients in Polish cuisine).
+6. Use only ingredients that realistically fit within the cuisine and model.
+7. The plan must be nutritionally realistic, matching ${lang} language and day names.
 
 ${modelDetails}
 
