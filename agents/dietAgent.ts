@@ -3,6 +3,11 @@ import OpenAI from "openai";
 import { nutrientRequirementsMap, type NutrientRequirements } from "@/utils/nutrientRequirementsMap";
 import type { Ingredient } from "@/utils/nutrition/calculateMealMacros";
 import type { Meal } from "@/types";
+import {
+  preparePatientContext,
+  buildDietAgentParamsFromContext,
+  buildDQChecksFromContext
+} from "../src/utils/preparePatientContext";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 

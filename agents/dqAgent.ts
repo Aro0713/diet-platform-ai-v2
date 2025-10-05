@@ -2,6 +2,11 @@ import OpenAI from "openai";
 import { Meal } from "@/types";
 import { validateDietWithModel } from "@/utils/validateDiet";
 import { nutrientRequirementsMap, type NutrientRequirements } from "@/utils/nutrientRequirementsMap";
+import {
+  preparePatientContext,
+  buildDietAgentParamsFromContext,
+  buildDQChecksFromContext
+} from "../src/utils/preparePatientContext";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
