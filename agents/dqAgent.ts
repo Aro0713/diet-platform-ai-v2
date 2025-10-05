@@ -139,6 +139,27 @@ if (process.env.USE_DQ_LLM !== "1") {
 
 
     const mergedRequirements = mergeRequirements([model, ...(conditions ?? [])]);
+    // ── Lists from checks (generic; per-user) ─────────────────────────────────────
+const forbiddenList = (dqChecks?.avoidIngredients ?? []).map(String);
+const preferredList = (dqChecks?.recommendIngredients ?? []).map(String);
+
+// ── Generic, role-based substitution policy (cuisine+model aware) ────────────
+const substitutionPolicy = `
+SUBSTITUTION POLICY (generic, applies to any user):
+- If a forbidden item appears in any meal, REPLACE it with a safe alternative that plays the SAME CULINARY ROLE within the SAME CUISINE and DIET MODEL. Do not change meal times, meal count or cuisine.
+- Prioritise items from the Preferred list when suitable.
+- Keep calories and macros approximately unchanged (±5–10%), keep sodium low when required, keep GI low for diabetes/IR models.
+- Examples by role (use only if that role is present in the meal):
+  • Protein role → use lean poultry, white fish, eggs, or non-soy legumes that are NOT forbidden.
+  • Dairy role → use lactose-free dairy OR plant-based alternatives (almond/oat/coconut/soy only if soy is not forbidden).
+  • Grain role → use whole-grain options; if gluten is forbidden, use gluten-free grains (rice, buckwheat, corn, quinoa).
+  • Shellfish role → replace with white fish or poultry.
+  • Soy role → replace with non-soy legumes or lactose-free/plant dairy.
+  • Nut/seed role → use non-forbidden nuts; if all nuts are forbidden, use seeds (sunflower, pumpkin, chia), fruit, or granola (non-forbidden).
+  • Sauce/condiment role → replace high-sodium or forbidden bases with herb, citrus, tomato, yogurt (lactose-free/plant) or tahini (if sesame allowed).
+- Never introduce new allergens or items from the Forbidden list. Do not switch cuisine or model.
+`;
+
  const prompt = `You are a clinical dietitian AI and diet quality controller.
 
 Evaluate the following 7-day diet plan for a patient with the following clinical conditions:
@@ -155,10 +176,13 @@ ${dqChecks?.avoidMacros?.length ? `Avoid these macronutrient profiles: ${dqCheck
 ${dqChecks?.avoidMicros?.length ? `Avoid these micronutrients: ${dqChecks.avoidMicros.join(", ")}` : ""}
 ${dqChecks?.recommendMicros?.length ? `Prefer these micronutrients: ${dqChecks.recommendMicros.join(", ")}` : ""}
 ${dqChecks?.recommendMacros?.length ? `Prefer macronutrient profiles: ${dqChecks.recommendMacros.join(", ")}` : ""}
-${dqChecks?.avoidIngredients?.length ? `Strictly avoid the following ingredients: ${dqChecks.avoidIngredients.join(", ")}` : ""}
+${forbidden.length ? `Strictly avoid the following ingredients: ${forbidden.join(", ")}` : ""}
+
 STRICT FOOD CONSTRAINTS:
 - Forbidden ingredients (never allowed): ${forbidden.join(", ") || "none"}.
 - Preferred ingredients (use when appropriate): ${preferred.join(", ") || "none"}.
+${substitutionPolicy}
+
 - When a forbidden item is present, REPLACE it with a safe alternative of similar culinary role:
   • lactose dairy → lactose-free dairy or plant milk,
   • soy products → non-soy legumes or dairy-free options,
