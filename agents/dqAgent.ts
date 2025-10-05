@@ -42,6 +42,57 @@ function mergeRequirements(models: string[]): NutrientRequirements {
     Object.entries(merged).map(([k, v]) => [k, v ?? { min: 0, max: 999999 }])
   ) as NutrientRequirements;
 }
+// ── Ingredient rules: small, precise expansions ─────────────────────────────
+function buildIngredientRules(dqChecks?: {
+  avoidIngredients?: string[];
+  recommendIngredients?: string[];
+}) {
+  const forbiddenBase = dqChecks?.avoidIngredients ?? [];
+  const preferredBase = dqChecks?.recommendIngredients ?? [];
+
+  const f = new Set<string>();
+  for (const raw of forbiddenBase) {
+    const k = String(raw).toLowerCase();
+    if (k.includes("laktoz")) {
+      ["mleko","mleko krowie","jogurt","kefir","ser","śmietana"].forEach(v => f.add(v));
+    } else if (k.includes("soja")) {
+      ["soja","tofu","tempeh","sos sojowy","mleko sojowe","edamame"].forEach(v => f.add(v));
+    } else if (k.includes("orzechy ziemne") || k.includes("arachid") || k.includes("peanut")) {
+      ["orzechy ziemne","masło orzechowe","olej arachidowy","peanut","peanut butter"].forEach(v => f.add(v));
+    } else if (k.includes("krewetk") || k.includes("skorupiak")) {
+      ["krewetki","skorupiaki","krab","homar","langustynki"].forEach(v => f.add(v));
+    } else if (k.includes("gluten")) {
+      ["pszenica","jęczmień","żyto","słód jęczmienny"].forEach(v => f.add(v));
+    } else {
+      f.add(String(raw));
+    }
+  }
+  const preferred = Array.from(new Set(preferredBase.map(String)));
+  return { forbidden: Array.from(f), preferred };
+}
+
+function findForbiddenHits(
+  plan: Record<string, Record<string, Meal>>,
+  forbidden: string[]
+) {
+  const hits: { day: string; mealKey: string; ingredient: string }[] = [];
+  if (!forbidden.length) return hits;
+  const fLow = forbidden.map(s => s.toLowerCase());
+
+  for (const day of Object.keys(plan)) {
+    const meals = plan[day];
+    for (const mealKey of Object.keys(meals)) {
+      const ings = (meals[mealKey]?.ingredients ?? []) as any[];
+      for (const it of ings) {
+        const name = String(it?.product ?? it?.name ?? "").toLowerCase();
+        if (fLow.some(f => f && name.includes(f))) {
+          hits.push({ day, mealKey, ingredient: String(it?.product ?? it?.name ?? "") });
+        }
+      }
+    }
+  }
+  return hits;
+}
 
 export const dqAgent = {
   run: async ({
@@ -59,24 +110,33 @@ export const dqAgent = {
     cpm?: number | null;
     weightKg?: number | null;
     conditions?: string[];
-    dqChecks?: {
-      avoidMacros?: string[];
-      avoidMicros?: string[];
-      avoidIngredients?: string[];
-      recommendMicros?: string[];
-      recommendMacros?: string[];
-      preferModels?: string[];
-    };
+   dqChecks?: {
+  avoidMacros?: string[];
+  avoidMicros?: string[];
+  avoidIngredients?: string[];
+  recommendIngredients?: string[];   // ← DODANE
+  recommendMicros?: string[];
+  recommendMacros?: string[];
+  preferModels?: string[];
+};
+
   }) => {
     
-// ⛳ Szybka ścieżka: bez LLM, oddaj plan jak jest (wymuś LLM przez USE_DQ_LLM=1)
+const { forbidden, preferred } = buildIngredientRules(dqChecks);
+
+// ⛳ Szybka ścieżka: bez LLM tylko jeśli NIE ma zakazanych składników
 if (process.env.USE_DQ_LLM !== "1") {
-  return {
-    type: "dietPlan",
-    plan: convertStructuredToFlatPlan(dietPlan),
-    violations: []
-  };
+  const hits = findForbiddenHits(dietPlan, forbidden);
+  if (hits.length === 0) {
+    return {
+      type: "dietPlan",
+      plan: convertStructuredToFlatPlan(dietPlan),
+      violations: []
+    };
+  }
+  // są naruszenia → przechodzimy do ścieżki LLM z korektą
 }
+
 
     const mergedRequirements = mergeRequirements([model, ...(conditions ?? [])]);
  const prompt = `You are a clinical dietitian AI and diet quality controller.
@@ -96,6 +156,15 @@ ${dqChecks?.avoidMicros?.length ? `Avoid these micronutrients: ${dqChecks.avoidM
 ${dqChecks?.recommendMicros?.length ? `Prefer these micronutrients: ${dqChecks.recommendMicros.join(", ")}` : ""}
 ${dqChecks?.recommendMacros?.length ? `Prefer macronutrient profiles: ${dqChecks.recommendMacros.join(", ")}` : ""}
 ${dqChecks?.avoidIngredients?.length ? `Strictly avoid the following ingredients: ${dqChecks.avoidIngredients.join(", ")}` : ""}
+STRICT FOOD CONSTRAINTS:
+- Forbidden ingredients (never allowed): ${forbidden.join(", ") || "none"}.
+- Preferred ingredients (use when appropriate): ${preferred.join(", ") || "none"}.
+- When a forbidden item is present, REPLACE it with a safe alternative of similar culinary role:
+  • lactose dairy → lactose-free dairy or plant milk,
+  • soy products → non-soy legumes or dairy-free options,
+  • peanuts/peanut butter → seeds or nut butters (if tree nuts are allowed),
+  • shrimps/shellfish → white fish or poultry.
+- Do not change the cuisine or diet model context while fixing.
 
 You already know the nutritional value of standard foods (e.g. chicken, broccoli, oats, olive oil, etc.). You do NOT need to ask any database.
 
