@@ -53,16 +53,24 @@ function buildIngredientRules(dqChecks?: {
   const f = new Set<string>();
   for (const raw of forbiddenBase) {
     const k = String(raw).toLowerCase();
+
     if (k.includes("laktoz")) {
-      ["mleko","mleko krowie","jogurt","kefir","ser","śmietana"].forEach(v => f.add(v));
+      ["mleko","mleko krowie","jogurt","kefir","ser","śmietana","maślanka","serwatka"]
+        .forEach(v => f.add(v));
     } else if (k.includes("soja")) {
-      ["soja","tofu","tempeh","sos sojowy","mleko sojowe","edamame"].forEach(v => f.add(v));
+      ["soja","tofu","tempeh","sos sojowy","tamari","miso","mleko sojowe","edamame",
+       "izolat białka sojowego","lecytyna sojowa"].forEach(v => f.add(v));
     } else if (k.includes("orzechy ziemne") || k.includes("arachid") || k.includes("peanut")) {
-      ["orzechy ziemne","masło orzechowe","olej arachidowy","peanut","peanut butter"].forEach(v => f.add(v));
+      ["orzechy ziemne","masło orzechowe","olej arachidowy","peanut","peanut butter"]
+        .forEach(v => f.add(v));
     } else if (k.includes("krewetk") || k.includes("skorupiak")) {
       ["krewetki","skorupiaki","krab","homar","langustynki"].forEach(v => f.add(v));
     } else if (k.includes("gluten")) {
       ["pszenica","jęczmień","żyto","słód jęczmienny"].forEach(v => f.add(v));
+    } else if (k.includes("broku")) {
+      ["brokuł","brokuły"].forEach(v => f.add(v)); // awersja
+    } else if (k.includes("butterfish") || k.includes("ryba maślana") || k.includes("escolar") || k.includes("oilfish")) {
+      ["ryba maślana","butterfish","escolar","oilfish"].forEach(v => f.add(v));
     } else {
       f.add(String(raw));
     }
@@ -70,6 +78,125 @@ function buildIngredientRules(dqChecks?: {
   const preferred = Array.from(new Set(preferredBase.map(String)));
   return { forbidden: Array.from(f), preferred };
 }
+type Violation = { code: string; severity: "error"|"warn"; day: string; mealKey?: string; detail: string };
+
+function mval(meal: any, keys: string[]): number {
+  const m = meal?.macros ?? {};
+  for (const k of keys) if (typeof m[k] === "number") return m[k];
+  return 0;
+}
+
+const K = {
+  kcal:      ["kcal","calories"],
+  protein:   ["protein","protein_g"],
+  fat:       ["fat","fat_g"],
+  carbs:     ["carbs","carbohydrates","carbs_g","carbohydrates_g"],
+  fiber:     ["fiber","fiber_g"],
+  sodium:    ["sodium_mg","sodium","na_mg"],
+  potassium: ["potassium_mg","potassium","k_mg"]
+};
+
+function sumDayMacros(dayMeals: Record<string, Meal>) {
+  const t = { kcal:0, protein:0, fat:0, carbs:0, fiber:0, sodium:0, potassium:0 };
+  for (const mk of Object.keys(dayMeals)) {
+    const meal = (dayMeals as any)[mk];
+    t.kcal      += mval(meal, K.kcal);
+    t.protein   += mval(meal, K.protein);
+    t.fat       += mval(meal, K.fat);
+    t.carbs     += mval(meal, K.carbs);
+    t.fiber     += mval(meal, K.fiber);
+    t.sodium    += mval(meal, K.sodium);
+    t.potassium += mval(meal, K.potassium);
+  }
+  return t;
+}
+function parseHHMM(s?: string): number | null {
+  if (!s || typeof s !== "string") return null;
+  const m = s.trim().match(/^(\d{1,2}):(\d{2})/);
+  if (!m) return null;
+  return Number(m[1]) * 60 + Number(m[2]);
+}
+
+function checkMealTimes(meals: Record<string, any>, expected: string[], toleranceMin = 60): string[] {
+  const issues: string[] = [];
+  const actual = Object.values(meals)
+    .map((m: any) => parseHHMM(m?.time))
+    .filter((t: number|null): t is number => t !== null)
+    .sort((a,b) => a-b);
+
+  const exp = (expected || []).map(parseHHMM).filter((x): x is number => x !== null).sort((a,b)=>a-b);
+  if (!exp.length || !actual.length) return issues;
+
+  if (actual.length !== exp.length) {
+    issues.push(`czasy posiłków: ${actual.length} ≠ oczekiwane ${exp.length}`);
+    return issues;
+  }
+  for (let i=0;i<exp.length;i++) {
+    if (Math.abs(actual[i]-exp[i]) > toleranceMin) {
+      issues.push(`posiłek #${i+1} poza oknem ±${toleranceMin} min`);
+    }
+  }
+  return issues;
+}
+function computeStaticViolations(
+  plan: Record<string, Record<string, Meal>>,
+  opts: {
+    expectedMealsPerDay?: number;
+    expectedMealTimes?: string[];
+    insulinResistance?: boolean;
+    sodiumMax?: number;
+    potassiumMin?: number;
+    fiberMin?: number;
+    proteinRange?: { min:number; max:number } | null;
+    carbsCaps?: [number,number,number,number] | null; // per posiłek
+  }
+): Violation[] {
+  const v: Violation[] = [];
+
+  for (const day of Object.keys(plan)) {
+    const meals = plan[day];
+
+    if (opts.expectedMealsPerDay && Object.keys(meals).length !== opts.expectedMealsPerDay) {
+      v.push({ code:"MEALS_COUNT", severity:"warn", day, detail:`${Object.keys(meals).length} pos./d vs oczekiwane ${opts.expectedMealsPerDay}` });
+    }
+
+    (checkMealTimes(meals as any, opts.expectedMealTimes ?? [], 60))
+      .forEach(msg => v.push({ code:"MEAL_TIME", severity:"warn", day, detail: msg }));
+
+    if (opts.carbsCaps) {
+      const sorted = Object.entries(meals).sort((a,b)=>{
+        const ta = parseHHMM((a[1] as any)?.time) ?? 0;
+        const tb = parseHHMM((b[1] as any)?.time) ?? 0;
+        return ta - tb;
+      });
+      sorted.forEach(([mealKey, meal], i) => {
+        const cap = opts.carbsCaps![Math.min(i, opts.carbsCaps!.length-1)];
+        const carbs = mval(meal, K.carbs);
+        if (cap && carbs > cap) {
+          v.push({ code:"MEAL_CARBS_CAP", severity:"warn", day, mealKey, detail:`${carbs} g > cap ${cap} g` });
+        }
+      });
+    }
+
+    const t = sumDayMacros(meals);
+    if (opts.fiberMin && t.fiber < opts.fiberMin) {
+      v.push({ code:"FIBER_LOW", severity:"warn", day, detail:`błonnik ${t.fiber} g < ${opts.fiberMin} g` });
+    }
+    if (opts.sodiumMax && t.sodium > opts.sodiumMax) {
+      v.push({ code:"SODIUM_HIGH", severity:"error", day, detail:`sód ${Math.round(t.sodium)} mg > ${opts.sodiumMax} mg` });
+    }
+    if (opts.potassiumMin && t.potassium && t.potassium < opts.potassiumMin) {
+      v.push({ code:"POTASSIUM_LOW", severity:"warn", day, detail:`potas ${Math.round(t.potassium)} mg < ${opts.potassiumMin} mg` });
+    }
+    if (opts.proteinRange) {
+      if (t.protein < opts.proteinRange.min || t.protein > opts.proteinRange.max) {
+        v.push({ code:"PROTEIN_RANGE", severity:"warn", day, detail:`białko ${Math.round(t.protein)} g poza ${opts.proteinRange.min}-${opts.proteinRange.max} g` });
+      }
+    }
+  }
+  return v;
+}
+
 
 function findForbiddenHits(
   plan: Record<string, Record<string, Meal>>,
@@ -102,7 +229,9 @@ export const dqAgent = {
     cpm,
     weightKg,
     conditions,
-    dqChecks
+    dqChecks,
+    interviewData,
+    medicalData
   }: {
     dietPlan: Record<string, Record<string, Meal>>;
     model: string;
@@ -110,38 +239,75 @@ export const dqAgent = {
     cpm?: number | null;
     weightKg?: number | null;
     conditions?: string[];
-   dqChecks?: {
-  avoidMacros?: string[];
-  avoidMicros?: string[];
-  avoidIngredients?: string[];
-  recommendIngredients?: string[];   // ← DODANE
-  recommendMicros?: string[];
-  recommendMacros?: string[];
-  preferModels?: string[];
-};
-
-  }) => {
-    
-const { forbidden, preferred } = buildIngredientRules(dqChecks);
-
-// ⛳ Szybka ścieżka: bez LLM tylko jeśli NIE ma zakazanych składników
-if (process.env.USE_DQ_LLM !== "1") {
-  const hits = findForbiddenHits(dietPlan, forbidden);
-  if (hits.length === 0) {
-    return {
-      type: "dietPlan",
-      plan: convertStructuredToFlatPlan(dietPlan),
-      violations: []
+    dqChecks?: {
+      avoidMacros?: string[];
+      avoidMicros?: string[];
+      avoidIngredients?: string[];
+      recommendIngredients?: string[];
+      recommendMicros?: string[];
+      recommendMacros?: string[];
+      preferModels?: string[];
     };
-  }
-  // są naruszenia → przechodzimy do ścieżki LLM z korektą
+    interviewData?: any; // allergies,intolerances,dislikes,likes,mealTimes,mealsPerDay
+    medicalData?: any;   // allergies,intolerances,diagnoses,labs
+  }): Promise<{
+    type: "dietPlan";
+    plan: Record<string, Meal[]>;
+    violations: Array<{ code: string; severity: "error" | "warn"; day: string; mealKey?: string; detail: string }>;
+  }> => {
+
+    
+// 0) Zbierz ograniczenia z wywiadu/medycznych i scal z dqChecks
+const derivedForbidden: string[] = [];
+const derivedPreferred: string[] = [];
+if (interviewData?.allergies)     derivedForbidden.push(...[].concat(interviewData.allergies));
+if (interviewData?.intolerances)  derivedForbidden.push(...[].concat(interviewData.intolerances));
+if (interviewData?.dislikes)      derivedForbidden.push(...[].concat(interviewData.dislikes));
+if (interviewData?.likes)         derivedPreferred.push(...[].concat(interviewData.likes));
+if (medicalData?.allergies)       derivedForbidden.push(...[].concat(medicalData.allergies));
+if (medicalData?.intolerances)    derivedForbidden.push(...[].concat(medicalData.intolerances));
+
+const mergedDQ = {
+  avoidIngredients: [...(dqChecks?.avoidIngredients ?? []), ...derivedForbidden],
+  recommendIngredients: [...(dqChecks?.recommendIngredients ?? []), ...derivedPreferred],
+};
+const { forbidden, preferred } = buildIngredientRules(mergedDQ);
+
+// 1) Parametry walidacji klinicznej
+const expectedMealsPerDay = interviewData?.mealsPerDay ?? 4;
+const expectedMealTimes: string[] = Array.isArray(interviewData?.mealTimes)
+  ? interviewData.mealTimes
+  : ["07:00","12:00","16:00","19:00"];
+const insulinResistance = (conditions ?? []).some(c => /insulin|diabet/i.test(String(c)));
+const sodiumMax = 1800;           // HTN/udar
+const potassiumMin = 3500;
+const fiberMin = 30;
+const proteinRange = weightKg
+  ? { min: Math.round(weightKg*1.2), max: Math.round(weightKg*1.6) }
+  : { min: 100, max: 130 };
+const carbsCaps: [number,number,number,number] | null = insulinResistance ? [45,40,40,40] : null;
+
+// 2) Walidacja statyczna – zawsze
+const staticViolations = computeStaticViolations(dietPlan, {
+  expectedMealsPerDay, expectedMealTimes, insulinResistance,
+  sodiumMax, potassiumMin, fiberMin, proteinRange, carbsCaps
+});
+
+// 3) Twarde naruszenia składników + brak makr?
+const forbiddenHits = findForbiddenHits(dietPlan, forbidden);
+const macrosMissing = Object.values(dietPlan).flatMap(d=>Object.values(d))
+  .some((m:any)=>!m?.macros || Object.values(m.macros).every((x:any)=>!x || Number(x)===0));
+
+// 4) Szybka ścieżka: bez LLM jeśli brak krytyków i mamy makra
+if (process.env.USE_DQ_LLM !== "1" && forbiddenHits.length === 0 && !macrosMissing) {
+  return {
+    type: "dietPlan",
+    plan: convertStructuredToFlatPlan(dietPlan),
+    violations: staticViolations
+  };
 }
 
-
     const mergedRequirements = mergeRequirements([model, ...(conditions ?? [])]);
-    // ── Lists from checks (generic; per-user) ─────────────────────────────────────
-const forbiddenList = (dqChecks?.avoidIngredients ?? []).map(String);
-const preferredList = (dqChecks?.recommendIngredients ?? []).map(String);
 
 // ── Generic, role-based substitution policy (cuisine+model aware) ────────────
 const substitutionPolicy = `
@@ -263,42 +429,50 @@ if (clean.includes("CORRECTED_JSON")) {
       }
     }
 
-    const hasAnyMacros = Object.values(correctedStructured)
-      .flatMap(day => Object.values(day))
-      .some(meal =>
-        meal.macros &&
-        Object.values(meal.macros).some(v => typeof v === 'number' && v > 0)
-      );
+const hasAnyMacros = Object.values(correctedStructured as Record<string, Record<string, Meal>>)
+  .flatMap(day => Object.values(day))
+  .some((meal: any) =>
+    meal?.macros && Object.values(meal.macros).some((v: any) => typeof v === "number" && v > 0)
+  );
 
-    if (!hasAnyMacros) {
-      console.warn("❌ GPT zwrócił dietę bez wartości odżywczych (macros all 0)");
-      throw new Error("Poprawiona dieta nie zawiera makroskładników");
-    }
+if (!hasAnyMacros) {
+  console.warn("❌ GPT zwrócił dietę bez wartości odżywczych (macros all 0)");
+  throw new Error("Poprawiona dieta nie zawiera makroskładników");
+}
 
-    const originalMeals: Meal[] = Object.values(dietPlan).flatMap(day => Object.values(day));
-    const correctedMeals: Meal[] = Object.values(correctedStructured).flatMap(day => Object.values(day));
+// porównanie naruszeń statycznych
+const vBefore = staticViolations.length;
+const vAfter = computeStaticViolations(correctedStructured as Record<string, Record<string, Meal>>, {
+  expectedMealsPerDay, expectedMealTimes, insulinResistance,
+  sodiumMax, potassiumMin, fiberMin, proteinRange, carbsCaps
+}).length;
 
-    const issuesOriginal = validateDietWithModel(originalMeals, model);
-    const issuesCorrected = validateDietWithModel(correctedMeals, model);
+// tie-breaker: stary walidator modelowy
+const originalMeals: Meal[] = Object.values(dietPlan).flatMap(day => Object.values(day));
+const correctedMeals: Meal[] = Object.values(correctedStructured as Record<string, Record<string, Meal>>).flatMap(day => Object.values(day));
+const issuesOriginal = validateDietWithModel(originalMeals, model).length;
+const issuesCorrected = validateDietWithModel(correctedMeals, model).length;
 
-    if (issuesCorrected.length < issuesOriginal.length) {
-      console.log("✅ Ulepszony plan wybrany przez dqAgent:", issuesCorrected);
-      return {
-        type: "dietPlan",
-        plan: convertStructuredToFlatPlan(correctedStructured),
-        violations: []
-      };
-    }
+if (vAfter < vBefore || issuesCorrected < issuesOriginal) {
+  return {
+    type: "dietPlan",
+    plan: convertStructuredToFlatPlan(correctedStructured as Record<string, Record<string, Meal>>),
+    violations: computeStaticViolations(correctedStructured as Record<string, Record<string, Meal>>, {
+      expectedMealsPerDay, expectedMealTimes, insulinResistance,
+      sodiumMax, potassiumMin, fiberMin, proteinRange, carbsCaps
+    })
+  };
+}
 
   } catch (e) {
     console.warn("❌ Nie udało się sparsować poprawionego JSON od GPT:", e);
   }
 }
+return {
+  type: "dietPlan",
+  plan: convertStructuredToFlatPlan(dietPlan),
+  violations: staticViolations
+};
 
-    return {
-      type: "dietPlan",
-      plan: convertStructuredToFlatPlan(dietPlan),
-      violations: []
-    };
   }
 };
