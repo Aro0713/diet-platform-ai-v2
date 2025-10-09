@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { translationsUI } from '@/utils/translationsUI';
 import { type LangKey, languageLabels } from '@/utils/i18n';
 
+
 // KONTAKT / SOCIAL
 const FOOTER = {
   email: 'contact@dcp.care', 
@@ -73,7 +74,7 @@ export default function Home() {
           if (mounted) setMarket('OTHER');
         }
       } catch {
-        if (mounted) setMarket('PL'); // fallback
+        if (mounted) setMarket('OTHER'); // fallback
       }
     })();
     return () => { mounted = false; };
