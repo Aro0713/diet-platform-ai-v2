@@ -463,14 +463,28 @@ const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
 
   alert('📩 Link aktywacyjny został wysłany na e-mail.');
 
-// 🔁 Google Ads – konwersja rejestracji
-if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
-  window.gtag('event', 'conversion', {
-    send_to: 'AW-1739542813/abc123xyz456', // ← wklej swój kod!
-    value: 1.0,
-    currency: 'PLN'
-  });
+// 🔁 Google Ads – konwersja rejestracji (po udanym signUp)
+try {
+  if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+    // prosty wybór waluty na podstawie kraju; popraw w razie potrzeby
+    const cc = (detectedCountry || 'pl').toLowerCase();
+    const currency =
+      cc === 'pl' ? 'PLN' :
+      cc === 'gb' ? 'GBP' :
+      cc === 'sa' ? 'SAR' :
+      'USD';
+
+    window.gtag('event', 'conversion', {
+      // <<< WSTAW swój *dokładny* identyfikator z Google Ads >>>
+      send_to: 'AW-17395428138/asdGcLUCxgwaEkzWSO2A',
+      value: 1.0,          // rejestracja (bez płatności) -> 0; jeśli chcesz, ustaw np. 1
+      currency,
+    });
+  }
+} catch (e) {
+  console.warn('GA conversion (signup) not sent:', e);
 }
+
 
 };
 if (!langReady || !router.isReady || !userType) {
