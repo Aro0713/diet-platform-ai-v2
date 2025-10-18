@@ -1,10 +1,10 @@
-import { Html, Head, Main, NextScript } from 'next/document';
+import { Html, Head, Main, NextScript } from "next/document";
 
 export default function Document() {
   return (
     <Html lang="pl">
       <Head>
-        {/* Google Ads Tag */}
+        {/* Google tag (gtag.js) */}
         <script
           async
           src="https://www.googletagmanager.com/gtag/js?id=AW-17395428138"
@@ -27,6 +27,4 @@ export default function Document() {
     </Html>
   );
 }
-
-
 
