@@ -2,21 +2,19 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
 import { buffer } from 'micro';
-import { generateInvoicePdf } from '@/utils/generateInvoicePdf';
-import { generateInvoiceNumber } from '@/utils/generateInvoiceNumber'; // fallback
-import { sendInvoiceEmail } from '@/utils/sendInvoiceEmail';
-import { createClient } from '@supabase/supabase-js';
 import { Buffer } from 'buffer';
+import { createClient } from '@supabase/supabase-js';
+import { generateInvoicePdf, type InvoiceData } from '@/utils/generateInvoicePdf';
+import { generateInvoiceNumber } from '@/utils/generateInvoiceNumber';
+import { sendInvoiceEmail } from '@/utils/sendInvoiceEmail';
 
 export const config = {
-  api: {
-    bodyParser: false,
-  },
+  api: { bodyParser: false },
 };
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY! // ← service role key
 );
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -25,12 +23,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).send('Method Not Allowed');
-  }
+  if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
 
+  // 0) Weryfikacja podpisu (raw body!)
   let event: Stripe.Event;
-
   try {
     const sig = req.headers['stripe-signature'] as string;
     const rawBody = await buffer(req);
@@ -40,201 +36,56 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).send(`Webhook Error: ${err?.message}`);
   }
 
-  if (event.type === 'checkout.session.completed') {
-    console.log('📥 Webhook received: checkout.session.completed');
+  if (event.type !== 'checkout.session.completed') {
+    return res.status(200).json({ ok: true, ignored: event.type });
+  }
 
-    const session = event.data.object as Stripe.Checkout.Session;
+  console.log('📥 Webhook received: checkout.session.completed');
+  const session = event.data.object as Stripe.Checkout.Session;
 
-    // Wymagane do obsługi abonamentu i faktury
-    if (!session.metadata || !session.metadata.plan || !session.customer_email) {
-      console.error('❌ Missing metadata or email – cannot generate invoice');
-      return res.status(400).json({ error: 'Missing required metadata or email' });
-    }
+  // 1) Minimalna walidacja danych z sesji
+  if (!session.customer_email || !session.metadata?.plan) {
+    console.error('❌ Missing metadata or email – cannot activate subscription');
+    return res.status(200).json({ ok: true, skipped: 'missing-email-or-plan' });
+  }
 
-    const plan = session.metadata.plan;
-    const email = session.customer_email;
+  // 2) Dane wspólne
+  const email = session.customer_email;
+  const plan = session.metadata.plan;
 
-    // Dane nabywcy (z metadanych lub z obiektu klienta)
-    const buyerName =
-      session.metadata?.buyerName || session.customer_details?.name || 'Nieznany klient';
-    const buyerAddress = session.metadata?.buyerAddress || 'Brak adresu';
-    const buyerNIP = session.metadata?.buyerNIP || '';
-    const service = session.metadata?.service || 'Usługa DCP';
+  const buyerName =
+    session.metadata?.buyerName || session.customer_details?.name || 'Nieznany klient';
+  const buyerAddress = session.metadata?.buyerAddress || 'Brak adresu';
+  const buyerNIP = session.metadata?.buyerNIP || '';
+  const service = session.metadata?.service || 'Usługa DCP';
 
-    const paymentMethod =
-      session.payment_method_types?.[0] === 'card' ? 'Karta' : 'Przelew';
-    const paymentDate = new Date().toISOString();
-    const lang = session.metadata?.lang === 'en' ? 'en' : 'pl';
-    const currency = (session.currency?.toUpperCase() || 'PLN') as 'PLN' | 'EUR' | 'USD';
+  const paymentMethod = session.payment_method_types?.[0] === 'card' ? 'Karta' : 'Przelew';
+  const paymentDate = new Date().toISOString();
+  const lang = (session.metadata?.lang === 'en' ? 'en' : 'pl') as 'pl' | 'en';
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // KWOTY: BRUTTO z Stripe, VAT=0 (zwolnienie – art. 43 ust. 1 pkt 19)
-    // ─────────────────────────────────────────────────────────────────────────
-    const grossAmount = (session.amount_total ?? 0) / 100; // Stripe zwraca w centach/groszach
-    const vatRate = 0;
-    const vatAmount = 0;
-    const netAmount = grossAmount; // przy VAT=0 netto = brutto
+  // Stripe daje walutę jako string; zawęź do unii wymaganej przez InvoiceData
+  const rawCurrency = (session.currency ?? 'pln').toUpperCase();
+  const allowed = ['PLN', 'EUR', 'USD'] as const;
+  type Currency3 = typeof allowed[number];
+  const currency3: Currency3 = (allowed as readonly string[]).includes(rawCurrency)
+    ? (rawCurrency as Currency3)
+    : 'PLN';
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // NUMERACJA: RPC next_invoice_number (gapless) z fallbackiem
-    // ─────────────────────────────────────────────────────────────────────────
-    let invoiceNumber: string | null = null;
+  // Kwoty (centy/grosze → zł)
+  const grossAmount = (session.amount_total ?? 0) / 100;
+  const netAmount = grossAmount; // VAT zw
+  const vatAmount = 0;
 
-    try {
-      const { data: rpcNum, error: rpcErr } = await supabase.rpc('next_invoice_number', {
-        p_prefix: 'DCP',
-        p_date: new Date().toISOString(),
-      });
-
-      if (rpcErr) {
-        console.warn('⚠️ next_invoice_number RPC failed, fallback to generateInvoiceNumber:', rpcErr.message);
-        invoiceNumber = await generateInvoiceNumber();
-      } else {
-        invoiceNumber = rpcNum as string;
-      }
-    } catch (e: any) {
-      console.warn('⚠️ RPC error (exception), fallback to generateInvoiceNumber:', e?.message);
-      invoiceNumber = await generateInvoiceNumber();
-    }
-
-    if (!invoiceNumber) {
-      console.error('❌ Invoice numbering failed');
-      return res.status(500).json({ error: 'Invoice numbering failed' });
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // GENEROWANIE PDF
-    // ─────────────────────────────────────────────────────────────────────────
-    let pdfBuffer: Uint8Array;
-
-    try {
-      const invoiceData = {
-        number: invoiceNumber,
-        buyerName,
-        buyerAddress,
-        buyerNIP,
-        email,
-        paymentDate,
-        paymentMethod,
-        lang: lang as 'pl' | 'en',
-        currency,
-        taxNote: 'Zwolnienie z VAT – art. 43 ust. 1 pkt 19 ustawy o VAT',
-        items: [
-          {
-            name: service,
-            quantity: 1,
-            unit: 'szt.',
-            unitPrice: netAmount, // = grossAmount przy VAT=0
-            vatRate: 0,
-          },
-        ],
-        totals: {
-          net: netAmount,
-          vat: vatAmount,
-          gross: grossAmount,
-        },
-      };
-
-      console.log('🧾 Dane do faktury:', invoiceData);
-      pdfBuffer = await generateInvoicePdf(invoiceData);
-    } catch (err: any) {
-      console.error('❌ Błąd generowania PDF:', err?.message);
-      console.error('📄 Stack:', err?.stack);
-      return res.status(500).json({
-        error: 'PDF generation failed',
-        message: err?.message,
-        stack: err?.stack,
-      });
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // UPLOAD PDF do Supabase Storage
-    // ─────────────────────────────────────────────────────────────────────────
-    const year = new Date(paymentDate).getFullYear();
-    const filename = `${invoiceNumber.replace(/\//g, '-')}.pdf`;
-
-  // Konwersja Uint8Array -> ArrayBuffer (uwzględnij offset/length)
-// Konwersja Uint8Array -> Node Buffer (najbezpieczniej dla uploadu w Node)
-const fileBody = Buffer.from(pdfBuffer);
-
-const { error: uploadError } = await supabase.storage
-  .from('invoices')
-  .upload(`${year}/${filename}`, fileBody, {
-    contentType: 'application/pdf',
-    upsert: true,
-  });
-
-
-
-    if (uploadError) {
-      console.error('❌ Upload error (storage):', uploadError.message);
-      return res.status(500).json({
-        error: 'Upload to storage failed',
-        message: uploadError.message,
-      });
-    }
-
-    const url = supabase.storage.from('invoices').getPublicUrl(`${year}/${filename}`).data.publicUrl;
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // WYSYŁKA MAILA — podajemy kwotę BRUTTO
-    // ─────────────────────────────────────────────────────────────────────────
-    await sendInvoiceEmail({
-      to: email,
-      invoiceNumber,
-      url,
-      service,
-      gross: `${grossAmount.toFixed(2)} ${currency}`,
-      lang,
-    });
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // INSERT do public.invoices
-    // amount = BRUTTO, vat = 0
-    // ─────────────────────────────────────────────────────────────────────────
-    const { error: insertError } = await supabase.from('invoices').insert({
-      number: invoiceNumber,
-      buyer: buyerName,
-      email,
-      file_url: url,
-      amount: grossAmount, // BRUTTO
-      vat: 0,              // VAT=0
-      currency,            // jeśli masz kolumnę; w razie czego usuń
-      paid_at: paymentDate,
-      method: paymentMethod,
-      user_id: null,
-      tax_note: 'Zwolnienie z VAT – art. 43 ust. 1 pkt 19 ustawy o VAT', // jeśli masz kolumnę
-    });
-
-    if (insertError) {
-      console.error('❌ Insert error (invoices):', insertError.message);
-      return res.status(500).json({
-        error: 'Insert to invoices failed',
-        message: insertError.message,
-      });
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // AKTUALIZACJA ABONAMENTU (patients i users)
-    // ─────────────────────────────────────────────────────────────────────────
+  // 3) ⛳ PRIORYTET: aktywacja subskrypcji (pacjent „wpuszczony” natychmiast)
+  try {
     const start = new Date();
     const end = new Date();
     switch (plan) {
-      case '7d':
-        end.setDate(start.getDate() + 7);
-        break;
-      case '30d':
-        end.setDate(start.getDate() + 30);
-        break;
-      case '90d':
-        end.setDate(start.getDate() + 90);
-        break;
-      case '365d':
-        end.setDate(start.getDate() + 365);
-        break;
-      default:
-        end.setDate(start.getDate() + 7);
-        break;
+      case '7d':  end.setDate(start.getDate() + 7);   break;
+      case '30d': end.setDate(start.getDate() + 30);  break;
+      case '90d': end.setDate(start.getDate() + 90);  break;
+      case '365d':end.setDate(start.getDate() + 365); break;
+      default:    end.setDate(start.getDate() + 7);   break;
     }
 
     const { error: updatePatientsError } = await supabase
@@ -247,11 +98,8 @@ const { error: uploadError } = await supabase.storage
       .eq('email', email);
 
     if (updatePatientsError) {
-      console.error('❌ Update error (patients):', updatePatientsError.message);
-      return res.status(500).json({
-        error: 'Update patients failed',
-        message: updatePatientsError.message,
-      });
+      console.error('⚠️ Update patients failed:', updatePatientsError.message);
+      // nie przerywamy – pacjent może i tak wejść po odświeżeniu widoku
     }
 
     const { error: updateUsersError } = await supabase
@@ -264,16 +112,104 @@ const { error: uploadError } = await supabase.storage
       .eq('email', email);
 
     if (updateUsersError) {
-      // nie przerywamy webhooka — logujemy
-      console.error('❌ Update error (users):', updateUsersError.message);
-    } else {
-      console.log(`👨‍⚕️ Zaktualizowano abonament lekarza: ${plan}`);
+      console.error('⚠️ Update users failed:', updateUsersError.message);
     }
 
-    console.log(
-      `✅ Plan: ${plan}, start: ${start.toISOString()}, koniec: ${end.toISOString()} dla ${email}`
-    );
+    console.log(`✅ Subscription activated: plan=${plan} for ${email}`);
+  } catch (e: any) {
+    console.error('⚠️ Subscription activation error (non-blocking):', e?.message);
   }
 
-  return res.status(200).json({ received: true });
+  // 4) Numer faktury — bez RPC (używamy Twojego fallbacku)
+  let invoiceNumber = 'UNASSIGNED';
+  try {
+    invoiceNumber = await generateInvoiceNumber(); // np. "7/DCP/2025"
+  } catch (e: any) {
+    console.error('⚠️ Invoice numbering failed (non-blocking):', e?.message);
+  }
+
+  // 5) PDF — best-effort (błąd nie blokuje)
+  let fileUrl: string | null = null;
+  try {
+   const invoiceData: InvoiceData = {
+  buyerName,
+  buyerAddress,
+  buyerNIP: buyerNIP || undefined,
+  email,
+  paymentDate,
+  paymentMethod,
+  placeOfIssue: session.metadata?.placeOfIssue || 'Zdzieszowice',
+  items: [
+    {
+      name: service,
+      quantity: 1,
+      unit: 'pcs',
+      unitPrice: netAmount, // netto = brutto (VAT zw)
+      vatRate: 0,
+    },
+  ],
+  lang,
+  currency: currency3,          // 'PLN' | 'EUR' | 'USD'
+  issuedBy: 'Diet Care Platform'
+};
+
+    console.log('🧾 Dane do faktury:', invoiceData);
+    const pdfBuffer = await generateInvoicePdf(invoiceData);
+
+    const year = new Date(paymentDate).getFullYear();
+    const filename = `${invoiceNumber.replace(/\//g, '-')}.pdf`;
+    const fileBody = Buffer.from(pdfBuffer);
+
+    const { error: uploadError } = await supabase.storage
+      .from('invoices')
+      .upload(`${year}/${filename}`, fileBody, {
+        contentType: 'application/pdf',
+        upsert: true,
+      });
+
+    if (uploadError) {
+      console.error('⚠️ Upload to storage failed (non-blocking):', uploadError.message);
+    } else {
+      fileUrl = supabase.storage.from('invoices').getPublicUrl(`${year}/${filename}`).data.publicUrl;
+    }
+  } catch (e: any) {
+    console.error('⚠️ PDF generation failed (non-blocking):', e?.message);
+  }
+
+  // 6) Zapis rekordu w public.invoices — tylko istniejące kolumny!
+  try {
+    const { error: insertError } = await supabase.from('invoices').insert({
+      number: invoiceNumber,   // jeśli masz DB-trigger numeracji, możesz pominąć
+      buyer: buyerName,
+      email,
+      file_url: fileUrl,
+      amount: grossAmount,     // BRUTTO
+      vat: 0,                  // VAT zw
+      currency: currency3,     // text w DB; tutaj strict union → bez błędu TS
+      paid_at: paymentDate,
+      method: paymentMethod,
+      user_id: null,
+      // UWAGA: NIE wysyłamy tax_note – w tabeli jej nie ma
+    });
+    if (insertError) console.error('⚠️ Insert invoice failed (non-blocking):', insertError.message);
+  } catch (e: any) {
+    console.error('⚠️ Insert invoice threw (non-blocking):', e?.message);
+  }
+
+  // 7) E-mail z linkiem do PDF — też best-effort
+  try {
+    await sendInvoiceEmail({
+      to: email,
+      invoiceNumber,
+      url: fileUrl ?? '',
+      service,
+      gross: `${grossAmount.toFixed(2)} ${currency3}`,
+      lang,
+    });
+  } catch (e: any) {
+    console.error('⚠️ sendInvoiceEmail failed (non-blocking):', e?.message);
+  }
+
+  // 8) ZAWSZE 200 → Stripe nie retryuje, pacjent pozostaje aktywny
+  return res.status(200).json({ received: true, ok: true });
 }

@@ -11,7 +11,8 @@ interface InvoiceItem {
   vatRate: number;
 }
 
-interface InvoiceData {
+export interface InvoiceData {
+
   buyerName: string;
   buyerAddress: string;
   buyerNIP?: string;
