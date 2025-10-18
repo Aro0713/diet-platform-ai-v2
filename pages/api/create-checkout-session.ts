@@ -91,7 +91,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         netAmount: netAmount.toFixed(2),
         vatRate: currency === 'pln' ? vatRate.toFixed(2) : '0'
       },
-      success_url: `${req.headers.origin}/panel-patient?payment=success`,
+      
+      success_url: `${req.headers.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.headers.origin}/panel-patient?payment=cancel`,
     });
 
