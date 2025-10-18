@@ -1,5 +1,5 @@
+// utils/generateInvoicePdf.ts
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
-import { generateInvoiceNumber } from '@/utils/generateInvoiceNumber';
 import { tUI } from '@/utils/i18n';
 
 interface InvoiceItem {
@@ -12,18 +12,20 @@ interface InvoiceItem {
 }
 
 export interface InvoiceData {
+  /** Numer faktury nadany przez Supabase (trigger/RPC/insert returning) */
+  invoiceNumber: string;
 
   buyerName: string;
   buyerAddress: string;
   buyerNIP?: string;
   email: string;
-  paymentDate: string;
-  paymentMethod: string;
-  placeOfIssue?: string;
+  paymentDate: string;     // ISO string
+  paymentMethod: string;   // np. "Karta" / "Przelew"
+  placeOfIssue?: string;   // domyślnie Zdzieszowice
   items: InvoiceItem[];
   lang?: 'pl' | 'en';
   currency: 'PLN' | 'EUR' | 'USD';
-  issuedBy?: string;
+  issuedBy?: string;       // np. "Diet Care Platform"
 }
 
 function stripDiacritics(text: string): string {
@@ -33,10 +35,8 @@ function stripDiacritics(text: string): string {
     Ą: 'A', Ć: 'C', Ę: 'E', Ł: 'L', Ń: 'N',
     Ó: 'O', Ś: 'S', Ż: 'Z', Ź: 'Z',
   };
-
-  return text.replace(/[ąćęłńóśżźĄĆĘŁŃÓŚŻŹ]/g, match => map[match] || match);
+  return text.replace(/[ąćęłńóśżźĄĆĘŁŃÓŚŻŹ]/g, (m) => map[m] || m);
 }
-
 
 function formatCurrency(value: number, currency: string, lang: string): string {
   const symbol = currency === 'PLN' ? 'zł' : currency;
@@ -44,6 +44,7 @@ function formatCurrency(value: number, currency: string, lang: string): string {
   return lang === 'pl' ? amount.replace('.', ',') + ' ' + symbol : amount + ' ' + symbol;
 }
 
+// Zostawiamy, jeśli kiedyś chcesz wydruk słowny kwoty (obecnie niewykorzystywane)
 function numberToWords(amount: number, currency: string, lang: string): string {
   const main = Math.floor(amount);
   const minor = Math.round((amount - main) * 100);
@@ -53,8 +54,6 @@ function numberToWords(amount: number, currency: string, lang: string): string {
 }
 
 export async function generateInvoicePdf(data: InvoiceData): Promise<Uint8Array> {
-  const invoiceNumber = await generateInvoiceNumber();
-
   console.log('📥 Dane wejściowe do PDF:', JSON.stringify(data, null, 2));
 
   if (!data.items || data.items.length === 0) {
@@ -84,8 +83,6 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<Uint8Array>
   const place = data.placeOfIssue || 'Zdzieszowice';
 
   const totalNet = data.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
-  
-  
 
   // Header
   draw('ALS sp. z o.o.', 50, 800);
@@ -111,7 +108,8 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<Uint8Array>
   if (data.buyerNIP) draw(`NIP: ${data.buyerNIP}`, 300, 675);
   draw(`${t('email')}: ${data.email}`, 300, 660);
 
-  draw(`${t('invoiceTitle')} ${invoiceNumber} ${t('original')}`, 50, 630, 12);
+  // Tytuł z numerem z Supabase
+  draw(`${t('invoiceTitle')} ${data.invoiceNumber} ${t('original')}`, 50, 630, 12);
 
   // Table Header
   draw('Lp', 50, 610);
@@ -125,35 +123,34 @@ export async function generateInvoicePdf(data: InvoiceData): Promise<Uint8Array>
   draw('VAT', 510, 610);
   draw(t('gross'), 550, 610);
 
- let y = 590;
-data.items.forEach((item, i) => {
-  const net = item.unitPrice * item.quantity;
-  const gross = net; // Brak VAT => netto = brutto
+  let y = 590;
+  data.items.forEach((item, i) => {
+    const net = item.unitPrice * item.quantity;
+    const gross = net; // VAT zwolniony → netto = brutto
 
-  draw(`${i + 1}`, 50, y);
-  draw(item.name, 70, y);
-  draw(item.code || '', 220, y);
-  draw(item.quantity.toString(), 270, y);
-  draw(item.unit, 310, y);
-  draw(formatCurrency(item.unitPrice, currency, lang), 350, y);
-  draw('zw', 410, y); // VAT %
-  draw(formatCurrency(net, currency, lang), 460, y);
-  draw('zw', 510, y); // VAT kwota
-  draw(formatCurrency(gross, currency, lang), 550, y);
-  y -= 18;
-});
+    draw(`${i + 1}`, 50, y);
+    draw(item.name, 70, y);
+    draw(item.code || '', 220, y);
+    draw(item.quantity.toString(), 270, y);
+    draw(item.unit, 310, y);
+    draw(formatCurrency(item.unitPrice, currency, lang), 350, y);
+    draw('zw', 410, y); // VAT %
+    draw(formatCurrency(net, currency, lang), 460, y);
+    draw('zw', 510, y); // VAT kwota
+    draw(formatCurrency(gross, currency, lang), 550, y);
+    y -= 18;
+  });
 
-// Podsumowanie z "zw" zamiast totalVat
-draw(`${t('total')}:`, 400, y);
-draw(formatCurrency(totalNet, currency, lang), 460, y);
-draw('zw', 510, y);
+  // Podsumowanie z "zw" (bez totalVat)
+  draw(`${t('total')}:`, 400, y);
+  draw(formatCurrency(totalNet, currency, lang), 460, y);
+  draw('zw', 510, y);
 
-y -= 30;
+  y -= 30;
 
-// 🔽 Dodano podstawę prawną zwolnienia
-draw(t('vatNoteExempt'), 50, y);
-y -= 20;
-
+  // Podstawa prawna zwolnienia
+  draw(t('vatNoteExempt'), 50, y);
+  y -= 20;
 
   draw(`${t('issuedBy')}: ${data.issuedBy || 'DCP system'}`, 50, y);
   draw(`${t('receivedBy')}: __________________________`, 300, y);

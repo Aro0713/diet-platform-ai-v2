@@ -1,13 +1,14 @@
+// pages/success.tsx
 import Head from 'next/head';
-import Script from 'next/script';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { translationsUI } from '@/utils/translationsUI';
-
+import { createClient } from '@supabase/supabase-js';
 
 type Lang = 'pl'|'en'|'de'|'fr'|'es'|'ua'|'ru'|'zh'|'hi'|'ar'|'he';
+type Currency3 = 'PLN'|'EUR'|'USD';
 
-function qp(name: string, fallback: string) {
+function qp(name: string, fallback = '') {
   if (typeof window === 'undefined') return fallback;
   const v = new URLSearchParams(window.location.search).get(name);
   return v ?? fallback;
@@ -22,97 +23,69 @@ function normalizeLang(v?: string): Lang {
   return 'pl';
 }
 
+// Supabase client (public, przeglądarka)
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
 export default function SuccessPage() {
-  // język z URL
   const lang: Lang = useMemo(() => normalizeLang(qp('lang', 'pl')), []);
+  const isRTL = lang === 'ar' || lang === 'he';
   const t = (key: string) =>
     translationsUI[key]?.[lang] ||
     translationsUI[key]?.['en'] ||
     key;
 
-  // kwota i waluta
-  const [currency, setCurrency] = useState<'PLN'|'EUR'|'USD'>('PLN');
-  const [value, setValue] = useState<number>(1.0);
+  const [amount, setAmount] = useState<number | null>(null);
+  const [currency, setCurrency] = useState<Currency3>('PLN');
+  const [loading, setLoading] = useState(true);
 
+  // Pobierz kwotę i walutę z Supabase po stripe_session_id
   useEffect(() => {
-    const cur = (qp('currency', 'PLN').toUpperCase());
-    const val = parseFloat(qp('value', '1.00'));
-    setCurrency((['PLN','EUR','USD'] as const).includes(cur as any) ? (cur as 'PLN'|'EUR'|'USD') : 'PLN');
-    setValue(Number.isFinite(val) ? val : 1.0);
+    let cancelled = false;
+    const sessionId = qp('session_id', '');
+
+    if (!sessionId) {
+      setLoading(false);
+      return;
+    }
+
+    // Polling: 6 prób co ~1.5s (max ~9s) – webhook może się spóźnić
+    const MAX_TRIES = 6;
+    let tries = 0;
+
+    const fetchOnce = async () => {
+      const { data, error } = await supabase
+        .from('invoices')
+        .select('amount, currency')
+        .eq('stripe_session_id', sessionId)
+        .maybeSingle();
+
+      if (!cancelled) {
+        if (error) {
+          // cicho – spróbujemy jeszcze raz
+        } else if (data?.amount != null && data?.currency) {
+          setAmount(Number(data.amount));
+          const cur = String(data.currency).toUpperCase();
+          setCurrency((['PLN','EUR','USD'] as const).includes(cur as Currency3) ? (cur as Currency3) : 'PLN');
+          setLoading(false);
+          return;
+        }
+
+        tries += 1;
+        if (tries < MAX_TRIES) {
+          setTimeout(fetchOnce, 1500);
+        } else {
+          // Fallback wyświetleniowy (bez wczytanej kwoty)
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchOnce();
+    return () => { cancelled = true; };
   }, []);
-
-  // RTL
-  const isRTL = lang === 'ar' || lang === 'he';
-  const dir = isRTL ? 'rtl' : 'ltr';
-  const align = isRTL ? 'right' : 'center';
-
-  // style zbliżone do index.tsx (gradient, karta, przycisk)
-  const styles = {
-    page: {
-      minHeight: '100vh',
-      margin: 0,
-      padding: 0,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background:
-        'linear-gradient(135deg, #0ea472 0%, #18b88a 35%, #59d3b0 70%, #b9f0df 100%)',
-      direction: dir as any,
-      fontFamily: 'Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif',
-    } as React.CSSProperties,
-    card: {
-      width: '100%',
-      maxWidth: 640,
-      background: 'rgba(255,255,255,0.96)',
-      borderRadius: 20,
-      boxShadow: '0 10px 30px rgba(0,0,0,0.12)',
-      padding: '36px 32px',
-      textAlign: align as any,
-      backdropFilter: 'blur(6px)',
-    } as React.CSSProperties,
-    logoWrap: {
-      display: 'flex',
-      justifyContent: align as any,
-      marginBottom: 16,
-    },
-    logo: {
-      height: 40,
-      width: 'auto',
-    },
-    h1: {
-      margin: 0,
-      fontSize: 28,
-      lineHeight: 1.2,
-      color: '#0f5132',
-      fontWeight: 700,
-    },
-    p: {
-      marginTop: 12,
-      marginBottom: 0,
-      fontSize: 16,
-      color: '#214a3a',
-    },
-    amount: {
-      marginTop: 8,
-      opacity: 0.8,
-      fontSize: 15,
-      color: '#214a3a',
-    },
-    ctaWrap: {
-      marginTop: 24,
-    },
-    cta: {
-      display: 'inline-block',
-      padding: '12px 18px',
-      borderRadius: 12,
-      background: '#0ea472',
-      color: '#ffffff',
-      textDecoration: 'none',
-      fontWeight: 600,
-      transition: 'transform .05s ease, box-shadow .2s ease',
-      boxShadow: '0 6px 16px rgba(14,164,114,0.35)',
-    } as React.CSSProperties,
-  };
 
   return (
     <>
@@ -121,53 +94,63 @@ export default function SuccessPage() {
         <meta name="robots" content="noindex" />
       </Head>
 
-      {/* Google Ads conversion event */}
-      <Script id="google-conversion" strategy="afterInteractive">
-        {`
-          (function () {
-            try {
-              var p = new URLSearchParams(window.location.search);
-              var cur = (p.get('currency') || 'PLN').toUpperCase();
-              var val = parseFloat(p.get('value') || '1.00');
-              if (['PLN','EUR','USD'].indexOf(cur) === -1) cur = 'PLN';
-              if (isNaN(val)) val = 1.00;
-              if (typeof gtag === 'function') {
-                gtag('event', 'conversion', {
-                  'send_to': 'AW-17359421838/aSdGcLuCxvgaERxW5O2aJ',
-                  'value': val,
-                  'currency': cur
-                });
-              }
-            } catch(_) {}
-          })();
-        `}
-      </Script>
+      <main
+        dir={isRTL ? 'rtl' : 'ltr'}
+        className="relative min-h-screen bg-[#0f271e]/70 bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 backdrop-blur-[12px] shadow-[inset_0_0_60px_rgba(255,255,255,0.08)] flex flex-col justify-start items-center pt-6 px-4 md:pt-10 md:px-6 text-white transition-all duration-300 overflow-x-hidden"
+      >
+        {/* kontener */}
+        <section className="w-full max-w-xl md:max-w-2xl">
+          {/* karta */}
+          <div className="mx-auto w-full rounded-2xl bg-white/95 text-[#0f271e] shadow-xl ring-1 ring-black/5 p-5 sm:p-6 md:p-8 backdrop-blur">
+            {/* logo */}
+            <div className={`flex ${isRTL ? 'justify-end' : 'justify-start'} mb-4`}>
+              <img
+                src="/logo-dietcare.png"
+                alt="Diet Care Platform"
+                className="h-9 w-auto sm:h-10"
+              />
+            </div>
 
-      <main style={styles.page}>
-        <section style={styles.card}>
+            {/* nagłówek */}
+            <h1 className="text-2xl sm:text-3xl font-bold leading-snug text-emerald-900">
+              {t('success.heading')}
+            </h1>
 
-          <div style={styles.logoWrap}>
-           <img
-            src="/logo-dietcare.png"
-            alt="Diet Care Platform"
-            style={styles.logo}
-            />
-          </div>
+            {/* opis */}
+            <p className="mt-2 text-base sm:text-lg text-emerald-900/80">
+              {t('success.activated')}
+            </p>
 
-          <h1 style={styles.h1}>{t('success.heading')}</h1>
-          <p style={styles.p}>{t('success.activated')}</p>
-          <p style={styles.amount}>
-            {t('success.amount')}: {value.toFixed(2)} {currency}
-          </p>
+            {/* kwota */}
+            <div className="mt-3">
+              {loading ? (
+                <div className="h-5 w-40 rounded bg-emerald-100 animate-pulse" />
+              ) : amount != null ? (
+                <p className="text-sm sm:text-base text-emerald-900/80">
+                  {t('success.amount')}: {amount.toFixed(2)} {currency}
+                </p>
+              ) : (
+                <p className="text-sm sm:text-base text-emerald-900/70">
+                  {t('success.amount')}: —
+                </p>
+              )}
+            </div>
 
-          <div style={styles.ctaWrap}>
-            <Link href="/" style={styles.cta}>
-              {t('success.back')}
-            </Link>
+            {/* CTA */}
+            <div className={`mt-6 ${isRTL ? 'text-left' : 'text-right'}`}>
+              <Link
+                href="/"
+                className="inline-flex items-center justify-center rounded-2xl px-4 py-2 text-sm sm:text-base font-semibold text-white bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] shadow-[0_8px_20px_rgba(16,185,129,0.35)] transition"
+              >
+                {t('success.back')}
+              </Link>
+            </div>
           </div>
         </section>
+
+        {/* margines dolny na małych ekranach */}
+        <div className="h-10 md:h-12" />
       </main>
     </>
   );
 }
-
