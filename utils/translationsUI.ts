@@ -8265,6 +8265,20 @@ pricingPro365B4: {
   hi: "राशि",
   ar: "المبلغ",
   he: "סכום"
-}
+},
+  "cta.preview": {
+    pl: 'Zobacz co Cię czeka',
+    en: "See what's coming",
+    de: 'Sieh dir an, was dich erwartet',
+    fr: 'Voir ce qui vous attend',
+    es: 'Mira lo que te espera',
+    ua: 'Подивись, що на тебе чекає',
+    ru: 'Посмотри, что тебя ждёт',
+    zh: '看看接下来会发生什么',
+    ar: 'شاهد ما ينتظرك',
+    hi: 'देखिए आगे क्या है',
+    he: 'תראה מה מחכה לך',
+  },
+
 
 };

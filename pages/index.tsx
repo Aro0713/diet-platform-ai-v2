@@ -1,7 +1,7 @@
 // pages/index.tsx
 import Head from 'next/head';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { translationsUI } from '@/utils/translationsUI';
 import { type LangKey, languageLabels } from '@/utils/i18n';
 
@@ -45,6 +45,28 @@ const EU_COUNTRIES = new Set([
   'LV','LT','LU','MT','NL','PT','RO','SK','SI','ES','SE'
 ]);
 export default function Home() {
+    // ──────────────────────────────────────────────────────────────
+  // TV — obsługa przewijania i sterowania YouTube
+  // ──────────────────────────────────────────────────────────────
+  const tvSectionRef = useRef<HTMLDivElement | null>(null);
+  const playerRef = useRef<HTMLIFrameElement | null>(null);
+
+  const goToTv = () => {
+    // 1) Scroll do sekcji TV
+    tvSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // 2) Włącz autoplay i dźwięk
+    setAutoPlayVideo(true);
+
+    // 3) Sterowanie playerem przez postMessage
+    const win = playerRef.current?.contentWindow;
+    if (win) {
+      win.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*');
+      win.postMessage(JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*');
+      win.postMessage(JSON.stringify({ event: 'command', func: 'setVolume', args: [100] }), '*');
+    }
+  };
+
   const [lang, setLang] = useState<LangKey>('pl');
   const [langReady, setLangReady] = useState(false);
 
@@ -53,6 +75,17 @@ export default function Home() {
     if (typeof window !== 'undefined') return localStorage.getItem('theme') === 'dark';
     return false;
   });
+  // Autoodtwarzanie TV (sterowane przez przycisk „Zobacz co Cię czeka”)
+    const [autoPlayVideo, setAutoPlayVideo] = useState(true);
+  
+    useEffect(() => {
+  if (typeof window === 'undefined') return;
+  const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const apply = () => setAutoPlayVideo(!mq.matches);
+  apply();
+  mq.addEventListener?.('change', apply);
+  return () => mq.removeEventListener?.('change', apply);
+}, []);
 
   // ──────────────────────────────────────────────────────────────
   // MARKET-AWARE PRICING (hooki muszą być wewnątrz komponentu)
@@ -140,13 +173,19 @@ export default function Home() {
     }
   }, []);
 
-  if (!langReady) {
-    return (
-      <main className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500 text-sm">⏳ Ładowanie języka...</p>
-      </main>
-    );
-  }
+ if (!langReady) {
+  return (
+    <main className="min-h-screen flex items-center justify-center">
+      <p
+        className="text-gray-500 text-sm"
+        aria-live="polite"
+        role="status"
+      >
+        ⏳ Ładowanie języka...
+      </p>
+    </main>
+  );
+}
 
 // 5) Formatowanie ceny
 function formatPrice(value: number, currency: string) {
@@ -271,6 +310,19 @@ const proPlans = [
     ],
   },
 ];
+const origin = typeof window !== 'undefined' ? window.location.origin : '';
+const videoSrc = `https://www.youtube-nocookie.com/embed/Ou56AtcivkA?` + new URLSearchParams({
+  autoplay: autoPlayVideo ? '1' : '0',
+  mute:     autoPlayVideo ? '1' : '0', // jeśli autoplay, domyślnie w ciszy (odmutujemy po kliknięciu)
+  controls: '0',
+  rel: '0',
+  modestbranding: '1',
+  loop: autoPlayVideo ? '1' : '0',
+  playlist: 'Ou56AtcivkA',
+  playsinline: '1',
+  enablejsapi: '1',
+  origin,
+}).toString();
 
 
 const steps = [
@@ -329,6 +381,8 @@ const steps = [
         <title>{tUI('app.title')}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="description" content={tUI('app.metaDescription')} />
+        <link rel="preconnect" href="https://www.youtube-nocookie.com" />
+        <link rel="preconnect" href="https://i.ytimg.com" />
       </Head>
 
       {/* NAV */}
@@ -416,17 +470,28 @@ const steps = [
                     {tUI('landing.tagline.desc')}
                   </p>
 
-                  <div className="mt-6 w-full flex justify-end pb-6 md:pb-10">
-                    <button
-                      onClick={() => {
-                        localStorage.setItem('entryMode', 'patient');
-                        window.location.href = '/register?mode=patient';
-                      }}
-                      className="w-full sm:w-auto max-w-[260px] bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl text-base sm:text-lg shadow-lg"
-                    >
-                      {tUI('cta.title')}
-                    </button>
-                  </div>
+                 <div className="mt-6 w-full flex flex-col sm:flex-row gap-3 justify-end pb-6 md:pb-10">
+                  <button
+                    onClick={() => {
+                      localStorage.setItem('entryMode', 'patient');
+                      window.location.href = '/register?mode=patient';
+                    }}
+                    className="w-full sm:w-auto max-w-[260px] bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl text-base sm:text-lg shadow-lg"
+                    aria-label={tUI('cta.title')}
+                    title={tUI('cta.title')}
+                  >
+                    {tUI('cta.title')}
+                  </button>
+
+                  <button
+                    onClick={goToTv}
+                    className="w-full sm:w-auto max-w-[260px] bg-white/90 text-gray-900 hover:bg-white px-6 py-3 rounded-xl text-base sm:text-lg shadow-lg border border-white/40 dark:bg-black/30 dark:text-white dark:hover:bg-black/40"
+                    aria-label={tUI('cta.preview')}
+                    title={tUI('cta.preview')}
+                  >
+                    {tUI('cta.preview')}
+                  </button>
+                </div>
                 </div>
               </div>
             </div>
@@ -528,67 +593,43 @@ const steps = [
     </div>
   </div>
  {/* MODERN TV – osadzone w sekcji PRICING (w pełni responsywne) */}
-<div className="mt-10 md:mt-12">
+<div id="intro-tv" ref={tvSectionRef} className="mt-10 md:mt-12">
   <div
-    className="
-      relative mx-auto w-full max-w-6xl
-      px-2 sm:px-4
-    "
+    className="relative mx-auto w-full max-w-6xl px-2 sm:px-4"
     aria-label="Modern TV – intro video player"
   >
     {/* Ekran z ultracienką ramką */}
     <div
-      className="
-        relative mx-auto w-full
-        aspect-video rounded-[14px]
-        bg-black/95
-        shadow-[0_20px_60px_rgba(0,0,0,.45)]
-        ring-1 ring-white/10
-        overflow-hidden
-      "
+      className="relative mx-auto w-full aspect-video rounded-[14px] bg-black/95 shadow-[0_20px_60px_rgba(0,0,0,.45)] ring-1 ring-white/10 overflow-hidden"
       style={{
-        // delikatna poświata ekranu
-        boxShadow:
-          '0 30px 80px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.04)',
+        boxShadow: '0 30px 80px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.04)',
       }}
     >
-      {/* subtelny „panel” jak w nowoczesnych TV (metaliczny dół) */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-9 bg-gradient-to-t from-white/6 to-transparent" />
-
-      {/* minimalny glare – ograniczony na mobile */}
       <div className="pointer-events-none absolute inset-0 hidden sm:block bg-[radial-gradient(120%_80%_at_10%_0%,rgba(255,255,255,.06),transparent_55%)]" />
-
-      {/* YouTube (no-cookie), autoplay bez dźwięku, pętla, branding minimalny */}
-      <iframe
-        className="absolute inset-0 h-full w-full"
-        src="https://www.youtube-nocookie.com/embed/Ou56AtcivkA?autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&loop=1&playlist=Ou56AtcivkA"
-        title="Diet Care Platform — intro"
-        allow="autoplay; encrypted-media; picture-in-picture"
-        allowFullScreen
-        loading="lazy"
-      />
+     <iframe
+      ref={playerRef}
+      className="absolute inset-0 h-full w-full"
+      src={videoSrc}
+      title="Diet Care Platform — intro"
+      allow="autoplay; encrypted-media; picture-in-picture"
+      allowFullScreen
+      loading="lazy"
+      referrerPolicy="strict-origin-when-cross-origin"
+    />
     </div>
 
     {/* Soundbar (dyskretny) */}
     <div className="mx-auto mt-3 h-2 sm:h-2.5 w-[88%] rounded-full bg-gradient-to-b from-gray-800 to-gray-900 ring-1 ring-white/10" />
 
-    {/* Stojak – dwie stopy, dopasowane do szerokości ekranu */}
+    {/* Stojak – dwie stopy */}
     <div className="mx-auto mt-3 flex w-[92%] items-center justify-between">
       <span className="h-1.5 w-16 sm:w-24 rounded-full bg-black/60" />
       <span className="h-1.5 w-16 sm:w-24 rounded-full bg-black/60" />
     </div>
-
-    {/* Preferencje dostępności: redukcja animacji/poświaty */}
-    <style jsx>{`
-      @media (prefers-reduced-motion: reduce) {
-        div[aria-label='Modern TV – intro video player'] > div {
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45),
-            inset 0 0 0 1px rgba(255, 255, 255, 0.04) !important;
-        }
-      }
-    `}</style>
   </div>
 </div>
+
 
 </section>
 
@@ -685,7 +726,7 @@ const steps = [
           </a>
            {/* ALS – strona administratora */}
           <a
-            href="https://alsolution.pl/produkty-1/diet-care-platfrom"
+            href="https://alsolution.pl/produkty-1/diet-care-platform"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="ALS – strona administratora"
