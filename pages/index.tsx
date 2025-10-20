@@ -547,18 +547,31 @@ const steps = [
       <div className="h-[72%] w-16 md:w-20 rounded-[20px]
                       bg-[linear-gradient(180deg,#0e2f26_0%,#0b251e_50%,#0a1f19_100%)]
                       border border-black/30 shadow-[inset_-2px_0_6px_rgba(0,0,0,.35),0_6px_16px_rgba(0,0,0,.25)] mr-2" />
-      {/* pokrętła */}
-      <div className="flex flex-col items-center gap-4 mr-2">
-        <div className="h-14 w-14 md:h-16 md:w-16 rounded-full
-                        bg-[radial-gradient(circle_at_35%_35%,#ffffff, #cfd3d6_30%,#8a8f95_60%,#5c6166_80%,#3a3f44)]
-                        shadow-[inset_-4px_-6px_10px_rgba(0,0,0,.35),0_6px_10px_rgba(0,0,0,.35)]
-                        border border-black/30"></div>
-        <div className="h-12 w-12 md:h-14 md:w-14 rounded-full
-                        bg-[radial-gradient(circle_at_35%_35%,#ffffff, #cfd3d6_30%,#8a8f95_60%,#5c6166_80%,#3a3f44)]
-                        shadow-[inset_-3px_-5px_10px_rgba(0,0,0,.35),0_5px_10px_rgba(0,0,0,.35)]
-                        border border-black/30"></div>
-        <div className="h-20 w-2 rounded bg-gray-700/85 shadow-inner"></div>
-      </div>
+      {/* pokrętła w stylu retro – kremowy plastik + czarne oznaczenia */}
+      <div className="flex flex-col items-center gap-5 mr-2">
+        {/* górne pokrętło – kanały */}
+        <div className="relative h-14 w-14 md:h-16 md:w-16 rounded-full
+                        bg-[radial-gradient(circle_at_35%_35%,#fefcf7_0%,#f1e8d4_40%,#d9caa7_75%,#b3a580_100%)]
+                        border border-black/30 shadow-[inset_-4px_-6px_8px_rgba(0,0,0,.35),0_6px_10px_rgba(0,0,0,.35)]">
+          {/* imitacja wskaźnika na froncie */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[2px] w-5 bg-black/80 rotate-[25deg] rounded-full" />
+          {/* drobne nacięcie */}
+          <div className="absolute top-[18%] left-1/2 -translate-x-1/2 h-[6px] w-[2px] bg-black/70 rounded-sm" />
+        </div>
+
+        {/* dolne pokrętło – głośność */}
+        <div className="relative h-12 w-12 md:h-14 md:w-14 rounded-full
+                        bg-[radial-gradient(circle_at_35%_35%,#fffdf5_0%,#efe5cc_40%,#d6c7a4_75%,#a99c7a_100%)]
+                        border border-black/30 shadow-[inset_-3px_-5px_8px_rgba(0,0,0,.35),0_5px_10px_rgba(0,0,0,.35)]">
+          <div className="absolute top-[22%] left-1/2 -translate-x-1/2 h-[6px] w-[2px] bg-black/70 rounded-sm" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[2px] w-4 bg-black/80 rotate-[40deg] rounded-full" />
+        </div>
+
+        {/* suwak jasności / kontrastu */}
+        <div className="h-20 w-2 rounded bg-gray-700/80 relative overflow-hidden">
+          <div className="absolute bottom-0 left-0 w-full h-2 bg-emerald-500/70"></div>
+        </div>
+    </div>
     </div>
 
     {/* Ekran */}
