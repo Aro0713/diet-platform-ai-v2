@@ -527,80 +527,68 @@ const steps = [
       </div>
     </div>
   </div>
-   {/* RETRO TV (ciemno-zielona rama) – osadzone w sekcji PRICING */}
+ {/* MODERN TV – osadzone w sekcji PRICING (w pełni responsywne) */}
 <div className="mt-10 md:mt-12">
   <div
     className="
       relative mx-auto w-full max-w-6xl
-      rounded-[28px] p-4 md:p-6 pr-24 md:pr-32
-      shadow-2xl border border-black/30
-      bg-[linear-gradient(135deg,#0d2a22_0%,#0a211b_45%,#071a15_100%)]
-      before:content-[''] before:absolute before:inset-0 before:rounded-[28px]
-      before:pointer-events-none before:shadow-[inset_0_1px_0_0_rgba(255,255,255,.08)]
-      overflow-visible
+      px-2 sm:px-4
     "
-    aria-label="Retro TV – odtwarzacz wideo"
+    aria-label="Modern TV – intro video player"
   >
-    {/* Boczny panel + pokrętła (ZAWSZE widoczne od sm) */}
-    <div className="absolute top-1/2 -translate-y-1/2 right-1 z-20 hidden sm:flex items-center">
-      {/* pionowy panel obudowy */}
-      <div className="h-[72%] w-16 md:w-20 rounded-[20px]
-                      bg-[linear-gradient(180deg,#0e2f26_0%,#0b251e_50%,#0a1f19_100%)]
-                      border border-black/30 shadow-[inset_-2px_0_6px_rgba(0,0,0,.35),0_6px_16px_rgba(0,0,0,.25)] mr-2" />
-      {/* pokrętła w stylu retro – kremowy plastik + czarne oznaczenia */}
-      <div className="flex flex-col items-center gap-5 mr-2">
-        {/* górne pokrętło – kanały */}
-        <div className="relative h-14 w-14 md:h-16 md:w-16 rounded-full
-                        bg-[radial-gradient(circle_at_35%_35%,#fefcf7_0%,#f1e8d4_40%,#d9caa7_75%,#b3a580_100%)]
-                        border border-black/30 shadow-[inset_-4px_-6px_8px_rgba(0,0,0,.35),0_6px_10px_rgba(0,0,0,.35)]">
-          {/* imitacja wskaźnika na froncie */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[2px] w-5 bg-black/80 rotate-[25deg] rounded-full" />
-          {/* drobne nacięcie */}
-          <div className="absolute top-[18%] left-1/2 -translate-x-1/2 h-[6px] w-[2px] bg-black/70 rounded-sm" />
-        </div>
-
-        {/* dolne pokrętło – głośność */}
-        <div className="relative h-12 w-12 md:h-14 md:w-14 rounded-full
-                        bg-[radial-gradient(circle_at_35%_35%,#fffdf5_0%,#efe5cc_40%,#d6c7a4_75%,#a99c7a_100%)]
-                        border border-black/30 shadow-[inset_-3px_-5px_8px_rgba(0,0,0,.35),0_5px_10px_rgba(0,0,0,.35)]">
-          <div className="absolute top-[22%] left-1/2 -translate-x-1/2 h-[6px] w-[2px] bg-black/70 rounded-sm" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[2px] w-4 bg-black/80 rotate-[40deg] rounded-full" />
-        </div>
-
-        {/* suwak jasności / kontrastu */}
-        <div className="h-20 w-2 rounded bg-gray-700/80 relative overflow-hidden">
-          <div className="absolute bottom-0 left-0 w-full h-2 bg-emerald-500/70"></div>
-        </div>
-    </div>
-    </div>
-
-    {/* Ekran */}
+    {/* Ekran z ultracienką ramką */}
     <div
       className="
-        relative rounded-[18px] overflow-hidden
-        bg-black aspect-video
-        border border-black/60 shadow-inner
+        relative mx-auto w-full
+        aspect-video rounded-[14px]
+        bg-black/95
+        shadow-[0_20px_60px_rgba(0,0,0,.45)]
+        ring-1 ring-white/10
+        overflow-hidden
       "
+      style={{
+        // delikatna poświata ekranu
+        boxShadow:
+          '0 30px 80px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.04)',
+      }}
     >
-      {/* delikatny „glass glare” */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_60%_at_0%_0%,rgba(255,255,255,.06),transparent_60%)]" />
+      {/* subtelny „panel” jak w nowoczesnych TV (metaliczny dół) */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-9 bg-gradient-to-t from-white/6 to-transparent" />
+
+      {/* minimalny glare – ograniczony na mobile */}
+      <div className="pointer-events-none absolute inset-0 hidden sm:block bg-[radial-gradient(120%_80%_at_10%_0%,rgba(255,255,255,.06),transparent_55%)]" />
+
+      {/* YouTube (no-cookie), autoplay bez dźwięku, pętla, branding minimalny */}
       <iframe
         className="absolute inset-0 h-full w-full"
-        src="https://www.youtube-nocookie.com/embed/jQ1Pur42Ccc?autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&loop=1&playlist=jQ1Pur42Ccc"
+        src="https://www.youtube-nocookie.com/embed/Ou56AtcivkA?autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&loop=1&playlist=Ou56AtcivkA"
         title="Diet Care Platform — intro"
         allow="autoplay; encrypted-media; picture-in-picture"
         allowFullScreen
+        loading="lazy"
       />
     </div>
 
-    {/* nóżki TV */}
-    <div className="mt-4 flex justify-between px-6">
-      <span className="h-2 w-12 rounded bg-black/70"></span>
-      <span className="h-2 w-12 rounded bg-black/70"></span>
+    {/* Soundbar (dyskretny) */}
+    <div className="mx-auto mt-3 h-2 sm:h-2.5 w-[88%] rounded-full bg-gradient-to-b from-gray-800 to-gray-900 ring-1 ring-white/10" />
+
+    {/* Stojak – dwie stopy, dopasowane do szerokości ekranu */}
+    <div className="mx-auto mt-3 flex w-[92%] items-center justify-between">
+      <span className="h-1.5 w-16 sm:w-24 rounded-full bg-black/60" />
+      <span className="h-1.5 w-16 sm:w-24 rounded-full bg-black/60" />
     </div>
+
+    {/* Preferencje dostępności: redukcja animacji/poświaty */}
+    <style jsx>{`
+      @media (prefers-reduced-motion: reduce) {
+        div[aria-label='Modern TV – intro video player'] > div {
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.04) !important;
+        }
+      }
+    `}</style>
   </div>
 </div>
-
 
 </section>
 
