@@ -527,41 +527,67 @@ const steps = [
       </div>
     </div>
   </div>
-    {/* RETRO TV (ciemno-zielona rama) – osadzone w sekcji PRICING */}
-  <div className="mt-10 md:mt-12">
-    <div className="mx-auto w-full rounded-[28px] p-4 md:p-6
-        shadow-2xl border border-black/30
-        bg-[linear-gradient(135deg,#0d2a22_0%,#0a211b_45%,#071a15_100%)]
-        before:content-[''] before:absolute before:rounded-[28px]
-        relative
-      ">
-      {/* panel z pokrętłami (po prawej, dyskretne) */}
-      <div className="absolute right-3 top-1/2 -translate-y-1/2 hidden md:flex flex-col items-center gap-3">
-        <div className="h-12 w-12 rounded-full bg-gradient-to-b from-gray-200 to-gray-500 shadow-inner border border-black/20"></div>
-        <div className="h-10 w-10 rounded-full bg-gradient-to-b from-gray-200 to-gray-500 shadow-inner border border-black/20"></div>
-        <div className="mt-1 h-16 w-2 rounded bg-gray-700/80"></div>
-      </div>
-
-      {/* ekran TV */}
-      <div className="relative rounded-[18px] overflow-hidden bg-black aspect-video border border-black/60 shadow-inner">
-        {/* subtelne odbicie „glass glare” */}
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_60%_at_0%_0%,rgba(255,255,255,.06),transparent_60%)]" />
-        <iframe
-          className="absolute inset-0 h-full w-full"
-          src="https://www.youtube-nocookie.com/embed/jQ1Pur42Ccc?autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&loop=1&playlist=jQ1Pur42Ccc"
-          title="Diet Care Platform — intro"
-          allow="autoplay; encrypted-media; picture-in-picture"
-          allowFullScreen
-        />
-      </div>
-
-      {/* nóżki – wyrównane do szerokości ekranu */}
-      <div className="mt-4 flex justify-between px-6">
-        <span className="h-2 w-12 rounded bg-black/70"></span>
-        <span className="h-2 w-12 rounded bg-black/70"></span>
+   {/* RETRO TV (ciemno-zielona rama) – osadzone w sekcji PRICING */}
+<div className="mt-10 md:mt-12">
+  <div
+    className="
+      relative mx-auto w-full max-w-6xl
+      rounded-[28px] p-4 md:p-6 pr-24 md:pr-32
+      shadow-2xl border border-black/30
+      bg-[linear-gradient(135deg,#0d2a22_0%,#0a211b_45%,#071a15_100%)]
+      before:content-[''] before:absolute before:inset-0 before:rounded-[28px]
+      before:pointer-events-none before:shadow-[inset_0_1px_0_0_rgba(255,255,255,.08)]
+      overflow-visible
+    "
+    aria-label="Retro TV – odtwarzacz wideo"
+  >
+    {/* Boczny panel + pokrętła (ZAWSZE widoczne od sm) */}
+    <div className="absolute top-1/2 -translate-y-1/2 right-1 z-20 hidden sm:flex items-center">
+      {/* pionowy panel obudowy */}
+      <div className="h-[72%] w-16 md:w-20 rounded-[20px]
+                      bg-[linear-gradient(180deg,#0e2f26_0%,#0b251e_50%,#0a1f19_100%)]
+                      border border-black/30 shadow-[inset_-2px_0_6px_rgba(0,0,0,.35),0_6px_16px_rgba(0,0,0,.25)] mr-2" />
+      {/* pokrętła */}
+      <div className="flex flex-col items-center gap-4 mr-2">
+        <div className="h-14 w-14 md:h-16 md:w-16 rounded-full
+                        bg-[radial-gradient(circle_at_35%_35%,#ffffff, #cfd3d6_30%,#8a8f95_60%,#5c6166_80%,#3a3f44)]
+                        shadow-[inset_-4px_-6px_10px_rgba(0,0,0,.35),0_6px_10px_rgba(0,0,0,.35)]
+                        border border-black/30"></div>
+        <div className="h-12 w-12 md:h-14 md:w-14 rounded-full
+                        bg-[radial-gradient(circle_at_35%_35%,#ffffff, #cfd3d6_30%,#8a8f95_60%,#5c6166_80%,#3a3f44)]
+                        shadow-[inset_-3px_-5px_10px_rgba(0,0,0,.35),0_5px_10px_rgba(0,0,0,.35)]
+                        border border-black/30"></div>
+        <div className="h-20 w-2 rounded bg-gray-700/85 shadow-inner"></div>
       </div>
     </div>
+
+    {/* Ekran */}
+    <div
+      className="
+        relative rounded-[18px] overflow-hidden
+        bg-black aspect-video
+        border border-black/60 shadow-inner
+      "
+    >
+      {/* delikatny „glass glare” */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_60%_at_0%_0%,rgba(255,255,255,.06),transparent_60%)]" />
+      <iframe
+        className="absolute inset-0 h-full w-full"
+        src="https://www.youtube-nocookie.com/embed/jQ1Pur42Ccc?autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&loop=1&playlist=jQ1Pur42Ccc"
+        title="Diet Care Platform — intro"
+        allow="autoplay; encrypted-media; picture-in-picture"
+        allowFullScreen
+      />
+    </div>
+
+    {/* nóżki TV */}
+    <div className="mt-4 flex justify-between px-6">
+      <span className="h-2 w-12 rounded bg-black/70"></span>
+      <span className="h-2 w-12 rounded bg-black/70"></span>
+    </div>
   </div>
+</div>
+
 
 </section>
 
