@@ -528,6 +528,71 @@ const steps = [
     </div>
   </div>
 </section>
+{/* RETRO TV — intro video */}
+<section className="mx-auto max-w-6xl px-5 mt-12 md:mt-16">
+  <div className="mb-6 text-center">
+    <h2 className="text-2xl md:text-3xl font-bold">
+      Intro Diet Care Platform
+    </h2>
+    <p className="mt-2 text-sm opacity-80">
+      Krótkie wprowadzenie — odtwórz poniżej
+    </p>
+  </div>
+
+  {/* Obudowa retro TV (lata 70/80, styl „wood veneer”) */}
+  <div
+    className="
+      relative mx-auto w-full max-w-4xl
+      rounded-[28px] p-4 md:p-6
+      shadow-2xl border border-black/30
+      bg-[linear-gradient(135deg,#5a3f2e_0%,#3e2a1e_45%,#2c1d14_100%)]
+      before:content-[''] before:absolute before:inset-0 before:rounded-[28px]
+      before:pointer-events-none before:shadow-[inset_0_1px_0_0_rgba(255,255,255,.08)]
+    "
+    aria-label="Retro TV – odtwarzacz wideo"
+  >
+    {/* Górne „uszy” anteny */}
+    <div className="absolute -top-10 left-1/2 -translate-x-1/2 hidden sm:block">
+      <div className="relative h-10 w-10">
+        <span className="absolute left-1 top-0 h-10 w-[2px] bg-gray-300 rotate-[-25deg] origin-bottom"></span>
+        <span className="absolute right-1 top-0 h-10 w-[2px] bg-gray-300 rotate-[25deg] origin-bottom"></span>
+      </div>
+    </div>
+
+    {/* Panel boczny z pokrętłami */}
+    <div className="absolute right-3 top-1/2 -translate-y-1/2 hidden md:flex flex-col items-center gap-3">
+      <div className="h-12 w-12 rounded-full bg-gradient-to-b from-gray-200 to-gray-500 shadow-inner border border-black/20"></div>
+      <div className="h-10 w-10 rounded-full bg-gradient-to-b from-gray-200 to-gray-500 shadow-inner border border-black/20"></div>
+      <div className="mt-1 h-16 w-2 rounded bg-gray-700/80"></div>
+    </div>
+
+    {/* Ekran */}
+    <div
+      className="
+        relative rounded-[18px] overflow-hidden
+        bg-black aspect-video
+        border border-black/50 shadow-inner
+      "
+    >
+      {/* delikatny „glass glare” */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_60%_at_0%_0%,rgba(255,255,255,.08),transparent_60%)]" />
+      {/* YouTube (bez cookies), autoplay/mute/loop */}
+      <iframe
+        className="absolute inset-0 h-full w-full"
+        src="https://www.youtube-nocookie.com/embed/jQ1Pur42Ccc?autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&loop=1&playlist=jQ1Pur42Ccc"
+        title="Diet Care Platform — intro"
+        allow="autoplay; encrypted-media; picture-in-picture"
+        allowFullScreen
+      />
+    </div>
+
+    {/* Nóżki TV */}
+    <div className="mt-4 flex justify-between">
+      <span className="h-2 w-10 rounded bg-black/70"></span>
+      <span className="h-2 w-10 rounded bg-black/70"></span>
+    </div>
+  </div>
+</section>
 
       {/* CTA końcowe */}
       <section className="mx-auto max-w-6xl px-5 mt-10 mb-16">
