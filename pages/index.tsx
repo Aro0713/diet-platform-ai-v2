@@ -602,21 +602,22 @@ const steps = [
     <div
       className="relative mx-auto w-full aspect-video rounded-[14px] bg-black/95 shadow-[0_20px_60px_rgba(0,0,0,.45)] ring-1 ring-white/10 overflow-hidden"
       style={{
-        boxShadow: '0 30px 80px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.04)',
+        boxShadow:
+          '0 30px 80px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.04)',
       }}
     >
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-9 bg-gradient-to-t from-white/6 to-transparent" />
       <div className="pointer-events-none absolute inset-0 hidden sm:block bg-[radial-gradient(120%_80%_at_10%_0%,rgba(255,255,255,.06),transparent_55%)]" />
-     <iframe
-      ref={playerRef}
-      className="absolute inset-0 h-full w-full"
-      src={videoSrc}
-      title="Diet Care Platform — intro"
-      allow="autoplay; encrypted-media; picture-in-picture"
-      allowFullScreen
-      loading="lazy"
-      referrerPolicy="strict-origin-when-cross-origin"
-    />
+      <iframe
+        ref={playerRef}
+        className="absolute inset-0 h-full w-full"
+        src={videoSrc}
+        title="Diet Care Platform — intro"
+        allow="autoplay; encrypted-media; picture-in-picture"
+        allowFullScreen
+        loading="lazy"
+        referrerPolicy="strict-origin-when-cross-origin"
+      />
     </div>
 
     {/* Soundbar (dyskretny) */}
@@ -629,7 +630,6 @@ const steps = [
     </div>
   </div>
 </div>
-
 
 </section>
 
