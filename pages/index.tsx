@@ -44,28 +44,48 @@ const EU_COUNTRIES = new Set([
   'AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT',
   'LV','LT','LU','MT','NL','PT','RO','SK','SI','ES','SE'
 ]);
+declare global {
+  interface Window {
+    YT: any;
+    onYouTubeIframeAPIReady: () => void;
+  }
+}
+
 export default function Home() {
     // ──────────────────────────────────────────────────────────────
   // TV — obsługa przewijania i sterowania YouTube
   // ──────────────────────────────────────────────────────────────
   const tvSectionRef = useRef<HTMLDivElement | null>(null);
   const playerRef = useRef<HTMLIFrameElement | null>(null);
+  const [ytReady, setYtReady] = useState(false);
+  const ytPlayerRef = useRef<any>(null);
 
-  const goToTv = () => {
-    // 1) Scroll do sekcji TV
-    tvSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+ const goToTv = () => {
+  // 1) Scroll
+  tvSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-    // 2) Włącz autoplay i dźwięk
-    setAutoPlayVideo(true);
+  // 2) Odpal audio/wideo wprost z YouTube API (gest użytkownika)
+  setAutoPlayVideo(true);
 
-    // 3) Sterowanie playerem przez postMessage
-    const win = playerRef.current?.contentWindow;
-    if (win) {
-      win.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*');
-      win.postMessage(JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*');
-      win.postMessage(JSON.stringify({ event: 'command', func: 'setVolume', args: [100] }), '*');
-    }
-  };
+  // iOS: wywołania MUSZĄ być wprost z handlera kliknięcia
+  const p = ytPlayerRef.current;
+  if (p && ytReady) {
+    try {
+      p.unMute();
+      p.setVolume(100);
+      p.playVideo();
+      return;
+    } catch {}
+  }
+
+  // Fallback: stary mechanizm postMessage (gdy player jeszcze się inicjuje)
+  const win = playerRef.current?.contentWindow;
+  if (win) {
+    win.postMessage(JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*');
+    win.postMessage(JSON.stringify({ event: 'command', func: 'setVolume', args: [100] }), '*');
+    win.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*');
+  }
+};
 
   const [lang, setLang] = useState<LangKey>('pl');
   const [langReady, setLangReady] = useState(false);
@@ -112,6 +132,26 @@ export default function Home() {
     })();
     return () => { mounted = false; };
   }, []);
+    useEffect(() => {
+  // Dołącz skrypt Iframe API tylko raz
+  if (typeof window === 'undefined') return;
+  if (window.YT && window.YT.Player) {
+    setYtReady(true);
+    ytPlayerRef.current = new window.YT.Player('introPlayer', {
+      events: { onReady: () => setYtReady(true) },
+    });
+    return;
+  }
+  const tag = document.createElement('script');
+  tag.src = 'https://www.youtube.com/iframe_api';
+  document.body.appendChild(tag);
+
+  window.onYouTubeIframeAPIReady = () => {
+    ytPlayerRef.current = new window.YT.Player('introPlayer', {
+      events: { onReady: () => setYtReady(true) },
+    });
+  };
+}, []);
 
   useEffect(() => {
     if (darkMode) {
