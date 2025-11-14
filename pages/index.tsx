@@ -255,8 +255,8 @@ const isPromo =
 // ceny promocyjne globalnie
 const PROMO_PRICE = {
   PL: 49,
-  EU: 29,
-  OTHER: 29
+  EU: 13,
+  OTHER: 14
 } as const;
 
 // 7) Sformatowane ceny

@@ -7,18 +7,33 @@ import { openCheckout } from '../src/native/browser';
 
 const planPrices = {
   '7d': 12900,
-  '30d': 24900,
+  '30d': 24900,   // bazowa cena (249 zł)
   '90d': 59900,
   '365d': 129900
 } as const;
+
+type PlanKey = keyof typeof planPrices;
+
+// PROMO: 30-day diabetes discount 14.11 → 14.12
+const PROMO_START = new Date(2025, 10, 14); // 14.11.2025
+const PROMO_END   = new Date(2025, 11, 14); // 14.12.2025
+
+const isPromoDate = (d: Date) => d >= PROMO_START && d <= PROMO_END;
+
+// Cena planu w groszach, z uwzględnieniem promocji
+function getPlanPrice(planId: PlanKey): number {
+  const base = planPrices[planId];
+  if (planId === '30d' && isPromoDate(new Date())) {
+    return 4900; // 49,00 PLN w czasie promocji
+  }
+  return base;
+}
 
 const currencyByCountry = (country: string): 'pln' | 'eur' | 'usd' => {
   if (country === 'PL') return 'pln';
   const eu = ['DE', 'FR', 'ES', 'IT', 'NL', 'BE', 'AT', 'FI', 'GR', 'IE', 'PT', 'LU', 'SK', 'SI', 'LV', 'LT', 'EE', 'CY', 'MT', 'HR'];
   return eu.includes(country) ? 'eur' : 'usd';
 };
-
-type PlanKey = keyof typeof planPrices;
 
         export default function PaymentPage() {
         const router = useRouter();
@@ -78,8 +93,9 @@ type PlanKey = keyof typeof planPrices;
       return;
     }
 
-    const plan = selectedPlan as PlanKey;
-    const price = planPrices[plan];
+  const plan = selectedPlan as PlanKey;
+const price = getPlanPrice(plan);
+
 
     setIsLoading(true);
 
@@ -132,7 +148,7 @@ type PlanKey = keyof typeof planPrices;
   ];
 
   const displayPrice = (planId: PlanKey) => {
-    const base = planPrices[planId];
+    const base = getPlanPrice(planId);
     const currency = currencyByCountry(form.region.toUpperCase());
     if (currency === 'pln') return `${(base / 100).toFixed(2)} PLN`;
     const rate = exchangeRates[currency];
