@@ -537,7 +537,24 @@ const steps = [
                     </p>
                   <p className="mt-4 text-base md:text-lg lg:text-xl font-semibold tracking-tight leading-[1.6] text-white/95">
                     {tUI('landing.tagline.desc')}
-                  </p>
+                        {isPromo && (
+                  <div className="mb-4 inline-flex items-center gap-3 rounded-full bg-sky-600/90 px-4 py-2 shadow-lg border border-sky-300/70">
+                    {/* Niebieski krąg – symbol World Diabetes Day */}
+                    <span
+                      aria-hidden
+                      className="h-6 w-6 rounded-full border-[3px] border-white bg-sky-500 shadow-inner"
+                    />
+                    <div className="text-xs sm:text-sm leading-snug">
+                      <div className="font-semibold">
+                        {tUI('promo')} {/* Światowy Dzień Cukrzycy – Cena specjalna */}
+                      </div>
+                      <div className="opacity-90">
+                        Plan 30 dni: <span className="font-semibold">49 PLN</span> (~13 EUR / 14 USD)
+                      </div>
+                    </div>
+                  </div>
+                )}
+                </p>
 
                  <div className="mt-6 w-full flex flex-col sm:flex-row gap-3 justify-end pb-6 md:pb-10">
                   <button
