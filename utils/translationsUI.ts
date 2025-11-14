@@ -8279,6 +8279,19 @@ pricingPro365B4: {
     hi: 'देखिए आगे क्या है',
     he: 'תראה מה מחכה לך',
   },
+promo: {
+  pl: "Światowy Dzień Cukrzycy – Cena specjalna",
+  en: "World Diabetes Day – Special Price",
+  de: "Welt-Diabetestag – Sonderpreis",
+  fr: "Journée mondiale du diabète – Prix spécial",
+  es: "Día Mundial de la Diabetes – Precio especial",
+  ua: "Всесвітній день діабету – Спеціальна ціна",
+  ru: "Всемирный день диабета – Специальная цена",
+  zh: "世界糖尿病日 – 特别优惠",
+  ar: "اليوم العالمي لمرض السكري – سعر خاص",
+  hi: "विश्व मधुमेह दिवस – विशेष मूल्य",
+  he: "יום הסוכרת העולמי – מחיר מיוחד",
+},
 
 
 };

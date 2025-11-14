@@ -238,9 +238,38 @@ const cur = P.currency;
 const pp = P.patient;
 const pr = P.pro;
 
+// ─────────────────────────────────────────────
+// PROMO: World Diabetes Day – 30-day discount
+// 14.11.2025 → 14.12.2025
+// ─────────────────────────────────────────────
+const now = new Date();
+
+// Uwaga: miesiące są 0–11, więc listopad = 10
+const promoStart = new Date(2025, 10, 14); // 14.11.2025
+const promoEnd   = new Date(2025, 11, 14); // 14.12.2025
+
+const isPromo =
+  now >= promoStart &&
+  now <= promoEnd;
+
+// ceny promocyjne globalnie
+const PROMO_PRICE = {
+  PL: 49,
+  EU: 29,
+  OTHER: 29
+} as const;
+
 // 7) Sformatowane ceny
 const pricePatient7   = formatPrice(pp.plan7, cur);
-const pricePatient30  = formatPrice(pp.plan30, cur);
+const basePatient30 = pp.plan30;
+
+const promoPatient30 = PROMO_PRICE[market];
+
+const pricePatient30 = formatPrice(
+  isPromo ? promoPatient30 : basePatient30,
+  cur
+);
+
 const pricePatient90  = formatPrice(pp.plan90, cur);
 const pricePatient365 = formatPrice(pp.plan365, cur);
 
@@ -588,19 +617,32 @@ const steps = [
       </h3>
       <div className="grid sm:grid-cols-2 gap-4">
         {patientPlans.map((p) => (
-          <div
-            key={p.title}
-            className="rounded-2xl bg-white/15 dark:bg-black/20 backdrop-blur p-5 border border-white/10 shadow-lg"
-          >
-            <div className="flex items-baseline justify-between">
-              <h4 className="font-semibold">{p.title}</h4>
-              <span className="text-emerald-300 font-semibold">{p.price}</span>
+        <div
+          key={p.title}
+          className={
+            "rounded-2xl backdrop-blur p-5 shadow-lg border transition " +
+            (isPromo && p.title === tUI('pricing.plan30.title')
+              ? "bg-sky-500/20 border-sky-400/40 shadow-sky-500/30"
+              : "bg-white/15 dark:bg-black/20 border-white/10"
+            )
+          }
+        >
+          <div className="flex items-baseline justify-between">
+            <h4 className="font-semibold">{p.title}</h4>
+            <span className="text-emerald-300 font-semibold">{p.price}</span>
+          </div>
+
+          {p.popular && (
+            <div className="mt-1 text-xs inline-block px-2 py-0.5 rounded bg-emerald-500/20 border border-emerald-400/40">
+              {tUI('pricing.popularTag')}
             </div>
-            {p.popular && (
-              <div className="mt-1 text-xs inline-block px-2 py-0.5 rounded bg-emerald-500/20 border border-emerald-400/40">
-                {tUI('pricing.popularTag')}
-              </div>
-            )}
+          )}
+
+          {isPromo && p.title === tUI('pricing.plan30.title') && (
+            <div className="mt-1 text-xs inline-block px-2 py-0.5 rounded bg-sky-500/20 border border-sky-400/40 text-sky-200">
+              {tUI('promo')}
+            </div>
+          )}
             <ul className="mt-3 space-y-2 text-sm opacity-95">
               {p.bullets.map((b, i) => <li key={i}>• {b}</li>)}
             </ul>
