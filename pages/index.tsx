@@ -380,18 +380,23 @@ const proPlans = [
   },
 ];
 const origin = typeof window !== 'undefined' ? window.location.origin : '';
-const videoSrc = `https://www.youtube-nocookie.com/embed/Ou56AtcivkA?` + new URLSearchParams({
-  autoplay: autoPlayVideo ? '1' : '0',
-  mute:     autoPlayVideo ? '1' : '0', // jeśli autoplay, domyślnie w ciszy (odmutujemy po kliknięciu)
-  controls: '0',
-  rel: '0',
-  modestbranding: '1',
-  loop: autoPlayVideo ? '1' : '0',
-  playlist: 'Ou56AtcivkA',
-  playsinline: '1',
-  enablejsapi: '1',
-  origin,
-}).toString();
+
+const videoId = 'kSc0F38T3ac';
+
+const videoSrc =
+  `https://www.youtube-nocookie.com/embed/${videoId}?` +
+  new URLSearchParams({
+    autoplay: autoPlayVideo ? '1' : '0',
+    mute: autoPlayVideo ? '1' : '0', // autoplay tylko w ciszy
+    controls: '0',
+    rel: '0',
+    modestbranding: '1',
+    loop: autoPlayVideo ? '1' : '0',
+    playlist: videoId, // WYMAGANE do loop
+    playsinline: '1',
+    enablejsapi: '1',
+    origin,
+  }).toString();
 
 
 const steps = [
