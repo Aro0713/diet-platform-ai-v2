@@ -116,23 +116,16 @@ function PediatricRibbon({ tUI }: { tUI: (k: keyof typeof translationsUI) => str
   return (
     <div className="pointer-events-none absolute inset-0 z-[40] overflow-hidden">
       <div
-        className={`absolute
-        top-16 left-[-170px]
-        w-[640px]
-        rotate-[-45deg]
-        text-white
-        border border-white/25
-        shadow-2xl`}
-
+        className="absolute top-10 left-[-320px] w-[1200px] rotate-[-35deg] text-white border border-white/30 shadow-2xl"
         style={{
-          background:
-            "linear-gradient(90deg, #38BDF8 0%, #A78BFA 45%, #FB7185 100%)",
+          background: "linear-gradient(90deg, #38BDF8 0%, #A78BFA 45%, #FB7185 100%)",
           backgroundSize: "200% 200%",
           animation: "dcpPediatricGlow 30s ease-in-out infinite",
+          boxShadow: "0 22px 70px rgba(0,0,0,.45)",
         }}
         aria-hidden="true"
       >
-        <div className="px-6 py-2 text-xs sm:text-sm font-semibold tracking-wide text-center drop-shadow">
+        <div className="px-10 py-4 sm:py-5 text-sm sm:text-base font-bold tracking-wide text-center drop-shadow">
           {label}
         </div>
       </div>
