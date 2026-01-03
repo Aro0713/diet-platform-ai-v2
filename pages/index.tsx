@@ -536,12 +536,13 @@ const steps = [
 
 
   return (
-    <main
-      className="relative min-h-screen
-      bg-[#0f271e]/70 bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60
-      dark:from-[#0e231b]/80 dark:to-[#0c1f18]/60
-      text-gray-900 dark:text-white transition-all duration-300"
-    >
+   <main
+  className={`relative min-h-screen
+    bg-[#0f271e]/70 bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60
+    dark:from-[#0e231b]/80 dark:to-[#0c1f18]/60
+    text-gray-900 dark:text-white transition-all duration-300`}
+>
+
       <PediatricRibbon tUI={tUI} />
 
       <Head>
