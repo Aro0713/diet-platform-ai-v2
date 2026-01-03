@@ -116,7 +116,7 @@ function PediatricRibbon({ tUI }: { tUI: (k: keyof typeof translationsUI) => str
   return (
     <div className="pointer-events-none absolute inset-0 z-[40]">
       <div
-        className="absolute top-24 left-[-320px] w-[1200px] rotate-[-35deg] text-white border border-white/30 shadow-2xl"
+        className="absolute top-36 left-[-320px] w-[1200px] rotate-[-35deg] text-white border border-white/30 shadow-2xl"
         style={{
           background: "linear-gradient(90deg, #38BDF8 0%, #A78BFA 45%, #FB7185 100%)",
           backgroundSize: "200% 200%",
