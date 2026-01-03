@@ -22,18 +22,42 @@ const FOOTER = {
 const MARKET_PRICING = {
   PL: {
     currency: 'PLN',
-    patient: { plan7: 129, plan30: 249, plan90: 599, plan365: 1299 },
-    pro:     { plan30: 390, plan365: 3800 },
+    patient: {
+      plan7: 29,
+      plan30: 49,
+      plan90: 145,
+      plan365: 499,
+    },
+    pro: {
+      plan30: 390,
+      plan365: 3800,
+    },
   },
   EU: {
     currency: 'EUR',
-    patient: { plan7: 39,  plan30: 79,  plan90: 179, plan365: 349 },
-    pro:     { plan30: 99,  plan365: 899 },
+    patient: {
+      plan7: 7,
+      plan30: 13,
+      plan90: 33,
+      plan365: 110,
+    },
+    pro: {
+      plan30: 99,
+      plan365: 899,
+    },
   },
   OTHER: {
     currency: 'USD',
-    patient: { plan7: 39,  plan30: 79,  plan90: 179, plan365: 349 },
-    pro:     { plan30: 99,  plan365: 899 },
+    patient: {
+      plan7: 8,
+      plan30: 14,
+      plan90: 35,
+      plan365: 120,
+    },
+    pro: {
+      plan30: 99,
+      plan365: 899,
+    },
   },
 } as const;
 
