@@ -114,9 +114,9 @@ function PediatricRibbon({ tUI }: { tUI: (k: keyof typeof translationsUI) => str
     : `${tUI("pediatricribbonPrefix")} ${time.d}d ${two(time.h)}:${two(time.m)}:${two(time.s)}`;
 
   return (
-    <div className="pointer-events-none absolute inset-0 z-[40] overflow-hidden">
+    <div className="pointer-events-none absolute inset-0 z-[40]">
       <div
-        className="absolute top-10 left-[-320px] w-[1200px] rotate-[-35deg] text-white border border-white/30 shadow-2xl"
+        className="absolute top-24 left-[-320px] w-[1200px] rotate-[-35deg] text-white border border-white/30 shadow-2xl"
         style={{
           background: "linear-gradient(90deg, #38BDF8 0%, #A78BFA 45%, #FB7185 100%)",
           backgroundSize: "200% 200%",
