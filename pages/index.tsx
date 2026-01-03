@@ -74,6 +74,72 @@ declare global {
     onYouTubeIframeAPIReady: () => void;
   }
 }
+// ──────────────────────────────────────────────────────────────
+// PEDIATRIC RIBBON 45° WITH ANIMATED GRADIENT + COUNTDOWN
+// ──────────────────────────────────────────────────────────────
+const PEDIATRIC_LAUNCH_AT = new Date("2026-02-15T00:00:00+01:00"); 
+
+function getCountdown(target: Date) {
+  const now = Date.now();
+  const diff = target.getTime() - now;
+
+  if (diff <= 0) {
+    return { done: true, d: 0, h: 0, m: 0, s: 0 };
+  }
+
+  const t = Math.floor(diff / 1000);
+  return {
+    done: false,
+    d: Math.floor(t / 86400),
+    h: Math.floor((t % 86400) / 3600),
+    m: Math.floor((t % 3600) / 60),
+    s: t % 60,
+  };
+}
+
+const two = (n: number) => String(n).padStart(2, "0");
+function PediatricRibbon({ tUI }: { tUI: (k: keyof typeof translationsUI) => string }) {
+  const [time, setTime] = useState(() => getCountdown(PEDIATRIC_LAUNCH_AT));
+
+  useEffect(() => {
+    const id = setInterval(
+      () => setTime(getCountdown(PEDIATRIC_LAUNCH_AT)),
+      1000
+    );
+    return () => clearInterval(id);
+  }, []);
+
+  const label = time.done
+    ? tUI("pediatricribbonLive")
+    : `${tUI("pediatricribbonPrefix")} ${time.d}d ${two(time.h)}:${two(time.m)}:${two(time.s)}`;
+
+  return (
+    <div className="pointer-events-none absolute inset-0 z-[40] overflow-hidden">
+      <div
+        className="
+          absolute
+          top-16 left-[-170px]
+          w-[640px]
+          rotate-[-45deg]
+          text-white
+          border border-white/25
+          shadow-2xl
+        "
+        style={{
+          background:
+            "linear-gradient(90deg, #38BDF8 0%, #A78BFA 45%, #FB7185 100%)",
+          backgroundSize: "200% 200%",
+          animation: "dcpPediatricGlow 30s ease-in-out infinite",
+        }}
+        aria-hidden="true"
+      >
+        <div className="px-6 py-2 text-xs sm:text-sm font-semibold tracking-wide text-center drop-shadow">
+          {label}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Home() {
     // ──────────────────────────────────────────────────────────────
@@ -468,6 +534,7 @@ const steps = [
   },
 ];
 
+
   return (
     <main
       className="relative min-h-screen
@@ -475,6 +542,8 @@ const steps = [
       dark:from-[#0e231b]/80 dark:to-[#0c1f18]/60
       text-gray-900 dark:text-white transition-all duration-300"
     >
+      <PediatricRibbon tUI={tUI} />
+
       <Head>
         <title>{tUI('app.title')}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -482,6 +551,23 @@ const steps = [
         <link rel="preconnect" href="https://www.youtube-nocookie.com" />
         <link rel="preconnect" href="https://i.ytimg.com" />
       </Head>
+
+      <style jsx global>{`
+        @keyframes dcpPediatricGlow {
+          0% {
+            background-position: 0% 50%;
+            filter: saturate(1.1) brightness(1);
+          }
+          50% {
+            background-position: 100% 50%;
+            filter: saturate(1.3) brightness(1.08);
+          }
+          100% {
+            background-position: 0% 50%;
+            filter: saturate(1.1) brightness(1);
+          }
+        }
+      `}</style>
 
       {/* NAV */}
       <nav className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between px-2 md:px-4">

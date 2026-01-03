@@ -8281,7 +8281,7 @@ pricingPro365B4: {
   },
 promo: {
   pl: "Światowy Dzień Cukrzycy – Cena specjalna",
-  en: "World Diabetes Day – Special Price",
+  en: "World Diabetes Day – Special price",
   de: "Welt-Diabetestag – Sonderpreis",
   fr: "Journée mondiale du diabète – Prix spécial",
   es: "Día Mundial de la Diabetes – Precio especial",
@@ -8291,6 +8291,34 @@ promo: {
   ar: "اليوم العالمي لمرض السكري – سعر خاص",
   hi: "विश्व मधुमेह दिवस – विशेष मूल्य",
   he: "יום הסוכרת העולמי – מחיר מיוחד",
+},
+
+pediatricribbonPrefix: {
+  pl: "Premiera panelu pediatrycznego już za",
+  en: "Pediatric panel launches in",
+  de: "Pädiatrisches Panel startet in",
+  fr: "Lancement du panneau pédiatrique dans",
+  es: "El panel pediátrico se lanza en",
+  ua: "Педіатричний панель стартує через",
+  ru: "Педиатрическая панель стартует через",
+  zh: "儿科面板上线倒计时",
+  ar: "إطلاق لوحة طب الأطفال خلال",
+  hi: "बाल रोग पैनल लॉन्च होगा",
+  he: "השקת הפאנל הפדיאטרי בעוד"
+},
+
+pediatricribbonLive: {
+  pl: "Panel pediatryczny wystartował",
+  en: "Pediatric panel is live",
+  de: "Pädiatrisches Panel ist online",
+  fr: "Le panneau pédiatrique est en ligne",
+  es: "El panel pediátrico ya está disponible",
+  ua: "Педіатричний панель вже доступний",
+  ru: "Педиатрическая панель уже доступна",
+  zh: "儿科面板已上线",
+  ar: "لوحة طب الأطفال أصبحت متاحة",
+  hi: "बाल रोग पैनल लाइव है",
+  he: "הפאנל הפדיאטרי עלה לאוויר"
 },
 
 
