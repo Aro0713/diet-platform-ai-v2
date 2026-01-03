@@ -6,11 +6,12 @@ import 'react-international-phone/style.css';
 import { openCheckout } from '../src/native/browser';
 
 const planPrices = {
-  '7d': 12900,
-  '30d': 24900,   // bazowa cena (249 zł)
-  '90d': 59900,
-  '365d': 129900
+  '7d': 2900,    // 29 PLN
+  '30d': 4900,   // 49 PLN
+  '90d': 14500,  // 145 PLN
+  '365d': 49900  // 499 PLN
 } as const;
+
 
 type PlanKey = keyof typeof planPrices;
 

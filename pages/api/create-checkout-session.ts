@@ -5,13 +5,30 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: '2025-06-30.basil',
 });
 
-// ceny brutto w groszach (lub centach dla USD)
+// ceny brutto w groszach (PLN) i centach (USD/EUR)
 const priceMap: Record<string, Record<'pln' | 'usd' | 'eur', number>> = {
-  '7d': { pln: 12900, usd: 1500, eur: 1400 },
-  '30d': { pln: 24900, usd: 3000, eur: 2800 },
-  '90d': { pln: 59900, usd: 8000, eur: 7500 },
-  '365d': { pln: 129900, usd: 29000, eur: 27000 },
+  '7d': {
+    pln: 2900,   // 29 PLN
+    usd: 700,    // ~7 USD
+    eur: 650,    // ~6.5 EUR
+  },
+  '30d': {
+    pln: 4900,   // 49 PLN
+    usd: 1200,   // ~12 USD
+    eur: 1100,   // ~11 EUR
+  },
+  '90d': {
+    pln: 14500,  // 145 PLN
+    usd: 3500,   // ~35 USD
+    eur: 3300,   // ~33 EUR
+  },
+  '365d': {
+    pln: 49900,  // 499 PLN
+    usd: 12000,  // ~120 USD
+    eur: 11000,  // ~110 EUR
+  },
 };
+
 
 const euCountries = ['DE', 'FR', 'ES', 'IT', 'NL', 'BE', 'AT', 'FI', 'GR', 'IE', 'PT', 'LU', 'SK', 'SI', 'LV', 'LT', 'EE', 'CY', 'MT', 'HR'];
 const currencyByCountry = (countryCode: string): 'pln' | 'eur' | 'usd' => {
