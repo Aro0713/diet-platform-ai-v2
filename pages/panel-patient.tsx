@@ -367,13 +367,13 @@ useEffect(() => {
     const now = new Date();
 
     // ✅ trial aktywny, jeśli status=trialing i trial_ends_at jest w przyszłości
-    const trialActive =
-      status === 'trialing' && !!trialEnds && new Date(trialEnds) > now;
+    const canceled = status === 'canceled';
+    const trialActive = !canceled && status === 'trialing' && !!trialEnds && new Date(trialEnds) > now;
 
     // ✅ plan aktywny po opłaceniu (legacy one-time albo po trialu, jeśli zapiszesz expires)
     const activePaid =
       status === 'active' && !!expires && new Date(expires) > now;
-
+    
     // ✅ fallback: jeśli masz expires w przyszłości, też traktuj jako dostęp
     const hasAccess =
       trialActive || activePaid || (!!expires && new Date(expires) > now);

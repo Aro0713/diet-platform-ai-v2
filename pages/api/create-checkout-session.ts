@@ -1,9 +1,14 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
+import { createClient } from '@supabase/supabase-js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: '2025-06-30.basil',
 });
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 // ceny brutto w groszach (PLN) i centach (USD/EUR)
 const priceMap: Record<string, Record<'pln' | 'usd' | 'eur', number>> = {
@@ -86,39 +91,49 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           // ===============================
     // PLAN 30D → SUBSCRIPTION + 7-DAY TRIAL
     // ===============================
-    if (plan === '30d') {
-      const session = await stripe.checkout.sessions.create({
-        mode: 'subscription',
-        payment_method_types: ['card'],
-        line_items: [
-          {
-            price: 'price_1SmZmeLJvnGlkuM9f8WUhhOc',
-            quantity: 1,
-          },
-        ],
-        subscription_data: {
-          trial_period_days: 7,
-        },
-        customer_email: email,
-        metadata: {
-          userId,
-          buyerName,
-          buyerAddress,
-          buyerNIP,
-          email,
-          lang: lang || 'pl',
-          plan,
-          service: service || 'Plan diety',
-          currency,
-          trialDays: '7',
-        },
-        success_url: `${req.headers.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${req.headers.origin}/panel-patient?payment=cancel`,
-      });
+if (plan === '30d') {
+  // 🚫 blokada ponownego triala – sprawdzamy w patients.trial_used
+  const { data: p, error: pErr } = await supabaseAdmin
+    .from('patients')
+    .select('trial_used')
+    .eq('user_id', userId)
+    .maybeSingle();
 
-      console.log(`✅ Stripe TRIAL subscription session created: ${session.id}`);
-      return res.status(200).json({ url: session.url });
-    }
+  if (pErr) console.warn('⚠️ trial_used check failed:', pErr.message);
+
+  const canTrial = !(p?.trial_used === true);
+
+  const session = await stripe.checkout.sessions.create({
+    mode: 'subscription',
+    payment_method_types: ['card'],
+    line_items: [
+      {
+        price: 'price_1SmZmeLJvnGlkuM9f8WUhhOc',
+        quantity: 1,
+      },
+    ],
+    subscription_data: canTrial ? { trial_period_days: 7 } : {},
+    customer_email: email,
+    metadata: {
+      userId,
+      buyerName,
+      buyerAddress,
+      buyerNIP,
+      email,
+      lang: lang || 'pl',
+      plan,
+      service: service || 'Plan diety',
+      currency,
+      trialDays: canTrial ? '7' : '0',
+      canTrial: String(canTrial),
+    },
+    success_url: `${req.headers.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${req.headers.origin}/panel-patient?payment=cancel`,
+  });
+
+  console.log(`✅ Stripe subscription session created: ${session.id} canTrial=${canTrial}`);
+  return res.status(200).json({ url: session.url });
+}
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',

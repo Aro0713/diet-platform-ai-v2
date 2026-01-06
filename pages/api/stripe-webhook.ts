@@ -37,13 +37,84 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
 const relevant = new Set([
   'checkout.session.completed',
+  'customer.subscription.deleted',
 ]);
-
 
 if (!relevant.has(event.type)) {
   return res.status(200).json({ ok: true, ignored: event.type });
 }
 
+  // ✅ CANCEL SUBSCRIPTION (blokada dostępu + blokada ponownego triala)
+  if (event.type === 'customer.subscription.deleted') {
+    const sub = event.data.object as Stripe.Subscription;
+
+    const customerId =
+      typeof (sub as any).customer === 'string'
+        ? (sub as any).customer
+        : (sub as any).customer?.id;
+
+    // trial end (zostawiamy w DB, nawet jeśli user anulował)
+    const te = (sub as any).trial_end as number | null | undefined;
+    const trialEndIso = te ? new Date(te * 1000).toISOString() : null;
+
+    // ✅ aktualizujemy patients po stripe_subscription_id (najpewniejsze)
+    const { data: patient, error: findErr } = await supabase
+      .from('patients')
+      .select('id, trial_ends_at')
+      .eq('stripe_subscription_id', sub.id)
+      .maybeSingle();
+
+    if (findErr) {
+      console.error('⚠️ patients lookup by stripe_subscription_id failed:', findErr.message);
+      return res.status(200).json({ ok: true, lookup_failed: true });
+    }
+
+    if (!patient?.id) {
+      // fallback: po customer_id
+      const { data: patient2, error: findErr2 } = await supabase
+        .from('patients')
+        .select('id, trial_ends_at')
+        .eq('stripe_customer_id', customerId || '')
+        .maybeSingle();
+
+      if (findErr2) console.error('⚠️ patients lookup by stripe_customer_id failed:', findErr2.message);
+
+      if (!patient2?.id) {
+        console.warn('⚠️ No patient found for canceled subscription:', { subId: sub.id, customerId });
+        return res.status(200).json({ ok: true, skipped: 'no-patient' });
+      }
+
+      const { error: upd2 } = await supabase
+        .from('patients')
+        .update({
+          subscription_status: 'canceled',     // 👈 blokuje dostęp od razu
+          trial_used: true,                   // 👈 blokada ponownego triala
+          trial_canceled_at: new Date().toISOString(),
+          // zostaw trial_ends_at (jeśli null, ustaw z Stripe)
+          ...(patient2.trial_ends_at ? {} : { trial_ends_at: trialEndIso }),
+        })
+        .eq('id', patient2.id);
+
+      if (upd2) console.error('⚠️ patients update cancel failed:', upd2.message);
+      return res.status(200).json({ ok: true, canceled: true });
+    }
+
+    // primary update (patient found by subscription_id)
+    const { error: upd } = await supabase
+      .from('patients')
+      .update({
+        subscription_status: 'canceled',     // 👈 blokuje dostęp od razu
+        trial_used: true,                   // 👈 blokada ponownego triala
+        trial_canceled_at: new Date().toISOString(),
+        ...(patient.trial_ends_at ? {} : { trial_ends_at: trialEndIso }),
+      })
+      .eq('id', patient.id);
+
+    if (upd) console.error('⚠️ patients update cancel failed:', upd.message);
+
+    console.log('✅ Subscription canceled -> access blocked, trial locked:', { subId: sub.id });
+    return res.status(200).json({ ok: true, canceled: true });
+  }
 
   console.log('📥 Webhook received: checkout.session.completed');
   const session = event.data.object as Stripe.Checkout.Session;
@@ -87,14 +158,16 @@ if (!relevant.has(event.type)) {
     const { error: pErr } = await supabase
       .from('patients')
       .update({
-        plan,                            // '30d'
-        subscription_status: status,     // 'trialing'
+        plan,
+        subscription_status: status,
         subscription_started_at: periodStart,
         subscription_expires_at: periodEnd,
         trial_ends_at: trialEnd,
+        trial_used: true, // ✅ BLOKADA PONOWNEGO TRIALA (od startu)
         stripe_customer_id: stripeCustomerId,
         stripe_subscription_id: sub.id,
       })
+
       .eq('email', email);
 
     if (pErr) console.error('⚠️ Update patients trial failed:', pErr.message);
