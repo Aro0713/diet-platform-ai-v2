@@ -8320,6 +8320,33 @@ pediatricribbonLive: {
   hi: "बाल रोग पैनल लाइव है",
   he: "הפאנל הפדיאטרי עלה לאוויר"
 },
+trialActive: {
+  pl: "Okres próbny aktywny",
+  en: "Free trial active",
+  de: "Kostenlose Testphase aktiv",
+  fr: "Période d’essai active",
+  es: "Prueba gratuita activa",
+  ua: "Пробний період активний",
+  ru: "Пробный период активен",
+  zh: "试用期已启用",
+  ar: "الفترة التجريبية نشطة",
+  hi: "ट्रायल सक्रिय है",
+  he: "תקופת הניסיון פעילה",
+},
+
+trialUntil: {
+  pl: "Ważny do",
+  en: "Valid until",
+  de: "Gültig bis",
+  fr: "Valable jusqu’au",
+  es: "Válido hasta",
+  ua: "Дійсний до",
+  ru: "Действует до",
+  zh: "有效期至",
+  ar: "ساري حتى",
+  hi: "मान्य है",
+  he: "בתוקף עד",
+},
 
 
 };

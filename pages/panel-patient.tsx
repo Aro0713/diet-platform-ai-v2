@@ -265,6 +265,7 @@ export default function PatientPanelPage(): React.JSX.Element {
   const [narrativeText, setNarrativeText] = useState('');
   const [dietApproved, setDietApproved] = useState(false);
   const [hasPaid, setHasPaid] = useState(false);
+  const [isTrialActive, setIsTrialActive] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [recipes, setRecipes] = useState<any>(null);
   const [isGeneratingRecipes, setIsGeneratingRecipes] = useState(false);
@@ -351,22 +352,45 @@ useEffect(() => {
       // 🔽 Flaga płatności
     const { data: patientData, error: patientError } = await supabase
       .from('patients')
-      .select('subscription_status, subscription_started_at, subscription_expires_at')
+      .select('subscription_status, subscription_started_at, subscription_expires_at, trial_ends_at, plan')
       .eq('user_id', uid)
       .maybeSingle();
 
     if (patientError) {
       console.error('❌ Błąd pobierania danych subskrypcji:', patientError.message);
     } else {
-     const status  = patientData?.subscription_status || 'none';
+      const status = patientData?.subscription_status || 'none';
       const expires = patientData?.subscription_expires_at || null;
-      const paid    = !!(expires && new Date(expires) > new Date());
+      const trialEnds = patientData?.trial_ends_at || null;
+      const plan = patientData?.plan || null;
 
-      setHasPaid(paid);
-      setSubscriptionStatus(paid ? status : 'expired');
-      setSubscriptionExpiresAt(expires);
+      const now = new Date();
 
-      console.log(`💳 status: ${status} | wygasa: ${expires}`);
+      // ✅ trial aktywny, jeśli status=trialing i trial_ends_at jest w przyszłości
+      const trialActive =
+        status === 'trialing' && !!trialEnds && new Date(trialEnds) > now;
+
+      // ✅ plan aktywny po opłaceniu (legacy one-time albo po trialu, jeśli zapiszesz expires)
+      const activePaid =
+        status === 'active' && !!expires && new Date(expires) > now;
+
+      // ✅ fallback: jeśli masz expires w przyszłości, też traktuj jako dostęp
+      const hasAccess =
+        trialActive || activePaid || (!!expires && new Date(expires) > now);
+
+      // To steruje ikonami/sektorami w panelu
+      setHasPaid(hasAccess);
+
+      // status do wyświetlenia
+      setSubscriptionStatus(hasAccess ? (plan ?? status) : 'expired');
+
+      // data ważności: dla trialu pokaż trial_ends_at, inaczej expires
+      setSubscriptionExpiresAt(trialActive ? trialEnds : expires);
+
+      console.log(
+        `💳 status=${status} plan=${plan} expires=${expires} trialEnds=${trialEnds} hasAccess=${hasAccess}`
+      );
+
     }
 
       // 🔽 Dieta
@@ -984,15 +1008,25 @@ const handleShowDoctors = async () => {
       onSelect={handleSectionChange}
       hasPaid={hasPaid}
     />
-        {hasPaid && (
-      <p
-        className="text-sm text-green-400 text-center mt-2"
-        dir={['ar','he'].includes(lang) ? 'rtl' : undefined}
-      >
+      {hasPaid && (
+  <p
+    className="text-sm text-green-400 text-center mt-2"
+    dir={['ar','he'].includes(lang) ? 'rtl' : undefined}
+  >
+    {isTrialActive ? (
+      <>
+        {tUI('trialActive', lang)}<br />
+        {tUI('trialUntil', lang)} <strong>{formatDate(subscriptionExpiresAt)}</strong>
+      </>
+    ) : (
+      <>
         {tUI('yourPlan', lang)} <strong>{subscriptionStatus}</strong><br />
         {tUI('validUntil', lang)} <strong>{formatDate(subscriptionExpiresAt)}</strong>
-      </p>
+      </>
     )}
+  </p>
+)}
+
 
             {/* Główna zawartość */}
        <div className="z-10 flex flex-col w-full max-w-[1000px] mx-auto gap-6 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-5 md:p-10 mt-16 md:mt-20 dark:text-white transition-colors animate-flip-in origin-center">

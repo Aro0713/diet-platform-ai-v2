@@ -75,7 +75,10 @@ if (!relevant.has(event.type)) {
     const cpe = (sub as any).current_period_end as number | undefined;
 
     const periodStart = cps ? new Date(cps * 1000).toISOString() : new Date().toISOString();
-    const periodEnd = cpe ? new Date(cpe * 1000).toISOString() : null;
+    const periodEnd = cpe
+  ? new Date(cpe * 1000).toISOString()
+  : (trialEnd ?? null);
+
 
     const stripeCustomerId =
       typeof sub.customer === 'string' ? sub.customer : (sub.customer as any).id;
