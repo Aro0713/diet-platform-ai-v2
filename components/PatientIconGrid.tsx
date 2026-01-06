@@ -6,11 +6,10 @@ import {
   FileText,
   Calculator,
   ChefHat,
-   CheckCircle,
+  CheckCircle,
   XCircle,
   Ban
 } from 'lucide-react';
-
 
 interface PatientIconGridProps {
   lang: LangKey;
@@ -20,9 +19,14 @@ interface PatientIconGridProps {
   isTrialActive: boolean;
 }
 
-
-export const PatientIconGrid: React.FC<PatientIconGridProps> = ({ lang, onSelect, selected, hasPaid, isTrialActive }) => {
-    const openCancelTrial = async () => {
+export const PatientIconGrid: React.FC<PatientIconGridProps> = ({
+  lang,
+  onSelect,
+  selected,
+  hasPaid,
+  isTrialActive
+}) => {
+  const openCancelTrial = async () => {
     try {
       const uid = localStorage.getItem('currentUserID');
       if (!uid) return;
@@ -38,7 +42,7 @@ export const PatientIconGrid: React.FC<PatientIconGridProps> = ({ lang, onSelect
       if (url) window.location.href = url;
     } catch (e) {
       console.error('❌ Cannot open customer portal:', e);
-      alert(tUI('paymentInitError', lang)); // masz już klucz
+      alert(tUI('paymentInitError', lang));
     }
   };
 
@@ -91,6 +95,17 @@ export const PatientIconGrid: React.FC<PatientIconGridProps> = ({ lang, onSelect
       color: '',
       ring: 'ring-purple-300'
     },
+
+    ...(isTrialActive
+      ? [{
+          id: 'cancel_trial',
+          label: tUI('cancelTrial', lang),
+          icon: Ban,
+          color: 'text-rose-200',
+          ring: 'ring-rose-300'
+        }]
+      : []),
+
     {
       id: 'status',
       label: hasPaid ? tUI('paymentConfirmed', lang) : tUI('paymentPending', lang),
@@ -101,23 +116,34 @@ export const PatientIconGrid: React.FC<PatientIconGridProps> = ({ lang, onSelect
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 mt-12 px-4">
-      {icons.map(({ id, label, icon: Icon, color, ring }) => {
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-6 mt-12 px-4">
+      {icons.map(({ id, label, icon: Icon, color, ring }: any) => {
         const isActive = selected === id;
-        const isDisabled = !hasPaid && id !== 'data' && id !== 'status';
+
+        // allow: data + status always; allow cancel_trial even if hasPaid is false
+        const isDisabled = !hasPaid && id !== 'data' && id !== 'status' && id !== 'cancel_trial';
 
         return (
-      <button
+          <button
             key={id}
             disabled={isDisabled}
             onClick={() => {
               if (isDisabled) return;
+
               if (id === 'scanner') {
-                onSelect('scanner'); // ✅ przełącza sekcję
+                onSelect('scanner');
                 setTimeout(() => {
                   document.getElementById('look-assistant')?.scrollIntoView({ behavior: 'smooth' });
-                }, 100); // ⏳ pozwala komponentowi się zamontować
-              } else if (id !== 'status') {
+                }, 100);
+                return;
+              }
+
+              if (id === 'cancel_trial') {
+                openCancelTrial();
+                return;
+              }
+
+              if (id !== 'status') {
                 onSelect(id);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }
@@ -127,6 +153,8 @@ export const PatientIconGrid: React.FC<PatientIconGridProps> = ({ lang, onSelect
               ${isDisabled ? 'opacity-30 cursor-not-allowed' : 'hover:scale-105'}
               bg-white/20 dark:bg-white/10
               ${isActive ? `scale-105 animate-pulse ring-2 ${ring}` : ''}`}
+            aria-label={label}
+            title={label}
           >
             <Icon
               size={42}

@@ -8347,6 +8347,19 @@ trialUntil: {
   hi: "मान्य है",
   he: "בתוקף עד",
 },
+cancelTrial: {
+  pl: "Anuluj okres próbny",
+  en: "Cancel trial",
+  de: "Testphase kündigen",
+  fr: "Annuler la période d’essai",
+  es: "Cancelar período de prueba",
+  ua: "Скасувати пробний період",
+  ru: "Отменить пробный период",
+  zh: "取消试用期",
+  ar: "إلغاء الفترة التجريبية",
+  hi: "परीक्षण अवधि रद्द करें",
+  he: "בטל תקופת ניסיון"
+},
 
 
 };
