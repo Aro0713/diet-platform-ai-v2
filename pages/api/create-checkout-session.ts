@@ -42,11 +42,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  try {
+    try {
     const {
-      buyerName,
-      buyerAddress,
-      buyerNIP,
+      name: buyerName,
+      address: buyerAddress,
+      nip: buyerNIP,
       email,
       lang,
       service,
@@ -66,7 +66,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const currency = currencyByCountry(country.toUpperCase());
+       const currency = currencyByCountry(country.toUpperCase());
     const price = priceMap[plan]?.[currency];
 
     if (!price) {
@@ -74,10 +74,51 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'Invalid plan or country' });
     }
 
-    const vatRate = 0.23;
-    const netAmount = currency === 'pln'
-      ? price / 100 / (1 + vatRate)
-      : price / 100;
+    console.log('💳 Creating checkout session', {
+      plan,
+      mode: plan === '30d' ? 'subscription' : 'payment',
+      currency,
+    });
+
+    const vatRate = 0;
+    const netAmount = price / 100;
+
+          // ===============================
+    // PLAN 30D → SUBSCRIPTION + 7-DAY TRIAL
+    // ===============================
+    if (plan === '30d') {
+      const session = await stripe.checkout.sessions.create({
+        mode: 'subscription',
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price: 'price_1SmZmeLJvnGlkuM9f8WUhhOc',
+            quantity: 1,
+          },
+        ],
+        subscription_data: {
+          trial_period_days: 7,
+        },
+        customer_email: email,
+        metadata: {
+          userId,
+          buyerName,
+          buyerAddress,
+          buyerNIP,
+          email,
+          lang: lang || 'pl',
+          plan,
+          service: service || 'Plan diety',
+          currency,
+          trialDays: '7',
+        },
+        success_url: `${req.headers.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${req.headers.origin}/panel-patient?payment=cancel`,
+      });
+
+      console.log(`✅ Stripe TRIAL subscription session created: ${session.id}`);
+      return res.status(200).json({ url: session.url });
+    }
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
@@ -106,7 +147,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         service: service || 'Plan diety',
         currency,
         netAmount: netAmount.toFixed(2),
-        vatRate: currency === 'pln' ? vatRate.toFixed(2) : '0'
+        vatRate: 'zw'
       },
       
       success_url: `${req.headers.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
