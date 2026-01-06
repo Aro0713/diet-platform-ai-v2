@@ -35,12 +35,87 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).send(`Webhook Error: ${err?.message}`);
   }
 
-  if (event.type !== 'checkout.session.completed') {
-    return res.status(200).json({ ok: true, ignored: event.type });
-  }
+const relevant = new Set([
+  'checkout.session.completed',
+]);
+
+
+if (!relevant.has(event.type)) {
+  return res.status(200).json({ ok: true, ignored: event.type });
+}
+
 
   console.log('📥 Webhook received: checkout.session.completed');
   const session = event.data.object as Stripe.Checkout.Session;
+  // ✅ TRIAL / SUBSCRIPTION (Plan 30d)
+  // Jeśli Checkout był w trybie subscription, nie wystawiamy faktury tutaj.
+  if (session.mode === 'subscription' && session.subscription) {
+    // Minimalna walidacja
+    if (!session.customer_email || !session.metadata?.plan) {
+      console.error('❌ Missing metadata or email – cannot set trial');
+      return res.status(200).json({ ok: true, skipped: 'missing-email-or-plan' });
+    }
+
+    const email = session.customer_email;
+    const plan = session.metadata.plan;
+   // ❗️Plan 30d jest subscription (trial) – nie obsługujemy go jako one-time
+
+
+    const subId =
+      typeof session.subscription === 'string'
+        ? session.subscription
+        : (session.subscription as any).id;
+
+    const subResp = await stripe.subscriptions.retrieve(subId);
+    const sub = subResp as unknown as Stripe.Subscription;
+
+    const status = sub.status; // 'trialing' / 'active' / ...
+    const trialEnd = sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null;
+    const cps = (sub as any).current_period_start as number | undefined;
+    const cpe = (sub as any).current_period_end as number | undefined;
+
+    const periodStart = cps ? new Date(cps * 1000).toISOString() : new Date().toISOString();
+    const periodEnd = cpe ? new Date(cpe * 1000).toISOString() : null;
+
+    const stripeCustomerId =
+      typeof sub.customer === 'string' ? sub.customer : (sub.customer as any).id;
+
+    // ✅ Zapis do Supabase: trial info
+    const { error: pErr } = await supabase
+      .from('patients')
+      .update({
+        plan,                            // '30d'
+        subscription_status: status,     // 'trialing'
+        subscription_started_at: periodStart,
+        subscription_expires_at: periodEnd,
+        trial_ends_at: trialEnd,
+        stripe_customer_id: stripeCustomerId,
+        stripe_subscription_id: sub.id,
+      })
+      .eq('email', email);
+
+    if (pErr) console.error('⚠️ Update patients trial failed:', pErr.message);
+
+    // (opcjonalnie) users
+    const { error: uErr } = await supabase
+      .from('users')
+      .update({
+        plan,
+        subscription_status: status,
+        subscription_start: periodStart,
+        subscription_end: periodEnd,
+        stripe_customer_id: stripeCustomerId,
+        stripe_subscription_id: sub.id,
+      })
+      .eq('email', email);
+
+    if (uErr) console.error('⚠️ Update users trial failed:', uErr.message);
+
+    console.log(`✅ Trial saved in Supabase: ${email} status=${status} trialEnd=${trialEnd}`);
+
+    // ❗️WAŻNE: nie generujemy faktury na trialu
+    return res.status(200).json({ received: true, ok: true, trial: true });
+  }
 
   // 1) Minimalna walidacja danych z sesji
   if (!session.customer_email || !session.metadata?.plan) {
@@ -51,6 +126,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // 2) Dane wspólne
   const email = session.customer_email;
   const plan = session.metadata.plan;
+  if (plan === '30d') {
+  console.log('ℹ️ Skipping legacy one-time flow for plan 30d (subscription-based).');
+  return res.status(200).json({ ok: true, skipped: '30d-legacy-flow' });
+}
 
   const buyerName =
     session.metadata?.buyerName || session.customer_details?.name || 'Nieznany klient';
@@ -90,7 +169,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { error: updatePatientsError } = await supabase
       .from('patients')
       .update({
-        subscription_status: plan,
+        plan: plan,
+        subscription_status: 'active',
         subscription_started_at: start.toISOString(),
         subscription_expires_at: end.toISOString(),
       })
@@ -102,11 +182,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const { error: updateUsersError } = await supabase
       .from('users')
-      .update({
-        plan: plan === '365d' ? 'pro_annual' : 'pro_monthly',
-        subscription_start: start.toISOString(),
-        subscription_end: end.toISOString(),
-      })
+     .update({
+      plan: plan,
+      subscription_status: 'active',
+      subscription_started_at: start.toISOString(),
+      subscription_expires_at: end.toISOString(),
+    })
+
       .eq('email', email);
 
     if (updateUsersError) {
