@@ -6,18 +6,42 @@ import {
   FileText,
   Calculator,
   ChefHat,
-  CheckCircle,
-  XCircle
+   CheckCircle,
+  XCircle,
+  Ban
 } from 'lucide-react';
+
 
 interface PatientIconGridProps {
   lang: LangKey;
   onSelect: (section: string) => void;
   selected: string | null;
   hasPaid: boolean;
+  isTrialActive: boolean;
 }
 
-export const PatientIconGrid: React.FC<PatientIconGridProps> = ({ lang, onSelect, selected, hasPaid }) => {
+
+export const PatientIconGrid: React.FC<PatientIconGridProps> = ({ lang, onSelect, selected, hasPaid, isTrialActive }) => {
+    const openCancelTrial = async () => {
+    try {
+      const uid = localStorage.getItem('currentUserID');
+      if (!uid) return;
+
+      const res = await fetch('/api/create-portal-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: uid, returnUrl: window.location.href }),
+      });
+
+      const data = await res.json();
+      const url = data?.url;
+      if (url) window.location.href = url;
+    } catch (e) {
+      console.error('❌ Cannot open customer portal:', e);
+      alert(tUI('paymentInitError', lang)); // masz już klucz
+    }
+  };
+
   const icons = [
     {
       id: 'data',

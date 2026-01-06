@@ -359,37 +359,41 @@ useEffect(() => {
     if (patientError) {
       console.error('❌ Błąd pobierania danych subskrypcji:', patientError.message);
     } else {
-      const status = patientData?.subscription_status || 'none';
-      const expires = patientData?.subscription_expires_at || null;
-      const trialEnds = patientData?.trial_ends_at || null;
-      const plan = patientData?.plan || null;
+    const status = patientData?.subscription_status || 'none';
+    const expires = patientData?.subscription_expires_at || null;
+    const trialEnds = patientData?.trial_ends_at || null;
+    const plan = patientData?.plan || null;
 
-      const now = new Date();
+    const now = new Date();
 
-      // ✅ trial aktywny, jeśli status=trialing i trial_ends_at jest w przyszłości
-      const trialActive =
-        status === 'trialing' && !!trialEnds && new Date(trialEnds) > now;
+    // ✅ trial aktywny, jeśli status=trialing i trial_ends_at jest w przyszłości
+    const trialActive =
+      status === 'trialing' && !!trialEnds && new Date(trialEnds) > now;
 
-      // ✅ plan aktywny po opłaceniu (legacy one-time albo po trialu, jeśli zapiszesz expires)
-      const activePaid =
-        status === 'active' && !!expires && new Date(expires) > now;
+    // ✅ plan aktywny po opłaceniu (legacy one-time albo po trialu, jeśli zapiszesz expires)
+    const activePaid =
+      status === 'active' && !!expires && new Date(expires) > now;
 
-      // ✅ fallback: jeśli masz expires w przyszłości, też traktuj jako dostęp
-      const hasAccess =
-        trialActive || activePaid || (!!expires && new Date(expires) > now);
+    // ✅ fallback: jeśli masz expires w przyszłości, też traktuj jako dostęp
+    const hasAccess =
+      trialActive || activePaid || (!!expires && new Date(expires) > now);
 
-      // To steruje ikonami/sektorami w panelu
-      setHasPaid(hasAccess);
+    // To steruje ikonami/sektorami w panelu
+    setHasPaid(hasAccess);
 
-      // status do wyświetlenia
-      setSubscriptionStatus(hasAccess ? (plan ?? status) : 'expired');
+    // ✅ to steruje tekstem "trial" vs "Twój plan"
+    setIsTrialActive(trialActive);
 
-      // data ważności: dla trialu pokaż trial_ends_at, inaczej expires
-      setSubscriptionExpiresAt(trialActive ? trialEnds : expires);
+    // status do wyświetlenia
+    setSubscriptionStatus(hasAccess ? (plan ?? status) : 'expired');
 
-      console.log(
-        `💳 status=${status} plan=${plan} expires=${expires} trialEnds=${trialEnds} hasAccess=${hasAccess}`
-      );
+    // data ważności: dla trialu pokaż trial_ends_at, inaczej expires
+    setSubscriptionExpiresAt(trialActive ? trialEnds : expires);
+
+    console.log(
+      `💳 status=${status} plan=${plan} expires=${expires} trialEnds=${trialEnds} hasAccess=${hasAccess} trialActive=${trialActive}`
+    );
+
 
     }
 
@@ -1007,6 +1011,7 @@ const handleShowDoctors = async () => {
       selected={selectedSection}
       onSelect={handleSectionChange}
       hasPaid={hasPaid}
+      isTrialActive={isTrialActive}
     />
       {hasPaid && (
   <p
