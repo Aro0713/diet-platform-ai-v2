@@ -740,33 +740,71 @@ const steps = [
         <div
           key={p.title}
           className={
-            "rounded-2xl backdrop-blur p-5 shadow-lg border transition " +
-            (isPromo && p.title === tUI('pricing.plan30.title')
-              ? "bg-sky-500/20 border-sky-400/40 shadow-sky-500/30"
-              : "bg-white/15 dark:bg-black/20 border-white/10"
+            "relative rounded-2xl backdrop-blur p-5 border transition overflow-hidden " +
+            (p.title === tUI('pricing.plan30.title')
+              ? "bg-white/10 dark:bg-black/20 border-fuchsia-300/40 shadow-[0_0_0_1px_rgba(255,255,255,.06),0_24px_80px_rgba(0,0,0,.45)]"
+              : "bg-white/15 dark:bg-black/20 border-white/10 shadow-lg"
             )
           }
         >
-          <div className="flex items-baseline justify-between">
-            <h4 className="font-semibold">{p.title}</h4>
-            <span className="text-emerald-300 font-semibold">{p.price}</span>
-          </div>
-
-          {p.popular && (
-            <div className="mt-1 text-xs inline-block px-2 py-0.5 rounded bg-emerald-500/20 border border-emerald-400/40">
-              {tUI('pricing.popularTag')}
-            </div>
+          {/* PREMIUM GLOW tylko dla Plan 30 */}
+          {p.title === tUI('pricing.plan30.title') && (
+            <>
+              {/* poświata */}
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -inset-10 opacity-70 blur-2xl"
+                style={{
+                  background:
+                    "radial-gradient(60% 60% at 20% 15%, rgba(56,189,248,.55), transparent 60%)," +
+                    "radial-gradient(55% 55% at 85% 30%, rgba(167,139,250,.55), transparent 60%)," +
+                    "radial-gradient(60% 60% at 55% 90%, rgba(251,113,133,.45), transparent 60%)",
+                }}
+              />
+              {/* „szkło” na wierzchu */}
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 opacity-40"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(255,255,255,.10) 0%, rgba(255,255,255,.02) 35%, rgba(0,0,0,.08) 100%)",
+                }}
+              />
+            </>
           )}
 
-          {isPromo && p.title === tUI('pricing.plan30.title') && (
-            <div className="mt-1 text-xs inline-block px-2 py-0.5 rounded bg-sky-500/20 border border-sky-400/40 text-sky-200">
-              {tUI('promo')}
+          <div className="relative">
+            <div className="flex items-baseline justify-between">
+              <h4 className="font-semibold">{p.title}</h4>
+              <span className="text-emerald-300 font-semibold">{p.price}</span>
             </div>
-          )}
+
+            {p.popular && (
+              <div className="mt-1 text-xs inline-block px-2 py-0.5 rounded bg-emerald-500/20 border border-emerald-400/40">
+                {tUI('pricing.popularTag')}
+              </div>
+            )}
+
+            {/* Badge trialu – tylko na Plan 30 (marketing, 11 języków) */}
+            {p.title === tUI('pricing.plan30.title') && (
+              <div className="mt-2 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold border border-white/20 bg-white/10">
+                <span aria-hidden className="h-2.5 w-2.5 rounded-full bg-emerald-300 shadow-[0_0_18px_rgba(110,231,183,.85)]" />
+                <span>{tUI('pricing.trial7Badge')}</span>
+              </div>
+            )}
+
+            {isPromo && p.title === tUI('pricing.plan30.title') && (
+              <div className="mt-2 text-xs inline-block px-2 py-0.5 rounded bg-sky-500/20 border border-sky-400/40 text-sky-200">
+                {tUI('promo')}
+              </div>
+            )}
+
             <ul className="mt-3 space-y-2 text-sm opacity-95">
               {p.bullets.map((b, i) => <li key={i}>• {b}</li>)}
             </ul>
           </div>
+        </div>
+
         ))}
       </div>
     </div>

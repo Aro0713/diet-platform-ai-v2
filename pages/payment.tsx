@@ -49,6 +49,7 @@ const currencyByCountry = (country: string): 'pln' | 'eur' | 'usd' => {
         });
         const [selectedPlan, setSelectedPlan] = useState<PlanKey | null>(null);
         const [isLoading, setIsLoading] = useState(false);
+        const [canTrial30d, setCanTrial30d] = useState<boolean>(false);
         const [exchangeRates, setExchangeRates] = useState({ eur: 1, usd: 1 });
 
         useEffect(() => {
@@ -64,7 +65,7 @@ const currencyByCountry = (country: string): 'pln' | 'eur' | 'usd' => {
 
             const { data: patient } = await supabase
             .from('patients')
-            .select('name, email, address, nip, region')
+            .select('name, email, address, nip, region, trial_used')
             .eq('user_id', uid)
             .maybeSingle();
 
@@ -75,6 +76,7 @@ const currencyByCountry = (country: string): 'pln' | 'eur' | 'usd' => {
             nip: patient?.nip || '',
             region: patient?.region || 'PL'
             });
+            setCanTrial30d(!(patient?.trial_used === true));
         });
 
         fetch('https://api.nbp.pl/api/exchangerates/rates/a/eur/?format=json')
@@ -134,8 +136,11 @@ const price = getPlanPrice(plan);
     {
       id: '30d',
       title: tUI('plan30d', lang),
-      description: tUI('plan30dDesc', lang)
+      description: canTrial30d
+        ? `${tUI('plan30dDesc', lang)}\n\n🎁 ${tUI('trialActive', lang)} — 7 dni`
+        : tUI('plan30dDesc', lang)
     },
+
     {
       id: '90d',
       title: tUI('plan90d', lang),
@@ -228,7 +233,14 @@ const price = getPlanPrice(plan);
             >
               <h2 className="text-lg md:text-xl font-bold mb-1">{plan.title}</h2>
               <p className="text-sm text-emerald-300 mb-2">
-            {displayPrice(plan.id)} <span className="text-xs text-white/60">({tUI('vatExemptNote', lang)})</span>
+              {displayPrice(plan.id)}{' '}
+              <span className="text-xs text-white/60">({tUI('vatExemptNote', lang)})</span>
+              {plan.id === '30d' && canTrial30d && (
+               <span className="ml-2 text-xs bg-emerald-600/60 px-2 py-1 rounded">
+              {tUI('trial7DaysFree', lang)}
+            </span>
+
+              )}
             </p>
               <p className="text-sm whitespace-pre-line">{plan.description}</p>
             </div>
