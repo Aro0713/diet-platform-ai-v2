@@ -17,6 +17,7 @@
     "@pdf-lib/fontkit": "^1.1.1",
     "@react-pdf/renderer": "^4.3.0",
     "@supabase/supabase-js": "^2.49.4",
+    "@vercel/analytics": "^1.6.1",
     "ai": "^4.3.16",
     "canvas": "^3.1.0",
     "ethers": "^6.13.5",
