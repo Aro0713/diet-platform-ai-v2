@@ -939,8 +939,6 @@ const handleGenerateNarrative = async () => {
   }
 };
 
-console.log("📦 form w panel-patient:", form);
-
 const handleSectionChange = async (newSection: string) => {
   if (!hasPaid && newSection !== 'data') {
     alert(tUI('subscriptionRequired', lang));

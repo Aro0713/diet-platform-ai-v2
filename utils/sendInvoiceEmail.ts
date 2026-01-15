@@ -1,6 +1,41 @@
-import { Resend } from 'resend';
+import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+const ALLOWED_LANGS = ["pl","en","de","fr","es","ua","ru","zh","ar","hi","he"] as const;
+type Lang = typeof ALLOWED_LANGS[number];
+
+function isLang(v: unknown): v is Lang {
+  return typeof v === "string" && (ALLOWED_LANGS as readonly string[]).includes(v);
+}
+
+function isEmail(v: unknown): v is string {
+  return typeof v === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function safeText(s: unknown, max = 200): string {
+  if (typeof s !== "string") return "";
+  return s.trim().slice(0, max);
+}
+
+function isSafeUrl(url: unknown): url is string {
+  if (typeof url !== "string") return false;
+  try {
+    const u = new URL(url);
+    return u.protocol === "https:"; // tylko https
+  } catch {
+    return false;
+  }
+}
 
 export async function sendInvoiceEmail({
   to,
@@ -8,145 +43,122 @@ export async function sendInvoiceEmail({
   url,
   service,
   gross,
-  lang = 'pl',
+  lang = "pl",
 }: {
   to: string;
   invoiceNumber: string;
   url: string;
   service: string;
   gross: string;
-  lang?: string;
+  lang?: Lang | string;
 }) {
-  const subjectMap: Record<string, string> = {
-    pl: `📄 Twoja faktura VAT ${invoiceNumber}`,
-    en: `📄 Your VAT invoice ${invoiceNumber}`,
-    de: `📄 Ihre Mehrwertsteuerrechnung ${invoiceNumber}`,
-    fr: `📄 Votre facture ${invoiceNumber}`,
-    es: `📄 Su factura ${invoiceNumber}`,
-    ua: `📄 Ваша рахунок-фактура ${invoiceNumber}`,
-    ru: `📄 Ваш счёт-фактура ${invoiceNumber}`,
-    zh: `📄 您的发票 ${invoiceNumber}`,
-    ar: `📄 فاتورة ضريبية ${invoiceNumber}`,
-    hi: `📄 आपकी कर चालान ${invoiceNumber}`,
-    he: `📄 החשבונית שלך ${invoiceNumber}`
+  if (!process.env.RESEND_API_KEY || !resend) {
+    throw new Error("RESEND_API_KEY is missing");
+  }
+
+  if (!isEmail(to)) {
+    throw new Error("Invalid recipient email");
+  }
+
+  const safeLang: Lang = isLang(lang) ? lang : "pl";
+
+  // 🔒 sanity / anti-injection (bo to leci w HTML)
+  const inv = escapeHtml(safeText(invoiceNumber, 60));
+  const srv = escapeHtml(safeText(service, 120));
+  const grs = escapeHtml(safeText(gross, 40));
+
+  // 🔒 link tylko https (najlepiej z Twojej domeny / storage)
+  if (!isSafeUrl(url)) {
+    throw new Error("Invalid invoice URL");
+  }
+  const safeUrl = url;
+
+  const subjectMap: Record<Lang, string> = {
+    pl: `📄 Twoja faktura VAT ${inv}`,
+    en: `📄 Your VAT invoice ${inv}`,
+    de: `📄 Ihre Mehrwertsteuerrechnung ${inv}`,
+    fr: `📄 Votre facture ${inv}`,
+    es: `📄 Su factura ${inv}`,
+    ua: `📄 Ваш рахунок-фактура ${inv}`,
+    ru: `📄 Ваш счёт-фактура ${inv}`,
+    zh: `📄 您的发票 ${inv}`,
+    ar: `📄 فاتورة ضريبية ${inv}`,
+    hi: `📄 आपकी कर चालान ${inv}`,
+    he: `📄 החשבונית שלך ${inv}`,
   };
 
-  const htmlMap: Record<string, string> = {
-    pl: `
-      <p>Dziękujemy za zakup planu diety w Diet Care Platform.</p>
-      <p><strong>Numer faktury:</strong> ${invoiceNumber}<br/>
-      <strong>Kwota brutto:</strong> ${gross}<br/>
-      <strong>Usługa:</strong> ${service}</p>
-      <p><a href="${url}" style="padding:12px 24px;background:#4f46e5;color:white;border-radius:8px;text-decoration:none;display:inline-block;">
-        📄 Pobierz fakturę PDF
-      </a></p>
-      <p style="margin-top:24px;font-size:12px;color:gray;">Faktura została wystawiona automatycznie. Nie odpowiadaj na tę wiadomość.</p>
-    `,
-    en: `
-      <p>Thank you for your purchase in Diet Care Platform.</p>
-      <p><strong>Invoice number:</strong> ${invoiceNumber}<br/>
-      <strong>Total amount:</strong> ${gross}<br/>
-      <strong>Service:</strong> ${service}</p>
-      <p><a href="${url}" style="padding:12px 24px;background:#4f46e5;color:white;border-radius:8px;text-decoration:none;display:inline-block;">
-        📄 Download invoice PDF
-      </a></p>
-      <p style="margin-top:24px;font-size:12px;color:gray;">This invoice was generated automatically. Do not reply to this message.</p>
-    `,
-    de: `
-      <p>Vielen Dank für Ihren Einkauf bei der Diet Care Platform.</p>
-      <p><strong>Rechnungsnummer:</strong> ${invoiceNumber}<br/>
-      <strong>Gesamtbetrag:</strong> ${gross}<br/>
-      <strong>Leistung:</strong> ${service}</p>
-      <p><a href="${url}" style="padding:12px 24px;background:#4f46e5;color:white;border-radius:8px;text-decoration:none;display:inline-block;">
-        📄 Rechnung herunterladen
-      </a></p>
-      <p style="margin-top:24px;font-size:12px;color:gray;">Diese Rechnung wurde automatisch erstellt. Bitte nicht antworten.</p>
-    `,
-    fr: `
-      <p>Merci pour votre achat sur la plateforme Diet Care.</p>
-      <p><strong>Numéro de facture :</strong> ${invoiceNumber}<br/>
-      <strong>Montant TTC :</strong> ${gross}<br/>
-      <strong>Service :</strong> ${service}</p>
-      <p><a href="${url}" style="padding:12px 24px;background:#4f46e5;color:white;border-radius:8px;text-decoration:none;display:inline-block;">
-        📄 Télécharger la facture
-      </a></p>
-      <p style="margin-top:24px;font-size:12px;color:gray;">Cette facture a été générée automatiquement. Ne répondez pas à ce message.</p>
-    `,
-    es: `
-      <p>Gracias por su compra en Diet Care Platform.</p>
-      <p><strong>Número de factura:</strong> ${invoiceNumber}<br/>
-      <strong>Importe total:</strong> ${gross}<br/>
-      <strong>Servicio:</strong> ${service}</p>
-      <p><a href="${url}" style="padding:12px 24px;background:#4f46e5;color:white;border-radius:8px;text-decoration:none;display:inline-block;">
-        📄 Descargar factura
-      </a></p>
-      <p style="margin-top:24px;font-size:12px;color:gray;">Esta factura fue generada automáticamente. No responda a este mensaje.</p>
-    `,
-    ua: `
-      <p>Дякуємо за покупку на платформі Diet Care.</p>
-      <p><strong>Номер рахунку:</strong> ${invoiceNumber}<br/>
-      <strong>Загальна сума:</strong> ${gross}<br/>
-      <strong>Послуга:</strong> ${service}</p>
-      <p><a href="${url}" style="padding:12px 24px;background:#4f46e5;color:white;border-radius:8px;text-decoration:none;display:inline-block;">
-        📄 Завантажити рахунок
-      </a></p>
-      <p style="margin-top:24px;font-size:12px;color:gray;">Рахунок створено автоматично. Не відповідайте на це повідомлення.</p>
-    `,
-    ru: `
-      <p>Спасибо за покупку на платформе Diet Care.</p>
-      <p><strong>Номер счета:</strong> ${invoiceNumber}<br/>
-      <strong>Общая сумма:</strong> ${gross}<br/>
-      <strong>Услуга:</strong> ${service}</p>
-      <p><a href="${url}" style="padding:12px 24px;background:#4f46e5;color:white;border-radius:8px;text-decoration:none;display:inline-block;">
-        📄 Скачать счет
-      </a></p>
-      <p style="margin-top:24px;font-size:12px;color:gray;">Счет создан автоматически. Не отвечайте на это сообщение.</p>
-    `,
-    zh: `
-      <p>感谢您在 Diet Care 平台的购买。</p>
-      <p><strong>发票编号：</strong> ${invoiceNumber}<br/>
-      <strong>总金额：</strong> ${gross}<br/>
-      <strong>服务：</strong> ${service}</p>
-      <p><a href="${url}" style="padding:12px 24px;background:#4f46e5;color:white;border-radius:8px;text-decoration:none;display:inline-block;">
-        📄 下载发票 PDF
-      </a></p>
-      <p style="margin-top:24px;font-size:12px;color:gray;">此发票为系统自动生成，请勿回复此邮件。</p>
-    `,
-    ar: `
-      <p>شكرًا لشرائك من منصة Diet Care.</p>
-      <p><strong>رقم الفاتورة:</strong> ${invoiceNumber}<br/>
-      <strong>المبلغ الإجمالي:</strong> ${gross}<br/>
-      <strong>الخدمة:</strong> ${service}</p>
-      <p><a href="${url}" style="padding:12px 24px;background:#4f46e5;color:white;border-radius:8px;text-decoration:none;display:inline-block;">
-        📄 تحميل الفاتورة
-      </a></p>
-      <p style="margin-top:24px;font-size:12px;color:gray;">تم إنشاء هذه الفاتورة تلقائيًا. لا ترد على هذه الرسالة.</p>
-    `,
-    hi: `
-      <p>Diet Care प्लेटफ़ॉर्म से खरीदारी के लिए धन्यवाद।</p>
-      <p><strong>चालान संख्या:</strong> ${invoiceNumber}<br/>
-      <strong>कुल राशि:</strong> ${gross}<br/>
-      <strong>सेवा:</strong> ${service}</p>
-      <p><a href="${url}" style="padding:12px 24px;background:#4f46e5;color:white;border-radius:8px;text-decoration:none;display:inline-block;">
-        📄 चालान डाउनलोड करें
-      </a></p>
-      <p style="margin-top:24px;font-size:12px;color:gray;">यह चालान स्वचालित रूप से उत्पन्न किया गया है। कृपया उत्तर न दें।</p>
-    `,
-    he: `
-      <p>תודה על הרכישה שלך ב-Diet Care.</p>
-      <p><strong>מספר חשבונית:</strong> ${invoiceNumber}<br/>
-      <strong>סכום כולל:</strong> ${gross}<br/>
-      <strong>שירות:</strong> ${service}</p>
-      <p><a href="${url}" style="padding:12px 24px;background:#4f46e5;color:white;border-radius:8px;text-decoration:none;display:inline-block;">
-        📄 הורד את החשבונית
-      </a></p>
-      <p style="margin-top:24px;font-size:12px;color:gray;">חשבונית זו נוצרה אוטומטית. אין להשיב להודעה זו.</p>
-    `,
+  const buttonMap: Record<Lang, string> = {
+    pl: "📄 Pobierz fakturę PDF",
+    en: "📄 Download invoice PDF",
+    de: "📄 Rechnung herunterladen",
+    fr: "📄 Télécharger la facture",
+    es: "📄 Descargar factura",
+    ua: "📄 Завантажити рахунок",
+    ru: "📄 Скачать счет",
+    zh: "📄 下载发票 PDF",
+    ar: "📄 تحميل الفاتورة",
+    hi: "📄 चालान डाउनलोड करें",
+    he: "📄 הורד את החשבונית",
   };
 
-  const subject = subjectMap[lang] || subjectMap['pl'];
-  const html = htmlMap[lang] || htmlMap['pl'];
-  const from = 'DCP Faktury <no-reply@dcp.care>';
+  const footerMap: Record<Lang, string> = {
+    pl: "Faktura została wystawiona automatycznie. Nie odpowiadaj na tę wiadomość.",
+    en: "This invoice was generated automatically. Do not reply to this message.",
+    de: "Diese Rechnung wurde automatisch erstellt. Bitte nicht antworten.",
+    fr: "Cette facture a été générée automatiquement. Ne répondez pas à ce message.",
+    es: "Esta factura fue generada automáticamente. No responda a este mensaje.",
+    ua: "Рахунок створено автоматично. Не відповідайте на це повідомлення.",
+    ru: "Счет создан автоматически. Не отвечайте на это сообщение.",
+    zh: "此发票为系统自动生成，请勿回复此邮件。",
+    ar: "تم إنشاء هذه الفاتورة تلقائيًا. لا ترد على هذه الرسالة.",
+    hi: "यह चालान स्वचालित रूप से उत्पन्न किया गया है। कृपया उत्तर न दें।",
+    he: "חשבונית זו נוצרה אוטומטית. אין להשיב להודעה זו.",
+  };
 
-  await resend.emails.send({ to, from, subject, html });
+  const introMap: Record<Lang, string> = {
+    pl: "Dziękujemy za zakup planu diety w Diet Care Platform.",
+    en: "Thank you for your purchase in Diet Care Platform.",
+    de: "Vielen Dank für Ihren Einkauf bei der Diet Care Platform.",
+    fr: "Merci pour votre achat sur la plateforme Diet Care.",
+    es: "Gracias por su compra en Diet Care Platform.",
+    ua: "Дякуємо за покупку на платформі Diet Care.",
+    ru: "Спасибо за покупку на платформе Diet Care.",
+    zh: "感谢您在 Diet Care 平台的购买。",
+    ar: "شكرًا لشرائك من منصة Diet Care.",
+    hi: "Diet Care प्लेटफ़ॉर्म से खरीदारी के लिए धन्यवाद।",
+    he: "תודה על הרכישה שלך ב-Diet Care.",
+  };
+
+  // HTML: wstawki już escapowane
+  const html = `
+    <div style="font-family:Arial,sans-serif;font-size:16px;line-height:1.5">
+      <p>${introMap[safeLang]}</p>
+      <p>
+        <strong>${safeLang === "pl" ? "Numer faktury:" : safeLang === "en" ? "Invoice number:" : safeLang === "de" ? "Rechnungsnummer:" : safeLang === "fr" ? "Numéro de facture :" : safeLang === "es" ? "Número de factura:" : safeLang === "ua" ? "Номер рахунку:" : safeLang === "ru" ? "Номер счета:" : safeLang === "zh" ? "发票编号：" : safeLang === "ar" ? "رقم الفاتورة:" : safeLang === "hi" ? "चालान संख्या:" : "מספר חשבונית:"}</strong> ${inv}<br/>
+        <strong>${safeLang === "pl" ? "Kwota brutto:" : safeLang === "en" ? "Total amount:" : safeLang === "de" ? "Gesamtbetrag:" : safeLang === "fr" ? "Montant TTC :" : safeLang === "es" ? "Importe total:" : safeLang === "ua" ? "Загальна сума:" : safeLang === "ru" ? "Общая сумма:" : safeLang === "zh" ? "总金额：" : safeLang === "ar" ? "المبلغ الإجمالي:" : safeLang === "hi" ? "कुल राशि:" : "סכום כולל:"}</strong> ${grs}<br/>
+        <strong>${safeLang === "pl" ? "Usługa:" : safeLang === "en" ? "Service:" : safeLang === "de" ? "Leistung:" : safeLang === "fr" ? "Service :" : safeLang === "es" ? "Servicio:" : safeLang === "ua" ? "Послуга:" : safeLang === "ru" ? "Услуга:" : safeLang === "zh" ? "服务：" : safeLang === "ar" ? "الخدمة:" : safeLang === "hi" ? "सेवा:" : "שירות:"}</strong> ${srv}
+      </p>
+      <p>
+        <a href="${safeUrl}" style="padding:12px 24px;background:#4f46e5;color:white;border-radius:8px;text-decoration:none;display:inline-block;">
+          ${buttonMap[safeLang]}
+        </a>
+      </p>
+      <p style="margin-top:24px;font-size:12px;color:gray;">
+        ${footerMap[safeLang]}
+      </p>
+    </div>
+  `;
+
+  // fajnie mieć też text jako fallback dla klientów poczty
+  const text = `${introMap[safeLang]}
+Invoice: ${invoiceNumber}
+Total: ${gross}
+Service: ${service}
+PDF: ${url}
+`;
+
+  const from = "DCP Faktury <no-reply@dcp.care>";
+  const subject = subjectMap[safeLang];
+
+  await resend.emails.send({ to, from, subject, html, text });
 }
