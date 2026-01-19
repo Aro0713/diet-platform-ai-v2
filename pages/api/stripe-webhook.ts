@@ -45,40 +45,58 @@ const relevant = new Set([
 if (!relevant.has(event.type)) {
   return res.status(200).json({ ok: true, ignored: event.type });
 }
-  // ✅ PAID / ACTIVATION (moment pobrania opłaty po trialu)
-  if (event.type === 'invoice.paid') {
-    const invoice = event.data.object as Stripe.Invoice;
 
-    const subscriptionId =
-      typeof (invoice as any).subscription === 'string'
-        ? (invoice as any).subscription
-        : (invoice as any).subscription?.id;
+// ✅ PAID / ACTIVATION (moment pobrania opłaty po trialu)
+if (event.type === 'invoice.paid') {
+  const invoice = event.data.object as Stripe.Invoice;
 
-    const customerId =
-      typeof (invoice as any).customer === 'string'
-        ? (invoice as any).customer
-        : (invoice as any).customer?.id;
+  const subscriptionId =
+    typeof (invoice as any).subscription === 'string'
+      ? (invoice as any).subscription
+      : (invoice as any).subscription?.id;
 
-    if (!subscriptionId || !customerId) {
-      console.warn('⚠️ invoice.paid missing subscription/customer', { subscriptionId, customerId });
-      return res.status(200).json({ ok: true, skipped: 'missing-sub-or-customer' });
-    }
+  const customerId =
+    typeof (invoice as any).customer === 'string'
+      ? (invoice as any).customer
+      : (invoice as any).customer?.id;
 
-    // Stripe = źródło prawdy (status + okres rozliczeniowy)
-    const subResp = await stripe.subscriptions.retrieve(subscriptionId);
-    const sub = subResp as unknown as Stripe.Subscription;
+  if (!subscriptionId || !customerId) {
+    console.warn('⚠️ invoice.paid missing subscription/customer', { subscriptionId, customerId });
+    return res.status(200).json({ ok: true, skipped: 'missing-sub-or-customer' });
+  }
 
-    const status = sub.status; // zwykle 'active' po invoice.paid
-    const cps = (sub as any).current_period_start as number | undefined;
-    const cpe = (sub as any).current_period_end as number | undefined;
+  const subResp = await stripe.subscriptions.retrieve(subscriptionId);
+  const sub = subResp as unknown as Stripe.Subscription;
 
-    const periodStart = cps ? new Date(cps * 1000).toISOString() : new Date().toISOString();
-    const periodEnd = cpe ? new Date(cpe * 1000).toISOString() : null;
+  const status = sub.status;
+  const cps = (sub as any).current_period_start as number | undefined;
+  const cpe = (sub as any).current_period_end as number | undefined;
 
-    // ✅ update pacjenta po customer_id (najpewniej)
-    let updated = false;
+  const periodStart = cps ? new Date(cps * 1000).toISOString() : new Date().toISOString();
+  const periodEnd = cpe ? new Date(cpe * 1000).toISOString() : null;
 
-    const { error: updByCustomer } = await supabase
+  let updated = false;
+
+  // 1) by stripe_customer_id
+  const updByCustomer = await supabase
+    .from('patients')
+    .update({
+      subscription_status: status,
+      subscription_started_at: periodStart,
+      subscription_expires_at: periodEnd,
+      stripe_customer_id: customerId,
+      stripe_subscription_id: subscriptionId,
+    })
+    .eq('stripe_customer_id', customerId)
+    .select('id');
+
+  if (!updByCustomer.error && updByCustomer.data && updByCustomer.data.length > 0) {
+    updated = true;
+  }
+
+  // 2) fallback by stripe_subscription_id
+  if (!updated) {
+    const updBySub = await supabase
       .from('patients')
       .update({
         subscription_status: status,
@@ -87,13 +105,23 @@ if (!relevant.has(event.type)) {
         stripe_customer_id: customerId,
         stripe_subscription_id: subscriptionId,
       })
-      .eq('stripe_customer_id', customerId);
+      .eq('stripe_subscription_id', subscriptionId)
+      .select('id');
 
-    if (!updByCustomer) updated = true;
+    if (updBySub.error) {
+      console.error('⚠️ invoice.paid update patients failed:', updBySub.error.message);
+    } else if (updBySub.data && updBySub.data.length > 0) {
+      updated = true;
+    }
+  }
 
-    // fallback po subscription_id
-    if (!updated) {
-      const { error: updBySub } = await supabase
+  // 3) FINAL FALLBACK: by email from Stripe customer
+  if (!updated) {
+    const customer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
+    const emailFromCustomer = (customer as any)?.email;
+
+    if (emailFromCustomer) {
+      const updByEmail = await supabase
         .from('patients')
         .update({
           subscription_status: status,
@@ -102,112 +130,42 @@ if (!relevant.has(event.type)) {
           stripe_customer_id: customerId,
           stripe_subscription_id: subscriptionId,
         })
-        .eq('stripe_subscription_id', subscriptionId);
+        .eq('email', emailFromCustomer)
+        .select('id');
 
-      if (updBySub) console.error('⚠️ invoice.paid update patients failed:', updBySub.message);
-      else updated = true;
-    }
-    // 🧯 FINAL FALLBACK: po email z customer (gdy rekord nie był jeszcze spięty)
-    if (!updated) {
-      const customer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
-      const emailFromCustomer = (customer as any)?.email;
-
-      if (emailFromCustomer) {
-        const { error: updByEmail } = await supabase
-          .from('patients')
-          .update({
-            subscription_status: status,
-            subscription_started_at: periodStart,
-            subscription_expires_at: periodEnd,
-            stripe_customer_id: customerId,
-            stripe_subscription_id: subscriptionId,
-          })
-          .eq('email', emailFromCustomer);
-
-        if (updByEmail) {
-          console.error('⚠️ invoice.paid update by email failed:', updByEmail.message);
-        } else {
-          updated = true;
-        }
+      if (updByEmail.error) {
+        console.error('⚠️ invoice.paid update by email failed:', updByEmail.error.message);
+      } else if (updByEmail.data && updByEmail.data.length > 0) {
+        updated = true;
       }
     }
-
-    // (opcjonalnie) users
-    const { error: updUsers } = await supabase
-      .from('users')
-      .update({
-        subscription_status: status,
-        subscription_start: periodStart,
-        subscription_end: periodEnd,
-        stripe_customer_id: customerId,
-        stripe_subscription_id: subscriptionId,
-      })
-      .eq('stripe_customer_id', customerId);
-
-    if (updUsers) console.warn('⚠️ invoice.paid update users warn:', updUsers.message);
-
-    console.log('✅ invoice.paid -> Supabase updated:', {
-      subscriptionId,
-      customerId,
-      status,
-      periodEnd,
-      updated,
-    });
-
-    return res.status(200).json({ ok: true, invoice_paid: true, status, periodEnd });
   }
 
-  // ✅ STATUS SYNC (trial -> active, active -> past_due, cancel_at_period_end, itd.)
-  if (event.type === 'customer.subscription.updated') {
-    const sub = event.data.object as Stripe.Subscription;
+  // (opcjonalnie) users
+  const updUsers = await supabase
+    .from('users')
+    .update({
+      subscription_status: status,
+      subscription_start: periodStart,
+      subscription_end: periodEnd,
+      stripe_customer_id: customerId,
+      stripe_subscription_id: subscriptionId,
+    })
+    .eq('stripe_customer_id', customerId)
+    .select('id');
 
-    const customerId =
-      typeof (sub as any).customer === 'string'
-        ? (sub as any).customer
-        : (sub as any).customer?.id;
+  if (updUsers.error) console.warn('⚠️ invoice.paid update users warn:', updUsers.error.message);
 
-    const cps = (sub as any).current_period_start as number | undefined;
-    const cpe = (sub as any).current_period_end as number | undefined;
+  console.log('✅ invoice.paid -> Supabase updated:', {
+    subscriptionId,
+    customerId,
+    status,
+    periodEnd,
+    updated,
+  });
 
-    const periodStart = cps ? new Date(cps * 1000).toISOString() : null;
-    const periodEnd = cpe ? new Date(cpe * 1000).toISOString() : null;
-
-    const { error: upd } = await supabase
-      .from('patients')
-      .update({
-        subscription_status: sub.status,
-        subscription_started_at: periodStart,
-        subscription_expires_at: periodEnd,
-        stripe_customer_id: customerId,
-        stripe_subscription_id: sub.id,
-      })
-      .eq('stripe_customer_id', customerId || '');
-
-    if (upd) {
-      // fallback po subscription_id
-      const { error: upd2 } = await supabase
-        .from('patients')
-        .update({
-          subscription_status: sub.status,
-          subscription_started_at: periodStart,
-          subscription_expires_at: periodEnd,
-          stripe_customer_id: customerId,
-          stripe_subscription_id: sub.id,
-        })
-        .eq('stripe_subscription_id', sub.id);
-
-      if (upd2) console.error('⚠️ subscription.updated update failed:', upd2.message);
-    }
-
-    console.log('✅ subscription.updated -> Supabase synced:', {
-      subId: sub.id,
-      customerId,
-      status: sub.status,
-      periodEnd,
-    });
-
-    return res.status(200).json({ ok: true, sub_updated: true, status: sub.status, periodEnd });
-  }
+  return res.status(200).json({ ok: true, invoice_paid: true, status, periodEnd, updated });
+}
 
   // ✅ CANCEL SUBSCRIPTION (blokada dostępu + blokada ponownego triala)
   if (event.type === 'customer.subscription.deleted') {
@@ -239,8 +197,13 @@ if (!relevant.has(event.type)) {
       const { data: patient2, error: findErr2 } = await supabase
         .from('patients')
         .select('id, trial_ends_at')
-        .eq('stripe_customer_id', customerId || '')
+        .eq('stripe_customer_id', customerId)
         .maybeSingle();
+
+      if (!customerId) {
+        console.warn('⚠️ subscription.deleted missing customerId', { subId: sub.id });
+        return res.status(200).json({ ok: true, skipped: 'missing-customerId' });
+      }
 
       if (findErr2) console.error('⚠️ patients lookup by stripe_customer_id failed:', findErr2.message);
 
@@ -281,82 +244,99 @@ if (!relevant.has(event.type)) {
     return res.status(200).json({ ok: true, canceled: true });
   }
 
-  console.log('📥 Webhook received: checkout.session.completed');
-  const session = event.data.object as Stripe.Checkout.Session;
-  // ✅ TRIAL / SUBSCRIPTION (Plan 30d)
-  // Jeśli Checkout był w trybie subscription, nie wystawiamy faktury tutaj.
-  if (session.mode === 'subscription' && session.subscription) {
-    // Minimalna walidacja
-    if (!session.customer_email || !session.metadata?.plan) {
-      console.error('❌ Missing metadata or email – cannot set trial');
-      return res.status(200).json({ ok: true, skipped: 'missing-email-or-plan' });
-    }
+ console.log('📥 Webhook received: checkout.session.completed');
+const session = event.data.object as Stripe.Checkout.Session;
 
-    const email = session.customer_email;
-    const plan = session.metadata.plan;
-   // ❗️Plan 30d jest subscription (trial) – nie obsługujemy go jako one-time
+// ✅ TRIAL / SUBSCRIPTION (Plan 30d)
+if (session.mode === 'subscription' && session.subscription) {
+  const email = session.customer_email || session.customer_details?.email;
 
+  if (!email || !session.metadata?.plan) {
+    console.error('❌ Missing metadata or email – cannot set trial');
+    return res.status(200).json({ ok: true, skipped: 'missing-email-or-plan' });
+  }
 
-    const subId =
-      typeof session.subscription === 'string'
-        ? session.subscription
-        : (session.subscription as any).id;
+  const plan = session.metadata.plan;
 
-    const subResp = await stripe.subscriptions.retrieve(subId);
-    const sub = subResp as unknown as Stripe.Subscription;
+  const subId =
+    typeof session.subscription === 'string'
+      ? session.subscription
+      : (session.subscription as any).id;
 
-    const status = sub.status; // 'trialing' / 'active' / ...
-    const trialEnd = sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null;
-    const cps = (sub as any).current_period_start as number | undefined;
-    const cpe = (sub as any).current_period_end as number | undefined;
+  const subResp = await stripe.subscriptions.retrieve(subId);
+  const sub = subResp as unknown as Stripe.Subscription;
 
-    const periodStart = cps ? new Date(cps * 1000).toISOString() : new Date().toISOString();
-    const periodEnd = cpe
-  ? new Date(cpe * 1000).toISOString()
-  : (trialEnd ?? null);
+  const status = sub.status;
+  const trialEnd = sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null;
+  const cps = (sub as any).current_period_start as number | undefined;
+  const cpe = (sub as any).current_period_end as number | undefined;
 
+  const periodStart = cps ? new Date(cps * 1000).toISOString() : new Date().toISOString();
+  const periodEnd = cpe ? new Date(cpe * 1000).toISOString() : (trialEnd ?? null);
 
-    const stripeCustomerId =
-      typeof sub.customer === 'string' ? sub.customer : (sub.customer as any).id;
+  const stripeCustomerId =
+    typeof sub.customer === 'string' ? sub.customer : (sub.customer as any).id;
 
-    // ✅ Zapis do Supabase: trial info
-    const { error: pErr } = await supabase
+  const updPatients = await supabase
+    .from('patients')
+    .update({
+      plan,
+      subscription_status: status,
+      subscription_started_at: periodStart,
+      subscription_expires_at: periodEnd,
+      trial_ends_at: trialEnd,
+      trial_used: true,
+      stripe_customer_id: stripeCustomerId,
+      stripe_subscription_id: sub.id,
+    })
+    .eq('email', email)
+    .select('id');
+
+  if (updPatients.error) {
+    console.error('⚠️ Update patients trial failed:', updPatients.error.message);
+  }
+
+  // jeśli 0 wierszy — robimy upsert
+  if (!updPatients.data || updPatients.data.length === 0) {
+    console.warn('⚠️ No patients row updated for trial by email. Doing upsert.', { email });
+
+    const up = await supabase
       .from('patients')
-      .update({
+      .upsert({
+        email,
+        name: session.customer_details?.name || null,
         plan,
         subscription_status: status,
         subscription_started_at: periodStart,
         subscription_expires_at: periodEnd,
         trial_ends_at: trialEnd,
-        trial_used: true, // ✅ BLOKADA PONOWNEGO TRIALA (od startu)
+        trial_used: true,
         stripe_customer_id: stripeCustomerId,
         stripe_subscription_id: sub.id,
-      })
+      }, { onConflict: 'email' });
 
-      .eq('email', email);
-
-    if (pErr) console.error('⚠️ Update patients trial failed:', pErr.message);
-
-    // (opcjonalnie) users
-    const { error: uErr } = await supabase
-      .from('users')
-      .update({
-        plan,
-        subscription_status: status,
-        subscription_start: periodStart,
-        subscription_end: periodEnd,
-        stripe_customer_id: stripeCustomerId,
-        stripe_subscription_id: sub.id,
-      })
-      .eq('email', email);
-
-    if (uErr) console.error('⚠️ Update users trial failed:', uErr.message);
-
-    console.log(`✅ Trial saved in Supabase: ${email} status=${status} trialEnd=${trialEnd}`);
-
-    // ❗️WAŻNE: nie generujemy faktury na trialu
-    return res.status(200).json({ received: true, ok: true, trial: true });
+    if (up.error) console.error('⚠️ patients upsert trial failed:', up.error.message);
   }
+
+  // (opcjonalnie) users
+  const updUsers = await supabase
+    .from('users')
+    .update({
+      plan,
+      subscription_status: status,
+      subscription_start: periodStart,
+      subscription_end: periodEnd,
+      stripe_customer_id: stripeCustomerId,
+      stripe_subscription_id: sub.id,
+    })
+    .eq('email', email)
+    .select('id');
+
+  if (updUsers.error) console.error('⚠️ Update users trial failed:', updUsers.error.message);
+
+  console.log(`✅ Trial saved in Supabase: ${email} status=${status} trialEnd=${trialEnd}`);
+  return res.status(200).json({ received: true, ok: true, trial: true });
+}
 
   // 1) Minimalna walidacja danych z sesji
   if (!session.customer_email || !session.metadata?.plan) {
