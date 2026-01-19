@@ -1,6 +1,5 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 const ALLOWED_LANGS = ["pl","en","de","fr","es","ua","ru","zh","ar","hi","he"] as const;
 type Lang = typeof ALLOWED_LANGS[number];
@@ -52,9 +51,11 @@ export async function sendInvoiceEmail({
   gross: string;
   lang?: Lang | string;
 }) {
-  if (!process.env.RESEND_API_KEY || !resend) {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) {
     throw new Error("RESEND_API_KEY is missing");
   }
+  const resend = new Resend(key);
 
   if (!isEmail(to)) {
     throw new Error("Invalid recipient email");
