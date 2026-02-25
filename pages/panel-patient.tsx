@@ -1,5 +1,6 @@
 import React from 'react';
 import Head from 'next/head';
+import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import LangAndThemeToggle from '@/components/LangAndThemeToggle';
@@ -280,7 +281,14 @@ export default function PatientPanelPage(): React.JSX.Element {
   const [subscriptionStatus, setSubscriptionStatus] = useState<string>('none');
   const [subscriptionExpiresAt, setSubscriptionExpiresAt] = useState<string | null>(null);
   const [subscriptionStartedAt, setSubscriptionStartedAt] = useState<string | null>(null);
-  
+  const [robotPrograms, setRobotPrograms] = useState<any>(null);
+  const [isGeneratingRobot, setIsGeneratingRobot] = useState(false);
+  const [robotHistory, setRobotHistory] = useState<any[]>([]);
+  const [robotMeta, setRobotMeta] = useState<{ cached?: boolean; profile?: string } | null>(null);
+  const [robotFilterDay, setRobotFilterDay] = useState<string>('');
+  const [robotFilterMeal, setRobotFilterMeal] = useState<string>('');
+  const [isLoadingRobotHistory, setIsLoadingRobotHistory] = useState(false);
+    
   // Auto-aktualizacja płatności po wygaśnięciu subskrypcji
 useEffect(() => {
   if (!subscriptionExpiresAt) { setHasPaid(false); return; }
@@ -332,6 +340,26 @@ useEffect(() => {
     setEditableDiet
   } = patientData;
 
+    const getAccessToken = async (): Promise<string | null> => {
+    const { data } = await supabase.auth.getSession();
+    return data?.session?.access_token ?? null;
+  };
+
+    const refreshRobotHistory = async () => {
+    try {
+      setIsLoadingRobotHistory(true);
+      const accessToken = await getAccessToken();
+      if (!accessToken) return;
+
+      const listRes = await fetch(`/api/robot-programs?limit=5&accessToken=${encodeURIComponent(accessToken)}`);
+      const listJson = await listRes.json();
+      setRobotHistory(Array.isArray(listJson?.items) ? listJson.items : []);
+    } catch (e) {
+      console.error('❌ refresh robot history:', e);
+    } finally {
+      setIsLoadingRobotHistory(false);
+    }
+  };
 
   useEffect(() => {
   const storedLang = localStorage.getItem('platformLang');
@@ -487,6 +515,40 @@ useEffect(() => {
         console.warn('⚠️ Brak potwierdzonej diety');
       }
     });
+}, [selectedSection]);
+useEffect(() => {
+  if (selectedSection !== 'robot') return;
+
+  (async () => {
+    try {
+      setIsLoadingRobotHistory(true);
+
+      const accessToken = await getAccessToken();
+      if (!accessToken) return;
+
+      // 1) latest
+      const latestRes = await fetch(`/api/robot-programs?latest=true&limit=1&accessToken=${encodeURIComponent(accessToken)}`);
+      const latestJson = await latestRes.json();
+      const latestItem = latestJson?.items?.[0] ?? null;
+
+      if (latestItem?.program_json) {
+        const program = latestItem.program_json;
+        setRobotPrograms(program);
+      } else {
+        // jeśli brak, nie nadpisuj ewentualnie wygenerowanego w sesji
+        // setRobotPrograms(null);
+      }
+
+      // 2) historia (5)
+      const listRes = await fetch(`/api/robot-programs?limit=5&accessToken=${encodeURIComponent(accessToken)}`);
+      const listJson = await listRes.json();
+      setRobotHistory(Array.isArray(listJson?.items) ? listJson.items : []);
+    } catch (e) {
+      console.error('❌ load robot programs:', e);
+    } finally {
+      setIsLoadingRobotHistory(false);
+    }
+  })();
 }, [selectedSection]);
 
 const saveDietToSupabaseAndPdf = async () => {
@@ -816,171 +878,299 @@ const handleGenerateDiet = async () => {
         }
       }
     );
-  } catch (err) {
-    console.error(`${tUI('dietGenerationErrorPrefix', lang)} ${err}`);
-    alert(tUI('dietGenerationFailed', lang));
-    stopFakeProgress();
-    setProgress(0);
-    setProgressMessage('');
-  } finally {
-    setIsGenerating(false);
-    generatingRef.current = false; // 🔓 odblokuj kolejne generowanie
-  }
-};
-
-
-async function saveDraftToSupabaseWithDoctor(email: string): Promise<void> {
-  try {
-    const userId = localStorage.getItem('currentUserID');
-
-    if (!userId) {
-      alert(tUI('noUserIdError', lang));
-      return;
-    }
-
-    if (!editableDiet || typeof editableDiet !== 'object' || Array.isArray(editableDiet)) {
-      console.error('❌ Nieprawidłowy diet_plan:', editableDiet);
-      alert(tUI('dietDataInvalid', lang));
-      return;
-    }
-
-    const cleanDiet = JSON.parse(JSON.stringify(editableDiet));
-
-    const { error } = await supabase
-      .from('patient_diets')
-      .upsert(
-        {
-          user_id: userId,
-          diet_plan: cleanDiet,
-          status: 'draft',
-          patient_name: form?.name || '',
-          ...(email && { selected_doctor_id: email }) // 👈 tylko jeśli email podany
-        },
-        { onConflict: 'user_id' }
-      );
-
-    if (error) {
-      console.error(`${tUI('draftSaveErrorLog', lang)}:`, error.message);
-      alert(tUI('dietSubmissionError', lang));
-    } else {
-      alert(tUI('dietSubmissionSuccess', lang));
-    }
-  } catch (err) {
-    console.error(`${tUI('draftSaveCatchErrorLog', lang)}:`, err);
-    alert(tUI('dietSaveError', lang));
-  }
-}
-
-
-const handleGenerateRecipes = async () => {
-  try {
-    setProgress(10);
-    setProgressMessage(tUI('generatingRecipes', lang));
-
-   const res = await fetch('/api/generate-recipes', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      dietPlan: editableDiet,
-      lang    
-    })
-  });
-
-    setProgress(60);
-    setProgressMessage(tUI('processingRecipes', lang));
-
-    const json = await res.json();
-    setRecipes(json.recipes);
-
-    setProgress(100);
-    setProgressMessage(tUI('recipesReady', lang));
-    setTimeout(() => {
+    } catch (err) {
+      console.error(`${tUI('dietGenerationErrorPrefix', lang)} ${err}`);
+      alert(tUI('dietGenerationFailed', lang));
+      stopFakeProgress();
       setProgress(0);
       setProgressMessage('');
-    }, 1000);
-  } catch (err) {
-    console.error('❌ Błąd generowania przepisów:', err);
-    alert(tUI('errorGeneratingRecipes', lang));
-    setProgress(0);
-    setProgressMessage('');
+    } finally {
+      setIsGenerating(false);
+      generatingRef.current = false; // 🔓 odblokuj kolejne generowanie
+    }
+  };
+
+
+  async function saveDraftToSupabaseWithDoctor(email: string): Promise<void> {
+    try {
+      const userId = localStorage.getItem('currentUserID');
+
+      if (!userId) {
+        alert(tUI('noUserIdError', lang));
+        return;
+      }
+
+      if (!editableDiet || typeof editableDiet !== 'object' || Array.isArray(editableDiet)) {
+        console.error('❌ Nieprawidłowy diet_plan:', editableDiet);
+        alert(tUI('dietDataInvalid', lang));
+        return;
+      }
+
+      const cleanDiet = JSON.parse(JSON.stringify(editableDiet));
+
+      const { error } = await supabase
+        .from('patient_diets')
+        .upsert(
+          {
+            user_id: userId,
+            diet_plan: cleanDiet,
+            status: 'draft',
+            patient_name: form?.name || '',
+            ...(email && { selected_doctor_id: email }) // 👈 tylko jeśli email podany
+          },
+          { onConflict: 'user_id' }
+        );
+
+      if (error) {
+        console.error(`${tUI('draftSaveErrorLog', lang)}:`, error.message);
+        alert(tUI('dietSubmissionError', lang));
+      } else {
+        alert(tUI('dietSubmissionSuccess', lang));
+      }
+    } catch (err) {
+      console.error(`${tUI('draftSaveCatchErrorLog', lang)}:`, err);
+      alert(tUI('dietSaveError', lang));
+    }
   }
-};
 
-const handleGenerateNarrative = async () => {
-  try {
-    setProgress(20);
-    setProgressMessage(tUI('generatingNarrative', lang));
 
-    const response = await fetch('/api/interview-narrative', {
+  const handleGenerateRecipes = async () => {
+    try {
+      setProgress(10);
+      setProgressMessage(tUI('generatingRecipes', lang));
+
+    const res = await fetch('/api/generate-recipes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        interviewData,
-        goal: interviewData.goal,
-        recommendation: interviewData.recommendation,
-        lang
+        dietPlan: editableDiet,
+        lang    
       })
     });
 
-    const { narrativeText } = await response.json();
-    if (narrativeText) setNarrativeText(narrativeText);
+      setProgress(60);
+      setProgressMessage(tUI('processingRecipes', lang));
 
-    setProgress(100);
-    setProgressMessage(tUI('narrativeReady', lang));
-    setTimeout(() => {
+      const json = await res.json();
+      setRecipes(json.recipes);
+
+      setProgress(100);
+      setProgressMessage(tUI('recipesReady', lang));
+      setTimeout(() => {
+        setProgress(0);
+        setProgressMessage('');
+      }, 1000);
+    } catch (err) {
+      console.error('❌ Błąd generowania przepisów:', err);
+      alert(tUI('errorGeneratingRecipes', lang));
       setProgress(0);
       setProgressMessage('');
-    }, 1000);
-  } catch (err) {
-    console.error('❌ Błąd przy pobieraniu opisu AI:', err);
-    setNarrativeText('⚠️ Błąd generowania opisu wywiadu przez AI');
-    setProgress(0);
-    setProgressMessage('');
-  }
-};
+    }
+  };
+  const handleGenerateRobotProgram = async () => {
+    try {
+      const hasRobot =
+        Boolean(form?.has_kitchen_robot) &&
+        Boolean(String(form?.kitchen_robot_model || '').trim()) &&
+        Boolean(String(form?.kitchen_robot_serial || '').trim());
 
-const handleSectionChange = async (newSection: string) => {
-  if (!hasPaid && newSection !== 'data') {
-    alert(tUI('subscriptionRequired', lang));
-    return;
-  }
+      if (!hasPaid) {
+        alert(tUI('subscriptionRequired', lang));
+        return;
+      }
 
-  // zapisz dane z aktualnej sekcji
-  if (selectedSection === 'medical' && medicalData) {
-    await saveMedicalData(medicalData);
-    console.log('💾 Autozapis: dane medyczne zapisane');
-  }
-  if (selectedSection === 'interview' && interviewData) {
-    await saveInterviewData(interviewData);
-    console.log('💾 Autozapis: dane z wywiadu zapisane');
-  }
+      if (!hasRobot) {
+        alert(tUI('kitchenRobot.missingConfig', lang));
+        return;
+      }
 
-  setSelectedSection(newSection);
-  setTimeout(() => {
-    document.getElementById(`section-${newSection}`)?.scrollIntoView({ behavior: 'smooth' });
-  }, 50);
-};
+      if (!editableDiet || Object.keys(editableDiet).length === 0) {
+        alert(tUI('kitchenRobot.noDiet', lang));
+        return;
+      }
 
-const [showDoctorDropdown, setShowDoctorDropdown] = useState(false);
+      // 🔐 Pobierz access token
+      const { data } = await supabase.auth.getSession();
+      const accessToken = data?.session?.access_token;
 
-const handleShowDoctors = async () => {
-  if (!showDoctorDropdown) {
-    setShowDoctorDropdown(true);
-    if (doctorList.length === 0) {
-      const { data, error } = await supabase
-        .from('users')
-        .select('id, name, email')
-        .in('role', ['doctor', 'dietitian']);
+      if (!accessToken) {
+        alert(tUI('notLoggedIn', lang));
+        return;
+      }
 
-      if (error) {
-        console.error('❌ Błąd pobierania listy lekarzy:', error.message);
-      } else {
-        setDoctorList((data || []).sort((a, b) => a.name.localeCompare(b.name)));
+      setIsGeneratingRobot(true);
+      setProgress(10);
+      setProgressMessage(tUI('kitchenRobot.generating', lang));
+
+      const res = await fetch('/api/generate-robot-program', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          accessToken, // ✅ NOWE
+          lang,
+          dietPlan: editableDiet,
+          robot: {
+            model: form?.kitchen_robot_model,
+            serial: form?.kitchen_robot_serial,
+            profile: form?.kitchen_robot_profile || 'cobbo-tuya-v0'
+          }
+        })
+      });
+
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(txt || `HTTP ${res.status}`);
+      }
+
+      const json = await res.json();
+      setRobotMeta({ cached: Boolean(json?.cached), profile: json?.profile });
+
+      // 🧠 backend zwraca { recipes, profile }
+      setRobotPrograms(json?.recipes ? json : { recipes: [] });
+      setRobotFilterDay('');
+      setRobotFilterMeal('');
+      setProgress(100);
+      setProgressMessage(tUI('kitchenRobot.ready', lang));
+
+      setTimeout(() => {
+        setProgress(0);
+        setProgressMessage('');
+      }, 800);
+
+    } catch (err) {
+      console.error('❌ Robot program generation error:', err);
+      alert(tUI('kitchenRobot.error', lang));
+      setProgress(0);
+      setProgressMessage('');
+    } finally {
+      setIsGeneratingRobot(false);
+    }
+  };
+  const handleGenerateNarrative = async () => {
+    try {
+      setProgress(20);
+      setProgressMessage(tUI('generatingNarrative', lang));
+
+      const response = await fetch('/api/interview-narrative', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          interviewData,
+          goal: interviewData.goal,
+          recommendation: interviewData.recommendation,
+          lang
+        })
+      });
+
+      const { narrativeText } = await response.json();
+      if (narrativeText) setNarrativeText(narrativeText);
+
+      setProgress(100);
+      setProgressMessage(tUI('narrativeReady', lang));
+      setTimeout(() => {
+        setProgress(0);
+        setProgressMessage('');
+      }, 1000);
+    } catch (err) {
+      console.error('❌ Błąd przy pobieraniu opisu AI:', err);
+      setNarrativeText('⚠️ Błąd generowania opisu wywiadu przez AI');
+      setProgress(0);
+      setProgressMessage('');
+    }
+  };
+
+  const handleSectionChange = async (newSection: string) => {
+    if (!hasPaid && newSection !== 'data') {
+      alert(tUI('subscriptionRequired', lang));
+      return;
+    }
+
+    // zapisz dane z aktualnej sekcji
+    if (selectedSection === 'medical' && medicalData) {
+      await saveMedicalData(medicalData);
+      console.log('💾 Autozapis: dane medyczne zapisane');
+    }
+    if (selectedSection === 'interview' && interviewData) {
+      await saveInterviewData(interviewData);
+      console.log('💾 Autozapis: dane z wywiadu zapisane');
+    }
+
+    setSelectedSection(newSection);
+    setTimeout(() => {
+      document.getElementById(`section-${newSection}`)?.scrollIntoView({ behavior: 'smooth' });
+    }, 50);
+  };
+
+  const [showDoctorDropdown, setShowDoctorDropdown] = useState(false);
+
+  const handleShowDoctors = async () => {
+    if (!showDoctorDropdown) {
+      setShowDoctorDropdown(true);
+      if (doctorList.length === 0) {
+        const { data, error } = await supabase
+          .from('users')
+          .select('id, name, email')
+          .in('role', ['doctor', 'dietitian']);
+
+        if (error) {
+          console.error('❌ Błąd pobierania listy lekarzy:', error.message);
+        } else {
+          setDoctorList((data || []).sort((a, b) => a.name.localeCompare(b.name)));
+        }
       }
     }
-  }
-};
+  };
+  const isMobile = () =>
+    typeof navigator !== "undefined" &&
+    /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
+  const openTuyaApp = (lang: LangKey) => {
+    // Smart Life / Tuya Smart – deep linki “otwórz aplikację”
+    const deepLinks = ["smartlife://", "tuyasmart://"];
+    const storeAndroid = "https://play.google.com/store/apps/details?id=com.tuya.smartlife";
+    const storeIos = "https://apps.apple.com/app/smart-life-smart-living/id1115101477";
+
+    if (!isMobile()) {
+      alert(tUI("kitchenRobot.tuyaDesktopInfo", lang));
+      window.open("https://www.tuya.com/", "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    const ua = navigator.userAgent || "";
+    const isAndroid = /Android/i.test(ua);
+    const storeUrl = isAndroid ? storeAndroid : storeIos;
+
+    let opened = false;
+    const tryOpen = (url: string) => {
+      opened = true;
+      window.location.href = url;
+    };
+
+    // próbujemy po kolei, a jak nie zadziała, lecimy do store
+    tryOpen(deepLinks[0]);
+
+    setTimeout(() => {
+      // jeśli app nie przejęła nawigacji, user zostaje w przeglądarce => store
+      if (opened) window.location.href = storeUrl;
+    }, 900);
+  };
+    // ===== ETAP 8.2-5: filtry dnia/posiłku dla programów robota =====
+    const robotRecipes: any[] = Array.isArray(robotPrograms?.recipes) ? robotPrograms.recipes : [];
+
+    const uniqueRobotDays = Array.from(
+      new Set(robotRecipes.map(r => String(r?.day || '')).filter(Boolean))
+    );
+
+    const uniqueRobotMeals = Array.from(
+      new Set(robotRecipes.map(r => String(r?.meal || '')).filter(Boolean))
+    );
+
+    const filteredRobotRecipes = robotRecipes.filter(r => {
+      const dOk = !robotFilterDay || String(r?.day || '') === robotFilterDay;
+      const mOk = !robotFilterMeal || String(r?.meal || '') === robotFilterMeal;
+      return dOk && mOk;
+    });
+    
   return (
     
     <main className="relative min-h-screen bg-[#0f271e]/70 bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 backdrop-blur-[12px] shadow-[inset_0_0_60px_rgba(255,255,255,0.08)] flex flex-col justify-start items-center pt-6 px-4 md:pt-10 md:px-6 text-white transition-all duration-300 overflow-x-hidden">
@@ -1010,6 +1200,7 @@ const handleShowDoctors = async () => {
       onSelect={handleSectionChange}
       hasPaid={hasPaid}
       isTrialActive={isTrialActive}
+      form={form}
     />
       {hasPaid && (
   <p
@@ -1132,288 +1323,602 @@ const handleShowDoctors = async () => {
         )}
 
 
-{selectedSection === 'diet' && (
-  <div className="space-y-6">
-    {/* 🧠 Cel, model, kuchnia, posiłki – 2 rzędy po 2 kolumny */}
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 text-center w-full">
-      <div className="w-full sm:max-w-[360px] min-h-[180px] flex flex-col justify-between items-stretch px-3 sm:px-4 mx-auto">
+        {selectedSection === 'diet' && (
+          <div className="space-y-6">
+            {/* 🧠 Cel, model, kuchnia, posiłki – 2 rzędy po 2 kolumny */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 text-center w-full">
+              <div className="w-full sm:max-w-[360px] min-h-[180px] flex flex-col justify-between items-stretch px-3 sm:px-4 mx-auto">
 
-        <DietGoalForm
-          lang={lang}
-          onChange={(goal) => setInterviewData({ ...interviewData, goal })}
-        />
-      </div>
-      <div className="w-full sm:max-w-[360px] min-h-[180px] flex flex-col justify-between items-stretch px-3 sm:px-4 mx-auto">
+                <DietGoalForm
+                  lang={lang}
+                  onChange={(goal) => setInterviewData({ ...interviewData, goal })}
+                />
+              </div>
+              <div className="w-full sm:max-w-[360px] min-h-[180px] flex flex-col justify-between items-stretch px-3 sm:px-4 mx-auto">
 
-        <SelectModelForm
-          lang={lang}
-          onChange={(model) => setInterviewData({ ...interviewData, model })}
-        />
-      </div>
-     <div className="w-full sm:max-w-[360px] min-h-[180px] flex flex-col justify-between items-stretch px-3 sm:px-4 mx-auto">
+                <SelectModelForm
+                  lang={lang}
+                  onChange={(model) => setInterviewData({ ...interviewData, model })}
+                />
+              </div>
+            <div className="w-full sm:max-w-[360px] min-h-[180px] flex flex-col justify-between items-stretch px-3 sm:px-4 mx-auto">
 
-       <SelectCuisineForm
-          lang={lang}
-          onChange={(cuisine) => setInterviewData({ ...interviewData, cuisine })}
-        />
-      </div>
-      <div className="w-full sm:max-w-[360px] min-h-[180px] flex flex-col justify-between items-stretch px-3 sm:px-4 mx-auto">
+              <SelectCuisineForm
+                  lang={lang}
+                  onChange={(cuisine) => setInterviewData({ ...interviewData, cuisine })}
+                />
+              </div>
+              <div className="w-full sm:max-w-[360px] min-h-[180px] flex flex-col justify-between items-stretch px-3 sm:px-4 mx-auto">
 
-  <SelectMealsPerDayForm
-    value={interviewData?.mealsPerDay ?? 0}
-    onChange={(meals: number) =>
-      setInterviewData({ ...interviewData, mealsPerDay: meals })
-    }
-    lang={lang}   // <-- DODANE
-  />
-</div>
-    </div>
+          <SelectMealsPerDayForm
+            value={interviewData?.mealsPerDay ?? 0}
+            onChange={(meals: number) =>
+              setInterviewData({ ...interviewData, mealsPerDay: meals })
+            }
+            lang={lang}   // <-- DODANE
+          />
+        </div>
+            </div>
 
-    {/* 🔽 Kolejna sekcja – status, przyciski, tabela */}
-    <div className="space-y-4">
-
-
-  {/* ⏳ Status generowania */}
-  {isGenerating && (
-    <div className="text-sm text-gray-600 italic animate-pulse">
-      ⏳ {tUI('writingDiet', lang)}{' '}
-      {streamingText.length > 20 && `(${tUI('generatingWait', lang)})`}
-    </div>
-  )}
-
-<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mt-6">
-  {/* 🧠 Generuj dietę */}
-  <button
-    onClick={handleGenerateDiet}
-    disabled={isGenerating}
-    className="w-24 h-24 sm:w-28 sm:h-28 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition disabled:opacity-50"
-  >
-    <span className="text-4xl leading-none">🧠</span>
-    <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
-      {tUI('generateDiet', lang)}
-    </span>
-  </button>
-
-{/* 📄 Generuj PDF */}
-<button
-  onClick={async () => {
-    try {
-      setProgress(10);
-      setProgressMessage(tUI('generatingPdf', lang));
-
-      const { generateDietPdf } = await import('@/utils/generateDietPdf');
-
-      const bmi =
-        form.weight && form.height
-          ? parseFloat((form.weight / ((form.height / 100) ** 2)).toFixed(1))
-          : 0;
-
-      const mealArray: Meal[] = Object.entries(editableDiet || {})
-      // pomiń meta / techniczne
-      .filter(([k]) => !k.startsWith('__'))
-      // dzień może być tablicą albo mapą posiłków
-      .flatMap(([, v]: [string, any]) => Array.isArray(v) ? v : Object.values(v || {}))
-      // dopilnuj składników
-      .map((m: any) => ({
-        ...m,
-        ingredients: Array.isArray(m?.ingredients)
-          ? m.ingredients.map((i: any) => ({
-              product: i?.product ?? i?.name ?? '',
-              weight: typeof i?.weight === 'number'
-                ? i.weight
-                : typeof i?.quantity === 'number'
-                  ? i.quantity
-                  : Number(i?.weight ?? i?.quantity) || 0,
-              unit: i?.unit || (i?.weight != null || i?.quantity != null ? 'g' : undefined),
-            }))
-          : []
-      }));
-
-      if (!Array.isArray(mealArray) || mealArray.length === 0) {
-        alert(tUI('dietPlanEmptyOrInvalid', lang));
-        setProgress(0);
-        setProgressMessage('');
-        return;
-      }
-
-      setProgress(40);
-      setProgressMessage(tUI('processingInterview', lang));
-
-      await generateDietPdf(
-        form,
-        bmi,
-        mealArray,
-        true,
-        notes,
-        lang,
-        interviewData,
-        {
-          bmi: interviewData.bmi,
-          ppm: interviewData.ppm,
-          cpm: interviewData.cpm,
-          pal: interviewData.pal,
-          kcalMaintain: interviewData.kcalMaintain,
-          kcalReduce: interviewData.kcalReduce,
-          kcalGain: interviewData.kcalGain,
-          nmcBroca: interviewData.nmcBroca,
-          nmcLorentz: interviewData.nmcLorentz
-        },
-        'download',
-        narrativeText,
-        recipes
-      );
-
-      setProgress(100);
-      setProgressMessage(tUI('pdfReady', lang));
-      setTimeout(() => {
-        setProgress(0);
-        setProgressMessage('');
-      }, 1000);
-    } catch (e) {
-      console.error('❌ PDF generation error:', e);
-      alert(tUI('errorGeneratingPdf', lang));
-      setProgress(0);
-      setProgressMessage('');
-    }
-  }}
-  disabled={!editableDiet || Object.keys(editableDiet).length === 0 || progress > 0}
-  className="w-28 h-28 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition disabled:opacity-50"
->
-  <span className="text-4xl leading-none">📄</span>
-  <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
-    {tUI('generatePdf', lang)}
-  </span>
-</button>
+            {/* 🔽 Kolejna sekcja – status, przyciski, tabela */}
+            <div className="space-y-4">
 
 
-  {/* ✅ Zatwierdź dietę */}
-  <button
-    onClick={async () => {
-      const confirm = window.confirm(tUI('confirmApproveDietAsPatient', lang));
-      if (confirm) {
-        await saveDietToSupabaseOnly();
-      }
-    }}
-    disabled={!editableDiet || Object.keys(editableDiet).length === 0}
-    className="w-28 h-28 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition disabled:opacity-50"
-  >
-    <span className="text-4xl leading-none">✅</span>
-    <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
-      {tUI('approveDietAsPatient', lang)}
-    </span>
-  </button>
+          {/* ⏳ Status generowania */}
+          {isGenerating && (
+            <div className="text-sm text-gray-600 italic animate-pulse">
+              ⏳ {tUI('writingDiet', lang)}{' '}
+              {streamingText.length > 20 && `(${tUI('generatingWait', lang)})`}
+            </div>
+          )}
 
-  {/* 🍽️ Generuj przepisy */}
-{editableDiet && Object.keys(editableDiet).length > 0 && (
-  <button
-    onClick={handleGenerateRecipes}
-    disabled={isGeneratingRecipes}
-    className="w-28 h-28 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition disabled:opacity-50"
-  >
-    <span className="text-4xl leading-none">🍽️</span>
-    <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
-      {tUI('generateRecipes', lang)}
-    </span>
-  </button>
-)}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mt-6">
+          {/* 🧠 Generuj dietę */}
+          <button
+            onClick={handleGenerateDiet}
+            disabled={isGenerating}
+            className="w-24 h-24 sm:w-28 sm:h-28 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition disabled:opacity-50"
+          >
+            <span className="text-4xl leading-none">🧠</span>
+            <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
+              {tUI('generateDiet', lang)}
+            </span>
+          </button>
 
-{/* 📤 Wyślij dietę do lekarza/dietetyka (tworzy draft) */}
-{editableDiet && Object.keys(editableDiet).length > 0 && (
-  <button
-    onClick={async () => {
-      const confirm = window.confirm(tUI('confirmSendDietToDoctor', lang));
-      if (!confirm) return;
+        {/* 📄 Generuj PDF */}
+        <button
+          onClick={async () => {
+            try {
+              setProgress(10);
+              setProgressMessage(tUI('generatingPdf', lang));
 
-      const doctorEmail = form?.assigned_doctor_email;
-      if (!doctorEmail) {
-        alert(tUI('noAssignedDoctor', lang));
-        return;
-      }
+              const { generateDietPdf } = await import('@/utils/generateDietPdf');
 
-      const userId = localStorage.getItem('currentUserID');
-      if (!userId) {
-        alert(tUI('noUserIdError', lang));
-        return;
-      }
+              const bmi =
+                form.weight && form.height
+                  ? parseFloat((form.weight / ((form.height / 100) ** 2)).toFixed(1))
+                  : 0;
 
-      setIsSending(true); // 🔒 blokada klikania
-      setProgressMessage(tUI('savingDraft', lang));
-      startFakeProgress(10, 25, 60000); // 🔄 1 minuta max
+              const mealArray: Meal[] = Object.entries(editableDiet || {})
+              // pomiń meta / techniczne
+              .filter(([k]) => !k.startsWith('__'))
+              // dzień może być tablicą albo mapą posiłków
+              .flatMap(([, v]: [string, any]) => Array.isArray(v) ? v : Object.values(v || {}))
+              // dopilnuj składników
+              .map((m: any) => ({
+                ...m,
+                ingredients: Array.isArray(m?.ingredients)
+                  ? m.ingredients.map((i: any) => ({
+                      product: i?.product ?? i?.name ?? '',
+                      weight: typeof i?.weight === 'number'
+                        ? i.weight
+                        : typeof i?.quantity === 'number'
+                          ? i.quantity
+                          : Number(i?.weight ?? i?.quantity) || 0,
+                      unit: i?.unit || (i?.weight != null || i?.quantity != null ? 'g' : undefined),
+                    }))
+                  : []
+              }));
 
-      try {
-        const cleanDiet = JSON.parse(JSON.stringify(editableDiet));
-        const { error } = await supabase.from('patient_diets').upsert(
-          {
-            user_id: userId,
-            diet_plan: cleanDiet,
-            status: 'draft',
-            patient_name: form?.name || '',
-            selected_doctor_id: doctorEmail
-          },
-          { onConflict: 'user_id' }
-        );
+              if (!Array.isArray(mealArray) || mealArray.length === 0) {
+                alert(tUI('dietPlanEmptyOrInvalid', lang));
+                setProgress(0);
+                setProgressMessage('');
+                return;
+              }
 
-        if (error) throw error;
+              setProgress(40);
+              setProgressMessage(tUI('processingInterview', lang));
 
-        // 🟢 Wyślij powiadomienie e-mail do lekarza
-        await fetch('/api/send-diet-notification', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            doctorEmail,
-            patientName: form?.name,
-            patientEmail: form?.email,
-            lang
-          })
-        });
+              await generateDietPdf(
+                form,
+                bmi,
+                mealArray,
+                true,
+                notes,
+                lang,
+                interviewData,
+                {
+                  bmi: interviewData.bmi,
+                  ppm: interviewData.ppm,
+                  cpm: interviewData.cpm,
+                  pal: interviewData.pal,
+                  kcalMaintain: interviewData.kcalMaintain,
+                  kcalReduce: interviewData.kcalReduce,
+                  kcalGain: interviewData.kcalGain,
+                  nmcBroca: interviewData.nmcBroca,
+                  nmcLorentz: interviewData.nmcLorentz
+                },
+                'download',
+                narrativeText,
+                recipes
+              );
 
-        stopFakeProgress();
-        setProgress(100);
-        setProgressMessage(tUI('dietSentToDoctor', lang));
-        setTimeout(() => {
-          setProgress(0);
-          setProgressMessage('');
-        }, 1000);
+              setProgress(100);
+              setProgressMessage(tUI('pdfReady', lang));
+              setTimeout(() => {
+                setProgress(0);
+                setProgressMessage('');
+              }, 1000);
+            } catch (e) {
+              console.error('❌ PDF generation error:', e);
+              alert(tUI('errorGeneratingPdf', lang));
+              setProgress(0);
+              setProgressMessage('');
+            }
+          }}
+          disabled={!editableDiet || Object.keys(editableDiet).length === 0 || progress > 0}
+          className="w-28 h-28 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition disabled:opacity-50"
+        >
+          <span className="text-4xl leading-none">📄</span>
+          <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
+            {tUI('generatePdf', lang)}
+          </span>
+        </button>
 
-        alert(tUI('dietSubmissionSuccess', lang));
-      } catch (err) {
-        console.error("❌ Błąd zapisu wersji roboczej diety:", err);
-        alert(tUI('dietSubmissionError', lang));
-        stopFakeProgress();
-        setProgress(0);
-        setProgressMessage('');
-      } finally {
-        setIsSending(false); // 🔓 odblokuj
-      }
-    }}
-    disabled={isSending}
-    className="w-28 h-28 bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition disabled:opacity-50"
-  >
-    <span className="text-4xl leading-none">📤</span>
-    <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
-      {tUI('sendDietToDoctor', lang)}
-    </span>
-  </button>
-)}
 
-</div>
+          {/* ✅ Zatwierdź dietę */}
+          <button
+            onClick={async () => {
+              const confirm = window.confirm(tUI('confirmApproveDietAsPatient', lang));
+              if (confirm) {
+                await saveDietToSupabaseOnly();
+              }
+            }}
+            disabled={!editableDiet || Object.keys(editableDiet).length === 0}
+            className="w-28 h-28 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition disabled:opacity-50"
+          >
+            <span className="text-4xl leading-none">✅</span>
+            <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
+              {tUI('approveDietAsPatient', lang)}
+            </span>
+          </button>
 
-</div>
-    {/* Tabela diety */}
-   {editableDiet && Object.keys(editableDiet).length > 0 && (
-      <DietTable
-        editableDiet={editableDiet} 
-        setEditableDiet={setEditableDiet}
-        setConfirmedDiet={() => {}}
-        isEditable={false}
-        lang={lang}
-        notes={notes}
-        setNotes={setNotes}
-      />
-    )}
-   </div>
-    )}
+          {/* 🍽️ Generuj przepisy */}
+        {editableDiet && Object.keys(editableDiet).length > 0 && (
+          <button
+            onClick={handleGenerateRecipes}
+            disabled={isGeneratingRecipes}
+            className="w-28 h-28 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition disabled:opacity-50"
+          >
+            <span className="text-4xl leading-none">🍽️</span>
+            <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
+              {tUI('generateRecipes', lang)}
+            </span>
+          </button>
+        )}
 
+        {/* 📤 Wyślij dietę do lekarza/dietetyka (tworzy draft) */}
+        {editableDiet && Object.keys(editableDiet).length > 0 && (
+          <button
+            onClick={async () => {
+              const confirm = window.confirm(tUI('confirmSendDietToDoctor', lang));
+              if (!confirm) return;
+
+              const doctorEmail = form?.assigned_doctor_email;
+              if (!doctorEmail) {
+                alert(tUI('noAssignedDoctor', lang));
+                return;
+              }
+
+              const userId = localStorage.getItem('currentUserID');
+              if (!userId) {
+                alert(tUI('noUserIdError', lang));
+                return;
+              }
+
+              setIsSending(true); // 🔒 blokada klikania
+              setProgressMessage(tUI('savingDraft', lang));
+              startFakeProgress(10, 25, 60000); // 🔄 1 minuta max
+
+              try {
+                const cleanDiet = JSON.parse(JSON.stringify(editableDiet));
+                const { error } = await supabase.from('patient_diets').upsert(
+                  {
+                    user_id: userId,
+                    diet_plan: cleanDiet,
+                    status: 'draft',
+                    patient_name: form?.name || '',
+                    selected_doctor_id: doctorEmail
+                  },
+                  { onConflict: 'user_id' }
+                );
+
+                if (error) throw error;
+
+                // 🟢 Wyślij powiadomienie e-mail do lekarza
+                await fetch('/api/send-diet-notification', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    doctorEmail,
+                    patientName: form?.name,
+                    patientEmail: form?.email,
+                    lang
+                  })
+                });
+
+                stopFakeProgress();
+                setProgress(100);
+                setProgressMessage(tUI('dietSentToDoctor', lang));
+                setTimeout(() => {
+                  setProgress(0);
+                  setProgressMessage('');
+                }, 1000);
+
+                alert(tUI('dietSubmissionSuccess', lang));
+              } catch (err) {
+                console.error("❌ Błąd zapisu wersji roboczej diety:", err);
+                alert(tUI('dietSubmissionError', lang));
+                stopFakeProgress();
+                setProgress(0);
+                setProgressMessage('');
+              } finally {
+                setIsSending(false); // 🔓 odblokuj
+              }
+            }}
+            disabled={isSending}
+            className="w-28 h-28 bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition disabled:opacity-50"
+          >
+            <span className="text-4xl leading-none">📤</span>
+            <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
+              {tUI('sendDietToDoctor', lang)}
+            </span>
+          </button>
+        )}
+
+        </div>
+
+        </div>
+            {/* Tabela diety */}
+          {editableDiet && Object.keys(editableDiet).length > 0 && (
+              <DietTable
+                editableDiet={editableDiet} 
+                setEditableDiet={setEditableDiet}
+                setConfirmedDiet={() => {}}
+                isEditable={false}
+                lang={lang}
+                notes={notes}
+                setNotes={setNotes}
+              />
+            )}
+          </div>
+            )}
+        {selectedSection === 'robot' && (
+          <div className="space-y-6">
+                        {/* ETAP 9/9: GUARDY */}
+            {!hasPaid && (
+              <div className="bg-white/10 rounded-xl p-4 border border-white/10">
+                <div className="font-bold text-lg">{tUI('kitchenRobot.guard.noAccessTitle', lang)}</div>
+                <div className="text-sm opacity-90 mt-1">{tUI('kitchenRobot.guard.noAccessDesc', lang)}</div>
+                <div className="mt-4">
+                  <Link href="/payment">
+                    <button className="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-white font-semibold px-6 py-3 rounded-xl shadow transition">
+                      💳 {tUI('goToPayment', lang)}
+                    </button>
+                  </Link>
+                </div>
+              </div>
+            )}
+
+            {hasPaid && (!form?.has_kitchen_robot || !String(form?.kitchen_robot_model || '').trim() || !String(form?.kitchen_robot_serial || '').trim()) && (
+              <div className="bg-white/10 rounded-xl p-4 border border-white/10">
+                <div className="font-bold text-lg">{tUI('kitchenRobot.guard.fixConfigTitle', lang)}</div>
+                <div className="text-sm opacity-90 mt-1">{tUI('kitchenRobot.guard.fixConfigDesc', lang)}</div>
+                <div className="mt-4">
+                  <button
+                    onClick={() => handleSectionChange('data')}
+                    className="w-full sm:w-auto bg-slate-600 hover:bg-slate-700 text-white font-semibold px-6 py-3 rounded-xl shadow transition"
+                  >
+                    📝 {tUI('kitchenRobot.goToRegistration', lang)}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {hasPaid && form?.has_kitchen_robot && String(form?.kitchen_robot_model || '').trim() && String(form?.kitchen_robot_serial || '').trim() &&
+              (!editableDiet || Object.keys(editableDiet).length === 0) && (
+              <div className="bg-white/10 rounded-xl p-4 border border-white/10">
+                <div className="font-bold text-lg">{tUI('kitchenRobot.guard.noDietTitle', lang)}</div>
+                <div className="text-sm opacity-90 mt-1">{tUI('kitchenRobot.guard.noDietDesc', lang)}</div>
+                <div className="mt-4">
+                  <button
+                    onClick={() => handleSectionChange('diet')}
+                    className="w-full sm:w-auto bg-sky-600 hover:bg-sky-700 text-white font-semibold px-6 py-3 rounded-xl shadow transition"
+                  >
+                    🍽️ {tUI('kitchenRobot.goToDiet', lang)}
+                  </button>
+                </div>
+              </div>
+            )}
+            <div className="bg-white/20 dark:bg-white/10 rounded-2xl p-5 shadow-md">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                🤖 {tUI('kitchenRobot.panelTitle', lang)}
+
+                {robotMeta?.cached === true && (
+                  <span className="text-xs px-2 py-1 rounded bg-emerald-500/20 border border-emerald-400/30">
+                    {tUI('kitchenRobot.usedCached', lang)}
+                  </span>
+                )}
+
+                {robotMeta?.cached === false && (
+                  <span className="text-xs px-2 py-1 rounded bg-sky-500/20 border border-sky-400/30">
+                    {tUI('kitchenRobot.generatedNew', lang)}
+                  </span>
+                )}
+              </h2>
+
+              <p className="text-sm opacity-90 mt-2">
+                {tUI('kitchenRobot.panelDesc', lang)}
+              </p>
+
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="bg-black/20 rounded-xl p-4">
+                  <div className="text-sm opacity-80">{tUI('kitchenRobot.model', lang)}</div>
+                  <div className="font-semibold">
+                    {String(form?.kitchen_robot_model || '—')}
+                  </div>
+                </div>
+
+                <div className="bg-black/20 rounded-xl p-4">
+                  <div className="text-sm opacity-80">{tUI('kitchenRobot.serial', lang)}</div>
+                  <div className="font-semibold">
+                    {String(form?.kitchen_robot_serial || '—')}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-5 flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={handleGenerateRobotProgram}
+                  disabled={isGeneratingRobot}
+                  className="w-full sm:w-auto bg-cyan-600 hover:bg-cyan-700 text-white font-semibold px-6 py-3 rounded-xl shadow transition disabled:opacity-50"
+                >
+                  {isGeneratingRobot
+                    ? `⏳ ${tUI('kitchenRobot.generatingShort', lang)}`
+                    : `⚙️ ${tUI('kitchenRobot.generateButton', lang)}`}
+                </button>
+
+                {robotPrograms?.recipes?.length ? (
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    {/* ⬇️ Pobierz JSON */}
+                    <button
+                      onClick={() => {
+                        const blob = new Blob(
+                          [JSON.stringify(robotPrograms, null, 2)],
+                          { type: 'application/json' }
+                        );
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `robot-program-${form?.kitchen_robot_model || 'device'}.json`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                      }}
+                      className="w-full sm:w-auto bg-slate-600 hover:bg-slate-700 text-white font-semibold px-6 py-3 rounded-xl shadow transition"
+                    >
+                      ⬇️ {tUI('kitchenRobot.downloadJson', lang)}
+                    </button>
+
+                    {/* 📱 Otwórz w Tuya */}
+                    <button
+                      onClick={() => openTuyaApp(lang)}
+                      className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-3 rounded-xl shadow transition"
+                    >
+                      📱 {tUI('kitchenRobot.openTuya', lang)}
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+                        {/* ETAP 8.2-6: Historia programów robota */}
+            <div className="bg-white/10 rounded-xl p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="font-semibold">{tUI('kitchenRobot.programHistory', lang)}</div>
+                {isLoadingRobotHistory && (
+                  <div className="text-xs opacity-80">{tUI('kitchenRobot.loadingHistory', lang)}</div>
+                )}
+              </div>
+
+              {!robotHistory.length ? (
+                <div className="text-sm opacity-80 mt-2">
+                  {tUI('kitchenRobot.noSavedPrograms', lang)}
+                </div>
+              ) : (
+                <div className="mt-3 space-y-2">
+                  {robotHistory.map((it: any) => (
+                    <div
+                      key={it.id}
+                      className="flex flex-col sm:flex-row sm:items-center gap-2 bg-black/20 rounded-lg p-3"
+                    >
+                      <div className="flex-1">
+                        <div className="text-sm font-semibold">
+                          {it.robot_model} • {String(it.robot_serial || '').slice(0, 6)}…
+                        </div>
+                        <div className="text-xs opacity-80">
+                          {new Date(it.created_at).toLocaleString()}
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            setRobotPrograms(it.program_json);
+                            setRobotMeta({ cached: true, profile: it.robot_profile });
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
+                          className="px-3 py-2 rounded bg-slate-600 hover:bg-slate-700 text-sm text-white"
+                        >
+                          {tUI('kitchenRobot.openProgram', lang)}
+                        </button>
+                        <button
+
+                          onClick={async () => {
+                            const ok = window.confirm(tUI('kitchenRobot.deleteConfirm', lang));
+                            if (!ok) return;
+
+                            try {
+                              const accessToken = await getAccessToken();
+                              if (!accessToken) {
+                                alert(tUI('notLoggedIn', lang));
+                                return;
+                              }
+
+                              const res = await fetch(`/api/robot-programs?id=${encodeURIComponent(it.id)}`, {
+                                method: 'DELETE',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ accessToken })
+                              });
+
+                              if (!res.ok) {
+                                const txt = await res.text();
+                                throw new Error(txt || `HTTP ${res.status}`);
+                              }
+
+                              // usuń z listy lokalnie (bez czekania)
+                              setRobotHistory((prev) => prev.filter(x => x.id !== it.id));
+                            } catch (e) {
+                              console.error('❌ delete robot program:', e);
+                              alert(tUI('kitchenRobot.deleteError', lang));
+                            }
+                          }}
+                          className="px-3 py-2 rounded bg-rose-600 hover:bg-rose-700 text-sm text-white"
+                        >
+                          🗑️ {tUI('kitchenRobot.deleteProgram', lang)}
+                        </button>
+                        <button
+                          onClick={() => {
+                            const blob = new Blob([JSON.stringify(it.program_json, null, 2)], { type: 'application/json' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `robot-program-${it.robot_model || 'device'}.json`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                          }}
+                          className="px-3 py-2 rounded bg-slate-700 hover:bg-slate-800 text-sm text-white"
+                        >
+                          {tUI('kitchenRobot.downloadJson', lang)}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+                        {/* ETAP 8.2-5: Filtry dzień / posiłek */}
+            {robotRecipes.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm opacity-80">{tUI('kitchenRobot.filterDay', lang)}</label>
+                  <select
+                    value={robotFilterDay}
+                    onChange={(e) => setRobotFilterDay(e.target.value)}
+                    className="w-full mt-1 h-[44px] rounded px-3 bg-white/20"
+                  >
+                    <option value="">{tUI('kitchenRobot.filterAll', lang)}</option>
+                    {uniqueRobotDays.map((d) => (
+                      <option key={d} value={d}>
+                        {translateDayNameIfKnown(d, lang)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-sm opacity-80">{tUI('kitchenRobot.filterMeal', lang)}</label>
+                  <select
+                    value={robotFilterMeal}
+                    onChange={(e) => setRobotFilterMeal(e.target.value)}
+                    className="w-full mt-1 h-[44px] rounded px-3 bg-white/20"
+                  >
+                    <option value="">{tUI('kitchenRobot.filterAll', lang)}</option>
+                    {uniqueRobotMeals.map((m) => (
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {/* Wynik */}
+            
+            {robotPrograms?.recipes?.length ? (
+              <div className="space-y-4">
+                {filteredRobotRecipes.map((r: any, idx: number) => (
+                  <div key={idx} className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div className="font-bold">
+                        {translateDayNameIfKnown(r.day, lang)} • {r.meal_label || r.meal}
+                      </div>
+                      <div className="text-sm opacity-80">{r.time || ''}</div>
+                    </div>
+
+                    <div className="mt-2 text-base font-semibold">{r.title}</div>
+
+                    {Array.isArray(r.warnings) && r.warnings.length > 0 && (
+                      <div className="mt-3 p-3 rounded-lg bg-amber-500/20 border border-amber-400/30">
+                        <div className="font-semibold text-amber-200">⚠️ {tUI('kitchenRobot.warnings', lang)}</div>
+                        <ul className="list-disc ml-5 text-sm mt-1">
+                          {r.warnings.map((w: string, i: number) => (
+                            <li key={i}>{w}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {Array.isArray(r.cookSteps) && r.cookSteps.length > 0 && (
+                      <div className="mt-3">
+                        <div className="font-semibold">{tUI('kitchenRobot.cookSteps', lang)}</div>
+                        <ol className="list-decimal ml-5 text-sm mt-1 space-y-1">
+                          {r.cookSteps.map((s: string, i: number) => (
+                            <li key={i}>{s}</li>
+                          ))}
+                        </ol>
+                      </div>
+                    )}
+
+                    {/* fallback: jeśli API zwraca robotSteps, pokaż je */}
+                    {!r.cookSteps?.length && Array.isArray(r.robotSteps) && r.robotSteps.length > 0 && (
+                      <div className="mt-3">
+                        <div className="font-semibold">{tUI('kitchenRobot.robotSteps', lang)}</div>
+                        <pre className="mt-2 text-xs bg-black/30 rounded-lg p-3 overflow-x-auto">
+        {JSON.stringify(r.robotSteps, null, 2)}
+                        </pre>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-sm opacity-80 text-center">
+                {tUI('kitchenRobot.noProgramYet', lang)}
+              </div>
+            )}
+          </div>
+        )}
       {/* 📖 Wyświetlenie przepisów */}
       {selectedSection === 'diet' && recipes && Object.keys(recipes).length > 0 && (
         <div

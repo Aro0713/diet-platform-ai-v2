@@ -8386,6 +8386,697 @@ trial7DaysFree: {
   ar: "7 أيام مجانًا — بطاقة للتحقق، 0 اليوم",
   he: "7 ימים בחינם — כרטיס לאימות, 0 היום"
 },
+"kitchenRobot.has": {
+  pl: "Posiadam robota kuchennego",
+  en: "I have a kitchen robot",
+  es: "Tengo un robot de cocina",
+  fr: "Je possède un robot de cuisine",
+  de: "Ich habe einen Küchenroboter",
+  ua: "Я маю кухонного робота",
+  ru: "У меня есть кухонный робот",
+  zh: "我有厨房机器人",
+  hi: "मेरे पास किचन रोबोट है",
+  ar: "لديّ روبوت مطبخ",
+  he: "יש לי רובוט מטבח"
+},
 
+"kitchenRobot.modelLabel": {
+  pl: "Model urządzenia",
+  en: "Device model",
+  es: "Modelo del dispositivo",
+  fr: "Modèle de l’appareil",
+  de: "Gerätemodell",
+  ua: "Модель пристрою",
+  ru: "Модель устройства",
+  zh: "设备型号",
+  hi: "डिवाइस मॉडल",
+  ar: "طراز الجهاز",
+  he: "דגם המכשיר"
+},
 
+"kitchenRobot.selectModel": {
+  pl: "Wybierz model",
+  en: "Select model",
+  es: "Seleccionar modelo",
+  fr: "Choisir un modèle",
+  de: "Modell auswählen",
+  ua: "Виберіть модель",
+  ru: "Выберите модель",
+  zh: "选择型号",
+  hi: "मॉडल चुनें",
+  ar: "اختر الطراز",
+  he: "בחר דגם"
+},
+
+"kitchenRobot.model.cobbo": {
+  pl: "Cobbo",
+  en: "Cobbo",
+  es: "Cobbo",
+  fr: "Cobbo",
+  de: "Cobbo",
+  ua: "Cobbo",
+  ru: "Cobbo",
+  zh: "Cobbo",
+  hi: "Cobbo",
+  ar: "Cobbo",
+  he: "Cobbo"
+},
+
+"kitchenRobot.serialLabel": {
+  pl: "Numer seryjny",
+  en: "Serial number",
+  es: "Número de serie",
+  fr: "Numéro de série",
+  de: "Seriennummer",
+  ua: "Серійний номер",
+  ru: "Серийный номер",
+  zh: "序列号",
+  hi: "सीरियल नंबर",
+  ar: "الرقم التسلسلي",
+  he: "מספר סידורי"
+},
+
+"kitchenRobot.serialPlaceholder": {
+  pl: "np. COBBO_123456",
+  en: "e.g. COBBO_123456",
+  es: "p. ej. COBBO_123456",
+  fr: "ex. COBBO_123456",
+  de: "z. B. COBBO_123456",
+  ua: "напр. COBBO_123456",
+  ru: "напр. COBBO_123456",
+  zh: "例如 COBBO_123456",
+  hi: "जैसे COBBO_123456",
+  ar: "مثال COBBO_123456",
+  he: "לדוגמה COBBO_123456"
+},
+
+"kitchenRobot.serialHint": {
+  pl: "Dozwolone: litery/cyfry oraz - _ (6–64 znaki)",
+  en: "Allowed: letters/digits and - _ (6–64 characters)",
+  es: "Permitido: letras/números y - _ (6–64 caracteres)",
+  fr: "Autorisé : lettres/chiffres et - _ (6–64 caractères)",
+  de: "Erlaubt: Buchstaben/Ziffern und - _ (6–64 Zeichen)",
+  ua: "Дозволено: літери/цифри та - _ (6–64 символи)",
+  ru: "Разрешено: буквы/цифры и - _ (6–64 символов)",
+  zh: "允许：字母/数字 以及 - _（6–64 个字符）",
+  hi: "मान्य: अक्षर/अंक और - _ (6–64 अक्षर)",
+  ar: "مسموح: أحرف/أرقام و - _ (من 6 إلى 64 رمزًا)",
+  he: "מותר: אותיות/ספרות ו־ - _ (6–64 תווים)"
+},
+
+"kitchenRobot.modelRequired": {
+  pl: "Wybierz model robota.",
+  en: "Select the robot model.",
+  es: "Selecciona el modelo del robot.",
+  fr: "Choisissez le modèle du robot.",
+  de: "Wähle das Robotermodell aus.",
+  ua: "Виберіть модель робота.",
+  ru: "Выберите модель робота.",
+  zh: "请选择机器人型号。",
+  hi: "रोबोट मॉडल चुनें।",
+  ar: "اختر طراز الروبوت.",
+  he: "בחר דגם רובוט."
+},
+
+"kitchenRobot.serialRequired": {
+  pl: "Podaj numer seryjny robota.",
+  en: "Enter the robot serial number.",
+  es: "Introduce el número de serie del robot.",
+  fr: "Saisissez le numéro de série du robot.",
+  de: "Gib die Seriennummer des Roboters ein.",
+  ua: "Введіть серійний номер робота.",
+  ru: "Введите серийный номер робота.",
+  zh: "请输入机器人序列号。",
+  hi: "रोबोट का सीरियल नंबर दर्ज करें।",
+  ar: "أدخل الرقم التسلسلي للروبوت.",
+  he: "הזן מספר סידורי של הרובוט."
+},
+
+"kitchenRobot.serialInvalid": {
+  pl: "Numer seryjny ma nieprawidłowy format.",
+  en: "The serial number format is invalid.",
+  es: "El formato del número de serie no es válido.",
+  fr: "Le format du numéro de série est invalide.",
+  de: "Ungültiges Seriennummer-Format.",
+  ua: "Неправильний формат серійного номера.",
+  ru: "Неверный формат серийного номера.",
+  zh: "序列号格式无效。",
+  hi: "सीरियल नंबर का फ़ॉर्मेट अमान्य है।",
+  ar: "تنسيق الرقم التسلسلي غير صحيح.",
+  he: "פורמט המספר הסידורי אינו תקין."
+},
+"kitchenRobot.panelLabel": {
+  pl: "Robot kuchenny",
+  en: "Kitchen robot",
+  es: "Robot de cocina",
+  fr: "Robot de cuisine",
+  de: "Küchenroboter",
+  ua: "Кухонний робот",
+  ru: "Кухонный робот",
+  zh: "厨房机器人",
+  hi: "किचन रोबोट",
+  ar: "روبوت المطبخ",
+  he: "רובוט מטבח"
+},
+"kitchenRobot.panelTitle": {
+  pl: "Robot kuchenny",
+  en: "Kitchen robot",
+  es: "Robot de cocina",
+  fr: "Robot de cuisine",
+  de: "Küchenroboter",
+  ua: "Кухонний робот",
+  ru: "Кухонный робот",
+  zh: "厨房机器人",
+  hi: "किचन रोबोट",
+  ar: "روبوت المطبخ",
+  he: "רובוט מטבח"
+},
+
+"kitchenRobot.panelDesc": {
+  pl: "Wygeneruj program gotowania dopasowany do Twojego urządzenia na podstawie zatwierdzonej diety.",
+  en: "Generate a cooking program tailored to your device based on your approved diet.",
+  es: "Genera un programa de cocina adaptado a tu dispositivo según tu dieta aprobada.",
+  fr: "Générez un programme de cuisson adapté à votre appareil à partir de votre régime validé.",
+  de: "Erstelle ein Kochprogramm passend zu deinem Gerät basierend auf deinem bestätigten Ernährungsplan.",
+  ua: "Згенеруйте програму приготування, адаптовану до вашого пристрою, на основі затвердженої дієти.",
+  ru: "Сгенерируйте программу приготовления, адаптированную к вашему устройству, на основе утвержденной диеты.",
+  zh: "根据已批准的饮食计划，为您的设备生成匹配的烹饪程序。",
+  hi: "आपकी अनुमोदित डाइट के आधार पर आपके डिवाइस के लिए कुकिंग प्रोग्राम बनाएं।",
+  ar: "أنشئ برنامج طهي مناسبًا لجهازك بناءً على نظامك الغذائي المعتمد.",
+  he: "צור תוכנית בישול מותאמת למכשיר שלך על בסיס התזונה המאושרת שלך."
+},
+
+"kitchenRobot.model": {
+  pl: "Model",
+  en: "Model",
+  es: "Modelo",
+  fr: "Modèle",
+  de: "Modell",
+  ua: "Модель",
+  ru: "Модель",
+  zh: "型号",
+  hi: "मॉडल",
+  ar: "الطراز",
+  he: "דגם"
+},
+
+"kitchenRobot.serial": {
+  pl: "Numer seryjny",
+  en: "Serial number",
+  es: "Número de serie",
+  fr: "Numéro de série",
+  de: "Seriennummer",
+  ua: "Серійний номер",
+  ru: "Серийный номер",
+  zh: "序列号",
+  hi: "सीरियल नंबर",
+  ar: "الرقم التسلسلي",
+  he: "מספר סידורי"
+},
+
+"kitchenRobot.generateButton": {
+  pl: "Generuj program robota",
+  en: "Generate robot program",
+  es: "Generar programa del robot",
+  fr: "Générer le programme du robot",
+  de: "Roboterprogramm generieren",
+  ua: "Згенерувати програму робота",
+  ru: "Сгенерировать программу робота",
+  zh: "生成机器人程序",
+  hi: "रोबोट प्रोग्राम बनाएं",
+  ar: "إنشاء برنامج الروبوت",
+  he: "צור תוכנית לרובוט"
+},
+
+"kitchenRobot.generatingShort": {
+  pl: "Generowanie…",
+  en: "Generating…",
+  es: "Generando…",
+  fr: "Génération…",
+  de: "Wird generiert…",
+  ua: "Генерація…",
+  ru: "Генерация…",
+  zh: "生成中…",
+  hi: "तैयार हो रहा है…",
+  ar: "جارٍ الإنشاء…",
+  he: "מייצר…"
+},
+
+"kitchenRobot.generating": {
+  pl: "Generuję program robota…",
+  en: "Generating robot program…",
+  es: "Generando programa del robot…",
+  fr: "Génération du programme du robot…",
+  de: "Roboterprogramm wird generiert…",
+  ua: "Генерую програму робота…",
+  ru: "Генерирую программу робота…",
+  zh: "正在生成机器人程序…",
+  hi: "रोबोट प्रोग्राम बनाया जा रहा है…",
+  ar: "جارٍ إنشاء برنامج الروبوت…",
+  he: "מייצר תוכנית לרובוט…"
+},
+
+"kitchenRobot.ready": {
+  pl: "Program robota gotowy",
+  en: "Robot program is ready",
+  es: "El programa del robot está listo",
+  fr: "Le programme du robot est prêt",
+  de: "Roboterprogramm ist bereit",
+  ua: "Програма робота готова",
+  ru: "Программа робота готова",
+  zh: "机器人程序已就绪",
+  hi: "रोबोट प्रोग्राम तैयार है",
+  ar: "برنامج الروبوت جاهز",
+  he: "תוכנית הרובוט מוכנה"
+},
+
+"kitchenRobot.noProgramYet": {
+  pl: "Brak wygenerowanego programu. Kliknij „Generuj program robota”.",
+  en: "No program generated yet. Click “Generate robot program”.",
+  es: "Aún no hay programa generado. Haz clic en “Generar programa del robot”.",
+  fr: "Aucun programme généré. Cliquez sur « Générer le programme du robot ».",
+  de: "Noch kein Programm generiert. Klicke auf „Roboterprogramm generieren“.",
+  ua: "Ще немає згенерованої програми. Натисніть «Згенерувати програму робота».",
+  ru: "Программа ещё не сгенерирована. Нажмите «Сгенерировать программу робота».",
+  zh: "尚未生成程序。点击“生成机器人程序”。",
+  hi: "अभी कोई प्रोग्राम नहीं बना। “रोबोट प्रोग्राम बनाएं” दबाएँ।",
+  ar: "لم يتم إنشاء برنامج بعد. اضغط «إنشاء برنامج الروبوت».",
+  he: "עדיין לא נוצרה תוכנית. לחץ „צור תוכנית לרובוט“."
+},
+
+"kitchenRobot.warnings": {
+  pl: "Ostrzeżenia",
+  en: "Warnings",
+  es: "Advertencias",
+  fr: "Avertissements",
+  de: "Warnungen",
+  ua: "Попередження",
+  ru: "Предупреждения",
+  zh: "警告",
+  hi: "चेतावनियाँ",
+  ar: "تحذيرات",
+  he: "אזהרות"
+},
+
+"kitchenRobot.cookSteps": {
+  pl: "Kroki na robota",
+  en: "Robot cooking steps",
+  es: "Pasos para el robot",
+  fr: "Étapes pour le robot",
+  de: "Roboterschritte",
+  ua: "Кроки для робота",
+  ru: "Шаги для робота",
+  zh: "机器人步骤",
+  hi: "रोबोट स्टेप्स",
+  ar: "خطوات الروبوت",
+  he: "צעדים לרובוט"
+},
+
+"kitchenRobot.robotSteps": {
+  pl: "Kroki (JSON)",
+  en: "Steps (JSON)",
+  es: "Pasos (JSON)",
+  fr: "Étapes (JSON)",
+  de: "Schritte (JSON)",
+  ua: "Кроки (JSON)",
+  ru: "Шаги (JSON)",
+  zh: "步骤（JSON）",
+  hi: "स्टेप्स (JSON)",
+  ar: "الخطوات (JSON)",
+  he: "צעדים (JSON)"
+},
+
+"kitchenRobot.downloadJson": {
+  pl: "Pobierz JSON",
+  en: "Download JSON",
+  es: "Descargar JSON",
+  fr: "Télécharger JSON",
+  de: "JSON herunterladen",
+  ua: "Завантажити JSON",
+  ru: "Скачать JSON",
+  zh: "下载 JSON",
+  hi: "JSON डाउनलोड करें",
+  ar: "تحميل JSON",
+  he: "הורד JSON"
+},
+
+"kitchenRobot.noDiet": {
+  pl: "Brak diety. Najpierw wygeneruj i zatwierdź plan diety.",
+  en: "No diet plan found. Generate and approve a diet plan first.",
+  es: "No se encontró un plan de dieta. Primero genera y aprueba un plan.",
+  fr: "Aucun plan alimentaire. Générez et approuvez d’abord un plan.",
+  de: "Kein Ernährungsplan gefunden. Erstelle und bestätige zuerst einen Plan.",
+  ua: "Плану дієти немає. Спочатку згенеруйте та затвердьте план.",
+  ru: "План диеты не найден. Сначала создайте и утвердите план.",
+  zh: "未找到饮食计划。请先生成并确认饮食计划。",
+  hi: "कोई डाइट प्लान नहीं मिला। पहले डाइट प्लान बनाकर अनुमोदित करें।",
+  ar: "لا توجد خطة غذائية. أنشئ ووافق على خطة أولاً.",
+  he: "לא נמצאה תזונה. צור ואשר תוכנית תזונה תחילה."
+},
+
+"kitchenRobot.missingConfig": {
+  pl: "Brakuje konfiguracji robota (model i numer seryjny). Uzupełnij w Rejestracji.",
+  en: "Robot configuration is missing (model and serial). Fill it in Registration.",
+  es: "Falta la configuración del robot (modelo y serie). Complétala en Registro.",
+  fr: "Configuration du robot manquante (modèle et série). Renseignez-la dans l’inscription.",
+  de: "Roboter-Konfiguration fehlt (Modell und Seriennummer). Bitte in der Registrierung ergänzen.",
+  ua: "Немає конфігурації робота (модель і серійний номер). Заповніть у Реєстрації.",
+  ru: "Не хватает конфигурации робота (модель и серийный номер). Заполните в Регистрации.",
+  zh: "缺少机器人配置（型号和序列号）。请在注册信息中填写。",
+  hi: "रोबोट कॉन्फ़िगरेशन नहीं है (मॉडल/सीरियल)। रजिस्ट्रेशन में भरें।",
+  ar: "إعدادات الروبوت ناقصة (الطراز والرقم التسلسلي). أكملها في التسجيل.",
+  he: "חסרה הגדרת רובוט (דגם ומספר סידורי). מלא זאת ברישום."
+},
+
+"kitchenRobot.error": {
+  pl: "Nie udało się wygenerować programu robota.",
+  en: "Failed to generate the robot program.",
+  es: "No se pudo generar el programa del robot.",
+  fr: "Impossible de générer le programme du robot.",
+  de: "Roboterprogramm konnte nicht generiert werden.",
+  ua: "Не вдалося згенерувати програму робота.",
+  ru: "Не удалось сгенерировать программу робота.",
+  zh: "无法生成机器人程序。",
+  hi: "रोबोट प्रोग्राम नहीं बन पाया।",
+  ar: "تعذر إنشاء برنامج الروبوت.",
+  he: "לא ניתן היה ליצור תוכנית לרובוט."
+},
+"notLoggedIn": {
+  pl: "Musisz być zalogowany, aby wykonać tę operację.",
+  en: "You must be logged in to perform this action.",
+  es: "Debes iniciar sesión para realizar esta acción.",
+  fr: "Vous devez être connecté pour effectuer cette action.",
+  de: "Du musst angemeldet sein, um diese Aktion auszuführen.",
+  ua: "Ви повинні увійти в систему, щоб виконати цю дію.",
+  ru: "Вы должны войти в систему, чтобы выполнить это действие.",
+  zh: "您必须登录才能执行此操作。",
+  hi: "यह क्रिया करने के लिए आपको लॉग इन होना आवश्यक है।",
+  ar: "يجب تسجيل الدخول لتنفيذ هذا الإجراء.",
+  he: "עליך להיות מחובר כדי לבצע פעולה זו."
+},
+"kitchenRobot.openTuya": {
+  pl: "Otwórz w Tuya",
+  en: "Open in Tuya",
+  es: "Abrir en Tuya",
+  fr: "Ouvrir dans Tuya",
+  de: "In Tuya öffnen",
+  ua: "Відкрити в Tuya",
+  ru: "Открыть в Tuya",
+  zh: "在 Tuya 中打开",
+  hi: "Tuya में खोलें",
+  ar: "افتح في Tuya",
+  he: "פתח ב-Tuya"
+},
+
+"kitchenRobot.tuyaDesktopInfo": {
+  pl: "Tuya działa w aplikacji mobilnej. Otwórz ten panel na telefonie lub zainstaluj aplikację Smart Life/Tuya Smart.",
+  en: "Tuya works in the mobile app. Open this panel on your phone or install Smart Life/Tuya Smart.",
+  es: "Tuya funciona en la app móvil. Abre este panel en tu teléfono o instala Smart Life/Tuya Smart.",
+  fr: "Tuya fonctionne via l’application mobile. Ouvrez ce panneau sur votre téléphone ou installez Smart Life/Tuya Smart.",
+  de: "Tuya funktioniert über die mobile App. Öffne dieses Panel am Handy oder installiere Smart Life/Tuya Smart.",
+  ua: "Tuya працює в мобільному застосунку. Відкрийте цю панель на телефоні або встановіть Smart Life/Tuya Smart.",
+  ru: "Tuya работает в мобильном приложении. Откройте эту панель на телефоне или установите Smart Life/Tuya Smart.",
+  zh: "Tuya 通过手机应用使用。请在手机上打开此页面或安装 Smart Life/Tuya Smart。",
+  hi: "Tuya मोबाइल ऐप में काम करता है। इसे फोन पर खोलें या Smart Life/Tuya Smart इंस्टॉल करें।",
+  ar: "تعمل Tuya عبر تطبيق الهاتف. افتح هذه الصفحة على هاتفك أو ثبّت Smart Life/Tuya Smart.",
+  he: "Tuya פועלת באפליקציה לנייד. פתח את הדף בטלפון או התקן Smart Life/Tuya Smart."
+},
+"kitchenRobot.programHistory": {
+  pl: "Historia programów",
+  en: "Program history",
+  es: "Historial de programas",
+  fr: "Historique des programmes",
+  de: "Programmverlauf",
+  ua: "Історія програм",
+  ru: "История программ",
+  zh: "程序历史",
+  hi: "प्रोग्राम इतिहास",
+  ar: "سجل البرامج",
+  he: "היסטוריית תוכניות"
+},
+
+"kitchenRobot.loadingHistory": {
+  pl: "Ładowanie…",
+  en: "Loading…",
+  es: "Cargando…",
+  fr: "Chargement…",
+  de: "Lädt…",
+  ua: "Завантаження…",
+  ru: "Загрузка…",
+  zh: "加载中…",
+  hi: "लोड हो रहा है…",
+  ar: "جارٍ التحميل…",
+  he: "טוען…"
+},
+
+"kitchenRobot.noSavedPrograms": {
+  pl: "Brak zapisanych programów. Wygeneruj pierwszy program.",
+  en: "No saved programs. Generate your first program.",
+  es: "No hay programas guardados. Genera el primero.",
+  fr: "Aucun programme enregistré. Générez le premier.",
+  de: "Keine gespeicherten Programme. Erstelle dein erstes Programm.",
+  ua: "Немає збережених програм. Згенеруйте першу.",
+  ru: "Нет сохранённых программ. Сгенерируйте первую.",
+  zh: "没有已保存的程序。请先生成一个。",
+  hi: "कोई सेव प्रोग्राम नहीं है। पहला प्रोग्राम बनाएं।",
+  ar: "لا توجد برامج محفوظة. أنشئ أول برنامج.",
+  he: "אין תוכניות שמורות. צור את התוכנית הראשונה."
+},
+
+"kitchenRobot.openProgram": {
+  pl: "Otwórz",
+  en: "Open",
+  es: "Abrir",
+  fr: "Ouvrir",
+  de: "Öffnen",
+  ua: "Відкрити",
+  ru: "Открыть",
+  zh: "打开",
+  hi: "खोलें",
+  ar: "افتح",
+  he: "פתח"
+},
+
+"kitchenRobot.usedCached": {
+  pl: "Użyto zapisanego programu",
+  en: "Loaded saved program",
+  es: "Programa guardado cargado",
+  fr: "Programme enregistré chargé",
+  de: "Gespeichertes Programm geladen",
+  ua: "Завантажено збережену програму",
+  ru: "Загружена сохранённая программа",
+  zh: "已加载已保存的程序",
+  hi: "सेव किया हुआ प्रोग्राम लोड हुआ",
+  ar: "تم تحميل برنامج محفوظ",
+  he: "נטענה תוכנית שמורה"
+},
+
+"kitchenRobot.generatedNew": {
+  pl: "Wygenerowano nowy program",
+  en: "Generated a new program",
+  es: "Se generó un programa nuevo",
+  fr: "Nouveau programme généré",
+  de: "Neues Programm generiert",
+  ua: "Згенеровано нову програму",
+  ru: "Сгенерирована новая программа",
+  zh: "已生成新程序",
+  hi: "नया प्रोग्राम बनाया गया",
+  ar: "تم إنشاء برنامج جديد",
+  he: "נוצרה תוכנית חדשה"
+},
+
+"kitchenRobot.filterDay": {
+  pl: "Dzień",
+  en: "Day",
+  es: "Día",
+  fr: "Jour",
+  de: "Tag",
+  ua: "День",
+  ru: "День",
+  zh: "天",
+  hi: "दिन",
+  ar: "اليوم",
+  he: "יום"
+},
+
+"kitchenRobot.filterMeal": {
+  pl: "Posiłek",
+  en: "Meal",
+  es: "Comida",
+  fr: "Repas",
+  de: "Mahlzeit",
+  ua: "Прийом їжі",
+  ru: "Приём пищи",
+  zh: "餐次",
+  hi: "भोजन",
+  ar: "الوجبة",
+  he: "ארוחה"
+},
+
+"kitchenRobot.filterAll": {
+  pl: "Wszystkie",
+  en: "All",
+  es: "Todas",
+  fr: "Tous",
+  de: "Alle",
+  ua: "Усі",
+  ru: "Все",
+  zh: "全部",
+  hi: "सभी",
+  ar: "الكل",
+  he: "הכל"
+},
+"kitchenRobot.guard.noAccessTitle": {
+  pl: "Wymagana subskrypcja",
+  en: "Subscription required",
+  es: "Se requiere suscripción",
+  fr: "Abonnement requis",
+  de: "Abo erforderlich",
+  ua: "Потрібна підписка",
+  ru: "Требуется подписка",
+  zh: "需要订阅",
+  hi: "सब्सक्रिप्शन आवश्यक",
+  ar: "الاشتراك مطلوب",
+  he: "נדרש מנוי"
+},
+
+"kitchenRobot.guard.noAccessDesc": {
+  pl: "Aby korzystać z programów robota kuchennego, aktywuj swój plan.",
+  en: "To use kitchen robot programs, activate your plan.",
+  es: "Para usar programas del robot de cocina, activa tu plan.",
+  fr: "Pour utiliser les programmes du robot, activez votre abonnement.",
+  de: "Um Roboterprogramme zu nutzen, aktiviere dein Abo.",
+  ua: "Щоб користуватися програмами робота, активуйте план.",
+  ru: "Чтобы пользоваться программами робота, активируйте план.",
+  zh: "要使用机器人程序，请先激活您的计划。",
+  hi: "रोबोट प्रोग्राम के लिए अपना प्लान सक्रिय करें।",
+  ar: "لاستخدام برامج الروبوت، فعّل خطتك.",
+  he: "כדי להשתמש בתוכניות הרובוט, הפעל את התוכנית."
+},
+
+"kitchenRobot.guard.fixConfigTitle": {
+  pl: "Brak konfiguracji robota",
+  en: "Robot configuration missing",
+  es: "Falta la configuración del robot",
+  fr: "Configuration du robot manquante",
+  de: "Roboter-Konfiguration fehlt",
+  ua: "Немає конфігурації робота",
+  ru: "Нет конфигурации робота",
+  zh: "缺少机器人配置",
+  hi: "रोबोट कॉन्फ़िगरेशन नहीं है",
+  ar: "إعدادات الروبوت ناقصة",
+  he: "חסרה הגדרת רובוט"
+},
+
+"kitchenRobot.guard.fixConfigDesc": {
+  pl: "Uzupełnij model i numer seryjny w sekcji Rejestracja.",
+  en: "Fill in the model and serial number in the Registration section.",
+  es: "Completa el modelo y el número de serie en la sección Registro.",
+  fr: "Renseignez le modèle et le numéro de série dans la section Inscription.",
+  de: "Trage Modell und Seriennummer in der Registrierung ein.",
+  ua: "Заповніть модель і серійний номер у розділі Реєстрація.",
+  ru: "Заполните модель и серийный номер в разделе Регистрация.",
+  zh: "请在“注册”中填写型号和序列号。",
+  hi: "रजिस्ट्रेशन में मॉडल और सीरियल नंबर भरें।",
+  ar: "أكمل الطراز والرقم التسلسلي في قسم التسجيل.",
+  he: "מלא דגם ומספר סידורי בסעיף הרישום."
+},
+
+"kitchenRobot.guard.noDietTitle": {
+  pl: "Brak diety",
+  en: "No diet plan",
+  es: "No hay dieta",
+  fr: "Aucun régime",
+  de: "Kein Ernährungsplan",
+  ua: "Немає дієти",
+  ru: "Нет диеты",
+  zh: "没有饮食计划",
+  hi: "डाइट प्लान नहीं है",
+  ar: "لا توجد حمية",
+  he: "אין תוכנית תזונה"
+},
+
+"kitchenRobot.guard.noDietDesc": {
+  pl: "Najpierw wygeneruj i zatwierdź dietę, aby stworzyć program robota.",
+  en: "Generate and approve a diet plan first to create a robot program.",
+  es: "Primero genera y aprueba una dieta para crear un programa del robot.",
+  fr: "Générez et approuvez d’abord un régime pour créer un programme du robot.",
+  de: "Erstelle und bestätige zuerst einen Ernährungsplan, um ein Roboterprogramm zu erstellen.",
+  ua: "Спочатку згенеруйте та затвердьте дієту, щоб створити програму робота.",
+  ru: "Сначала создайте и утвердите диету, чтобы создать программу робота.",
+  zh: "请先生成并确认饮食计划，再创建机器人程序。",
+  hi: "पहले डाइट प्लान बनाकर अनुमोदित करें, फिर रोबोट प्रोग्राम बनाएं।",
+  ar: "أنشئ ووافق على الحمية أولاً لإنشاء برنامج الروبوت.",
+  he: "צור ואשר תזונה תחילה כדי ליצור תוכנית לרובוט."
+},
+
+"kitchenRobot.goToRegistration": {
+  pl: "Przejdź do Rejestracji",
+  en: "Go to Registration",
+  es: "Ir a Registro",
+  fr: "Aller à l’inscription",
+  de: "Zur Registrierung",
+  ua: "Перейти до Реєстрації",
+  ru: "Перейти к регистрации",
+  zh: "前往注册",
+  hi: "रजिस्ट्रेशन खोलें",
+  ar: "اذهب إلى التسجيل",
+  he: "עבור לרישום"
+},
+
+"kitchenRobot.goToDiet": {
+  pl: "Przejdź do Diety",
+  en: "Go to Diet",
+  es: "Ir a Dieta",
+  fr: "Aller au régime",
+  de: "Zur Ernährung",
+  ua: "Перейти до Дієти",
+  ru: "Перейти к диете",
+  zh: "前往饮食计划",
+  hi: "डाइट पर जाएँ",
+  ar: "اذهب إلى الحمية",
+  he: "עבור לתזונה"
+},
+
+"kitchenRobot.deleteProgram": {
+  pl: "Usuń",
+  en: "Delete",
+  es: "Eliminar",
+  fr: "Supprimer",
+  de: "Löschen",
+  ua: "Видалити",
+  ru: "Удалить",
+  zh: "删除",
+  hi: "हटाएं",
+  ar: "حذف",
+  he: "מחק"
+},
+
+"kitchenRobot.deleteConfirm": {
+  pl: "Usunąć ten zapisany program robota?",
+  en: "Delete this saved robot program?",
+  es: "¿Eliminar este programa guardado del robot?",
+  fr: "Supprimer ce programme robot enregistré ?",
+  de: "Dieses gespeicherte Roboterprogramm löschen?",
+  ua: "Видалити цю збережену програму робота?",
+  ru: "Удалить эту сохранённую программу робота?",
+  zh: "删除此已保存的机器人程序？",
+  hi: "इस सेव किए गए रोबोट प्रोग्राम को हटाएँ?",
+  ar: "هل تريد حذف برنامج الروبوت المحفوظ؟",
+  he: "למחוק את תוכנית הרובוט השמורה?"
+},
+
+"kitchenRobot.deleteError": {
+  pl: "Nie udało się usunąć programu.",
+  en: "Failed to delete the program.",
+  es: "No se pudo eliminar el programa.",
+  fr: "Impossible de supprimer le programme.",
+  de: "Programm konnte nicht gelöscht werden.",
+  ua: "Не вдалося видалити програму.",
+  ru: "Не удалось удалить программу.",
+  zh: "无法删除该程序。",
+  hi: "प्रोग्राम हटाया नहीं जा सका।",
+  ar: "تعذر حذف البرنامج.",
+  he: "לא ניתן למחוק את התוכנית."
+},
 };

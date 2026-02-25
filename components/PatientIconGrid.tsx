@@ -8,7 +8,8 @@ import {
   ChefHat,
   CheckCircle,
   XCircle,
-  Ban
+  Ban,
+  Bot
 } from 'lucide-react';
 
 interface PatientIconGridProps {
@@ -17,6 +18,7 @@ interface PatientIconGridProps {
   selected: string | null;
   hasPaid: boolean;
   isTrialActive: boolean;
+  form?: any; // ✅ ETAP 3/9
 }
 
 export const PatientIconGrid: React.FC<PatientIconGridProps> = ({
@@ -24,7 +26,8 @@ export const PatientIconGrid: React.FC<PatientIconGridProps> = ({
   onSelect,
   selected,
   hasPaid,
-  isTrialActive
+  isTrialActive,
+  form // ✅ ETAP 3/9
 }) => {
   const openCancelTrial = async () => {
     try {
@@ -45,6 +48,13 @@ export const PatientIconGrid: React.FC<PatientIconGridProps> = ({
       alert(tUI('paymentInitError', lang));
     }
   };
+
+  // ✅ ETAP 3/9 — widoczność ikony robota (tylko gdy pacjent ma zadeklarowane urządzenie)
+  const showRobot =
+    Boolean(hasPaid) &&
+    Boolean(form?.has_kitchen_robot) &&
+    Boolean(String(form?.kitchen_robot_model || '').trim()) &&
+    Boolean(String(form?.kitchen_robot_serial || '').trim());
 
   const icons = [
     {
@@ -95,6 +105,17 @@ export const PatientIconGrid: React.FC<PatientIconGridProps> = ({
       color: '',
       ring: 'ring-purple-300'
     },
+
+    // ✅ ETAP 3/9 — ikona robota po Looku (warunkowo)
+    ...(showRobot
+      ? [{
+          id: 'robot',
+          label: tUI('kitchenRobot.panelLabel', lang),
+          icon: Bot,
+          color: 'text-cyan-300',
+          ring: 'ring-cyan-300'
+        }]
+      : []),
 
     ...(isTrialActive
       ? [{

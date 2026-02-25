@@ -84,6 +84,20 @@ export interface PatientData {
   pal?: number | null;
   bmi?: number | null;
   cpm?: number | null;
+    // 🤖 Robot kuchenny (public.patients)
+  has_kitchen_robot?: boolean | null;
+  kitchen_robot_model?: string | null;
+  kitchen_robot_serial?: string | null;
+  kitchen_robot_profile?: string | null;
+  kitchen_robot_linked_at?: string | null;
+
+  // (opcjonalnie) subskrypcja / faktura (używane w panelu)
+  subscription_status?: string | null;
+  subscription_started_at?: string | null;
+  subscription_expires_at?: string | null;
+  trial_ends_at?: string | null;
+  plan?: string | null;
+  invoice_url?: string | null;
 }
 
 export interface InterviewData {
