@@ -466,9 +466,9 @@ function detectMealKind(nameOrKey: string): MealKind {
   const s = (nameOrKey || "").toLowerCase();
 
   if (s.includes("owsian") || s.includes("musli") || s.includes("płatki")) return "oatmeal";
+  if (s.includes("smoothie") || s.includes("koktajl")) return "smoothie";
   if (s.includes("kanapk") || s.includes("tost") || s.includes("hummus") || s.includes("awokado")) return "sandwich";
   if (s.includes("jaj") || s.includes("omlet") || s.includes("jajeczn")) return "eggs";
-  if (s.includes("smoothie") || s.includes("koktajl")) return "smoothie";
   if (s.includes("sałatk")) return "salad";
   if (s.includes("zupa") || s.includes("krem")) return "soup";
   if (s.includes("makaron")) return "pasta";
@@ -539,6 +539,38 @@ function buildDeterministicRecipe(meal: FlatMeal, lang: string): RoboRecipe {
   function stepManual(text: string) {
     instructions.push(text);
     robotSteps.push({ kind: "manual", text });
+  }
+    const isColdBowl =
+    hasIngredient(ingredients, "jogurt") ||
+    hasIngredient(ingredients, "musli") ||
+    hasIngredient(ingredients, "owoce") ||
+    hasIngredient(ingredients, "orzech") ||
+    hasIngredient(ingredients, "jagody") ||
+    hasIngredient(ingredients, "truskaw") ||
+    hasIngredient(ingredients, "banan") ||
+    hasIngredient(ingredients, "jabłko") ||
+    hasIngredient(ingredients, "pomarańcz");
+
+  // Jeśli to zimny posiłek (np. jogurt + orzechy / musli), nie gotujemy.
+  // Mieszamy krótko bez grzania.
+  if (isColdBowl && kind === "other") {
+    stepAdd("Dodaj składniki do misy.");
+    stepRun(8, 30, 2, "Wymieszaj krótko.");
+    stepManual("Przełóż do miski i podawaj.");
+
+    return {
+      day: meal.day,
+      meal: meal.mealKey,
+      meal_label,
+      title,
+      time: baseTime,
+      ingredients,
+      instructions,
+      robotSteps,
+      cookSteps: [],
+      warnings: [],
+      profile: { model: cobboProfileV0.model }
+    };
   }
 
   if (kind === "oatmeal") {
