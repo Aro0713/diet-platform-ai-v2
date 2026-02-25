@@ -165,6 +165,8 @@ const PatientSelfForm: React.FC<Props> = ({ lang, value, onChange }) => {
   }, []);
 
   const serialOk = !patient.has_kitchen_robot || SERIAL_RE.test(String(patient.kitchen_robot_serial || '').trim());
+  const modelOk = !patient.has_kitchen_robot || Boolean(String(patient.kitchen_robot_model || '').trim());
+  const robotOk = modelOk && serialOk;
 
   return (
     <div className="w-full max-w-3xl mx-auto overflow-hidden space-y-4 px-4 sm:px-0">
@@ -327,6 +329,11 @@ const PatientSelfForm: React.FC<Props> = ({ lang, value, onChange }) => {
                   </option>
                 ))}
               </select>
+                {patient.has_kitchen_robot && !modelOk && (
+                <p className="text-xs text-red-300">
+                 {tUI('kitchenRobotModelRequired', lang)}
+                </p>
+              )}
             </div>
 
             <div className="flex flex-col gap-1">
@@ -340,11 +347,15 @@ const PatientSelfForm: React.FC<Props> = ({ lang, value, onChange }) => {
                            focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors"
                 placeholder={tUI('kitchenRobotSerialPlaceholder', lang)}
               />
-              {!serialOk && (
-                <p className="text-xs text-amber-300">
-                  {tUI('kitchenRobotSerialHint', lang)}
+              {patient.has_kitchen_robot && !serialOk && (
+                <p className="text-xs text-red-300">
+                  {tUI('kitchenRobotSerialInvalid', lang)}
                 </p>
               )}
+
+              <p className="text-xs text-amber-300">
+                {tUI('kitchenRobotSerialHint', lang)}
+              </p>
             </div>
           </div>
         )}
@@ -355,7 +366,7 @@ const PatientSelfForm: React.FC<Props> = ({ lang, value, onChange }) => {
         <button
           onClick={handleSave}
           className="w-full sm:w-auto bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded transition disabled:opacity-50"
-          disabled={saving}
+          disabled={saving || !robotOk}
         >
           {saving ? tUI('saving', lang) : tUI('save', lang)}
         </button>

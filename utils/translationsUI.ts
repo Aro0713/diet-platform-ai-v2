@@ -9079,4 +9079,128 @@ trial7DaysFree: {
   ar: "تعذر حذف البرنامج.",
   he: "לא ניתן למחוק את התוכנית."
 },
+"kitchenRobotHas": {
+  pl: "Posiadam robota kuchennego",
+  en: "I have a kitchen robot",
+  es: "Tengo un robot de cocina",
+  fr: "Je possède un robot de cuisine",
+  de: "Ich habe einen Küchenroboter",
+  ua: "Я маю кухонного робота",
+  ru: "У меня есть кухонный робот",
+  zh: "我拥有厨房机器人",
+  hi: "मेरे पास किचन रोबोट है",
+  ar: "لدي روبوت مطبخ",
+  he: "יש לי רובוט מטבח"
+},
+
+"kitchenRobotModel": {
+  pl: "Model robota",
+  en: "Robot model",
+  es: "Modelo del robot",
+  fr: "Modèle du robot",
+  de: "Robotermodell",
+  ua: "Модель робота",
+  ru: "Модель робота",
+  zh: "机器人型号",
+  hi: "रोबोट मॉडल",
+  ar: "طراز الروبوت",
+  he: "דגם הרובוט"
+},
+
+"kitchenRobotSerial": {
+  pl: "Numer seryjny",
+  en: "Serial number",
+  es: "Número de serie",
+  fr: "Numéro de série",
+  de: "Seriennummer",
+  ua: "Серійний номер",
+  ru: "Серийный номер",
+  zh: "序列号",
+  hi: "सीरियल नंबर",
+  ar: "الرقم التسلسلي",
+  he: "מספר סידורי"
+},
+
+"kitchenRobotSelectModel": {
+  pl: "Wybierz model",
+  en: "Select model",
+  es: "Selecciona modelo",
+  fr: "Sélectionnez le modèle",
+  de: "Modell auswählen",
+  ua: "Оберіть модель",
+  ru: "Выберите модель",
+  zh: "选择型号",
+  hi: "मॉडल चुनें",
+  ar: "اختر الطراز",
+  he: "בחר דגם"
+},
+
+"kitchenRobotModelCobbo": {
+  pl: "Cobbo Smart Chef",
+  en: "Cobbo Smart Chef",
+  es: "Cobbo Smart Chef",
+  fr: "Cobbo Smart Chef",
+  de: "Cobbo Smart Chef",
+  ua: "Cobbo Smart Chef",
+  ru: "Cobbo Smart Chef",
+  zh: "Cobbo Smart Chef",
+  hi: "Cobbo Smart Chef",
+  ar: "Cobbo Smart Chef",
+  he: "Cobbo Smart Chef"
+},
+
+"kitchenRobotSerialPlaceholder": {
+  pl: "Wpisz numer seryjny urządzenia",
+  en: "Enter device serial number",
+  es: "Introduce el número de serie",
+  fr: "Entrez le numéro de série",
+  de: "Seriennummer eingeben",
+  ua: "Введіть серійний номер",
+  ru: "Введите серийный номер",
+  zh: "输入设备序列号",
+  hi: "डिवाइस का सीरियल नंबर दर्ज करें",
+  ar: "أدخل الرقم التسلسلي للجهاز",
+  he: "הזן מספר סידורי"
+},
+
+"kitchenRobotSerialHint": {
+  pl: "Numer seryjny znajdziesz na spodzie urządzenia lub w aplikacji Tuya.",
+  en: "You can find the serial number on the bottom of the device or in the Tuya app.",
+  es: "El número de serie se encuentra en la parte inferior del dispositivo o en la app Tuya.",
+  fr: "Le numéro de série se trouve sous l’appareil ou dans l’application Tuya.",
+  de: "Die Seriennummer finden Sie auf der Unterseite des Geräts oder in der Tuya-App.",
+  ua: "Серійний номер можна знайти на нижній частині пристрою або в додатку Tuya.",
+  ru: "Серийный номер указан на нижней части устройства или в приложении Tuya.",
+  zh: "序列号可在设备底部或Tuya应用中找到。",
+  hi: "सीरियल नंबर डिवाइस के नीचे या Tuya ऐप में मिलता है।",
+  ar: "يمكن العثور على الرقم التسلسلي أسفل الجهاز أو في تطبيق Tuya.",
+  he: "את המספר הסידורי ניתן למצוא בתחתית המכשיר או באפליקציית Tuya."
+},
+"kitchenRobotModelRequired": {
+  pl: "Wybierz model robota.",
+  en: "Please select a robot model.",
+  es: "Selecciona el modelo del robot.",
+  fr: "Veuillez sélectionner le modèle du robot.",
+  de: "Bitte wählen Sie ein Robotermodell aus.",
+  ua: "Оберіть модель робота.",
+  ru: "Выберите модель робота.",
+  zh: "请选择机器人型号。",
+  hi: "कृपया रोबोट मॉडल चुनें।",
+  ar: "يرجى اختيار طراز الروبوت.",
+  he: "נא לבחור דגם רובוט."
+},
+
+"kitchenRobotSerialInvalid": {
+  pl: "Nieprawidłowy numer seryjny. Dozwolone: litery, cyfry, _ oraz -, 6–64 znaków.",
+  en: "Invalid serial number. Allowed: letters, numbers, _ and -, 6–64 characters.",
+  es: "Número de serie no válido. Permitidos: letras, números, _ y -, 6–64 caracteres.",
+  fr: "Numéro de série invalide. Autorisés : lettres, chiffres, _ et -, 6–64 caractères.",
+  de: "Ungültige Seriennummer. Erlaubt: Buchstaben, Zahlen, _ und -, 6–64 Zeichen.",
+  ua: "Неправильний серійний номер. Дозволено: літери, цифри, _ та -, 6–64 символи.",
+  ru: "Неверный серийный номер. Допустимо: буквы, цифры, _ и -, 6–64 символов.",
+  zh: "序列号无效。允许字母、数字、_ 和 -，长度 6–64 个字符。",
+  hi: "अमान्य सीरियल नंबर। अनुमति: अक्षर, संख्या, _ और -, 6–64 वर्ण।",
+  ar: "رقم تسلسلي غير صالح. المسموح: أحرف وأرقام و _ و -, من 6 إلى 64 حرفًا.",
+  he: "מספר סידורי לא תקין. מותר: אותיות, ספרות, _ ו-, באורך 6–64 תווים."
+},
 };
