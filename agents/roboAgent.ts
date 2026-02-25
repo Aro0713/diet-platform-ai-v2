@@ -225,11 +225,12 @@ function applyCobboConstraints(steps: RoboStep[], profile: CobboProfile): { step
     }
 
     if (tempC != null && tempC >= 60 && speedLevel != null) {
-      const limit = profile.speed.constraints.find(c => c.ifTempGteC <= tempC)?.maxLevel ?? null;
-      if (limit != null && speedLevel > limit) {
+    const tempNum = tempC; // ✅ TS: tempNum jest number w tym zakresie
+    const limit = profile.speed.constraints.find(c => c.ifTempGteC <= tempNum)?.maxLevel ?? null;
+    if (limit != null && speedLevel > limit) {
         warnings.push(`Cobbo: speed limited to level ${limit} at temp >= 60°C (requested ${speedLevel}).`);
         speedLevel = limit;
-      }
+    }
     }
 
     out.push({
