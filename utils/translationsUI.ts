@@ -9203,4 +9203,17 @@ trial7DaysFree: {
   ar: "رقم تسلسلي غير صالح. المسموح: أحرف وأرقام و _ و -, من 6 إلى 64 حرفًا.",
   he: "מספר סידורי לא תקין. מותר: אותיות, ספרות, _ ו-, באורך 6–64 תווים."
 },
+"kitchenRobot.generateFromDiet": {
+  pl: "Generuj program Cobbo",
+  en: "Generate Cobbo program",
+  es: "Generar programa Cobbo",
+  fr: "Générer programme Cobbo",
+  de: "Cobbo-Programm generieren",
+  ua: "Створити програму Cobbo",
+  ru: "Создать программу Cobbo",
+  zh: "生成 Cobbo 程序",
+  hi: "Cobbo प्रोग्राम जनरेट करें",
+  ar: "إنشاء برنامج Cobbo",
+  he: "צור תוכנית Cobbo"
+}
 };

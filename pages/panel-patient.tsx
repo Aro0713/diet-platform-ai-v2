@@ -1507,6 +1507,17 @@ const handleGenerateDiet = async () => {
             </span>
           </button>
         )}
+        {editableDiet && form?.has_kitchen_robot && (
+          <button
+            onClick={() => handleSectionChange('robot')}
+            className="w-28 h-28 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition"
+          >
+            <span className="text-4xl leading-none">🤖</span>
+            <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
+              {tUI('kitchenRobot.generateFromDiet', lang)}
+            </span>
+          </button>
+        )}
 
         {/* 📤 Wyślij dietę do lekarza/dietetyka (tworzy draft) */}
         {editableDiet && Object.keys(editableDiet).length > 0 && (
