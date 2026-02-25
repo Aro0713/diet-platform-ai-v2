@@ -10,8 +10,23 @@ interface Props {
   onChange?: (updated: any) => void;
 }
 
-const SERIAL_RE = /^[A-Za-z0-9_-]{6,64}$/;
+const COBBO_SERIAL_RE = /^([0-9a-fA-F]{2}([:-])){5}[0-9a-fA-F]{2}$|^[0-9a-fA-F]{12}$/;
+function normalizeCobboSerial(input: string): string {
+  const raw = String(input || "").trim();
 
+  // 1) już MAC z separatorami
+  if (/^([0-9a-f]{2}([:-])){5}[0-9a-f]{2}$/i.test(raw)) {
+    return raw.replace(/-/g, ":").toUpperCase();
+  }
+
+  // 2) 12 hex bez separatorów -> AA:BB:...
+  if (/^[0-9a-f]{12}$/i.test(raw)) {
+    const up = raw.toUpperCase();
+    return up.match(/.{1,2}/g)!.join(":");
+  }
+
+  return raw;
+}
 const ROBOT_MODELS: Array<{ value: string; labelKey: string; profile: string }> = [
   { value: 'cobbo', labelKey: 'kitchenRobotModelCobbo', profile: 'cobbo-tuya-v0' },
 ];
@@ -88,6 +103,7 @@ const PatientSelfForm: React.FC<Props> = ({ lang, value, onChange }) => {
       kitchen_robot_profile: profile,
     }));
   };
+  
 
   const validateRobot = (): string | null => {
     if (!patient.has_kitchen_robot) return null;
@@ -97,7 +113,7 @@ const PatientSelfForm: React.FC<Props> = ({ lang, value, onChange }) => {
 
     if (!model) return tUI('kitchenRobotModelRequired', lang);
     if (!serial) return tUI('kitchenRobotSerialRequired', lang);
-    if (!SERIAL_RE.test(serial)) return tUI('kitchenRobotSerialInvalid', lang);
+    if (!COBBO_SERIAL_RE.test(serial)) return tUI('kitchenRobotSerialInvalid', lang);
 
     return null;
   };
@@ -127,7 +143,9 @@ const PatientSelfForm: React.FC<Props> = ({ lang, value, onChange }) => {
       // ✅ enforce DB constraints cleanly
       has_kitchen_robot: Boolean(patient.has_kitchen_robot),
       kitchen_robot_model: patient.has_kitchen_robot ? (patient.kitchen_robot_model || null) : null,
-      kitchen_robot_serial: patient.has_kitchen_robot ? (patient.kitchen_robot_serial || null) : null,
+      kitchen_robot_serial: patient.has_kitchen_robot
+      ? (normalizeCobboSerial(patient.kitchen_robot_serial) || null)
+      : null,
       kitchen_robot_profile: patient.has_kitchen_robot ? (patient.kitchen_robot_profile || 'cobbo-tuya-v0') : null,
       kitchen_robot_linked_at: patient.has_kitchen_robot ? new Date().toISOString() : null,
     };
@@ -163,8 +181,9 @@ const PatientSelfForm: React.FC<Props> = ({ lang, value, onChange }) => {
         }
       });
   }, []);
+  
 
-  const serialOk = !patient.has_kitchen_robot || SERIAL_RE.test(String(patient.kitchen_robot_serial || '').trim());
+  const serialOk = !patient.has_kitchen_robot || COBBO_SERIAL_RE.test(String(patient.kitchen_robot_serial || '').trim());
   const modelOk = !patient.has_kitchen_robot || Boolean(String(patient.kitchen_robot_model || '').trim());
   const robotOk = modelOk && serialOk;
 

@@ -9189,20 +9189,6 @@ trial7DaysFree: {
   ar: "يرجى اختيار طراز الروبوت.",
   he: "נא לבחור דגם רובוט."
 },
-
-"kitchenRobotSerialInvalid": {
-  pl: "Nieprawidłowy numer seryjny. Dozwolone: litery, cyfry, _ oraz -, 6–64 znaków.",
-  en: "Invalid serial number. Allowed: letters, numbers, _ and -, 6–64 characters.",
-  es: "Número de serie no válido. Permitidos: letras, números, _ y -, 6–64 caracteres.",
-  fr: "Numéro de série invalide. Autorisés : lettres, chiffres, _ et -, 6–64 caractères.",
-  de: "Ungültige Seriennummer. Erlaubt: Buchstaben, Zahlen, _ und -, 6–64 Zeichen.",
-  ua: "Неправильний серійний номер. Дозволено: літери, цифри, _ та -, 6–64 символи.",
-  ru: "Неверный серийный номер. Допустимо: буквы, цифры, _ и -, 6–64 символов.",
-  zh: "序列号无效。允许字母、数字、_ 和 -，长度 6–64 个字符。",
-  hi: "अमान्य सीरियल नंबर। अनुमति: अक्षर, संख्या, _ और -, 6–64 वर्ण।",
-  ar: "رقم تسلسلي غير صالح. المسموح: أحرف وأرقام و _ و -, من 6 إلى 64 حرفًا.",
-  he: "מספר סידורי לא תקין. מותר: אותיות, ספרות, _ ו-, באורך 6–64 תווים."
-},
 "kitchenRobot.generateFromDiet": {
   pl: "Generuj program Cobbo",
   en: "Generate Cobbo program",
@@ -9215,5 +9201,18 @@ trial7DaysFree: {
   hi: "Cobbo प्रोग्राम जनरेट करें",
   ar: "إنشاء برنامج Cobbo",
   he: "צור תוכנית Cobbo"
-}
+},
+"kitchenRobotSerialInvalid": {
+  pl: "Nieprawidłowy numer seryjny. Wpisz format MAC, np. 8C:BD:37:82:7E:A1.",
+  en: "Invalid serial number. Enter a MAC format, e.g. 8C:BD:37:82:7E:A1.",
+  es: "Número de serie inválido. Introduce un formato MAC, p. ej. 8C:BD:37:82:7E:A1.",
+  fr: "Numéro de série invalide. Saisissez un format MAC, ex. 8C:BD:37:82:7E:A1.",
+  de: "Ungültige Seriennummer. Bitte MAC-Format eingeben, z. B. 8C:BD:37:82:7E:A1.",
+  ua: "Некоректний серійний номер. Введіть формат MAC, напр. 8C:BD:37:82:7E:A1.",
+  ru: "Неверный серийный номер. Введите формат MAC, например 8C:BD:37:82:7E:A1.",
+  zh: "序列号无效。请输入 MAC 格式，例如 8C:BD:37:82:7E:A1。",
+  hi: "अमान्य सीरियल नंबर। MAC फ़ॉर्मेट दर्ज करें, जैसे 8C:BD:37:82:7E:A1।",
+  ar: "رقم تسلسلي غير صالح. أدخل تنسيق MAC مثل 8C:BD:37:82:7E:A1.",
+  he: "מספר סידורי לא תקין. הזן בפורמט MAC, למשל 8C:BD:37:82:7E:A1."
+},
 };

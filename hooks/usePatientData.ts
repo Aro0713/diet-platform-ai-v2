@@ -71,6 +71,20 @@ export function usePatientData(): UsePatientDataResult {
       cuisine: data.cuisine || '',
       model: data.model || '',
       assigned_doctor_email: data.assigned_doctor_email || '',
+            // 🤖 robot kitchen (patients.*)
+      has_kitchen_robot: Boolean(data.has_kitchen_robot),
+      kitchen_robot_model: data.kitchen_robot_model || '',
+      kitchen_robot_serial: data.kitchen_robot_serial || '',
+      kitchen_robot_profile: data.kitchen_robot_profile || '',
+      kitchen_robot_linked_at: data.kitchen_robot_linked_at || null,
+
+      // 💳 subscription (używane w panelu)
+      subscription_status: data.subscription_status || null,
+      subscription_started_at: data.subscription_started_at || null,
+      subscription_expires_at: data.subscription_expires_at || null,
+      trial_ends_at: data.trial_ends_at || null,
+      plan: data.plan || null,
+      invoice_url: data.invoice_url || null,
     });
 
     setMedicalData({
