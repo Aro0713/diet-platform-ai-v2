@@ -484,7 +484,7 @@ useEffect(() => {
     selectedSection === 'medical' ||
     selectedSection === 'interview';
 
-  if (shouldFetchPatient && !form?.user_id) {
+  if (shouldFetchPatient) {
     console.log('🔁 Auto-fetch danych pacjenta (sekcja):', selectedSection);
     fetchPatientData();
   }
