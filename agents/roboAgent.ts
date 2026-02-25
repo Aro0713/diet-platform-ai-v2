@@ -50,31 +50,40 @@ export type DietMeal = {
 
 export type DietPlan = Record<string, Record<string, DietMeal>>;
 
+/**
+ * XLSX-compatible cook step patterns (Cobbo):
+ * - Dodaj składniki:...końcówka:<recipeStepText>
+ * - Działamy Szefie!:<sekund>/<speed> Prędkość/<temp>℃.tryb:0.końcówka:<recipeStepText>
+ * - Obsłuż ręcznie:<recipeStepText>
+ *
+ * Uwaga: w XLSX "tryb" jest liczbą (często 0). Trzymamy 0, dopóki nie dostaniesz mapy trybów Cobbo.
+ */
 export type RoboStep =
-  | { kind: "add"; text: string }
-  | { kind: "manual"; text: string }
-  | { kind: "wait"; timeSec: number; note?: string }
+  | { kind: "add"; text: string; tail?: string }
+  | { kind: "manual"; text: string; tail?: string }
+  | { kind: "wait"; timeSec: number; note?: string; tail?: string }
   | {
       kind: "run";
       timeSec: number;
       tempC?: number | null;
       speedLevel?: number | null;
-      mode?: string | null; // e.g. "blend", "cook", "knead", "mix"
+      mode?: string | null; // obecnie niewykorzystywane w cookSteps (XLSX ma tryb:0)
       note?: string;
+      tail?: string;
     };
 
 export type RoboIngredient = { name: string; amount: number; unit: "g" | "ml" | "pcs" };
 
 export type RoboRecipe = {
   day: string;
-  meal: string; // zachowujemy mealKey z dietPlan (nie wymuszamy tu kanonu)
+  meal: string; // mealKey z dietPlan
   meal_label?: string;
   title: string;
   time?: string;
   ingredients: RoboIngredient[];
-  instructions: string[]; // “dla człowieka”
-  robotSteps: RoboStep[]; // “dla robota”
-  cookSteps: string[]; // emitter w stylu XLSX (cookStep_1..N)
+  instructions: string[]; // „dla człowieka”
+  robotSteps: RoboStep[]; // „dla robota” (strukturalne)
+  cookSteps: string[]; // XLSX-compatible (cookStep_1..N)
   warnings?: string[];
   profile?: { model: string };
 };
@@ -134,9 +143,11 @@ function normalizeDietIngredient(i: unknown): RoboIngredient | null {
 
   const unitRaw = String(obj.unit ?? "g").toLowerCase().trim();
   const unit: "g" | "ml" | "pcs" =
-    unitRaw === "ml" ? "ml" :
-    unitRaw === "pcs" || unitRaw === "pc" || unitRaw.startsWith("szt") ? "pcs" :
-    "g";
+    unitRaw === "ml"
+      ? "ml"
+      : unitRaw === "pcs" || unitRaw === "pc" || unitRaw.startsWith("szt")
+        ? "pcs"
+        : "g";
 
   return { name: nameRaw, amount: Math.round(amount), unit };
 }
@@ -186,7 +197,10 @@ function clampToStep(v: number, min: number, max: number, step: number): number 
   return Math.min(Math.max(snapped, min), max);
 }
 
-function applyCobboConstraints(steps: RoboStep[], profile: CobboProfile): { steps: RoboStep[]; warnings: string[] } {
+function applyCobboConstraints(
+  steps: RoboStep[],
+  profile: CobboProfile
+): { steps: RoboStep[]; warnings: string[] } {
   const warnings: string[] = [];
   const out: RoboStep[] = [];
 
@@ -225,12 +239,15 @@ function applyCobboConstraints(steps: RoboStep[], profile: CobboProfile): { step
     }
 
     if (tempC != null && tempC >= 60 && speedLevel != null) {
-    const tempNum = tempC; // ✅ TS: tempNum jest number w tym zakresie
-    const limit = profile.speed.constraints.find(c => c.ifTempGteC <= tempNum)?.maxLevel ?? null;
-    if (limit != null && speedLevel > limit) {
-        warnings.push(`Cobbo: speed limited to level ${limit} at temp >= 60°C (requested ${speedLevel}).`);
+      const tempNum = tempC;
+      const limit =
+        profile.speed.constraints.find(c => c.ifTempGteC <= tempNum)?.maxLevel ?? null;
+      if (limit != null && speedLevel > limit) {
+        warnings.push(
+          `Cobbo: speed limited to level ${limit} at temp >= 60°C (requested ${speedLevel}).`
+        );
         speedLevel = limit;
-    }
+      }
     }
 
     out.push({
@@ -239,7 +256,8 @@ function applyCobboConstraints(steps: RoboStep[], profile: CobboProfile): { step
       tempC,
       speedLevel,
       mode: optString(s.mode) ?? null,
-      note: optString(s.note) ?? undefined
+      note: optString(s.note) ?? undefined,
+      tail: optString((s as any).tail) ?? undefined
     });
   }
 
@@ -262,64 +280,240 @@ function estimateVolumeMl(ings: RoboIngredient[]): number {
   return ml;
 }
 
-/** -------------------- Cobbo cookStep emitter (XLSX-compatible) -------------------- **/
+/** -------------------- XLSX-compatible cookStep emitter -------------------- **/
+function fmtIngredientList(ings: RoboIngredient[]): string {
+  // XLSX: "marchewkę (100g), mleko (1400g), jajko (1 sztukę)"
+  // Trzymamy prosto: "<name> (<amount><unit>)"
+  return (ings || [])
+    .map(i => `${String(i.name).trim()} (${i.amount}${i.unit})`)
+    .join(", ");
+}
+
 function emitCookSteps(steps: RoboStep[], _lang: string): string[] {
-  // XLSX wzorzec (z Twoich przykładów):
-  // - "Dodaj składniki: ..."
-  // - "Obsłuż ręcznie: ..."
-  // - "Działamy Szefie!:120sekund/3 Prędkość/60℃.tryb:blend."
-  // - specjalny preset: "Wyrabianie ciasta: 60 sekund"
   const out: string[] = [];
 
   for (const s of steps || []) {
     if (!s) continue;
 
     if (s.kind === "add") {
-      // XLSX: Dodaj składniki: ...
-      out.push(`Dodaj składniki: ${s.text}`.trim());
+      const tail = optString(s.tail) ?? "";
+      out.push(`Dodaj składniki:${String(s.text || "").trim()}.końcówka:${tail}`.trim());
       continue;
     }
 
     if (s.kind === "manual") {
-      // XLSX: Obsłuż ręcznie: ...
-      out.push(`Obsłuż ręcznie: ${s.text}`.trim());
+      out.push(`Obsłuż ręcznie:${String(s.text || "").trim()}`.trim());
       continue;
     }
 
     if (s.kind === "wait") {
-      // XLSX nie ma "Odczekaj" w przykładzie — robimy krok neutralny w stylu programu:
-      // Działamy Szefie!:600sekund/0 Prędkość/0℃.
       const t = Math.max(1, Math.round(s.timeSec));
-      const note = s.note ? ` (${String(s.note).trim()})` : "";
-      out.push(`Działamy Szefie!:${t}sekund/0 Prędkość/0℃.${note}`.trim());
+      const tail = optString(s.tail) ?? "";
+      out.push(`Działamy Szefie!:${t}sekund/0 Prędkość/0℃.tryb:0.końcówka:${tail}`.trim());
       continue;
     }
 
     if (s.kind === "run") {
       const t = Math.max(1, Math.round(s.timeSec));
-
-      // Special-case: knead -> XLSX preset
-      const mode = (s.mode || "").toLowerCase().trim();
-      if (mode === "knead" || mode === "wyrabianie" || mode === "dough") {
-        out.push(`Wyrabianie ciasta: ${t} sekund`);
-        continue;
-      }
-
       const speedLevel = s.speedLevel != null ? Math.max(0, Math.round(s.speedLevel)) : 0;
       const temp = s.tempC != null ? Math.round(s.tempC) : 0;
-
-      // XLSX: Działamy Szefie!:120sekund/3 Prędkość/60℃.tryb:blend.
-      const tryb = mode ? `.tryb:${mode}.` : `.`;
-      out.push(`Działamy Szefie!:${t}sekund/${speedLevel} Prędkość/${temp}℃${tryb}`);
+      const tail = optString(s.tail) ?? "";
+      out.push(
+        `Działamy Szefie!:${t}sekund/${speedLevel} Prędkość/${temp}℃.tryb:0.końcówka:${tail}`.trim()
+      );
       continue;
     }
   }
 
-  // usuń puste
   return out.map(s => String(s || "").trim()).filter(Boolean);
 }
 
-/** -------------------- Agent prompt -------------------- **/
+/** -------------------- Deterministic recipe builder (NO LLM) -------------------- **/
+type MealKind =
+  | "oatmeal"
+  | "sandwich"
+  | "eggs"
+  | "smoothie"
+  | "salad"
+  | "soup"
+  | "pasta"
+  | "fish"
+  | "meat_grain"
+  | "steam_veg"
+  | "other";
+
+function detectMealKind(nameOrKey: string): MealKind {
+  const s = (nameOrKey || "").toLowerCase();
+
+  if (s.includes("owsian") || s.includes("musli") || s.includes("płatki")) return "oatmeal";
+  if (s.includes("kanapk") || s.includes("tost") || s.includes("hummus") || s.includes("awokado"))
+    return "sandwich";
+  if (s.includes("jaj") || s.includes("omlet") || s.includes("jajeczn")) return "eggs";
+  if (s.includes("smoothie") || s.includes("koktajl")) return "smoothie";
+  if (s.includes("sałatk")) return "salad";
+  if (s.includes("zupa") || s.includes("krem")) return "soup";
+  if (s.includes("makaron")) return "pasta";
+  if (s.includes("łoso") || s.includes("dorsz") || s.includes("tuńczyk") || s.includes("ryba"))
+    return "fish";
+  if (s.includes("wołow") || s.includes("kurcz") || s.includes("indyk") || s.includes("schab"))
+    return "meat_grain";
+  if (s.includes("parze") || s.includes("gotowane") || s.includes("warzywa")) return "steam_veg";
+
+  return "other";
+}
+
+function hasIngredient(ings: RoboIngredient[], needle: string): boolean {
+  const n = needle.toLowerCase();
+  return (ings || []).some(i => (i.name || "").toLowerCase().includes(n));
+}
+
+function addOptionalIngredient(
+  base: RoboIngredient[],
+  name: string,
+  amount: number,
+  unit: "g" | "ml" | "pcs"
+): RoboIngredient[] {
+  // nie duplikuj, jeśli już jest podobny składnik
+  const exists = base.some(i => (i.name || "").toLowerCase() === name.toLowerCase());
+  if (exists) return base;
+  return [...base, { name, amount, unit }];
+}
+
+function buildDeterministicRecipe(meal: FlatMeal, lang: string): RoboRecipe {
+  const title = meal.mealName || meal.mealKey || "Posiłek";
+  const kind = detectMealKind(title || meal.mealKey);
+
+  // Bazowe składniki: 1:1 z dietPlan
+  let ingredients = [...meal.ingredients];
+
+  // Opcjonalne dodatki technologiczne (dozwolone)
+  const mayNeedSalt = !hasIngredient(ingredients, "sól");
+  const mayNeedPepper = !hasIngredient(ingredients, "pieprz");
+
+  // Woda tylko, gdy typ potrawy jej wymaga (zupa/kasze/makaron/gotowanie na parze)
+  const shouldAddWater =
+    kind === "soup" || kind === "pasta" || kind === "meat_grain" || kind === "steam_veg";
+
+  if (shouldAddWater && !hasIngredient(ingredients, "woda")) {
+    // konserwatywnie: 500 ml (nie rozwali misy), ewentualnie użytkownik doprecyzuje później
+    ingredients = addOptionalIngredient(ingredients, "Woda", 500, "ml");
+  }
+  if (mayNeedSalt) ingredients = addOptionalIngredient(ingredients, "Sól", 1, "g");
+  if (mayNeedPepper) ingredients = addOptionalIngredient(ingredients, "Pieprz", 1, "g");
+
+  // Zioła tylko jako 1g (bezpiecznie)
+  if (!hasIngredient(ingredients, "zioła") && (kind === "meat_grain" || kind === "fish" || kind === "soup")) {
+    ingredients = addOptionalIngredient(ingredients, "Zioła (np. prowansalskie)", 1, "g");
+  }
+
+  const ingText = fmtIngredientList(ingredients);
+  const baseTime = meal.time;
+
+  // recipeStep_* (dla człowieka) + robotSteps z tail do cookSteps
+  const instructions: string[] = [];
+  const robotSteps: RoboStep[] = [];
+
+  function stepAdd(tail: string) {
+    instructions.push(tail);
+    robotSteps.push({
+      kind: "add",
+      text: ingText,
+      tail
+    });
+  }
+
+  function stepRun(timeSec: number, tempC: number | null, speedLevel: number | null, tail: string) {
+    instructions.push(tail);
+    robotSteps.push({
+      kind: "run",
+      timeSec,
+      tempC,
+      speedLevel,
+      mode: null,
+      tail
+    });
+  }
+
+  function stepManual(text: string) {
+    instructions.push(text);
+    robotSteps.push({ kind: "manual", text });
+  }
+
+  // Deterministic templates (minimalne, realistyczne)
+  if (kind === "oatmeal") {
+    stepAdd("Wlej/dodaj składniki do misy (bez owoców i orzechów, jeśli wolisz je na wierzch).");
+    stepRun(300, 95, 2, "Gotuj 5 minut do zmięknięcia płatków.");
+    stepManual("Przełóż do miski, dodaj owoce/orzechy na wierzch i podawaj.");
+  } else if (kind === "sandwich") {
+    // Robot nie zrobi chleba — opcjonalnie może tylko „zmiksować” pastę (awokado/hummus)
+    const canBlendPaste = hasIngredient(ingredients, "awokado") || hasIngredient(ingredients, "hummus");
+    if (canBlendPaste) {
+      stepAdd("Dodaj składniki pasty do misy (np. awokado/hummus + przyprawy).");
+      stepRun(10, 30, 4, "Zblenduj krótko do uzyskania pasty.");
+      stepManual("Rozsmaruj pastę na pieczywie i dodaj warzywa. Podawaj.");
+    } else {
+      stepManual("To danie przygotuj ręcznie: posmaruj pieczywo dodatkiem i ułóż warzywa. Podawaj.");
+    }
+  } else if (kind === "eggs") {
+    // Jajka: delikatne mieszanie na temp 90–95, speed 1–2
+    stepAdd("Dodaj składniki do misy (jajka + warzywa + tłuszcz + przyprawy).");
+    stepRun(120, 95, 2, "Podgrzewaj i mieszaj do ścięcia jajek.");
+    stepManual("Wyłóż na talerz i podawaj.");
+  } else if (kind === "smoothie") {
+    stepAdd("Dodaj składniki do misy (owoce/warzywa + płyn).");
+    stepRun(30, 30, 8, "Blenduj na gładko.");
+    stepManual("Przelej do szklanki i podawaj.");
+  } else if (kind === "salad") {
+    // Sałatka: robot może tylko posiekać/mieszać (temp 0)
+    stepAdd("Dodaj składniki do misy (bez delikatnych dodatków, jeśli chcesz je dodać na końcu).");
+    stepRun(8, 30, 4, "Wymieszaj/posiekaj krótko.");
+    stepManual("Wyłóż do miski, dopraw do smaku i podawaj.");
+  } else if (kind === "soup") {
+    stepAdd("Dodaj składniki do misy.");
+    stepRun(10, 30, 5, "Rozdrobnij warzywa.");
+    stepRun(900, 100, 2, "Gotuj do miękkości.");
+    stepRun(30, 30, 8, "Zblenduj do kremu.");
+    stepManual("Podawaj na ciepło.");
+  } else if (kind === "pasta") {
+    stepAdd("Dodaj wodę i składniki sosu do misy (makaron ugotuj osobno, jeśli to możliwe).");
+    stepRun(600, 100, 2, "Gotuj sos 10 minut.");
+    stepManual("Ugotuj makaron osobno i połącz z sosem. Podawaj.");
+  } else if (kind === "fish") {
+    stepAdd("Dodaj składniki do misy (warzywa + tłuszcz + przyprawy).");
+    stepRun(900, 100, 2, "Gotuj/duś warzywa do miękkości.");
+    stepManual("Rybę przygotuj na patelni lub w piekarniku (wg zaleceń diety) i podaj z warzywami.");
+  } else if (kind === "meat_grain") {
+    // Bezpieczny template: kasza/ryż w robocie, mięso często ręcznie (żeby nie ryzykować tekstury)
+    stepAdd("Dodaj składniki do misy (kasza/ryż + woda + przyprawy).");
+    stepRun(900, 100, 2, "Gotuj kaszę/ryż do miękkości.");
+    stepManual("Mięso przygotuj osobno (smaż/piecz) i podaj z ugotowaną kaszą oraz warzywami.");
+  } else if (kind === "steam_veg") {
+    stepAdd("Dodaj warzywa i wodę do misy.");
+    stepRun(1200, 100, 2, "Gotuj do miękkości.");
+    stepManual("Podawaj na ciepło.");
+  } else {
+    // fallback minimalny (bezpieczny)
+    stepAdd("Dodaj składniki do misy.");
+    stepRun(300, 95, 2, "Podgrzewaj i mieszaj do uzyskania pożądanej konsystencji.");
+    stepManual("Podawaj.");
+  }
+
+  return {
+    day: meal.day,
+    meal: meal.mealKey,
+    meal_label: meal.mealName,
+    title,
+    time: baseTime,
+    ingredients,
+    instructions,
+    robotSteps,
+    cookSteps: [],
+    warnings: [],
+    profile: { model: cobboProfileV0.model }
+  };
+}
+
+/** -------------------- Agent prompt (kept, but NOT used by default) -------------------- **/
 const ROBO_BASE_INSTRUCTIONS = `
 You are a clinical cooking automation agent for a kitchen robot (Cobbo/Tuya).
 Your job: generate ROBOT-EXECUTABLE recipes from a given dietPlan meal specification.
@@ -327,68 +521,6 @@ Your job: generate ROBOT-EXECUTABLE recipes from a given dietPlan meal specifica
 STRICT JSON MODE:
 - OUTPUT MUST BE PURE JSON. No prose. No markdown fences.
 - If you cannot produce output, return {"recipes": []}.
-
-INPUT (single JSON string):
-{
-  "lang": "pl" | "en" | "de" | "fr" | "es" | "ua" | "ru" | "zh" | "hi" | "ar" | "he",
-  "cuisine": "...",
-  "modelKey": "...",
-  "goal": "...",
-  "forbiddenIngredients": ["..."],
-  "preferredIngredients": ["..."],
-  "robot": {
-    "temperature": { "minC": 30, "maxC": 140, "stepC": 5 },
-    "speed": { "minLevel": 1, "maxLevel": 10, "tempLockC": 60, "tempLockMaxLevel": 4, "rampToTargetSec": 6 },
-    "time": { "requiresTimeIfTemp": true },
-    "bowl": { "workingL": 2.0 }
-  },
-  "meals": [
-    {
-      "day": "<string>",
-      "mealKey": "<string>",
-      "mealName": "<string or null>",
-      "time": "<string or null>",
-      "ingredients": [{ "name": "<string>", "amount": <number>, "unit": "g"|"ml"|"pcs" }]
-    }
-  ]
-}
-
-CRITICAL RULES:
-1) DO NOT change the core meal ingredients from input.meals[*].ingredients.
-   - You may add ONLY: water/stock (if needed for cooking), herbs/spices, cooking fat, acid (lemon/vinegar) IF clinically safe.
-   - Never add forbidden ingredients. Never introduce allergens. Respect modelKey/goal/cuisine.
-2) Output MUST be feasible on the robot with constraints:
-   - temperature 30..140 step 5
-   - speed level 1..10
-   - if temperature >= 60 then speedLevel must be <= 4
-   - temperature cannot be used without timeSec
-3) Keep steps realistic and minimal. Prefer robot steps over manual steps when possible.
-4) Provide BOTH:
-   - human instructions[] in input.lang
-   - robotSteps[] with structured parameters
-   - Use mode values from: "cook" | "mix" | "blend" | "knead" when generating run steps.
-
-OUTPUT SHAPE:
-{
-  "recipes": [
-    {
-      "day": "<day>",
-      "meal": "<mealKey>",
-      "meal_label": "<human label in input.lang>",
-      "title": "<dish title in input.lang>",
-      "time": "<time or null>",
-      "ingredients": [{ "name": "...", "amount": 0, "unit": "g|ml|pcs" }],
-      "instructions": ["..."],
-      "robotSteps": [
-        { "kind":"add", "text":"..." } |
-        { "kind":"manual", "text":"..." } |
-        { "kind":"wait", "timeSec": 60, "note":"..." } |
-        { "kind":"run", "timeSec": 120, "tempC": 95, "speedLevel": 2, "mode": "cook|mix|blend|knead", "note":"..." }
-      ],
-      "warnings": ["..."]
-    }
-  ]
-}
 `.trim();
 
 function buildRoboAgent(model: string, name: string) {
@@ -402,19 +534,27 @@ function buildRoboAgent(model: string, name: string) {
 const roboAgentQuality = buildRoboAgent("gpt-4o", "Robo Agent (Quality)");
 const roboAgentFast = buildRoboAgent("gpt-4o-mini", "Robo Agent (Fast)");
 
-/** -------------------- sanitize output -------------------- **/
+/** -------------------- sanitize output (only for optional LLM mode) -------------------- **/
 function cleanUnit(u: unknown): "g" | "ml" | "pcs" {
   const x = String(u || "").toLowerCase();
   if (x === "ml" || x.startsWith("millil")) return "ml";
   if (
-    x === "pcs" || x === "pc" || x === "piece" || x === "pieces" ||
-    x.startsWith("szt") || x === "ud" || x === "uds" || x === "stk" || x === "st."
-  ) return "pcs";
+    x === "pcs" ||
+    x === "pc" ||
+    x === "piece" ||
+    x === "pieces" ||
+    x.startsWith("szt") ||
+    x === "ud" ||
+    x === "uds" ||
+    x === "stk" ||
+    x === "st."
+  )
+    return "pcs";
   return "g";
 }
 
 function sanitizeRoboRecipes(obj: unknown): { recipes: RoboRecipe[] } {
-  const root = (obj && typeof obj === "object") ? (obj as Record<string, unknown>) : null;
+  const root = obj && typeof obj === "object" ? (obj as Record<string, unknown>) : null;
   const arr = Array.isArray(root?.recipes) ? (root!.recipes as unknown[]) : [];
 
   const out: RoboRecipe[] = arr
@@ -456,14 +596,16 @@ function sanitizeRoboRecipes(obj: unknown): { recipes: RoboRecipe[] } {
             .map((s: unknown): RoboStep => {
               const ss = s as Record<string, unknown>;
               const kind = String(ss.kind ?? "").trim();
+              const tail = optString((ss as any).tail) ?? undefined;
 
-              if (kind === "add") return { kind: "add", text: String(ss.text ?? "").trim().slice(0, 500) };
-              if (kind === "manual") return { kind: "manual", text: String(ss.text ?? "").trim().slice(0, 500) };
+              if (kind === "add") return { kind: "add", text: String(ss.text ?? "").trim().slice(0, 500), tail };
+              if (kind === "manual") return { kind: "manual", text: String(ss.text ?? "").trim().slice(0, 500), tail };
               if (kind === "wait") {
                 return {
                   kind: "wait",
                   timeSec: Math.max(1, Math.round(optNumber(ss.timeSec) ?? 60)),
-                  note: optString(ss.note) ?? undefined
+                  note: optString(ss.note) ?? undefined,
+                  tail
                 };
               }
 
@@ -473,7 +615,8 @@ function sanitizeRoboRecipes(obj: unknown): { recipes: RoboRecipe[] } {
                 tempC: ss.tempC == null ? null : Math.round(optNumber(ss.tempC) ?? 0),
                 speedLevel: ss.speedLevel == null ? null : Math.round(optNumber(ss.speedLevel) ?? 0),
                 mode: optString(ss.mode) ?? null,
-                note: optString(ss.note) ?? undefined
+                note: optString(ss.note) ?? undefined,
+                tail
               };
             })
         : [];
@@ -500,7 +643,10 @@ function sanitizeRoboRecipes(obj: unknown): { recipes: RoboRecipe[] } {
         profile: { model: String((rr.profile as any)?.model || "").trim() || "cobbo-tuya-v0" }
       };
     })
-    .filter((r: RoboRecipe) => r.day && r.meal && r.title && r.ingredients.length > 0 && r.instructions.length > 0 && r.robotSteps.length > 0);
+    .filter(
+      (r: RoboRecipe) =>
+        r.day && r.meal && r.title && r.ingredients.length > 0 && r.instructions.length > 0 && r.robotSteps.length > 0
+    );
 
   return { recipes: out };
 }
@@ -522,49 +668,23 @@ export async function generateRoboRecipes(input: GenerateRoboInput): Promise<{ r
   const meals = flattenDietPlan(dietPlan);
   if (!meals.length) return { recipes: [] };
 
-  const robotPayload = {
-    temperature: profile.temperature,
-    speed: {
-      minLevel: profile.speed.minLevel,
-      maxLevel: profile.speed.maxLevel,
-      tempLockC: 60,
-      tempLockMaxLevel: 4,
-      rampToTargetSec: profile.speed.rampToTargetSec
-    },
-    time: { requiresTimeIfTemp: profile.time.requiresTimeIfTemp },
-    bowl: { workingL: profile.bowl.workingL }
-  };
+  /**
+   * IMPORTANT:
+   * Domyślnie działamy deterministycznie (NO LLM) => brak halucynacji.
+   * Jeśli kiedyś będziesz chciał LLM jako fallback, dodamy flagę (np. modelHint === "llm").
+   */
+  const deterministicRecipes: RoboRecipe[] = meals.slice(0, 42).map(m => buildDeterministicRecipe(m, lang));
 
-  const userPayload = {
-    lang,
-    cuisine,
-    modelKey,
-    goal,
-    forbiddenIngredients: (forbiddenIngredients || []).map(String).filter(Boolean).slice(0, 120),
-    preferredIngredients: (preferredIngredients || []).map(String).filter(Boolean).slice(0, 120),
-    robot: robotPayload,
-    meals: meals.slice(0, 42) // 7 dni * do 6 posiłków
-  };
-
-  const agent = modelHint === "fast" ? roboAgentFast : roboAgentQuality;
-
-  const result: any = await run(agent, JSON.stringify(userPayload));
-  const text = String(result?.finalOutput ?? result?.output_text ?? "").trim();
-
-  const parsed = tryParseJsonLoose(text);
-  if (!parsed || typeof parsed !== "object") return { recipes: [] };
-
-  const sanitized = sanitizeRoboRecipes(parsed);
-  if (!sanitized.recipes.length) return { recipes: [] };
-
-  const final: RoboRecipe[] = sanitized.recipes.map((r: RoboRecipe) => {
+  const final: RoboRecipe[] = deterministicRecipes.map((r: RoboRecipe) => {
     const { steps, warnings: w1 } = applyCobboConstraints(r.robotSteps, profile);
 
     const volMl = estimateVolumeMl(r.ingredients);
     const w2: string[] = [];
     if (volMl > profile.bowl.workingL * 1000) {
       const liters = Math.round((volMl / 1000) * 10) / 10;
-      w2.push(`Pojemność robocza misy ${profile.bowl.workingL}L może zostać przekroczona (~${liters}L). Rozważ podział na 2 tury.`);
+      w2.push(
+        `Pojemność robocza misy ${profile.bowl.workingL}L może zostać przekroczona (~${liters}L). Rozważ podział na 2 tury.`
+      );
     }
 
     const cookSteps = emitCookSteps(steps, lang);
