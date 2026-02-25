@@ -262,31 +262,61 @@ function estimateVolumeMl(ings: RoboIngredient[]): number {
   return ml;
 }
 
-/** -------------------- Cobbo cookStep emitter -------------------- **/
-function emitCookSteps(steps: RoboStep[], lang: string): string[] {
-  // minimalna lokalizacja (na razie PL/EN)
-  const isPL = (lang || "pl").toLowerCase().startsWith("pl");
-  const L = {
-    add: isPL ? "Dodaj składniki" : "Add ingredients",
-    manual: isPL ? "Obsłuż ręcznie" : "Manual step",
-    wait: isPL ? "Odczekaj" : "Wait",
-    go: isPL ? "Działamy Szefie!" : "Let’s cook!"
-  };
-
+/** -------------------- Cobbo cookStep emitter (XLSX-compatible) -------------------- **/
+function emitCookSteps(steps: RoboStep[], _lang: string): string[] {
+  // XLSX wzorzec (z Twoich przykładów):
+  // - "Dodaj składniki: ..."
+  // - "Obsłuż ręcznie: ..."
+  // - "Działamy Szefie!:120sekund/3 Prędkość/60℃.tryb:blend."
+  // - specjalny preset: "Wyrabianie ciasta: 60 sekund"
   const out: string[] = [];
+
   for (const s of steps || []) {
-    if (s.kind === "add") out.push(`${L.add}: ${s.text}`);
-    else if (s.kind === "manual") out.push(`${L.manual}: ${s.text}`);
-    else if (s.kind === "wait") out.push(`${L.wait}: ${s.timeSec}s${s.note ? ` (${s.note})` : ""}`);
-    else if (s.kind === "run") {
+    if (!s) continue;
+
+    if (s.kind === "add") {
+      // XLSX: Dodaj składniki: ...
+      out.push(`Dodaj składniki: ${s.text}`.trim());
+      continue;
+    }
+
+    if (s.kind === "manual") {
+      // XLSX: Obsłuż ręcznie: ...
+      out.push(`Obsłuż ręcznie: ${s.text}`.trim());
+      continue;
+    }
+
+    if (s.kind === "wait") {
+      // XLSX nie ma "Odczekaj" w przykładzie — robimy krok neutralny w stylu programu:
+      // Działamy Szefie!:600sekund/0 Prędkość/0℃.
       const t = Math.max(1, Math.round(s.timeSec));
-      const sp = s.speedLevel != null ? `${Math.round(s.speedLevel)} speed` : "0 speed";
-      const temp = s.tempC != null ? `${Math.round(s.tempC)}℃` : `0℃`;
-      const mode = s.mode ? `.mode:${String(s.mode).trim()}.` : `.`;
-      out.push(`${L.go}:${t}sec/${sp}/${temp}${mode}`);
+      const note = s.note ? ` (${String(s.note).trim()})` : "";
+      out.push(`Działamy Szefie!:${t}sekund/0 Prędkość/0℃.${note}`.trim());
+      continue;
+    }
+
+    if (s.kind === "run") {
+      const t = Math.max(1, Math.round(s.timeSec));
+
+      // Special-case: knead -> XLSX preset
+      const mode = (s.mode || "").toLowerCase().trim();
+      if (mode === "knead" || mode === "wyrabianie" || mode === "dough") {
+        out.push(`Wyrabianie ciasta: ${t} sekund`);
+        continue;
+      }
+
+      const speedLevel = s.speedLevel != null ? Math.max(0, Math.round(s.speedLevel)) : 0;
+      const temp = s.tempC != null ? Math.round(s.tempC) : 0;
+
+      // XLSX: Działamy Szefie!:120sekund/3 Prędkość/60℃.tryb:blend.
+      const tryb = mode ? `.tryb:${mode}.` : `.`;
+      out.push(`Działamy Szefie!:${t}sekund/${speedLevel} Prędkość/${temp}℃${tryb}`);
+      continue;
     }
   }
-  return out.filter(Boolean);
+
+  // usuń puste
+  return out.map(s => String(s || "").trim()).filter(Boolean);
 }
 
 /** -------------------- Agent prompt -------------------- **/
@@ -335,7 +365,8 @@ CRITICAL RULES:
 3) Keep steps realistic and minimal. Prefer robot steps over manual steps when possible.
 4) Provide BOTH:
    - human instructions[] in input.lang
-   - robotSteps[] with structured parameters.
+   - robotSteps[] with structured parameters
+   - Use mode values from: "cook" | "mix" | "blend" | "knead" when generating run steps.
 
 OUTPUT SHAPE:
 {
