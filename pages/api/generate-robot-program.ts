@@ -76,8 +76,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { data: patient, error: patientError } = await admin
       .from("patients")
       .select(
-        "user_id, has_kitchen_robot, kitchen_robot_model, kitchen_robot_serial, kitchen_robot_profile, model, goal, cuisine"
-      )
+        "user_id, has_kitchen_robot, kitchen_robot_model, kitchen_robot_serial, kitchen_robot_profile"
+        )
       .eq("user_id", userId)
       .maybeSingle();
 
@@ -125,16 +125,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         recipes: (existing.program_json as any)?.recipes ?? []
       });
     }
-
-    // 2) Generuj nowy program
-    const result = await generateRoboRecipes({
-      lang,
-      dietPlan,
-      modelKey: patient.model || "",
-      goal: patient.goal || "",
-      cuisine: patient.cuisine || ""
-      // profile: domyślny cobboProfileV0 w roboAgencie
-    });
+    const meta = (dietPlan as any)?.__meta ?? {};
+    const modelKey = typeof meta?.model === "string" ? meta.model : "";
+    const goal = typeof meta?.goal === "string" ? meta.goal : "";
+    const cuisine = typeof meta?.cuisine === "string" ? meta.cuisine : "";
+    const result = await generateRoboRecipes({ lang, dietPlan, modelKey, goal, cuisine });
 
     const program = {
       recipes: result.recipes ?? []
