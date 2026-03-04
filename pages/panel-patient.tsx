@@ -1188,8 +1188,8 @@ const handleGenerateDiet = async () => {
     </div>
 
     {/* LAYOUT */}
-    <div className="relative z-10 mx-auto w-full max-w-[1440px] px-4 md:px-6 pt-4 md:pt-6">
-      <div className="grid grid-cols-1 lg:grid-cols-[280px,1fr] gap-6">
+    <div className="relative z-10 mx-auto w-full max-w-[1680px] px-3 sm:px-4 md:px-6 lg:px-8 pt-3 md:pt-5">
+      <div className="grid grid-cols-1 lg:grid-cols-[320px,1fr] gap-5 lg:gap-6">
         {/* LEFT MENU */}
         <aside className="lg:sticky lg:top-4 h-fit rounded-3xl border border-white/10 bg-white/6 backdrop-blur-2xl shadow-[0_30px_90px_rgba(0,0,0,.45)] overflow-hidden">
           <div className="p-5">
@@ -1279,6 +1279,7 @@ const handleGenerateDiet = async () => {
 
         {/* CENTER WORKSPACE */}
         <section className="min-w-0">
+          <div className="mx-auto w-full max-w-[1180px] 2xl:max-w-[1320px]">
           {/* Welcome (when no section) */}
           {!selectedSection && (
             <div className="rounded-3xl border border-white/10 bg-white/6 backdrop-blur-2xl shadow-[0_30px_90px_rgba(0,0,0,.45)] p-6 md:p-10">
@@ -1729,9 +1730,10 @@ const handleGenerateDiet = async () => {
           {progress > 0 && progress < 100 && (
             <ProgressOverlay message={progressMessage} percent={progress} />
           )}
-        </section>
-      </div>
+         </div>
+      </section>
     </div>
-  </main>
+  </div>
+</main>
 );
 }
