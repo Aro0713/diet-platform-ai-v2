@@ -1983,16 +1983,93 @@ return (
                   )}
                 </div>
 
-                  {selectedSection === "scanner" && (
-                    <>
-                      <ProductAssistantPanel lang={lang} patient={form} form={form} interviewData={interviewData} medical={medicalData} dietPlan={editableDiet} />
-                      <BasketTable lang={lang} />
-                    </>
-                  )}
+                 {selectedSection === "scanner" && (
+                  <div id="look-assistant" className="space-y-6">
+                    {/* Header */}
+                    <div className="rounded-3xl border border-white/10 bg-white/6 backdrop-blur-2xl shadow-[0_18px_60px_rgba(0,0,0,.30)] p-5 md:p-6">
+                      <div className="text-xs uppercase tracking-wide text-white/60 mb-1">
+                        {tUI("askLook", lang)}
+                      </div>
+                      <div className="text-xl font-semibold tracking-tight text-white">
+                        {tUI("askLook", lang)}
+                      </div>
+                      <div className="text-sm text-white/75 mt-2">
+                        {tUI("askLookDesc", lang) === "askLookDesc"
+                          ? "Scan products, get AI guidance and build a shopping basket aligned with your diet."
+                          : tUI("askLookDesc", lang)}
+                      </div>
+                    </div>
+
+                    {/* Workspace */}
+                    <div className="grid grid-cols-1 xl:grid-cols-[1fr,420px] gap-6">
+                      {/* Look Assistant */}
+                      <div className="rounded-3xl border border-white/10 bg-white/6 backdrop-blur-2xl shadow-[0_30px_90px_rgba(0,0,0,.45)] overflow-hidden">
+                        <div aria-hidden className="pointer-events-none absolute inset-0 rounded-3xl bg-[radial-gradient(120%_80%_at_15%_0%,rgba(255,255,255,.10),transparent_55%)]" />
+                        <div className="relative p-5 md:p-6">
+                          <div className="flex items-center justify-between gap-3 mb-4">
+                            <div>
+                              <div className="text-sm font-semibold text-white">
+                                {tUI("productAssistantTitle", lang) === "productAssistantTitle"
+                                  ? "Look Assistant"
+                                  : tUI("productAssistantTitle", lang)}
+                              </div>
+                              <div className="text-xs text-white/60">
+                                {tUI("productAssistantSubtitle", lang) === "productAssistantSubtitle"
+                                  ? "AI product analysis & suggestions"
+                                  : tUI("productAssistantSubtitle", lang)}
+                              </div>
+                            </div>
+
+                            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/8 px-3 py-1 text-xs text-white/80">
+                              <span className="h-2 w-2 rounded-full bg-sky-300" />
+                              {tUI("live", lang) === "live" ? "Live" : tUI("live", lang)}
+                            </div>
+                          </div>
+
+                          <ProductAssistantPanel
+                            lang={lang}
+                            patient={form}
+                            form={form}
+                            interviewData={interviewData}
+                            medical={medicalData}
+                            dietPlan={editableDiet}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Basket */}
+                      <div className="rounded-3xl border border-white/10 bg-white/6 backdrop-blur-2xl shadow-[0_18px_60px_rgba(0,0,0,.30)] overflow-hidden">
+                        <div className="p-5 md:p-6">
+                          <div className="flex items-center justify-between gap-3 mb-4">
+                            <div>
+                              <div className="text-sm font-semibold text-white">
+                                {tUI("basketTitle", lang) === "basketTitle" ? "Basket" : tUI("basketTitle", lang)}
+                              </div>
+                              <div className="text-xs text-white/60">
+                                {tUI("basketSubtitle", lang) === "basketSubtitle"
+                                  ? "Products saved from Look"
+                                  : tUI("basketSubtitle", lang)}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="rounded-2xl border border-white/10 bg-white/7 backdrop-blur-xl p-3">
+                            <BasketTable lang={lang} />
+                          </div>
+
+                          <div className="mt-4 text-xs text-white/60">
+                            {tUI("basketHint", lang) === "basketHint"
+                              ? "Tip: add items while scanning — the basket will stay here."
+                              : tUI("basketHint", lang)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 </div>
               </div>
             )}
-
             {progress > 0 && progress < 100 && <ProgressOverlay message={progressMessage} percent={progress} />}
           </div>
         </section>
