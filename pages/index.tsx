@@ -768,9 +768,7 @@ export default function Home() {
                         localStorage.setItem("entryMode", "patient");
                         window.location.href = "/register?mode=patient";
                       }}
-                      className="w-full sm:w-auto rounded-2xl px-6 py-3 text-base sm:text-lg font-semibold shadow-lg border border-white/10
-                      bg-[linear-gradient(135deg,rgba(56,189,248,.35),rgba(16,185,129,.25))] hover:bg-[linear-gradient(135deg,rgba(56,189,248,.45),rgba(16,185,129,.32))]
-                      backdrop-blur-xl"
+                      className="w-full sm:w-auto rounded-2xl px-6 py-3 text-base sm:text-lg font-semibold shadow-lg border border-white/10 bg-[linear-gradient(135deg,rgba(56,189,248,.35),rgba(16,185,129,.25))] hover:bg-[linear-gradient(135deg,rgba(56,189,248,.45),rgba(16,185,129,.32))] backdrop-blur-xl"
                       aria-label={tUI("cta.title")}
                       title={tUI("cta.title")}
                     >
@@ -779,8 +777,7 @@ export default function Home() {
 
                     <button
                       onClick={goToTv}
-                      className="w-full sm:w-auto rounded-2xl px-6 py-3 text-base sm:text-lg font-semibold shadow-lg border border-white/10
-                      bg-white/10 hover:bg-white/14 backdrop-blur-xl"
+                      className="w-full sm:w-auto rounded-2xl px-6 py-3 text-base sm:text-lg font-semibold shadow-lg border border-white/10 bg-white/10 hover:bg-white/14 backdrop-blur-xl"
                       aria-label={tUI("cta.preview")}
                       title={tUI("cta.preview")}
                     >
@@ -1031,9 +1028,7 @@ export default function Home() {
               localStorage.setItem("entryMode", "patient");
               window.location.href = "/register?mode=patient";
             }}
-            className="w-full sm:w-auto rounded-2xl px-6 py-3 text-lg font-semibold shadow-lg border border-white/10
-            bg-[linear-gradient(135deg,rgba(56,189,248,.35),rgba(16,185,129,.25))] hover:bg-[linear-gradient(135deg,rgba(56,189,248,.45),rgba(16,185,129,.32))]
-            backdrop-blur-xl"
+           className="w-full sm:w-auto rounded-2xl px-6 py-3 text-lg font-semibold shadow-lg border border-white/10 bg-[linear-gradient(135deg,rgba(56,189,248,.35),rgba(16,185,129,.25))] hover:bg-[linear-gradient(135deg,rgba(56,189,248,.45),rgba(16,185,129,.32))] backdrop-blur-xl"
             aria-label={tUI("cta.patientAria")}
             title={tUI("cta.patientAria")}
           >
@@ -1045,8 +1040,7 @@ export default function Home() {
               localStorage.setItem("entryMode", "doctor");
               window.location.href = "/register?mode=doctor";
             }}
-            className="w-full sm:w-auto rounded-2xl px-6 py-3 text-lg font-semibold shadow-lg border border-white/10
-            bg-white/10 hover:bg-white/14 backdrop-blur-xl"
+            className="w-full sm:w-auto rounded-2xl px-6 py-3 text-lg font-semibold shadow-lg border border-white/10 bg-white/10 hover:bg-white/14 backdrop-blur-xl"
             aria-label={tUI("cta.doctorAria")}
             title={tUI("cta.doctorAria")}
           >
