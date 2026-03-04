@@ -45,16 +45,6 @@ export default function LangAndThemeToggle() {
           </option>
         ))}
       </select>
-
-      {/* LOGOUT (modern lux button) */}
-      <button
-        onClick={handleLogout}
-        className="px-4 py-2 rounded-xl border border-white/10 bg-white/8 hover:bg-white/12 text-white/90 hover:text-white shadow-[0_18px_60px_rgba(0,0,0,.30)] backdrop-blur-xl transition"
-        aria-label={tUI("logout", lang) === "logout" ? "Wyloguj się" : tUI("logout", lang)}
-        title={tUI("logout", lang) === "logout" ? "Wyloguj się" : tUI("logout", lang)}
-      >
-        {tUI("logout", lang) === "logout" ? "Wyloguj się" : tUI("logout", lang)}
-      </button>
     </div>
   );
 }
