@@ -1,88 +1,60 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { LangKey, languageLabels } from '@/utils/i18n';
-import { useRouter } from 'next/router';
-import { SunIcon, MoonIcon } from 'lucide-react';
-import { supabase } from '@/lib/supabaseClient';
-import { tUI } from '@/utils/i18n';
+import { useEffect, useState } from "react";
+import { LangKey, languageLabels } from "@/utils/i18n";
+import { useRouter } from "next/router";
+import { supabase } from "@/lib/supabaseClient";
+import { tUI } from "@/utils/i18n";
 
 export default function LangAndThemeToggle() {
   const router = useRouter();
 
-  const [lang, setLang] = useState<LangKey>('pl');
-  const [isDark, setIsDark] = useState(false);
+  const [lang, setLang] = useState<LangKey>("pl");
 
   useEffect(() => {
-    const storedLang = localStorage.getItem('platformLang') as LangKey;
+    const storedLang = localStorage.getItem("platformLang") as LangKey;
     if (storedLang) setLang(storedLang);
-
-    const savedTheme = localStorage.getItem('theme');
-    const dark = savedTheme === 'dark';
-    setIsDark(dark);
-    document.documentElement.classList.toggle('dark', dark);
   }, []);
 
   const handleLangChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedLang = e.target.value as LangKey;
     setLang(selectedLang);
-    localStorage.setItem('platformLang', selectedLang);
+    localStorage.setItem("platformLang", selectedLang);
     router.reload();
-  };
-
-  const toggleTheme = () => {
-    const newIsDark = !isDark;
-    setIsDark(newIsDark);
-    document.documentElement.classList.toggle('dark', newIsDark);
-    localStorage.setItem('theme', newIsDark ? 'dark' : 'light');
   };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.push('/'); // lub '/login' jeśli masz stronę logowania
+    localStorage.removeItem("currentUserID");
+    localStorage.removeItem("currentUserRole");
+    router.push("/"); // lub '/register?mode=login' jeśli tak wolisz globalnie
   };
 
   return (
     <div className="flex flex-col items-end gap-2">
-      {/* LANGUAGE SELECTOR */}
+      {/* LANGUAGE SELECTOR (glass) */}
       <select
-        className="px-2 py-1 rounded-md border border-gray-300 text-black bg-white dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+        className="px-3 py-2 rounded-xl border border-white/10 bg-white/10 text-white shadow-sm backdrop-blur-xl focus:outline-none focus:ring-2 focus:ring-sky-400/60"
         value={lang}
         onChange={handleLangChange}
+        aria-label={tUI("nav.languageAria", lang) === "nav.languageAria" ? "Language selection" : tUI("nav.languageAria", lang)}
       >
         {Object.entries(languageLabels).map(([key, label]) => (
-          <option key={key} value={key}>
+          <option key={key} value={key} className="text-black">
             {label}
           </option>
         ))}
       </select>
 
-      {/* THEME TOGGLE */}
+      {/* LOGOUT (modern lux button) */}
       <button
-        onClick={toggleTheme}
-        aria-label="Toggle dark mode"
-        className="w-12 h-6 flex items-center bg-gray-300 dark:bg-gray-700 rounded-full p-1 transition-colors duration-300"
+        onClick={handleLogout}
+        className="px-4 py-2 rounded-xl border border-white/10 bg-white/8 hover:bg-white/12 text-white/90 hover:text-white shadow-[0_18px_60px_rgba(0,0,0,.30)] backdrop-blur-xl transition"
+        aria-label={tUI("logout", lang) === "logout" ? "Wyloguj się" : tUI("logout", lang)}
+        title={tUI("logout", lang) === "logout" ? "Wyloguj się" : tUI("logout", lang)}
       >
-        <div
-          className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300 ${
-            isDark ? 'translate-x-6' : 'translate-x-0'
-          }`}
-        >
-          {isDark ? (
-            <MoonIcon className="w-3 h-3 text-gray-800 mx-auto mt-0.5" />
-          ) : (
-            <SunIcon className="w-3 h-3 text-yellow-500 mx-auto mt-0.5" />
-          )}
-        </div>
+        {tUI("logout", lang) === "logout" ? "Wyloguj się" : tUI("logout", lang)}
       </button>
-
-      {/* 🔴 WYLOGUJ SIĘ */}
-      <button
-      onClick={handleLogout}
-      className="text-sm text-red-300 hover:text-red-500 transition"
-    >
-      {tUI('logout', lang)}
-    </button>
     </div>
   );
 }

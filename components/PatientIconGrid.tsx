@@ -19,7 +19,8 @@ interface PatientIconGridProps {
   selected: string | null;
   hasPaid: boolean;
   isTrialActive: boolean;
-  form?: any; // ✅ ETAP 3/9
+  form?: any;
+  layout?: "grid" | "sidebar";
 }
 
 type IconLike =
@@ -71,7 +72,8 @@ export const PatientIconGrid: React.FC<PatientIconGridProps> = ({
   selected,
   hasPaid,
   isTrialActive,
-  form, // ✅ ETAP 3/9
+  form,
+  layout = "grid"
 }) => {
   const openCancelTrial = async () => {
     try {
@@ -129,15 +131,21 @@ export const PatientIconGrid: React.FC<PatientIconGridProps> = ({
     : []),
 
   {
-    id: "status",
-    label: hasPaid ? tUI("paymentConfirmed", lang) : tUI("paymentPending", lang),
-    icon: hasPaid ? CheckCircle : XCircle,
-    tone: (hasPaid ? "success" : "danger") as SemanticTone,
-  },
+  id: "status",
+  label: hasPaid ? tUI("paymentConfirmed", lang) : tUI("paymentPending", lang),
+  icon: hasPaid ? CheckCircle : XCircle,
+  tone: (hasPaid ? "success" : "danger") as SemanticTone,
+},
 ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-6 mt-12 px-4">
+      <div
+        className={
+          layout === "sidebar"
+            ? "flex flex-col gap-2 mt-4"
+            : "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-6 mt-12 px-4"
+        }
+      >
       {icons.map(({ id, label, icon: Icon, tone }) => {
         const isActive = selected === id;
 
@@ -172,12 +180,23 @@ export const PatientIconGrid: React.FC<PatientIconGridProps> = ({
               }
             }}
             className={[
-              "group flex flex-col items-center justify-center p-4 rounded-3xl",
+              layout === "sidebar"
+                ? "group flex flex-row items-center gap-3 px-4 py-3 rounded-2xl"
+                : "group flex flex-col items-center justify-center p-4 rounded-3xl",
+
               "transition-all duration-300",
               "border border-white/10 bg-white/6 backdrop-blur-2xl",
               "shadow-[0_18px_60px_rgba(0,0,0,.30)]",
-              isDisabled ? "opacity-30 cursor-not-allowed" : "hover:translate-y-[-2px] hover:bg-white/8",
-              isActive ? `ring-2 ${ring} shadow-[0_0_0_1px_rgba(255,255,255,.06),0_26px_90px_rgba(0,0,0,.50)]` : "",
+
+              isDisabled
+                ? "opacity-30 cursor-not-allowed"
+                : layout === "sidebar"
+                  ? "hover:bg-white/10"
+                  : "hover:translate-y-[-2px] hover:bg-white/8",
+
+              isActive
+                ? `ring-2 ${ring} shadow-[0_0_0_1px_rgba(255,255,255,.06),0_26px_90px_rgba(0,0,0,.50)]`
+                : "",
             ].join(" ")}
             aria-label={label}
             title={label}
@@ -185,7 +204,7 @@ export const PatientIconGrid: React.FC<PatientIconGridProps> = ({
             <IconBadge active={isActive} disabled={isDisabled} glow={glow}>
               {typeof Icon === "function" && Icon.length !== 0 ? (
                 <Icon
-                  size={30}
+                  size={layout === "sidebar" ? 22 : 30}
                   strokeWidth={1.6}
                   className={[
                     "transition-transform duration-300",
@@ -204,7 +223,13 @@ export const PatientIconGrid: React.FC<PatientIconGridProps> = ({
               )}
             </IconBadge>
 
-            <span className="mt-2 text-xs font-medium text-white/90 text-center">{label}</span>
+           <span
+            className={
+              layout === "sidebar"
+                ? "text-sm font-medium text-white"
+                : "mt-2 text-xs font-medium text-white/90 text-center"
+            }
+          >{label}</span>
           </button>
         );
       })}

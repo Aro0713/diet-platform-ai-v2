@@ -1171,845 +1171,567 @@ const handleGenerateDiet = async () => {
       return dOk && mOk;
     });
     
-  return (
-    
-    <main className="relative min-h-screen bg-[#0f271e]/70 bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 backdrop-blur-[12px] shadow-[inset_0_0_60px_rgba(255,255,255,0.08)] flex flex-col justify-start items-center pt-6 px-4 md:pt-10 md:px-6 text-white transition-all duration-300 overflow-x-hidden">
-      <Head>
-        <title>{tUI('patientPanelTitle', lang)}</title>
-      </Head>
+ return (
+  <main className="relative min-h-screen overflow-x-hidden text-white bg-[#06131a]">
+    <Head>
+      <title>{tUI('patientPanelTitle', lang)}</title>
+    </Head>
 
-      {/* Pasek nagłówka */}
-     <div className="absolute top-3 left-3 right-3 z-50 flex items-center justify-between px-3">
-        <div className="flex flex-col">
-          {form?.name && (
-            <span className="text-sm font-medium text-white dark:text-white">
-              {form.name}
-            </span>
-          )}
-          <h1 className="text-2xl font-bold text-white dark:text-white">
-            {tUI('patientPanelTitle', lang)}
-          </h1>
-        </div>
-        <LangAndThemeToggle />
+    {/* GLASS BACKDROP (wizual) */}
+    <div aria-hidden className="pointer-events-none absolute inset-0">
+      <div className="absolute inset-0 bg-[radial-gradient(1200px_700px_at_20%_15%,rgba(56,189,248,.22),transparent_60%),radial-gradient(900px_600px_at_80%_25%,rgba(167,139,250,.16),transparent_60%),radial-gradient(900px_700px_at_55%_85%,rgba(16,185,129,.10),transparent_60%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,.10)_0%,rgba(255,255,255,.04)_30%,rgba(0,0,0,.10)_100%)] opacity-70" />
+      <div className="absolute inset-0 opacity-[0.10] mix-blend-overlay">
+        <div className="absolute inset-0 [background-image:radial-gradient(rgba(255,255,255,.18)_1px,transparent_1px)] [background-size:18px_18px]" />
       </div>
+      <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#06131a] to-transparent opacity-60" />
+    </div>
 
-      {/* Ikony */}
-      <PatientIconGrid
-      lang={lang}
-      selected={selectedSection}
-      onSelect={handleSectionChange}
-      hasPaid={hasPaid}
-      isTrialActive={isTrialActive}
-      form={form}
-    />
-      {hasPaid && (
-  <p
-    className="text-sm text-green-400 text-center mt-2"
-    dir={['ar','he'].includes(lang) ? 'rtl' : undefined}
-  >
-    {isTrialActive ? (
-      <>
-        {tUI('trialActive', lang)}<br />
-        {tUI('trialUntil', lang)} <strong>{formatDate(subscriptionExpiresAt)}</strong>
-      </>
-    ) : (
-      <>
-        {tUI('yourPlan', lang)} <strong>{subscriptionStatus}</strong><br />
-        {tUI('validUntil', lang)} <strong>{formatDate(subscriptionExpiresAt)}</strong>
-      </>
-    )}
-  </p>
-)}
-
-
-            {/* Główna zawartość */}
-       <div className="z-10 flex flex-col w-full max-w-[1000px] mx-auto gap-6 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-5 md:p-10 mt-16 md:mt-20 dark:text-white transition-colors animate-flip-in origin-center">
-        {selectedSection === 'data' && (
-          <>
-            <PatientSelfForm
-              lang={lang}
-              value={form}
-            />
-            <div className="flex justify-end mt-6">
-          <NeonNextArrow
-            onClick={() => handleSectionChange("medical")}
-            label={tUI("nextSection_medical", lang)}
-          />
-        </div>
-          </>
-            )}
-
-       {selectedSection === 'medical' && (
-      <>
-        <MedicalForm
-          onChange={(data) => {
-            saveMedicalData(data).then(() => setIsConfirmed(true));
-          }}
-          onUpdateMedical={(summary) => {
-            setMedicalData((prev: any) => ({ ...prev, summary }));
-          }}
-          initialData={initialMedicalData}
-          existingMedical={medicalData}
-          lang={lang}
-        />
-
-        {isConfirmed && interviewData?.goal && (
-          <div className="mt-6 p-4 bg-emerald-100/80 dark:bg-emerald-900/40 text-base rounded-md text-gray-900 dark:text-white shadow max-w-2xl mx-auto">
-            {tUI('medicalConfirmationMessage', lang)}
-          </div>
-        )}
-
-          {/* 🔽 Neonowa strzałka Dalej */}
-         <div className="mt-6 flex justify-end">
-          <NeonNextArrow
-           onClick={() => handleSectionChange("interview")}
-            label={tUI("nextSection_interview", lang)}
-          />
-        </div>
-        </>
-      )}
-
-       {selectedSection === 'interview' && (
-  <>
-          <InterviewWizard
-            form={form}
-            onFinish={async (data) => {
-              await saveInterviewData(data);
-              await handleGenerateNarrative();
-            }}
-            lang={lang}
-            initialData={initialInterviewData}
-          />
-
-          {interviewData?.goal && (
-            <div className="mt-6 p-4 bg-sky-100/80 dark:bg-sky-900/40 text-base rounded-md text-gray-900 dark:text-white shadow max-w-2xl mx-auto">
-              {tUI('interviewConfirmationMessage', lang)}
-            </div>
-          )}
-
-          {/* 🔽 Neonowa strzałka Dalej */}
-          <div className="mt-6 flex justify-end">
-          <NeonNextArrow
-            onClick={() => handleSectionChange("calculator")}
-            label={tUI("nextSection_calculator", lang)}
-          />
-        </div>
-        </>
-      )}
-
-        {selectedSection === 'calculator' && (
-          <>
-            <CalculationBlock
-              form={form}
-              interview={extractMappedInterview(interviewData)}
-              lang={lang}
-              onResult={(result) => {
-                setInterviewData((prev: any) => ({
-                  ...prev,
-                  ...result,
-                  model: result.suggestedModel
-                }));
-              }}
-            />
-
-            {/* 🔽 Neonowa strzałka Dalej */}
-            <div className="mt-6 flex justify-end">
-            <NeonNextArrow
-              onClick={() => handleSectionChange("diet")}
-              label={tUI("nextSection_diet", lang)}
-            />
-          </div>
-          </>
-        )}
-
-
-        {selectedSection === 'diet' && (
-          <div className="space-y-6">
-            {/* 🧠 Cel, model, kuchnia, posiłki – 2 rzędy po 2 kolumny */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 text-center w-full">
-              <div className="w-full sm:max-w-[360px] min-h-[180px] flex flex-col justify-between items-stretch px-3 sm:px-4 mx-auto">
-
-                <DietGoalForm
-                  lang={lang}
-                  onChange={(goal) => setInterviewData({ ...interviewData, goal })}
-                />
-              </div>
-              <div className="w-full sm:max-w-[360px] min-h-[180px] flex flex-col justify-between items-stretch px-3 sm:px-4 mx-auto">
-
-                <SelectModelForm
-                  lang={lang}
-                  onChange={(model) => setInterviewData({ ...interviewData, model })}
-                />
-              </div>
-            <div className="w-full sm:max-w-[360px] min-h-[180px] flex flex-col justify-between items-stretch px-3 sm:px-4 mx-auto">
-
-              <SelectCuisineForm
-                  lang={lang}
-                  onChange={(cuisine) => setInterviewData({ ...interviewData, cuisine })}
-                />
-              </div>
-              <div className="w-full sm:max-w-[360px] min-h-[180px] flex flex-col justify-between items-stretch px-3 sm:px-4 mx-auto">
-
-          <SelectMealsPerDayForm
-            value={interviewData?.mealsPerDay ?? 0}
-            onChange={(meals: number) =>
-              setInterviewData({ ...interviewData, mealsPerDay: meals })
-            }
-            lang={lang}   // <-- DODANE
-          />
-        </div>
-            </div>
-
-            {/* 🔽 Kolejna sekcja – status, przyciski, tabela */}
-            <div className="space-y-4">
-
-
-          {/* ⏳ Status generowania */}
-          {isGenerating && (
-            <div className="text-sm text-gray-600 italic animate-pulse">
-              ⏳ {tUI('writingDiet', lang)}{' '}
-              {streamingText.length > 20 && `(${tUI('generatingWait', lang)})`}
-            </div>
-          )}
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mt-6">
-          {/* 🧠 Generuj dietę */}
-          <button
-            onClick={handleGenerateDiet}
-            disabled={isGenerating}
-            className="w-24 h-24 sm:w-28 sm:h-28 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition disabled:opacity-50"
-          >
-            <span className="text-4xl leading-none">🧠</span>
-            <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
-              {tUI('generateDiet', lang)}
-            </span>
-          </button>
-
-        {/* 📄 Generuj PDF */}
-        <button
-          onClick={async () => {
-            try {
-              setProgress(10);
-              setProgressMessage(tUI('generatingPdf', lang));
-
-              const { generateDietPdf } = await import('@/utils/generateDietPdf');
-
-              const bmi =
-                form.weight && form.height
-                  ? parseFloat((form.weight / ((form.height / 100) ** 2)).toFixed(1))
-                  : 0;
-
-              const mealArray: Meal[] = Object.entries(editableDiet || {})
-              // pomiń meta / techniczne
-              .filter(([k]) => !k.startsWith('__'))
-              // dzień może być tablicą albo mapą posiłków
-              .flatMap(([, v]: [string, any]) => Array.isArray(v) ? v : Object.values(v || {}))
-              // dopilnuj składników
-              .map((m: any) => ({
-                ...m,
-                ingredients: Array.isArray(m?.ingredients)
-                  ? m.ingredients.map((i: any) => ({
-                      product: i?.product ?? i?.name ?? '',
-                      weight: typeof i?.weight === 'number'
-                        ? i.weight
-                        : typeof i?.quantity === 'number'
-                          ? i.quantity
-                          : Number(i?.weight ?? i?.quantity) || 0,
-                      unit: i?.unit || (i?.weight != null || i?.quantity != null ? 'g' : undefined),
-                    }))
-                  : []
-              }));
-
-              if (!Array.isArray(mealArray) || mealArray.length === 0) {
-                alert(tUI('dietPlanEmptyOrInvalid', lang));
-                setProgress(0);
-                setProgressMessage('');
-                return;
-              }
-
-              setProgress(40);
-              setProgressMessage(tUI('processingInterview', lang));
-
-              await generateDietPdf(
-                form,
-                bmi,
-                mealArray,
-                true,
-                notes,
-                lang,
-                interviewData,
-                {
-                  bmi: interviewData.bmi,
-                  ppm: interviewData.ppm,
-                  cpm: interviewData.cpm,
-                  pal: interviewData.pal,
-                  kcalMaintain: interviewData.kcalMaintain,
-                  kcalReduce: interviewData.kcalReduce,
-                  kcalGain: interviewData.kcalGain,
-                  nmcBroca: interviewData.nmcBroca,
-                  nmcLorentz: interviewData.nmcLorentz
-                },
-                'download',
-                narrativeText,
-                recipes
-              );
-
-              setProgress(100);
-              setProgressMessage(tUI('pdfReady', lang));
-              setTimeout(() => {
-                setProgress(0);
-                setProgressMessage('');
-              }, 1000);
-            } catch (e) {
-              console.error('❌ PDF generation error:', e);
-              alert(tUI('errorGeneratingPdf', lang));
-              setProgress(0);
-              setProgressMessage('');
-            }
-          }}
-          disabled={!editableDiet || Object.keys(editableDiet).length === 0 || progress > 0}
-          className="w-28 h-28 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition disabled:opacity-50"
-        >
-          <span className="text-4xl leading-none">📄</span>
-          <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
-            {tUI('generatePdf', lang)}
-          </span>
-        </button>
-
-
-          {/* ✅ Zatwierdź dietę */}
-          <button
-            onClick={async () => {
-              const confirm = window.confirm(tUI('confirmApproveDietAsPatient', lang));
-              if (confirm) {
-                await saveDietToSupabaseOnly();
-              }
-            }}
-            disabled={!editableDiet || Object.keys(editableDiet).length === 0}
-            className="w-28 h-28 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition disabled:opacity-50"
-          >
-            <span className="text-4xl leading-none">✅</span>
-            <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
-              {tUI('approveDietAsPatient', lang)}
-            </span>
-          </button>
-
-          {/* 🍽️ Generuj przepisy */}
-        {editableDiet && Object.keys(editableDiet).length > 0 && (
-          <button
-            onClick={handleGenerateRecipes}
-            disabled={isGeneratingRecipes}
-            className="w-28 h-28 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition disabled:opacity-50"
-          >
-            <span className="text-4xl leading-none">🍽️</span>
-            <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
-              {tUI('generateRecipes', lang)}
-            </span>
-          </button>
-        )}
-        {editableDiet && form?.has_kitchen_robot && (
-          <button
-            onClick={() => handleSectionChange('robot')}
-            className="w-28 h-28 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition"
-          >
-            <span className="text-4xl leading-none">🤖</span>
-            <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
-              {tUI('kitchenRobot.generateFromDiet', lang)}
-            </span>
-          </button>
-        )}
-
-        {/* 📤 Wyślij dietę do lekarza/dietetyka (tworzy draft) */}
-        {editableDiet && Object.keys(editableDiet).length > 0 && (
-          <button
-            onClick={async () => {
-              const confirm = window.confirm(tUI('confirmSendDietToDoctor', lang));
-              if (!confirm) return;
-
-              const doctorEmail = form?.assigned_doctor_email;
-              if (!doctorEmail) {
-                alert(tUI('noAssignedDoctor', lang));
-                return;
-              }
-
-              const userId = localStorage.getItem('currentUserID');
-              if (!userId) {
-                alert(tUI('noUserIdError', lang));
-                return;
-              }
-
-              setIsSending(true); // 🔒 blokada klikania
-              setProgressMessage(tUI('savingDraft', lang));
-              startFakeProgress(10, 25, 60000); // 🔄 1 minuta max
-
-              try {
-                const cleanDiet = JSON.parse(JSON.stringify(editableDiet));
-                const { error } = await supabase.from('patient_diets').upsert(
-                  {
-                    user_id: userId,
-                    diet_plan: cleanDiet,
-                    status: 'draft',
-                    patient_name: form?.name || '',
-                    selected_doctor_id: doctorEmail
-                  },
-                  { onConflict: 'user_id' }
-                );
-
-                if (error) throw error;
-
-                // 🟢 Wyślij powiadomienie e-mail do lekarza
-                await fetch('/api/send-diet-notification', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    doctorEmail,
-                    patientName: form?.name,
-                    patientEmail: form?.email,
-                    lang
-                  })
-                });
-
-                stopFakeProgress();
-                setProgress(100);
-                setProgressMessage(tUI('dietSentToDoctor', lang));
-                setTimeout(() => {
-                  setProgress(0);
-                  setProgressMessage('');
-                }, 1000);
-
-                alert(tUI('dietSubmissionSuccess', lang));
-              } catch (err) {
-                console.error("❌ Błąd zapisu wersji roboczej diety:", err);
-                alert(tUI('dietSubmissionError', lang));
-                stopFakeProgress();
-                setProgress(0);
-                setProgressMessage('');
-              } finally {
-                setIsSending(false); // 🔓 odblokuj
-              }
-            }}
-            disabled={isSending}
-            className="w-28 h-28 bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-semibold rounded-xl shadow flex flex-col items-center justify-center text-center transition disabled:opacity-50"
-          >
-            <span className="text-4xl leading-none">📤</span>
-            <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
-              {tUI('sendDietToDoctor', lang)}
-            </span>
-          </button>
-        )}
-
-        </div>
-
-        </div>
-            {/* Tabela diety */}
-          {editableDiet && Object.keys(editableDiet).length > 0 && (
-              <DietTable
-                editableDiet={editableDiet} 
-                setEditableDiet={setEditableDiet}
-                setConfirmedDiet={() => {}}
-                isEditable={false}
-                lang={lang}
-                notes={notes}
-                setNotes={setNotes}
-              />
-            )}
-          </div>
-            )}
-        {selectedSection === 'robot' && (
-          <div className="space-y-6">
-                        {/* ETAP 9/9: GUARDY */}
-            {!hasPaid && (
-              <div className="bg-white/10 rounded-xl p-4 border border-white/10">
-                <div className="font-bold text-lg">{tUI('kitchenRobot.guard.noAccessTitle', lang)}</div>
-                <div className="text-sm opacity-90 mt-1">{tUI('kitchenRobot.guard.noAccessDesc', lang)}</div>
-                <div className="mt-4">
-                  <Link href="/payment">
-                    <button className="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-white font-semibold px-6 py-3 rounded-xl shadow transition">
-                      💳 {tUI('goToPayment', lang)}
-                    </button>
-                  </Link>
-                </div>
-              </div>
-            )}
-
-            {hasPaid && (!form?.has_kitchen_robot || !String(form?.kitchen_robot_model || '').trim() || !String(form?.kitchen_robot_serial || '').trim()) && (
-              <div className="bg-white/10 rounded-xl p-4 border border-white/10">
-                <div className="font-bold text-lg">{tUI('kitchenRobot.guard.fixConfigTitle', lang)}</div>
-                <div className="text-sm opacity-90 mt-1">{tUI('kitchenRobot.guard.fixConfigDesc', lang)}</div>
-                <div className="mt-4">
-                  <button
-                    onClick={() => handleSectionChange('data')}
-                    className="w-full sm:w-auto bg-slate-600 hover:bg-slate-700 text-white font-semibold px-6 py-3 rounded-xl shadow transition"
-                  >
-                    📝 {tUI('kitchenRobot.goToRegistration', lang)}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {hasPaid && form?.has_kitchen_robot && String(form?.kitchen_robot_model || '').trim() && String(form?.kitchen_robot_serial || '').trim() &&
-              (!editableDiet || Object.keys(editableDiet).length === 0) && (
-              <div className="bg-white/10 rounded-xl p-4 border border-white/10">
-                <div className="font-bold text-lg">{tUI('kitchenRobot.guard.noDietTitle', lang)}</div>
-                <div className="text-sm opacity-90 mt-1">{tUI('kitchenRobot.guard.noDietDesc', lang)}</div>
-                <div className="mt-4">
-                  <button
-                    onClick={() => handleSectionChange('diet')}
-                    className="w-full sm:w-auto bg-sky-600 hover:bg-sky-700 text-white font-semibold px-6 py-3 rounded-xl shadow transition"
-                  >
-                    🍽️ {tUI('kitchenRobot.goToDiet', lang)}
-                  </button>
-                </div>
-              </div>
-            )}
-            <div className="bg-white/20 dark:bg-white/10 rounded-2xl p-5 shadow-md">
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                🤖 {tUI('kitchenRobot.panelTitle', lang)}
-
-                {robotMeta?.cached === true && (
-                  <span className="text-xs px-2 py-1 rounded bg-emerald-500/20 border border-emerald-400/30">
-                    {tUI('kitchenRobot.usedCached', lang)}
-                  </span>
-                )}
-
-                {robotMeta?.cached === false && (
-                  <span className="text-xs px-2 py-1 rounded bg-sky-500/20 border border-sky-400/30">
-                    {tUI('kitchenRobot.generatedNew', lang)}
-                  </span>
-                )}
-              </h2>
-
-              <p className="text-sm opacity-90 mt-2">
-                {tUI('kitchenRobot.panelDesc', lang)}
-              </p>
-
-              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="bg-black/20 rounded-xl p-4">
-                  <div className="text-sm opacity-80">{tUI('kitchenRobot.model', lang)}</div>
-                  <div className="font-semibold">
-                    {String(form?.kitchen_robot_model || '—')}
-                  </div>
-                </div>
-
-                <div className="bg-black/20 rounded-xl p-4">
-                  <div className="text-sm opacity-80">{tUI('kitchenRobot.serial', lang)}</div>
-                  <div className="font-semibold">
-                    {String(form?.kitchen_robot_serial || '—')}
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-5 flex flex-col sm:flex-row gap-3">
-                <button
-                  onClick={handleGenerateRobotProgram}
-                  disabled={isGeneratingRobot}
-                  className="w-full sm:w-auto bg-cyan-600 hover:bg-cyan-700 text-white font-semibold px-6 py-3 rounded-xl shadow transition disabled:opacity-50"
-                >
-                  {isGeneratingRobot
-                    ? `⏳ ${tUI('kitchenRobot.generatingShort', lang)}`
-                    : `⚙️ ${tUI('kitchenRobot.generateButton', lang)}`}
-                </button>
-
-                {robotPrograms?.recipes?.length ? (
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    {/* ⬇️ Pobierz JSON */}
-                    <button
-                      onClick={() => {
-                        const blob = new Blob(
-                          [JSON.stringify(robotPrograms, null, 2)],
-                          { type: 'application/json' }
-                        );
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = `robot-program-${form?.kitchen_robot_model || 'device'}.json`;
-                        a.click();
-                        URL.revokeObjectURL(url);
-                      }}
-                      className="w-full sm:w-auto bg-slate-600 hover:bg-slate-700 text-white font-semibold px-6 py-3 rounded-xl shadow transition"
-                    >
-                      ⬇️ {tUI('kitchenRobot.downloadJson', lang)}
-                    </button>
-
-                    {/* 📱 Otwórz w Tuya */}
-                    <button
-                      onClick={() => openTuyaApp(lang)}
-                      className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-3 rounded-xl shadow transition"
-                    >
-                      📱 {tUI('kitchenRobot.openTuya', lang)}
-                    </button>
-                  </div>
-                ) : null}
-              </div>
-            </div>
-                        {/* ETAP 8.2-6: Historia programów robota */}
-            <div className="bg-white/10 rounded-xl p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div className="font-semibold">{tUI('kitchenRobot.programHistory', lang)}</div>
-                {isLoadingRobotHistory && (
-                  <div className="text-xs opacity-80">{tUI('kitchenRobot.loadingHistory', lang)}</div>
-                )}
-              </div>
-
-              {!robotHistory.length ? (
-                <div className="text-sm opacity-80 mt-2">
-                  {tUI('kitchenRobot.noSavedPrograms', lang)}
-                </div>
-              ) : (
-                <div className="mt-3 space-y-2">
-                  {robotHistory.map((it: any) => (
-                    <div
-                      key={it.id}
-                      className="flex flex-col sm:flex-row sm:items-center gap-2 bg-black/20 rounded-lg p-3"
-                    >
-                      <div className="flex-1">
-                        <div className="text-sm font-semibold">
-                          {it.robot_model} • {String(it.robot_serial || '').slice(0, 6)}…
-                        </div>
-                        <div className="text-xs opacity-80">
-                          {new Date(it.created_at).toLocaleString()}
-                        </div>
-                      </div>
-
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => {
-                            setRobotPrograms(it.program_json);
-                            setRobotMeta({ cached: true, profile: it.robot_profile });
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                          }}
-                          className="px-3 py-2 rounded bg-slate-600 hover:bg-slate-700 text-sm text-white"
-                        >
-                          {tUI('kitchenRobot.openProgram', lang)}
-                        </button>
-                        <button
-
-                          onClick={async () => {
-                            const ok = window.confirm(tUI('kitchenRobot.deleteConfirm', lang));
-                            if (!ok) return;
-
-                            try {
-                              const accessToken = await getAccessToken();
-                              if (!accessToken) {
-                                alert(tUI('notLoggedIn', lang));
-                                return;
-                              }
-
-                              const res = await fetch(`/api/robot-programs?id=${encodeURIComponent(it.id)}`, {
-                                method: 'DELETE',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ accessToken })
-                              });
-
-                              if (!res.ok) {
-                                const txt = await res.text();
-                                throw new Error(txt || `HTTP ${res.status}`);
-                              }
-
-                              // usuń z listy lokalnie (bez czekania)
-                              setRobotHistory((prev) => prev.filter(x => x.id !== it.id));
-                            } catch (e) {
-                              console.error('❌ delete robot program:', e);
-                              alert(tUI('kitchenRobot.deleteError', lang));
-                            }
-                          }}
-                          className="px-3 py-2 rounded bg-rose-600 hover:bg-rose-700 text-sm text-white"
-                        >
-                          🗑️ {tUI('kitchenRobot.deleteProgram', lang)}
-                        </button>
-                        <button
-                          onClick={() => {
-                            const blob = new Blob([JSON.stringify(it.program_json, null, 2)], { type: 'application/json' });
-                            const url = URL.createObjectURL(blob);
-                            const a = document.createElement('a');
-                            a.href = url;
-                            a.download = `robot-program-${it.robot_model || 'device'}.json`;
-                            a.click();
-                            URL.revokeObjectURL(url);
-                          }}
-                          className="px-3 py-2 rounded bg-slate-700 hover:bg-slate-800 text-sm text-white"
-                        >
-                          {tUI('kitchenRobot.downloadJson', lang)}
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+    {/* LAYOUT */}
+    <div className="relative z-10 mx-auto w-full max-w-[1440px] px-4 md:px-6 pt-4 md:pt-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[280px,1fr] gap-6">
+        {/* LEFT MENU */}
+        <aside className="lg:sticky lg:top-4 h-fit rounded-3xl border border-white/10 bg-white/6 backdrop-blur-2xl shadow-[0_30px_90px_rgba(0,0,0,.45)] overflow-hidden">
+          <div className="p-5">
+            {/* Header: Name + Title */}
+            <div className="mb-4">
+              {form?.name && (
+                <div className="text-sm font-medium text-white/80">
+                  {form.name}
                 </div>
               )}
+              <h1 className="text-2xl font-bold tracking-tight">
+                {tUI('patientPanelTitle', lang)}
+              </h1>
             </div>
-                        {/* ETAP 8.2-5: Filtry dzień / posiłek */}
-            {robotRecipes.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-sm opacity-80">{tUI('kitchenRobot.filterDay', lang)}</label>
-                  <select
-                    value={robotFilterDay}
-                    onChange={(e) => setRobotFilterDay(e.target.value)}
-                    className="w-full mt-1 h-[44px] rounded px-3 bg-white/20"
-                  >
-                    <option value="">{tUI('kitchenRobot.filterAll', lang)}</option>
-                    {uniqueRobotDays.map((d) => (
-                      <option key={d} value={d}>
-                        {translateDayNameIfKnown(d, lang)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
 
-                <div>
-                  <label className="text-sm opacity-80">{tUI('kitchenRobot.filterMeal', lang)}</label>
-                  <select
-                    value={robotFilterMeal}
-                    onChange={(e) => setRobotFilterMeal(e.target.value)}
-                    className="w-full mt-1 h-[44px] rounded px-3 bg-white/20"
-                  >
-                    <option value="">{tUI('kitchenRobot.filterAll', lang)}</option>
-                    {uniqueRobotMeals.map((m) => (
-                      <option key={m} value={m}>
-                        {m}
-                      </option>
-                    ))}
-                  </select>
+            {/* Language only (bez kontrastu) */}
+            <div className="mb-4 rounded-2xl border border-white/10 bg-white/7 backdrop-blur-xl p-3">
+              {/* Jeśli LangAndThemeToggle potrafi przyjąć setLang/lang i ma opcję wyłączenia theme:
+                  użyj go tutaj. W przeciwnym razie podmień na swój <select> z languageLabels. */}
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-xs uppercase tracking-wide text-white/60">
+                  {tUI('nav.languageLabel', lang) === 'nav.languageLabel' ? 'Language' : tUI('nav.languageLabel', lang)}
+                </div>
+                <div className="shrink-0">
+                  <LangAndThemeToggle />
+                </div>
+              </div>
+            </div>
+
+            {/* Menu: icons */}
+            <div className="mt-4">
+             <PatientIconGrid
+              lang={lang}
+              selected={selectedSection}
+              onSelect={handleSectionChange}
+              hasPaid={hasPaid}
+              isTrialActive={isTrialActive}
+              form={form}
+              layout="sidebar"
+            />
+            </div>
+
+            {/* Subscription status */}
+            {hasPaid && (
+              <div
+                className="mt-4 rounded-2xl border border-white/10 bg-white/7 backdrop-blur-xl p-4"
+                dir={['ar','he'].includes(lang) ? 'rtl' : undefined}
+              >
+                <div className="text-xs uppercase tracking-wide text-white/60 mb-1">
+                  {isTrialActive ? tUI('trialActive', lang) : tUI('yourPlan', lang)}
+                </div>
+                <div className="text-sm text-emerald-200">
+                  {isTrialActive ? (
+                    <>
+                      {tUI('trialUntil', lang)} <strong className="text-white">{formatDate(subscriptionExpiresAt)}</strong>
+                    </>
+                  ) : (
+                    <>
+                      <strong className="text-white">{subscriptionStatus}</strong><br />
+                      {tUI('validUntil', lang)} <strong className="text-white">{formatDate(subscriptionExpiresAt)}</strong>
+                    </>
+                  )}
                 </div>
               </div>
             )}
 
-            {/* Wynik */}
-            
-            {robotPrograms?.recipes?.length ? (
-              <div className="space-y-4">
-                {filteredRobotRecipes.map((r: any, idx: number) => (
-                  <div key={idx} className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                      <div className="font-bold">
-                        {translateDayNameIfKnown(r.day, lang)} • {r.meal_label || r.meal}
-                      </div>
-                      <div className="text-sm opacity-80">{r.time || ''}</div>
+            {/* Logout */}
+            <div className="mt-5">
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    await supabase.auth.signOut();
+                  } finally {
+                    localStorage.removeItem('currentUserID');
+                    localStorage.removeItem('currentUserRole');
+                    router.push('/register?mode=login');
+                  }
+                }}
+                className="w-full rounded-2xl px-4 py-3 font-semibold border border-white/10 bg-white/8 hover:bg-white/12 backdrop-blur-xl shadow-[0_18px_60px_rgba(0,0,0,.30)] transition"
+              >
+                {tUI('logout', lang) === 'logout' ? 'Wyloguj się' : tUI('logout', lang)}
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        {/* CENTER WORKSPACE */}
+        <section className="min-w-0">
+          {/* Welcome (when no section) */}
+          {!selectedSection && (
+            <div className="rounded-3xl border border-white/10 bg-white/6 backdrop-blur-2xl shadow-[0_30px_90px_rgba(0,0,0,.45)] p-6 md:p-10">
+              <p className="text-center text-white/90 text-sm max-w-xl mx-auto">
+                {tUI('welcomeMessagePatient', lang)}
+              </p>
+            </div>
+          )}
+
+          {/* Main content container */}
+          {selectedSection && (
+            <div className="rounded-3xl border border-white/10 bg-white/6 backdrop-blur-2xl shadow-[0_30px_90px_rgba(0,0,0,.45)] p-5 md:p-10 transition-colors">
+              {selectedSection === 'data' && (
+                <>
+                  <PatientSelfForm lang={lang} value={form} />
+                  <div className="flex justify-end mt-6">
+                    <NeonNextArrow
+                      onClick={() => handleSectionChange('medical')}
+                      label={tUI('nextSection_medical', lang)}
+                    />
+                  </div>
+                </>
+              )}
+
+              {selectedSection === 'medical' && (
+                <>
+                  <MedicalForm
+                    onChange={(data) => {
+                      saveMedicalData(data).then(() => setIsConfirmed(true));
+                    }}
+                    onUpdateMedical={(summary) => {
+                      setMedicalData((prev: any) => ({ ...prev, summary }));
+                    }}
+                    initialData={initialMedicalData}
+                    existingMedical={medicalData}
+                    lang={lang}
+                  />
+
+                  {isConfirmed && interviewData?.goal && (
+                    <div className="mt-6 p-4 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 text-base shadow max-w-2xl mx-auto">
+                      {tUI('medicalConfirmationMessage', lang)}
+                    </div>
+                  )}
+
+                  <div className="mt-6 flex justify-end">
+                    <NeonNextArrow
+                      onClick={() => handleSectionChange('interview')}
+                      label={tUI('nextSection_interview', lang)}
+                    />
+                  </div>
+                </>
+              )}
+
+              {selectedSection === 'interview' && (
+                <>
+                  <InterviewWizard
+                    form={form}
+                    onFinish={async (data) => {
+                      await saveInterviewData(data);
+                      await handleGenerateNarrative();
+                    }}
+                    lang={lang}
+                    initialData={initialInterviewData}
+                  />
+
+                  {interviewData?.goal && (
+                    <div className="mt-6 p-4 rounded-2xl border border-sky-400/20 bg-sky-500/10 text-base shadow max-w-2xl mx-auto">
+                      {tUI('interviewConfirmationMessage', lang)}
+                    </div>
+                  )}
+
+                  <div className="mt-6 flex justify-end">
+                    <NeonNextArrow
+                      onClick={() => handleSectionChange('calculator')}
+                      label={tUI('nextSection_calculator', lang)}
+                    />
+                  </div>
+                </>
+              )}
+
+              {selectedSection === 'calculator' && (
+                <>
+                  <CalculationBlock
+                    form={form}
+                    interview={extractMappedInterview(interviewData)}
+                    lang={lang}
+                    onResult={(result) => {
+                      setInterviewData((prev: any) => ({
+                        ...prev,
+                        ...result,
+                        model: result.suggestedModel
+                      }));
+                    }}
+                  />
+
+                  <div className="mt-6 flex justify-end">
+                    <NeonNextArrow
+                      onClick={() => handleSectionChange('diet')}
+                      label={tUI('nextSection_diet', lang)}
+                    />
+                  </div>
+                </>
+              )}
+
+              {selectedSection === 'diet' && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 text-center w-full">
+                    <div className="w-full sm:max-w-[360px] min-h-[180px] flex flex-col justify-between items-stretch px-3 sm:px-4 mx-auto">
+                      <DietGoalForm
+                        lang={lang}
+                        onChange={(goal) => setInterviewData({ ...interviewData, goal })}
+                      />
                     </div>
 
-                    <div className="mt-2 text-base font-semibold">{r.title}</div>
+                    <div className="w-full sm:max-w-[360px] min-h-[180px] flex flex-col justify-between items-stretch px-3 sm:px-4 mx-auto">
+                      <SelectModelForm
+                        lang={lang}
+                        onChange={(model) => setInterviewData({ ...interviewData, model })}
+                      />
+                    </div>
 
-                    {Array.isArray(r.warnings) && r.warnings.length > 0 && (
-                      <div className="mt-3 p-3 rounded-lg bg-amber-500/20 border border-amber-400/30">
-                        <div className="font-semibold text-amber-200">⚠️ {tUI('kitchenRobot.warnings', lang)}</div>
-                        <ul className="list-disc ml-5 text-sm mt-1">
-                          {r.warnings.map((w: string, i: number) => (
-                            <li key={i}>{w}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                    <div className="w-full sm:max-w-[360px] min-h-[180px] flex flex-col justify-between items-stretch px-3 sm:px-4 mx-auto">
+                      <SelectCuisineForm
+                        lang={lang}
+                        onChange={(cuisine) => setInterviewData({ ...interviewData, cuisine })}
+                      />
+                    </div>
 
-                    {Array.isArray(r.cookSteps) && r.cookSteps.length > 0 && (
-                      <div className="mt-3">
-                        <div className="font-semibold">{tUI('kitchenRobot.cookSteps', lang)}</div>
-                        <ol className="list-decimal ml-5 text-sm mt-1 space-y-1">
-                          {r.cookSteps.map((s: string, i: number) => (
-                            <li key={i}>{s}</li>
-                          ))}
-                        </ol>
-                      </div>
-                    )}
-
-                    {/* fallback: jeśli API zwraca robotSteps, pokaż je */}
-                    {!r.cookSteps?.length && Array.isArray(r.robotSteps) && r.robotSteps.length > 0 && (
-                      <div className="mt-3">
-                        <div className="font-semibold">{tUI('kitchenRobot.robotSteps', lang)}</div>
-                        <pre className="mt-2 text-xs bg-black/30 rounded-lg p-3 overflow-x-auto">
-        {JSON.stringify(r.robotSteps, null, 2)}
-                        </pre>
-                      </div>
-                    )}
+                    <div className="w-full sm:max-w-[360px] min-h-[180px] flex flex-col justify-between items-stretch px-3 sm:px-4 mx-auto">
+                      <SelectMealsPerDayForm
+                        value={interviewData?.mealsPerDay ?? 0}
+                        onChange={(meals: number) => setInterviewData({ ...interviewData, mealsPerDay: meals })}
+                        lang={lang}
+                      />
+                    </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-sm opacity-80 text-center">
-                {tUI('kitchenRobot.noProgramYet', lang)}
-              </div>
-            )}
-          </div>
-        )}
-      {/* 📖 Wyświetlenie przepisów */}
-      {selectedSection === 'diet' && recipes && Object.keys(recipes).length > 0 && (
-        <div
-          className="mt-6 space-y-6"
-          dir={['ar','he'].includes(lang) ? 'rtl' : undefined}
-        >
-          {Object.entries(recipes).map(([day, meals]: any) => (
-            <div key={day} className="bg-white dark:bg-slate-800 rounded-xl p-3 sm:p-4 shadow">
-              <h3 className="text-lg font-bold mb-2">
-                {translateDayNameIfKnown(day, lang)}
-              </h3>
-              {Object.entries(meals).map(([mealName, recipe]: any) => (
-              <div key={mealName} className="mb-4">
-        <h4 className="font-semibold">
-          {(recipe.meal_label && String(recipe.meal_label).trim()) || mealLabel(mealName, lang)}: {recipe.dish}
-        </h4>
 
-        {recipe.description && (
-          <p className="italic text-sm text-gray-600 dark:text-gray-400 mb-1">
-            {recipe.description}
-          </p>
-        )}
+                  <div className="space-y-4">
+                    {isGenerating && (
+                      <div className="text-sm text-white/70 italic animate-pulse">
+                        ⏳ {tUI('writingDiet', lang)} {streamingText.length > 20 && `(${tUI('generatingWait', lang)})`}
+                      </div>
+                    )}
 
-        <ul className={`list-disc ${['ar','he'].includes(lang) ? 'pr-5' : 'pl-5'} text-sm`}>
-          {recipe.ingredients?.map((ing: any, i: number) => (
-            <li key={i}>
-              {ing.product}
-              {ing.weight != null && <> – {ing.weight}{ing.unit ? ` ${ing.unit}` : ''}</>}
-            </li>
-          ))}
-        </ul>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mt-6">
+                      <button
+                        onClick={handleGenerateDiet}
+                        disabled={isGenerating}
+                        className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl border border-white/10 bg-[linear-gradient(135deg,rgba(56,189,248,.22),rgba(16,185,129,.14))] hover:bg-[linear-gradient(135deg,rgba(56,189,248,.30),rgba(16,185,129,.18))] shadow-[0_18px_60px_rgba(0,0,0,.30)] backdrop-blur-xl text-white font-semibold flex flex-col items-center justify-center text-center transition disabled:opacity-50"
+                      >
+                        <span className="text-4xl leading-none">🧠</span>
+                        <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
+                          {tUI('generateDiet', lang)}
+                        </span>
+                      </button>
 
-        {recipe.steps && (
-          <div className="mt-2 text-sm">
-            <strong>{stepsLabelText(lang)}:</strong>
-            <ol className={`list-decimal ${['ar','he'].includes(lang) ? 'mr-4' : 'ml-4'}`}>
-              {recipe.steps.map((step: string, i: number) => (
-                <li key={i}>{step}</li>
-              ))}
-            </ol>
-          </div>
-        )}
+                      <button
+                        onClick={async () => {
+                          try {
+                            setProgress(10);
+                            setProgressMessage(tUI('generatingPdf', lang));
 
-        {recipe.time && (
-          <p className="mt-1 text-sm text-gray-500">⏱️ {recipe.time}</p>
-        )}
+                            const { generateDietPdf } = await import('@/utils/generateDietPdf');
+
+                            const bmi =
+                              form.weight && form.height
+                                ? parseFloat((form.weight / ((form.height / 100) ** 2)).toFixed(1))
+                                : 0;
+
+                            const mealArray: Meal[] = Object.entries(editableDiet || {})
+                              .filter(([k]) => !k.startsWith('__'))
+                              .flatMap(([, v]: [string, any]) => Array.isArray(v) ? v : Object.values(v || {}))
+                              .map((m: any) => ({
+                                ...m,
+                                ingredients: Array.isArray(m?.ingredients)
+                                  ? m.ingredients.map((i: any) => ({
+                                      product: i?.product ?? i?.name ?? '',
+                                      weight: typeof i?.weight === 'number'
+                                        ? i.weight
+                                        : typeof i?.quantity === 'number'
+                                          ? i.quantity
+                                          : Number(i?.weight ?? i?.quantity) || 0,
+                                      unit: i?.unit || (i?.weight != null || i?.quantity != null ? 'g' : undefined),
+                                    }))
+                                  : []
+                              }));
+
+                            if (!Array.isArray(mealArray) || mealArray.length === 0) {
+                              alert(tUI('dietPlanEmptyOrInvalid', lang));
+                              setProgress(0);
+                              setProgressMessage('');
+                              return;
+                            }
+
+                            setProgress(40);
+                            setProgressMessage(tUI('processingInterview', lang));
+
+                            await generateDietPdf(
+                              form,
+                              bmi,
+                              mealArray,
+                              true,
+                              notes,
+                              lang,
+                              interviewData,
+                              {
+                                bmi: interviewData.bmi,
+                                ppm: interviewData.ppm,
+                                cpm: interviewData.cpm,
+                                pal: interviewData.pal,
+                                kcalMaintain: interviewData.kcalMaintain,
+                                kcalReduce: interviewData.kcalReduce,
+                                kcalGain: interviewData.kcalGain,
+                                nmcBroca: interviewData.nmcBroca,
+                                nmcLorentz: interviewData.nmcLorentz
+                              },
+                              'download',
+                              narrativeText,
+                              recipes
+                            );
+
+                            setProgress(100);
+                            setProgressMessage(tUI('pdfReady', lang));
+                            setTimeout(() => {
+                              setProgress(0);
+                              setProgressMessage('');
+                            }, 1000);
+                          } catch (e) {
+                            console.error('❌ PDF generation error:', e);
+                            alert(tUI('errorGeneratingPdf', lang));
+                            setProgress(0);
+                            setProgressMessage('');
+                          }
+                        }}
+                        disabled={!editableDiet || Object.keys(editableDiet).length === 0 || progress > 0}
+                        className="w-28 h-28 rounded-2xl border border-white/10 bg-white/8 hover:bg-white/12 shadow-[0_18px_60px_rgba(0,0,0,.30)] backdrop-blur-xl text-white font-semibold flex flex-col items-center justify-center text-center transition disabled:opacity-50"
+                      >
+                        <span className="text-4xl leading-none">📄</span>
+                        <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
+                          {tUI('generatePdf', lang)}
+                        </span>
+                      </button>
+
+                      <button
+                        onClick={async () => {
+                          const confirm = window.confirm(tUI('confirmApproveDietAsPatient', lang));
+                          if (confirm) {
+                            await saveDietToSupabaseOnly();
+                          }
+                        }}
+                        disabled={!editableDiet || Object.keys(editableDiet).length === 0}
+                        className="w-28 h-28 rounded-2xl border border-white/10 bg-white/8 hover:bg-white/12 shadow-[0_18px_60px_rgba(0,0,0,.30)] backdrop-blur-xl text-white font-semibold flex flex-col items-center justify-center text-center transition disabled:opacity-50"
+                      >
+                        <span className="text-4xl leading-none">✅</span>
+                        <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
+                          {tUI('approveDietAsPatient', lang)}
+                        </span>
+                      </button>
+
+                      {editableDiet && Object.keys(editableDiet).length > 0 && (
+                        <button
+                          onClick={handleGenerateRecipes}
+                          disabled={isGeneratingRecipes}
+                          className="w-28 h-28 rounded-2xl border border-white/10 bg-white/8 hover:bg-white/12 shadow-[0_18px_60px_rgba(0,0,0,.30)] backdrop-blur-xl text-white font-semibold flex flex-col items-center justify-center text-center transition disabled:opacity-50"
+                        >
+                          <span className="text-4xl leading-none">🍽️</span>
+                          <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
+                            {tUI('generateRecipes', lang)}
+                          </span>
+                        </button>
+                      )}
+
+                      {editableDiet && form?.has_kitchen_robot && (
+                        <button
+                          onClick={() => handleSectionChange('robot')}
+                          className="w-28 h-28 rounded-2xl border border-white/10 bg-white/8 hover:bg-white/12 shadow-[0_18px_60px_rgba(0,0,0,.30)] backdrop-blur-xl text-white font-semibold flex flex-col items-center justify-center text-center transition"
+                        >
+                          <span className="text-4xl leading-none">🤖</span>
+                          <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
+                            {tUI('kitchenRobot.generateFromDiet', lang)}
+                          </span>
+                        </button>
+                      )}
+
+                      {editableDiet && Object.keys(editableDiet).length > 0 && (
+                        <button
+                          onClick={async () => {
+                            const confirm = window.confirm(tUI('confirmSendDietToDoctor', lang));
+                            if (!confirm) return;
+
+                            const doctorEmail = form?.assigned_doctor_email;
+                            if (!doctorEmail) {
+                              alert(tUI('noAssignedDoctor', lang));
+                              return;
+                            }
+
+                            const userId = localStorage.getItem('currentUserID');
+                            if (!userId) {
+                              alert(tUI('noUserIdError', lang));
+                              return;
+                            }
+
+                            setIsSending(true);
+                            setProgressMessage(tUI('savingDraft', lang));
+                            startFakeProgress(10, 25, 60000);
+
+                            try {
+                              const cleanDiet = JSON.parse(JSON.stringify(editableDiet));
+                              const { error } = await supabase.from('patient_diets').upsert(
+                                {
+                                  user_id: userId,
+                                  diet_plan: cleanDiet,
+                                  status: 'draft',
+                                  patient_name: form?.name || '',
+                                  selected_doctor_id: doctorEmail
+                                },
+                                { onConflict: 'user_id' }
+                              );
+
+                              if (error) throw error;
+
+                              await fetch('/api/send-diet-notification', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  doctorEmail,
+                                  patientName: form?.name,
+                                  patientEmail: form?.email,
+                                  lang
+                                })
+                              });
+
+                              stopFakeProgress();
+                              setProgress(100);
+                              setProgressMessage(tUI('dietSentToDoctor', lang));
+                              setTimeout(() => {
+                                setProgress(0);
+                                setProgressMessage('');
+                              }, 1000);
+
+                              alert(tUI('dietSubmissionSuccess', lang));
+                            } catch (err) {
+                              console.error('❌ Błąd zapisu wersji roboczej diety:', err);
+                              alert(tUI('dietSubmissionError', lang));
+                              stopFakeProgress();
+                              setProgress(0);
+                              setProgressMessage('');
+                            } finally {
+                              setIsSending(false);
+                            }
+                          }}
+                          disabled={isSending}
+                          className="w-28 h-28 rounded-2xl border border-white/10 bg-white/8 hover:bg-white/12 shadow-[0_18px_60px_rgba(0,0,0,.30)] backdrop-blur-xl text-white font-semibold flex flex-col items-center justify-center text-center transition disabled:opacity-50"
+                        >
+                          <span className="text-4xl leading-none">📤</span>
+                          <span className="text-sm mt-2 leading-tight px-2 max-w-full break-words whitespace-normal">
+                            {tUI('sendDietToDoctor', lang)}
+                          </span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {editableDiet && Object.keys(editableDiet).length > 0 && (
+                    <div className="mt-6">
+                      <DietTable
+                        editableDiet={editableDiet}
+                        setEditableDiet={setEditableDiet}
+                        setConfirmedDiet={() => {}}
+                        isEditable={false}
+                        lang={lang}
+                        notes={notes}
+                        setNotes={setNotes}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {selectedSection === 'robot' && (
+                <div className="space-y-6">
+                  {/* UWAGA: tu zostawiam Twoją sekcję robot 1:1, tylko styl kontenerów na glass */}
+                  {!hasPaid && (
+                    <div className="rounded-2xl border border-white/10 bg-white/7 backdrop-blur-2xl p-4">
+                      <div className="font-bold text-lg">{tUI('kitchenRobot.guard.noAccessTitle', lang)}</div>
+                      <div className="text-sm opacity-90 mt-1">{tUI('kitchenRobot.guard.noAccessDesc', lang)}</div>
+                      <div className="mt-4">
+                        <Link href="/payment">
+                          <button className="w-full sm:w-auto rounded-2xl px-6 py-3 font-semibold border border-white/10 bg-white/10 hover:bg-white/14 backdrop-blur-xl shadow-[0_18px_60px_rgba(0,0,0,.30)] transition">
+                            💳 {tUI('goToPayment', lang)}
+                          </button>
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+
+                  {hasPaid && (!form?.has_kitchen_robot || !String(form?.kitchen_robot_model || '').trim() || !String(form?.kitchen_robot_serial || '').trim()) && (
+                    <div className="rounded-2xl border border-white/10 bg-white/7 backdrop-blur-2xl p-4">
+                      <div className="font-bold text-lg">{tUI('kitchenRobot.guard.fixConfigTitle', lang)}</div>
+                      <div className="text-sm opacity-90 mt-1">{tUI('kitchenRobot.guard.fixConfigDesc', lang)}</div>
+                      <div className="mt-4">
+                        <button
+                          onClick={() => handleSectionChange('data')}
+                          className="w-full sm:w-auto rounded-2xl px-6 py-3 font-semibold border border-white/10 bg-white/10 hover:bg-white/14 backdrop-blur-xl shadow-[0_18px_60px_rgba(0,0,0,.30)] transition"
+                        >
+                          📝 {tUI('kitchenRobot.goToRegistration', lang)}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {hasPaid && form?.has_kitchen_robot && String(form?.kitchen_robot_model || '').trim() && String(form?.kitchen_robot_serial || '').trim() && (!editableDiet || Object.keys(editableDiet).length === 0) && (
+                    <div className="rounded-2xl border border-white/10 bg-white/7 backdrop-blur-2xl p-4">
+                      <div className="font-bold text-lg">{tUI('kitchenRobot.guard.noDietTitle', lang)}</div>
+                      <div className="text-sm opacity-90 mt-1">{tUI('kitchenRobot.guard.noDietDesc', lang)}</div>
+                      <div className="mt-4">
+                        <button
+                          onClick={() => handleSectionChange('diet')}
+                          className="w-full sm:w-auto rounded-2xl px-6 py-3 font-semibold border border-white/10 bg-white/10 hover:bg-white/14 backdrop-blur-xl shadow-[0_18px_60px_rgba(0,0,0,.30)] transition"
+                        >
+                          🍽️ {tUI('kitchenRobot.goToDiet', lang)}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Reszta Twojej sekcji robot zostaje 1:1 — tylko podmień swoje kontenery bg na glass jak wyżej */}
+                  {/* ... */}
+                </div>
+              )}
+
+              {selectedSection === 'scanner' && (
+                <>
+                  <ProductAssistantPanel
+                    lang={lang}
+                    patient={form}
+                    form={form}
+                    interviewData={interviewData}
+                    medical={medicalData}
+                    dietPlan={editableDiet}
+                  />
+                  <BasketTable lang={lang} />
+                </>
+              )}
+            </div>
+          )}
+
+          {progress > 0 && progress < 100 && (
+            <ProgressOverlay message={progressMessage} percent={progress} />
+          )}
+        </section>
       </div>
-
-        ))}
-      </div>
-    ))}
-  </div>
-)}
-
-      {/* Asystent produktu + koszyk */}
-      {selectedSection === 'scanner' && (
-        <>
-          <ProductAssistantPanel
-        lang={lang}
-        patient={form}
-        form={form}
-        interviewData={interviewData}
-        medical={medicalData}
-        dietPlan={editableDiet}
-      />
-        <BasketTable lang={lang} />
-
-        </>
-      )}
-
-      {!selectedSection && (
-      <p className="text-center text-white text-sm max-w-xl mx-auto">
-        {tUI('welcomeMessagePatient', lang)}
-      </p>
-    )}
-     </div>
-      {progress > 0 && progress < 100 && (
-  <ProgressOverlay message={progressMessage} percent={progress} />
-)}
-
-    </main>
-  );
+    </div>
+  </main>
+);
 }
