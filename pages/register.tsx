@@ -496,356 +496,376 @@ if (!langReady || !router.isReady || !userType) {
 }
 
 return (
-<main className="relative min-h-screen 
-  bg-[#0f271e]/70 
-  bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 
-  backdrop-blur-[12px] 
-  shadow-[inset_0_0_60px_rgba(255,255,255,0.08)] 
-  flex flex-col justify-start items-center pt-6 px-4 
-  text-white transition-all duration-300 overflow-x-hidden">
-
-  <nav className="absolute top-3 left-3 right-3 z-50 flex items-center justify-between px-3">
-    {/* 🌍 Wybór języka */}
-    <div className="flex items-center gap-2">
-      <label htmlFor="language-select" className="sr-only">Wybierz język</label>
-      <select
-        id="language-select"
-        value={lang}
-        onChange={(e) => {
-          const selected = e.target.value as LangKey;
-          setLang(selected);
-          localStorage.setItem('platformLang', selected);
-        }}
-       className="border rounded px-3 py-1 text-sm shadow bg-white/80 text-black backdrop-blur dark:bg-gray-800 dark:text-white"
-        aria-label="Language selection"
-      >
-        {Object.entries(languageLabels).map(([key, label]) => (
-          <option key={key} value={key}>{label}</option>
-        ))}
-      </select>
+  <main className="relative min-h-screen overflow-x-hidden text-white bg-[#06131a]">
+    {/* GLASS BACKDROP (wizual) */}
+    <div aria-hidden className="pointer-events-none absolute inset-0">
+      <div className="absolute inset-0 bg-[radial-gradient(1200px_700px_at_20%_15%,rgba(56,189,248,.22),transparent_60%),radial-gradient(900px_600px_at_80%_25%,rgba(167,139,250,.16),transparent_60%),radial-gradient(900px_700px_at_55%_85%,rgba(16,185,129,.10),transparent_60%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,.10)_0%,rgba(255,255,255,.04)_30%,rgba(0,0,0,.10)_100%)] opacity-70" />
+      <div className="absolute inset-0 opacity-[0.10] mix-blend-overlay">
+        <div className="absolute inset-0 [background-image:radial-gradient(rgba(255,255,255,.18)_1px,transparent_1px)] [background-size:18px_18px]" />
+      </div>
+      <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#06131a] to-transparent opacity-60" />
     </div>
 
-    {/* 🔘 Pstryczek elektryczek po prawej */}
-    <div className="flex items-center gap-2 group" title={darkMode ? tUI('lightMode') : tUI('darkMode')}>
-      <span className="text-xs text-black dark:text-white">{tUI('toggleContrast')}</span>
-      <button
-        onClick={() => setDarkMode(!darkMode)}
-        className={`relative inline-flex items-center h-6 w-11 rounded-full transition-colors ${
-          darkMode ? 'bg-gray-700' : 'bg-yellow-400'
-        }`}
-        aria-label={tUI('toggleContrast')}
-      >
-        {/* Ikony 🌙 / ☀️ */}
-        <span
-          className={`absolute left-1 text-sm transition-opacity duration-200 ${
-            darkMode ? 'opacity-0' : 'opacity-100'
-          }`}
-        >
-          ☀️
-        </span>
-        <span
-          className={`absolute right-1 text-sm transition-opacity duration-200 ${
-            darkMode ? 'opacity-100' : 'opacity-0'
-          }`}
-        >
-          🌙
-        </span>
+    {/* CONTENT */}
+    <div className="relative flex flex-col justify-start items-center pt-6 px-4">
+      {/* NAV (tylko język) */}
+      <nav className="sticky top-0 z-50 w-full">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="mt-3 mb-2 rounded-2xl border border-white/10 bg-white/8 backdrop-blur-xl shadow-[0_18px_60px_rgba(0,0,0,.35)]">
+            <div className="flex items-center justify-between px-3 py-2 md:px-4">
+              <div className="flex items-center gap-2">
+                <label htmlFor="language-select" className="sr-only">
+                  Wybierz język
+                </label>
+                <select
+                  id="language-select"
+                  value={lang}
+                  onChange={(e) => {
+                    const selected = e.target.value as LangKey;
+                    setLang(selected);
+                    localStorage.setItem("platformLang", selected);
+                  }}
+                  className="border border-white/10 rounded-xl px-3 py-1.5 shadow bg-white/10 text-white backdrop-blur-xl focus:outline-none focus:ring-2 focus:ring-sky-400/60"
+                  aria-label="Language selection"
+                >
+                  {Object.entries(languageLabels).map(([key, label]) => (
+                    <option key={key} value={key} className="text-black">
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-        {/* Kulka */}
-        <span
-          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-300 ${
-            darkMode ? 'translate-x-5' : 'translate-x-1'
-          }`}
-        />
-      </button>
-    </div>
-  </nav>
-
-           {/* 🔐 Login i Rejestracja */}
-    <section
-  className="
-    z-10
-    grid grid-cols-1 lg:grid-cols-2
-    gap-6 lg:gap-8
-    mt-8 lg:mt-12
-    w-full max-w-3xl lg:max-w-6xl mx-auto
-    bg-white/30 dark:bg-gray-900/30 backdrop-blur-md
-    p-6 lg:p-10
-    rounded-2xl shadow-xl transition-colors dark:text-white
-    overflow-hidden
-  "
->
-      <h1 id="auth-section" className="sr-only">Logowanie i rejestracja</h1>
-        {confirmation && (
-      <div className="fixed top-0 left-0 w-full z-50 bg-green-600 text-white text-center py-2 shadow-md animate-fadeOut">
-        ✅ {t('emailConfirmed')}
-      </div>
-      )}
-
-  {/* ✅ Login */}
-  <article className="z-10 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-6 md:p-8 transition-colors dark:text-white" aria-labelledby="login-form">
-    <h2 id="login-form" className="text-xl font-bold mb-4">{t('loginTitle')}</h2>
-    <form onSubmit={handleLogin} className="space-y-4">
-      <label htmlFor="login-email" className="sr-only">{t('email')}</label>
-      <input
-        id="login-email"
-        type="email"
-        required
-        value={login.email}
-        onChange={(e) => setLogin({ ...login, email: e.target.value })}
-        className="w-full bg-white text-black border border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 rounded px-3 py-2"
-        placeholder={t('email')}
-        aria-label={t('email')}
-      />
-      <label htmlFor="login-password" className="sr-only">{t('password')}</label>
-      <input
-        id="login-password"
-        type="password"
-        required
-        value={login.password}
-        onChange={(e) => setLogin({ ...login, password: e.target.value })}
-        className="w-full bg-white text-black border border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 rounded px-3 py-2"
-        placeholder={t('password')}
-        aria-label={t('password')}
-      />
-     <div className="flex items-start text-sm gap-2 mt-2">
-      <input
-        type="checkbox"
-        checked={loginConsent}
-        onChange={(e) => setLoginConsent(e.target.checked)}
-        className="mt-1"
-        id="login-consent"
-      />
-      <label htmlFor="login-consent" className="leading-snug text-sm">
-        <span className="block">{consentPrefix}</span>
-        <span className="block">
-          <a href="/regulamin" className="underline hover:text-blue-400" target="_blank" rel="noopener noreferrer">
-            {termsLinkText}
-          </a>{' '}
-          {t('and')}{' '}
-          <a href="/polityka-prywatnosci" className="underline hover:text-blue-400" target="_blank" rel="noopener noreferrer">
-            {privacyLinkText}
-          </a>
-        </span>
-      </label>
-    </div>
-     <button
-      type="submit"
-      className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded w-full transition disabled:opacity-50 shadow-md"
-      disabled={!loginConsent}
-    >
-      {t('loginTitle')}
-    </button>
-    </form>
-
-    <div className="mt-6 border-t pt-4">
-      <h3 className="font-bold mb-2">{t('forgotPassword')}</h3>
-      <label htmlFor="recovery-email" className="sr-only">{t('email')}</label>
-      <input
-        id="recovery-email"
-        type="email"
-        placeholder={t('email')}
-        className="w-full bg-white text-black border border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 rounded px-3 py-2"
-        value={recoveryID}
-        onChange={(e) => setRecoveryID(e.target.value)}
-        aria-label={t('email')}
-      />
-      <button
-      type="button"
-      className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded w-full transition disabled:opacity-50"
-      onClick={handleResetPassword}
-      disabled={resetCooldown > 0}
-    >
-      {resetCooldown > 0
-        ? `${t('resetPassword')} (${resetCooldown}s)`
-        : t('resetPassword')}
-    </button>
-    </div>
-  </article>
-
-  {/* ✅ Rejestracja */}
-  <article className="z-10 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md rounded-2xl shadow-xl p-6 md:p-8 transition-colors dark:text-white" aria-labelledby="register-form">
-    <h2 id="register-form" className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
-      {t('registerTitle')}
-    </h2>
-
-    <div
-  className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3 mb-4 w-full"
-  role="radiogroup"
-  aria-label={t('selectRole')}
->
-      {router.isReady && (
-        <>
-          {(router.query.mode === 'doctor' || router.query.mode === 'dietitian') && (
-            <>
-             <button
-              onClick={() => setUserType('doctor')}
-            className={`w-full sm:w-auto text-sm sm:text-base px-4 py-2 rounded transition ${
-              userType === 'doctor'
-                ? 'bg-blue-700 text-white'
-                : 'bg-blue-100 text-blue-700'
-            }`}
-              role="radio"
-              aria-checked={userType === 'doctor'}
-              aria-label={t('roleDoctor')}
-            >
-              {t('roleDoctor')}
-            </button>
-
-            <button
-            onClick={() => setUserType('dietitian')}
-            className={`w-full sm:w-auto text-sm sm:text-base px-4 py-2 rounded transition ${
-              userType === 'dietitian'
-                ? 'bg-purple-700 text-white'
-                : 'bg-purple-100 text-purple-700'
-            }`}
-            role="radio"
-            aria-checked={userType === 'dietitian'}
-            aria-label={t('roleDietitian')}
-          >
-            {t('roleDietitian')}
-          </button>
-            </>
-          )}
-
-          {(!router.query.mode || router.query.mode === 'register' || router.query.mode === 'patient') && (
-           <button
-            onClick={() => setUserType('patient')}
-            className={`w-full sm:w-auto text-sm sm:text-base px-4 py-2 rounded transition ${
-              userType === 'patient'
-                ? 'bg-green-700 text-white'
-                : 'bg-green-100 text-green-700'
-            }`}
-            role="radio"
-            aria-checked={userType === 'patient'}
-            aria-label={rolePatientLabel}
-          >
-            {rolePatientLabel}
-          </button>
-          )}
-        </>
-      )}
-    </div>
-
-    <form onSubmit={handleRegister} className="space-y-4">
-      <div>
-        <label htmlFor="fullName" className="sr-only">{t('fullName')}</label>
-        <input
-          id="fullName"
-          type="text"
-          required
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-          className="w-full bg-white text-black border border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 rounded px-3 py-2"
-          placeholder={t('fullName')}
-          aria-label={t('fullName')}
-        />
-      </div>
-
-      <div>
-        <label htmlFor="email" className="sr-only">{t('email')}</label>
-        <input
-          id="email"
-          type="email"
-          required
-          onChange={(e) => setForm({ ...form, email: e.target.value })}
-          className="w-full bg-white text-black border border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 rounded px-3 py-2"
-          placeholder={t('email')}
-          aria-label={t('email')}
-        />
-      </div>
-
-      <div className="w-full">
-      <label htmlFor="phone" className="sr-only">{t('phone')}</label>
-
-      <PhoneInput
-        defaultCountry={(detectedCountry ?? 'pl') as CountryIso2}
-        value={form.phone}
-        onChange={(phone) => setForm({ ...form, phone })}
-        className="!w-full"
-        inputClassName="!w-full h-[44px] text-sm bg-white dark:bg-gray-800 text-black dark:text-white border border-gray-300 dark:border-gray-600 rounded px-3 py-2"
-        countrySelectorStyleProps={{ buttonClassName: "!h-[44px]" }}
-        inputProps={{
-          name: 'phone',
-          required: true,
-          id: 'phone',
-          'aria-label': t('phone'),
-          placeholder: t('phone'),
-        }}
-      />
-      </div>
-    
-      <div>
-        <label htmlFor="password" className="sr-only">{t('password')}</label>
-        <input
-          id="password"
-          type="password"
-          required
-          value={form.password}
-          onChange={(e) => setForm({ ...form, password: e.target.value })}
-          className="w-full bg-white text-black border border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 rounded px-3 py-2"
-          placeholder={t('password')}
-          aria-label={t('password')}
-        />
-      </div>
-
-      {userType === 'doctor' && (
-        <MedicalJurisdiction
-          lang={lang}
-          jurisdiction={jurisdiction}
-          licenseNumber={licenseNumber}
-          onJurisdictionChange={setJurisdiction}
-          onLicenseChange={setLicenseNumber}
-        />
-      )}
-
-      {userType === 'dietitian' && (
-        <div>
-          <label htmlFor="diplomaNumber" className="sr-only">{t('diplomaNumber')}</label>
-          <input
-            id="diplomaNumber"
-            type="text"
-            required
-            value={licenseNumber}
-            onChange={(e) => setLicenseNumber(e.target.value)}
-            className="w-full bg-white text-black border border-gray-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 rounded px-3 py-2"
-            placeholder={t('diplomaNumber')}
-            aria-label={t('diplomaNumber')}
-          />
+              <div className="text-xs text-white/70 hidden sm:block">
+                {tUI("app.title")}
+              </div>
+            </div>
+          </div>
         </div>
-      )}
+      </nav>
 
-        <div className="flex items-start text-sm gap-2 mt-2">
-        <input
-          type="checkbox"
-          checked={consentGiven}
-          onChange={(e) => setConsentGiven(e.target.checked)}
-          className="mt-1"
-          id="consent"
+      {/* 🔐 Login i Rejestracja */}
+      <section className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mt-8 lg:mt-12 w-full max-w-3xl lg:max-w-6xl mx-auto rounded-3xl border border-white/10 bg-white/6 backdrop-blur-2xl p-6 lg:p-10 shadow-[0_30px_90px_rgba(0,0,0,.45)] overflow-hidden">
+        <h1 id="auth-section" className="sr-only">
+          Logowanie i rejestracja
+        </h1>
+
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 hidden lg:block bg-[radial-gradient(120%_80%_at_15%_0%,rgba(255,255,255,.10),transparent_55%)]"
         />
-        <label htmlFor="consent" className="leading-snug text-sm">
-          <span className="block">{consentPrefix}</span>
-          <span className="block">
-            <a href="/regulamin" className="underline hover:text-blue-400" target="_blank" rel="noopener noreferrer">
-              {termsLinkText}
-            </a>{' '}
-            {t('and')}{' '}
-            <a href="/polityka-prywatnosci" className="underline hover:text-blue-400" target="_blank" rel="noopener noreferrer">
-              {privacyLinkText}
-            </a>
-          </span>
-        </label>
-      </div>
 
-      <button
-        type="submit"
-        className="bg-green-700 text-white px-4 py-2 rounded w-full hover:bg-green-800 transition disabled:opacity-50"
-        disabled={!consentGiven}
-      >
-        {t('registerTitle')}
-      </button>
-    </form>
-  </article>
-</section>
-    </main>
-  );
+        {confirmation && (
+          <div className="fixed top-0 left-0 w-full z-50 bg-emerald-600 text-white text-center py-2 shadow-md animate-fadeOut">
+            ✅ {t("emailConfirmed")}
+          </div>
+        )}
+
+        {/* ✅ Login */}
+        <article
+          className="relative z-10 rounded-3xl border border-white/10 bg-white/7 backdrop-blur-2xl shadow-[0_18px_60px_rgba(0,0,0,.30)] p-6 md:p-8 transition-colors"
+          aria-labelledby="login-form"
+        >
+          <div className="pointer-events-none absolute inset-0 rounded-3xl bg-[radial-gradient(120%_90%_at_20%_0%,rgba(255,255,255,.10),transparent_55%)]" />
+          <div className="relative">
+            <h2 id="login-form" className="text-xl font-bold mb-4">
+              {t("loginTitle")}
+            </h2>
+
+            <form onSubmit={handleLogin} className="space-y-4">
+              <label htmlFor="login-email" className="sr-only">
+                {t("email")}
+              </label>
+              <input
+                id="login-email"
+                type="email"
+                required
+                value={login.email}
+                onChange={(e) => setLogin({ ...login, email: e.target.value })}
+                className="w-full rounded-xl border border-white/10 bg-white/10 text-white placeholder:text-white/50 px-3 py-2.5 shadow-sm backdrop-blur-xl focus:outline-none focus:ring-2 focus:ring-sky-400/60"
+                placeholder={t("email")}
+                aria-label={t("email")}
+              />
+
+              <label htmlFor="login-password" className="sr-only">
+                {t("password")}
+              </label>
+              <input
+                id="login-password"
+                type="password"
+                required
+                value={login.password}
+                onChange={(e) => setLogin({ ...login, password: e.target.value })}
+                className="w-full rounded-xl border border-white/10 bg-white/10 text-white placeholder:text-white/50 px-3 py-2.5 shadow-sm backdrop-blur-xl focus:outline-none focus:ring-2 focus:ring-sky-400/60"
+                placeholder={t("password")}
+                aria-label={t("password")}
+              />
+
+              <div className="flex items-start text-sm gap-2 mt-2">
+                <input
+                  type="checkbox"
+                  checked={loginConsent}
+                  onChange={(e) => setLoginConsent(e.target.checked)}
+                  className="mt-1"
+                  id="login-consent"
+                />
+                <label htmlFor="login-consent" className="leading-snug text-sm text-white/85">
+                  <span className="block">{consentPrefix}</span>
+                  <span className="block">
+                    <a
+                      href="/regulamin"
+                      className="underline decoration-white/30 hover:decoration-white"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {termsLinkText}
+                    </a>{" "}
+                    {t("and")}{" "}
+                    <a
+                      href="/polityka-prywatnosci"
+                      className="underline decoration-white/30 hover:decoration-white"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {privacyLinkText}
+                    </a>
+                  </span>
+                </label>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full rounded-2xl px-4 py-2.5 font-semibold border border-white/10 bg-white/10 hover:bg-white/14 backdrop-blur-xl shadow-[0_18px_60px_rgba(0,0,0,.30)] transition disabled:opacity-50"
+                disabled={!loginConsent}
+              >
+                {t("loginTitle")}
+              </button>
+            </form>
+
+            <div className="mt-6 border-t border-white/10 pt-4">
+              <h3 className="font-bold mb-2">{t("forgotPassword")}</h3>
+              <label htmlFor="recovery-email" className="sr-only">
+                {t("email")}
+              </label>
+              <input
+                id="recovery-email"
+                type="email"
+                placeholder={t("email")}
+                className="w-full rounded-xl border border-white/10 bg-white/10 text-white placeholder:text-white/50 px-3 py-2.5 shadow-sm backdrop-blur-xl focus:outline-none focus:ring-2 focus:ring-sky-400/60"
+                value={recoveryID}
+                onChange={(e) => setRecoveryID(e.target.value)}
+                aria-label={t("email")}
+              />
+              <button
+                type="button"
+                className="mt-3 w-full rounded-2xl px-4 py-2.5 font-semibold border border-white/10 bg-white/10 hover:bg-white/14 backdrop-blur-xl transition disabled:opacity-50"
+                onClick={handleResetPassword}
+                disabled={resetCooldown > 0}
+              >
+                {resetCooldown > 0 ? `${t("resetPassword")} (${resetCooldown}s)` : t("resetPassword")}
+              </button>
+            </div>
+          </div>
+        </article>
+
+        {/* ✅ Rejestracja */}
+        <article
+          className="relative z-10 rounded-3xl border border-white/10 bg-white/7 backdrop-blur-2xl shadow-[0_18px_60px_rgba(0,0,0,.30)] p-6 md:p-8 transition-colors"
+          aria-labelledby="register-form"
+        >
+          <div className="pointer-events-none absolute inset-0 rounded-3xl bg-[radial-gradient(120%_90%_at_20%_0%,rgba(255,255,255,.10),transparent_55%)]" />
+          <div className="relative">
+            <h2 id="register-form" className="text-2xl font-bold mb-4">
+              {t("registerTitle")}
+            </h2>
+
+            <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3 mb-4 w-full" role="radiogroup" aria-label={t("selectRole")}>
+              {router.isReady && (
+                <>
+                  {(router.query.mode === "doctor" || router.query.mode === "dietitian") && (
+                    <>
+                      <button
+                        onClick={() => setUserType("doctor")}
+                        className={`w-full sm:w-auto rounded-2xl px-4 py-2 text-sm sm:text-base font-semibold border border-white/10 transition ${userType === "doctor" ? "bg-white/14 shadow-[0_18px_60px_rgba(0,0,0,.25)]" : "bg-white/8 hover:bg-white/10"}`}
+                        role="radio"
+                        aria-checked={userType === "doctor"}
+                        aria-label={t("roleDoctor")}
+                        type="button"
+                      >
+                        {t("roleDoctor")}
+                      </button>
+
+                      <button
+                        onClick={() => setUserType("dietitian")}
+                        className={`w-full sm:w-auto rounded-2xl px-4 py-2 text-sm sm:text-base font-semibold border border-white/10 transition ${userType === "dietitian" ? "bg-white/14 shadow-[0_18px_60px_rgba(0,0,0,.25)]" : "bg-white/8 hover:bg-white/10"}`}
+                        role="radio"
+                        aria-checked={userType === "dietitian"}
+                        aria-label={t("roleDietitian")}
+                        type="button"
+                      >
+                        {t("roleDietitian")}
+                      </button>
+                    </>
+                  )}
+
+                  {(!router.query.mode || router.query.mode === "register" || router.query.mode === "patient") && (
+                    <button
+                      onClick={() => setUserType("patient")}
+                      className={`w-full sm:w-auto rounded-2xl px-4 py-2 text-sm sm:text-base font-semibold border border-white/10 transition ${userType === "patient" ? "bg-white/14 shadow-[0_18px_60px_rgba(0,0,0,.25)]" : "bg-white/8 hover:bg-white/10"}`}
+                      role="radio"
+                      aria-checked={userType === "patient"}
+                      aria-label={rolePatientLabel}
+                      type="button"
+                    >
+                      {rolePatientLabel}
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+
+            <form onSubmit={handleRegister} className="space-y-4">
+              <div>
+                <label htmlFor="fullName" className="sr-only">
+                  {t("fullName")}
+                </label>
+                <input
+                  id="fullName"
+                  type="text"
+                  required
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  className="w-full rounded-xl border border-white/10 bg-white/10 text-white placeholder:text-white/50 px-3 py-2.5 shadow-sm backdrop-blur-xl focus:outline-none focus:ring-2 focus:ring-sky-400/60"
+                  placeholder={t("fullName")}
+                  aria-label={t("fullName")}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="email" className="sr-only">
+                  {t("email")}
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  required
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  className="w-full rounded-xl border border-white/10 bg-white/10 text-white placeholder:text-white/50 px-3 py-2.5 shadow-sm backdrop-blur-xl focus:outline-none focus:ring-2 focus:ring-sky-400/60"
+                  placeholder={t("email")}
+                  aria-label={t("email")}
+                />
+              </div>
+
+              <div className="w-full">
+                <label htmlFor="phone" className="sr-only">
+                  {t("phone")}
+                </label>
+
+                <PhoneInput
+                  defaultCountry={(detectedCountry ?? "pl") as CountryIso2}
+                  value={form.phone}
+                  onChange={(phone) => setForm({ ...form, phone })}
+                  className="!w-full"
+                  inputClassName="!w-full !h-[44px] !rounded-xl !border !border-white/10 !bg-white/10 !text-white placeholder:!text-white/50 !px-3 !py-2.5 !shadow-sm !backdrop-blur-xl focus:!outline-none focus:!ring-2 focus:!ring-sky-400/60"
+                  countrySelectorStyleProps={{ buttonClassName: "!h-[44px] !rounded-xl !border !border-white/10 !bg-white/10 !backdrop-blur-xl" }}
+                  inputProps={{
+                    name: "phone",
+                    required: true,
+                    id: "phone",
+                    "aria-label": t("phone"),
+                    placeholder: t("phone"),
+                  }}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="password" className="sr-only">
+                  {t("password")}
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  required
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  className="w-full rounded-xl border border-white/10 bg-white/10 text-white placeholder:text-white/50 px-3 py-2.5 shadow-sm backdrop-blur-xl focus:outline-none focus:ring-2 focus:ring-sky-400/60"
+                  placeholder={t("password")}
+                  aria-label={t("password")}
+                />
+              </div>
+
+              {userType === "doctor" && (
+                <MedicalJurisdiction
+                  lang={lang}
+                  jurisdiction={jurisdiction}
+                  licenseNumber={licenseNumber}
+                  onJurisdictionChange={setJurisdiction}
+                  onLicenseChange={setLicenseNumber}
+                />
+              )}
+
+              {userType === "dietitian" && (
+                <div>
+                  <label htmlFor="diplomaNumber" className="sr-only">
+                    {t("diplomaNumber")}
+                  </label>
+                  <input
+                    id="diplomaNumber"
+                    type="text"
+                    required
+                    value={licenseNumber}
+                    onChange={(e) => setLicenseNumber(e.target.value)}
+                    className="w-full rounded-xl border border-white/10 bg-white/10 text-white placeholder:text-white/50 px-3 py-2.5 shadow-sm backdrop-blur-xl focus:outline-none focus:ring-2 focus:ring-sky-400/60"
+                    placeholder={t("diplomaNumber")}
+                    aria-label={t("diplomaNumber")}
+                  />
+                </div>
+              )}
+
+              <div className="flex items-start text-sm gap-2 mt-2">
+                <input
+                  type="checkbox"
+                  checked={consentGiven}
+                  onChange={(e) => setConsentGiven(e.target.checked)}
+                  className="mt-1"
+                  id="consent"
+                />
+                <label htmlFor="consent" className="leading-snug text-sm text-white/85">
+                  <span className="block">{consentPrefix}</span>
+                  <span className="block">
+                    <a
+                      href="/regulamin"
+                      className="underline decoration-white/30 hover:decoration-white"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {termsLinkText}
+                    </a>{" "}
+                    {t("and")}{" "}
+                    <a
+                      href="/polityka-prywatnosci"
+                      className="underline decoration-white/30 hover:decoration-white"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {privacyLinkText}
+                    </a>
+                  </span>
+                </label>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full rounded-2xl px-4 py-2.5 font-semibold border border-white/10 bg-[linear-gradient(135deg,rgba(56,189,248,.35),rgba(16,185,129,.25))] hover:bg-[linear-gradient(135deg,rgba(56,189,248,.45),rgba(16,185,129,.32))] backdrop-blur-xl shadow-[0_18px_60px_rgba(0,0,0,.30)] transition disabled:opacity-50"
+                disabled={!consentGiven}
+              >
+                {t("registerTitle")}
+              </button>
+            </form>
+          </div>
+        </article>
+      </section>
+    </div>
+  </main>
+);
 }
