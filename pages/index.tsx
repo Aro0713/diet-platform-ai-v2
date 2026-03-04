@@ -1,17 +1,16 @@
 // pages/index.tsx
-import Head from 'next/head';
-import Image from 'next/image';
-import { useEffect, useState, useRef } from 'react';
-import { translationsUI } from '@/utils/translationsUI';
-import { type LangKey, languageLabels } from '@/utils/i18n';
-
+import Head from "next/head";
+import Image from "next/image";
+import { useEffect, useState, useRef } from "react";
+import { translationsUI } from "@/utils/translationsUI";
+import { type LangKey, languageLabels } from "@/utils/i18n";
 
 // KONTAKT / SOCIAL
 const FOOTER = {
-  email: 'contact@dcp.care', 
-  facebook: 'https://www.facebook.com/profile.php?id=61580694946237',
-  youtube: 'https://www.youtube.com/@DietCarePlatform',
-  adminName: 'ALS sp. z o.o.',
+  email: "contact@dcp.care",
+  facebook: "https://www.facebook.com/profile.php?id=61580694946237",
+  youtube: "https://www.youtube.com/@DietCarePlatform",
+  adminName: "ALS sp. z o.o.",
 };
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -21,7 +20,7 @@ const FOOTER = {
 // 1) Cennik per rynek (stałe biznesowe – bez FX)
 const MARKET_PRICING = {
   PL: {
-    currency: 'PLN',
+    currency: "PLN",
     patient: {
       plan7: 29,
       plan30: 49,
@@ -34,7 +33,7 @@ const MARKET_PRICING = {
     },
   },
   EU: {
-    currency: 'EUR',
+    currency: "EUR",
     patient: {
       plan7: 7,
       plan30: 13,
@@ -47,7 +46,7 @@ const MARKET_PRICING = {
     },
   },
   OTHER: {
-    currency: 'USD',
+    currency: "USD",
     patient: {
       plan7: 8,
       plan30: 14,
@@ -65,8 +64,32 @@ type Market = keyof typeof MARKET_PRICING;
 
 // 2) UE (bez PL – PL ma własny cennik)
 const EU_COUNTRIES = new Set([
-  'AT','BE','BG','HR','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT',
-  'LV','LT','LU','MT','NL','PT','RO','SK','SI','ES','SE'
+  "AT",
+  "BE",
+  "BG",
+  "HR",
+  "CY",
+  "CZ",
+  "DK",
+  "EE",
+  "FI",
+  "FR",
+  "DE",
+  "GR",
+  "HU",
+  "IE",
+  "IT",
+  "LV",
+  "LT",
+  "LU",
+  "MT",
+  "NL",
+  "PT",
+  "RO",
+  "SK",
+  "SI",
+  "ES",
+  "SE",
 ]);
 declare global {
   interface Window {
@@ -74,67 +97,120 @@ declare global {
     onYouTubeIframeAPIReady: () => void;
   }
 }
-// ──────────────────────────────────────────────────────────────
-// PEDIATRIC RIBBON 45° WITH ANIMATED GRADIENT + COUNTDOWN
-// ──────────────────────────────────────────────────────────────
-const PEDIATRIC_LAUNCH_AT = new Date("2026-02-15T00:00:00+01:00"); 
 
-function getCountdown(target: Date) {
-  const now = Date.now();
-  const diff = target.getTime() - now;
-
-  if (diff <= 0) {
-    return { done: true, d: 0, h: 0, m: 0, s: 0 };
-  }
-
-  const t = Math.floor(diff / 1000);
-  return {
-    done: false,
-    d: Math.floor(t / 86400),
-    h: Math.floor((t % 86400) / 3600),
-    m: Math.floor((t % 3600) / 60),
-    s: t % 60,
-  };
-}
-
-const two = (n: number) => String(n).padStart(2, "0");
-function PediatricRibbon({ tUI }: { tUI: (k: keyof typeof translationsUI) => string }) {
-  const [time, setTime] = useState(() => getCountdown(PEDIATRIC_LAUNCH_AT));
-
-  useEffect(() => {
-    const id = setInterval(
-      () => setTime(getCountdown(PEDIATRIC_LAUNCH_AT)),
-      1000
-    );
-    return () => clearInterval(id);
-  }, []);
-
-  const label = time.done
-    ? tUI("pediatricribbonLive")
-    : `${tUI("pediatricribbonPrefix")} ${time.d}d ${two(time.h)}:${two(time.m)}:${two(time.s)}`;
-
+/**
+ * 2026 GLASS BACKGROUND (visual only):
+ * - icy blue glass base
+ * - subtle watermark logo (selectively blended)
+ * - fiber optic threads (SVG, very subtle)
+ */
+function GlassBackdrop() {
   return (
-    <div className="pointer-events-none absolute inset-0 z-[40]">
-      <div
-        className="absolute top-20 left-[-35vw] w-[150vw] rotate-[-35deg] text-white border border-white/30 shadow-2xl sm:top-36 sm:left-[-320px] sm:w-[1200px]"
-        style={{
-          background: "linear-gradient(90deg, #38BDF8 0%, #A78BFA 45%, #FB7185 100%)",
-          backgroundSize: "200% 200%",
-          animation: "dcpPediatricGlow 30s ease-in-out infinite",
-          boxShadow: "0 22px 70px rgba(0,0,0,.45)",
-        }}
-        aria-hidden="true"
-      >
-        <div className="px-6 py-3 text-xs font-bold tracking-wide text-center drop-shadow whitespace-nowrap sm:px-10 sm:py-5 sm:text-base">
-          {label}
+    <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+      {/* Base gradient */}
+      <div className="absolute inset-0 bg-[radial-gradient(1200px_700px_at_20%_15%,rgba(56,189,248,.22),transparent_60%),radial-gradient(900px_600px_at_80%_25%,rgba(167,139,250,.16),transparent_60%),radial-gradient(900px_700px_at_55%_85%,rgba(16,185,129,.10),transparent_60%)]" />
+
+      {/* Glass veil */}
+      <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,.10)_0%,rgba(255,255,255,.04)_30%,rgba(0,0,0,.10)_100%)] opacity-70" />
+
+      {/* Subtle noise (CSS-only) */}
+      <div className="absolute inset-0 opacity-[0.10] mix-blend-overlay">
+        <div className="absolute inset-0 [background-image:radial-gradient(rgba(255,255,255,.18)_1px,transparent_1px)] [background-size:18px_18px] blur-[0.2px]" />
+      </div>
+
+      {/* Logo watermark (selective + subtle)
+          Jeśli masz lepszy znak (np. samo serce) podmień src na np. /logo-mark.png */}
+      <div className="absolute inset-0 opacity-[0.12]">
+        <div className="absolute -top-20 -left-10 h-[520px] w-[520px] blur-[0.2px] rotate-[-10deg]">
+          <Image
+            src="/logo-dietcare.png"
+            alt=""
+            fill
+            className="object-contain opacity-[0.45]"
+            priority={false}
+          />
+        </div>
+        <div className="absolute -bottom-24 right-[-60px] h-[620px] w-[620px] blur-[0.4px] rotate-[12deg]">
+          <Image
+            src="/logo-dietcare.png"
+            alt=""
+            fill
+            className="object-contain opacity-[0.25]"
+            priority={false}
+          />
         </div>
       </div>
+
+      {/* Fiber threads (very subtle) */}
+      <svg
+        className="absolute inset-0 h-full w-full opacity-[0.18]"
+        viewBox="0 0 1200 800"
+        preserveAspectRatio="none"
+      >
+        <defs>
+          <linearGradient id="fiberA" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="rgba(56,189,248,0.00)" />
+            <stop offset="35%" stopColor="rgba(56,189,248,0.45)" />
+            <stop offset="70%" stopColor="rgba(167,139,250,0.35)" />
+            <stop offset="100%" stopColor="rgba(16,185,129,0.00)" />
+          </linearGradient>
+          <linearGradient id="fiberB" x1="1" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="rgba(251,113,133,0.00)" />
+            <stop offset="40%" stopColor="rgba(167,139,250,0.25)" />
+            <stop offset="70%" stopColor="rgba(56,189,248,0.30)" />
+            <stop offset="100%" stopColor="rgba(56,189,248,0.00)" />
+          </linearGradient>
+          <filter id="fiberGlow">
+            <feGaussianBlur stdDeviation="1.2" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
+        {/* Lines */}
+        <path
+          d="M-40,620 C180,520 240,420 420,380 C620,335 720,470 860,420 C1010,365 1080,200 1240,120"
+          fill="none"
+          stroke="url(#fiberA)"
+          strokeWidth="1.4"
+          strokeLinecap="round"
+          strokeDasharray="8 14"
+          className="dcp-fiber"
+          filter="url(#fiberGlow)"
+        />
+        <path
+          d="M-60,220 C120,280 260,120 420,160 C620,210 650,320 820,300 C980,280 1060,520 1260,560"
+          fill="none"
+          stroke="url(#fiberB)"
+          strokeWidth="1.2"
+          strokeLinecap="round"
+          strokeDasharray="10 18"
+          className="dcp-fiber dcp-fiber-slow"
+          filter="url(#fiberGlow)"
+        />
+
+        {/* Micro sparkles */}
+        {Array.from({ length: 14 }).map((_, i) => {
+          const x = 60 + i * 80;
+          const y = 120 + ((i * 37) % 520);
+          return (
+            <circle key={i} cx={x} cy={y} r="1.2" fill="rgba(255,255,255,.55)" opacity="0.35">
+              <animate attributeName="opacity" values="0.10;0.55;0.10" dur={`${5 + (i % 6)}s`} repeatCount="indefinite" />
+            </circle>
+          );
+        })}
+      </svg>
+
+      {/* Bottom fade for readability */}
+      <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#06131a] to-transparent opacity-60" />
     </div>
   );
 }
 
 export default function Home() {
-    // ──────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────────────────────
   // TV — obsługa przewijania i sterowania YouTube
   // ──────────────────────────────────────────────────────────────
   const tvSectionRef = useRef<HTMLDivElement | null>(null);
@@ -142,106 +218,110 @@ export default function Home() {
   const [ytReady, setYtReady] = useState(false);
   const ytPlayerRef = useRef<any>(null);
 
- const goToTv = () => {
-  // 1) Scroll
-  tvSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const goToTv = () => {
+    // 1) Scroll
+    tvSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 
-  // 2) Odpal audio/wideo wprost z YouTube API (gest użytkownika)
-  setAutoPlayVideo(true);
+    // 2) Odpal audio/wideo wprost z YouTube API (gest użytkownika)
+    setAutoPlayVideo(true);
 
-  // iOS: wywołania MUSZĄ być wprost z handlera kliknięcia
-  const p = ytPlayerRef.current;
-  if (p && ytReady) {
-    try {
-      p.unMute();
-      p.setVolume(100);
-      p.playVideo();
-      return;
-    } catch {}
-  }
+    // iOS: wywołania MUSZĄ być wprost z handlera kliknięcia
+    const p = ytPlayerRef.current;
+    if (p && ytReady) {
+      try {
+        p.unMute();
+        p.setVolume(100);
+        p.playVideo();
+        return;
+      } catch {}
+    }
 
-  // Fallback: stary mechanizm postMessage (gdy player jeszcze się inicjuje)
-  const win = playerRef.current?.contentWindow;
-  if (win) {
-    win.postMessage(JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*');
-    win.postMessage(JSON.stringify({ event: 'command', func: 'setVolume', args: [100] }), '*');
-    win.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*');
-  }
-};
+    // Fallback: stary mechanizm postMessage (gdy player jeszcze się inicjuje)
+    const win = playerRef.current?.contentWindow;
+    if (win) {
+      win.postMessage(JSON.stringify({ event: "command", func: "unMute", args: [] }), "*");
+      win.postMessage(JSON.stringify({ event: "command", func: "setVolume", args: [100] }), "*");
+      win.postMessage(JSON.stringify({ event: "command", func: "playVideo", args: [] }), "*");
+    }
+  };
 
-  const [lang, setLang] = useState<LangKey>('pl');
+  const [lang, setLang] = useState<LangKey>("pl");
   const [langReady, setLangReady] = useState(false);
 
   // dark mode (jak w register.tsx)
   const [darkMode, setDarkMode] = useState(() => {
-    if (typeof window !== 'undefined') return localStorage.getItem('theme') === 'dark';
+    if (typeof window !== "undefined") return localStorage.getItem("theme") === "dark";
     return false;
   });
+
   // Autoodtwarzanie TV (sterowane przez przycisk „Zobacz co Cię czeka”)
-    const [autoPlayVideo, setAutoPlayVideo] = useState(true);
-  
-    useEffect(() => {
-  if (typeof window === 'undefined') return;
-  const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-  const apply = () => setAutoPlayVideo(!mq.matches);
-  apply();
-  mq.addEventListener?.('change', apply);
-  return () => mq.removeEventListener?.('change', apply);
-}, []);
+  const [autoPlayVideo, setAutoPlayVideo] = useState(true);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const apply = () => setAutoPlayVideo(!mq.matches);
+    apply();
+    mq.addEventListener?.("change", apply);
+    return () => mq.removeEventListener?.("change", apply);
+  }, []);
 
   // ──────────────────────────────────────────────────────────────
   // MARKET-AWARE PRICING (hooki muszą być wewnątrz komponentu)
   // ──────────────────────────────────────────────────────────────
-  const [market, setMarket] = useState<Market>('PL');
+  const [market, setMarket] = useState<Market>("PL");
 
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
-        const res = await fetch('https://ipapi.co/json/');
+        const res = await fetch("https://ipapi.co/json/");
         const data = await res.json();
-        const cc = String(data?.country_code || '').toUpperCase();
-        if (cc === 'PL') {
-          if (mounted) setMarket('PL');
+        const cc = String(data?.country_code || "").toUpperCase();
+        if (cc === "PL") {
+          if (mounted) setMarket("PL");
         } else if (EU_COUNTRIES.has(cc)) {
-          if (mounted) setMarket('EU');
+          if (mounted) setMarket("EU");
         } else {
-          if (mounted) setMarket('OTHER');
+          if (mounted) setMarket("OTHER");
         }
       } catch {
-        if (mounted) setMarket('OTHER'); // fallback
+        if (mounted) setMarket("OTHER"); // fallback
       }
     })();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
-    useEffect(() => {
-  // Dołącz skrypt Iframe API tylko raz
-  if (typeof window === 'undefined') return;
-  if (window.YT && window.YT.Player) {
-    setYtReady(true);
-    ytPlayerRef.current = new window.YT.Player('introPlayer', {
-      events: { onReady: () => setYtReady(true) },
-    });
-    return;
-  }
-  const tag = document.createElement('script');
-  tag.src = 'https://www.youtube.com/iframe_api';
-  document.body.appendChild(tag);
 
-  window.onYouTubeIframeAPIReady = () => {
-    ytPlayerRef.current = new window.YT.Player('introPlayer', {
-      events: { onReady: () => setYtReady(true) },
-    });
-  };
-}, []);
+  useEffect(() => {
+    // Dołącz skrypt Iframe API tylko raz
+    if (typeof window === "undefined") return;
+    if (window.YT && window.YT.Player) {
+      setYtReady(true);
+      ytPlayerRef.current = new window.YT.Player("introPlayer", {
+        events: { onReady: () => setYtReady(true) },
+      });
+      return;
+    }
+    const tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.body.appendChild(tag);
+
+    window.onYouTubeIframeAPIReady = () => {
+      ytPlayerRef.current = new window.YT.Player("introPlayer", {
+        events: { onReady: () => setYtReady(true) },
+      });
+    };
+  }, []);
 
   useEffect(() => {
     if (darkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
     } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
     }
   }, [darkMode]);
 
@@ -259,25 +339,25 @@ export default function Home() {
   useEffect(() => {
     const initLang = async () => {
       try {
-        const stored = localStorage.getItem('platformLang');
+        const stored = localStorage.getItem("platformLang");
         if (stored && Object.keys(languageLabels).includes(stored)) {
           setLang(stored as LangKey);
           setLangReady(true);
           return;
         }
-        const res = await fetch('https://ipapi.co/json/');
+        const res = await fetch("https://ipapi.co/json/");
         const data = await res.json();
-        const detected = data?.languages?.split(',')[0]?.toLowerCase();
+        const detected = data?.languages?.split(",")[0]?.toLowerCase();
         if (detected && Object.keys(languageLabels).includes(detected)) {
           setLang(detected as LangKey);
-          localStorage.setItem('platformLang', detected);
+          localStorage.setItem("platformLang", detected);
         } else {
-          setLang('en');
-          localStorage.setItem('platformLang', 'en');
+          setLang("en");
+          localStorage.setItem("platformLang", "en");
         }
       } catch {
-        setLang('pl');
-        localStorage.setItem('platformLang', 'pl');
+        setLang("pl");
+        localStorage.setItem("platformLang", "pl");
       } finally {
         setLangReady(true);
       }
@@ -287,255 +367,243 @@ export default function Home() {
 
   // Magic link → /reset
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const hash = window.location.hash;
-      if (hash.includes('access_token') && !window.location.pathname.includes('/reset')) {
-        window.location.href = '/reset' + hash;
+      if (hash.includes("access_token") && !window.location.pathname.includes("/reset")) {
+        window.location.href = "/reset" + hash;
       }
     }
   }, []);
 
- if (!langReady) {
-  return (
-    <main className="min-h-screen flex items-center justify-center">
-      <p
-        className="text-gray-500 text-sm"
-        aria-live="polite"
-        role="status"
-      >
-        ⏳ Ładowanie języka...
-      </p>
-    </main>
-  );
-}
+  if (!langReady) {
+    return (
+      <main className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-500 text-sm" aria-live="polite" role="status">
+          ⏳ Ładowanie języka...
+        </p>
+      </main>
+    );
+  }
 
-// 5) Formatowanie ceny
-function formatPrice(value: number, currency: string) {
-  return new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(value);
-}
+  // 5) Formatowanie ceny
+  function formatPrice(value: number, currency: string) {
+    return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(value);
+  }
 
-// 6) Pomocnicze aliasy
-const P = MARKET_PRICING[market];
-const cur = P.currency;
-const pp = P.patient;
-const pr = P.pro;
+  // 6) Pomocnicze aliasy
+  const P = MARKET_PRICING[market];
+  const cur = P.currency;
+  const pp = P.patient;
+  const pr = P.pro;
 
-// ─────────────────────────────────────────────
-// PROMO: World Diabetes Day – 30-day discount
-// 14.11.2025 → 14.12.2025
-// ─────────────────────────────────────────────
-const now = new Date();
+  // ─────────────────────────────────────────────
+  // PROMO: World Diabetes Day – 30-day discount
+  // 14.11.2025 → 14.12.2025
+  // ─────────────────────────────────────────────
+  const now = new Date();
 
-// Uwaga: miesiące są 0–11, więc listopad = 10
-const promoStart = new Date(2025, 10, 14); // 14.11.2025
-const promoEnd   = new Date(2025, 11, 14); // 14.12.2025
+  // Uwaga: miesiące są 0–11, więc listopad = 10
+  const promoStart = new Date(2025, 10, 14); // 14.11.2025
+  const promoEnd = new Date(2025, 11, 14); // 14.12.2025
 
-const isPromo =
-  now >= promoStart &&
-  now <= promoEnd;
+  const isPromo = now >= promoStart && now <= promoEnd;
 
-// ceny promocyjne globalnie
-const PROMO_PRICE = {
-  PL: 49,
-  EU: 13,
-  OTHER: 14
-} as const;
+  // ceny promocyjne globalnie
+  const PROMO_PRICE = {
+    PL: 49,
+    EU: 13,
+    OTHER: 14,
+  } as const;
 
-// 7) Sformatowane ceny
-const pricePatient7   = formatPrice(pp.plan7, cur);
-const basePatient30 = pp.plan30;
+  // 7) Sformatowane ceny
+  const pricePatient7 = formatPrice(pp.plan7, cur);
+  const basePatient30 = pp.plan30;
 
-const promoPatient30 = PROMO_PRICE[market];
+  const promoPatient30 = PROMO_PRICE[market];
 
-const pricePatient30 = formatPrice(
-  isPromo ? promoPatient30 : basePatient30,
-  cur
-);
+  const pricePatient30 = formatPrice(isPromo ? promoPatient30 : basePatient30, cur);
 
-const pricePatient90  = formatPrice(pp.plan90, cur);
-const pricePatient365 = formatPrice(pp.plan365, cur);
+  const pricePatient90 = formatPrice(pp.plan90, cur);
+  const pricePatient365 = formatPrice(pp.plan365, cur);
 
-const pricePro30  = formatPrice(pr.plan30, cur);
-const pricePro365 = formatPrice(pr.plan365, cur);
+  const pricePro30 = formatPrice(pr.plan30, cur);
+  const pricePro365 = formatPrice(pr.plan365, cur);
 
-const patientPlans = [
-  {
-    title: tUI('pricing.plan7.title'),
-    price: pricePatient7,
-    popular: false,
-    bullets: [
-      tUI('pricing.plan7.b1'),
-      tUI('pricing.plan7.b2'),
-      tUI('pricing.plan7.b3'),
-      tUI('pricing.plan7.b4'),
-      tUI('pricing.plan7.b5'),
-      tUI('pricing.plan7.b6'),
-      tUI('pricing.plan7.b7'),
-      tUI('pricing.plan7.b8'),
-      tUI('pricing.plan7.b9'),
-      tUI('pricing.plan7.b10'),
-    ],
-  },
-  {
-    title: tUI('pricing.plan30.title'),
-    price: pricePatient30,
-    popular: true,
-    bullets: [
-      tUI('pricing.plan30.b1'),
-      tUI('pricing.plan30.b2'),
-      tUI('pricing.plan30.b3'),
-      tUI('pricing.plan30.b4'),
-      tUI('pricing.plan30.b5'),
-      tUI('pricing.plan30.b6'),
-      tUI('pricing.plan30.b7'),
-      tUI('pricing.plan30.b8'),
-      tUI('pricing.plan30.b9'),
-      tUI('pricing.plan30.b10'),
-    ],
-  },
-  {
-    title: tUI('pricing.plan90.title'),
-    price: pricePatient90,
-    popular: false,
-    bullets: [
-      tUI('pricing.plan90.b1'),
-      tUI('pricing.plan90.b2'),
-      tUI('pricing.plan90.b3'),
-      tUI('pricing.plan90.b4'),
-      tUI('pricing.plan90.b5'),
-      tUI('pricing.plan90.b6'),
-      tUI('pricing.plan90.b7'),
-      tUI('pricing.plan90.b8'),
-      tUI('pricing.plan90.b9'),
-      tUI('pricing.plan90.b10'),
-    ],
-  },
-  {
-    title: tUI('pricing.plan365.title'),
-    price: pricePatient365,
-    popular: false,
-    bullets: [
-      tUI('pricing.plan365.b1'),
-      tUI('pricing.plan365.b2'),
-      tUI('pricing.plan365.b3'),
-      tUI('pricing.plan365.b4'),
-      tUI('pricing.plan365.b5'),
-      tUI('pricing.plan365.b6'),
-      tUI('pricing.plan365.b7'),
-      tUI('pricing.plan365.b8'),
-      tUI('pricing.plan365.b9'),
-      tUI('pricing.plan365.b10'),
-    ],
-  },
-];
+  const patientPlans = [
+    {
+      title: tUI("pricing.plan7.title"),
+      price: pricePatient7,
+      popular: false,
+      bullets: [
+        tUI("pricing.plan7.b1"),
+        tUI("pricing.plan7.b2"),
+        tUI("pricing.plan7.b3"),
+        tUI("pricing.plan7.b4"),
+        tUI("pricing.plan7.b5"),
+        tUI("pricing.plan7.b6"),
+        tUI("pricing.plan7.b7"),
+        tUI("pricing.plan7.b8"),
+        tUI("pricing.plan7.b9"),
+        tUI("pricing.plan7.b10"),
+      ],
+    },
+    {
+      title: tUI("pricing.plan30.title"),
+      price: pricePatient30,
+      popular: true,
+      bullets: [
+        tUI("pricing.plan30.b1"),
+        tUI("pricing.plan30.b2"),
+        tUI("pricing.plan30.b3"),
+        tUI("pricing.plan30.b4"),
+        tUI("pricing.plan30.b5"),
+        tUI("pricing.plan30.b6"),
+        tUI("pricing.plan30.b7"),
+        tUI("pricing.plan30.b8"),
+        tUI("pricing.plan30.b9"),
+        tUI("pricing.plan30.b10"),
+      ],
+    },
+    {
+      title: tUI("pricing.plan90.title"),
+      price: pricePatient90,
+      popular: false,
+      bullets: [
+        tUI("pricing.plan90.b1"),
+        tUI("pricing.plan90.b2"),
+        tUI("pricing.plan90.b3"),
+        tUI("pricing.plan90.b4"),
+        tUI("pricing.plan90.b5"),
+        tUI("pricing.plan90.b6"),
+        tUI("pricing.plan90.b7"),
+        tUI("pricing.plan90.b8"),
+        tUI("pricing.plan90.b9"),
+        tUI("pricing.plan90.b10"),
+      ],
+    },
+    {
+      title: tUI("pricing.plan365.title"),
+      price: pricePatient365,
+      popular: false,
+      bullets: [
+        tUI("pricing.plan365.b1"),
+        tUI("pricing.plan365.b2"),
+        tUI("pricing.plan365.b3"),
+        tUI("pricing.plan365.b4"),
+        tUI("pricing.plan365.b5"),
+        tUI("pricing.plan365.b6"),
+        tUI("pricing.plan365.b7"),
+        tUI("pricing.plan365.b8"),
+        tUI("pricing.plan365.b9"),
+        tUI("pricing.plan365.b10"),
+      ],
+    },
+  ];
 
-const proPlans = [
-  {
-    title: tUI('pricing.pro30.title'),
-    price: pricePro30,
-    bullets: [
-      tUI('pricing.pro30.b1'),
-      tUI('pricing.pro30.b2'),
-      tUI('pricing.pro30.b3'),
-      tUI('pricing.pro30.b4'),
-      tUI('pricing.pro30.b5'),
-      tUI('pricing.pro30.b6'),
-      tUI('pricing.pro30.b7'),
-      tUI('pricing.pro30.b8'),
-      tUI('pricing.pro30.b9'),
-    ],
-  },
-  {
-    title: tUI('pricing.pro365.title'),
-    price: pricePro365,
-    bullets: [
-      tUI('pricing.pro365.b1'),
-      tUI('pricing.pro365.b2'),
-      tUI('pricing.pro365.b3'),
-      tUI('pricing.pro365.b4'),
-      tUI('pricing.pro365.b5'),
-      tUI('pricing.pro365.b6'),
-      tUI('pricing.pro365.b7'),
-      tUI('pricing.pro365.b8'),
-      tUI('pricing.pro365.b9'),
-    ],
-  },
-];
-const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const proPlans = [
+    {
+      title: tUI("pricing.pro30.title"),
+      price: pricePro30,
+      bullets: [
+        tUI("pricing.pro30.b1"),
+        tUI("pricing.pro30.b2"),
+        tUI("pricing.pro30.b3"),
+        tUI("pricing.pro30.b4"),
+        tUI("pricing.pro30.b5"),
+        tUI("pricing.pro30.b6"),
+        tUI("pricing.pro30.b7"),
+        tUI("pricing.pro30.b8"),
+        tUI("pricing.pro30.b9"),
+      ],
+    },
+    {
+      title: tUI("pricing.pro365.title"),
+      price: pricePro365,
+      bullets: [
+        tUI("pricing.pro365.b1"),
+        tUI("pricing.pro365.b2"),
+        tUI("pricing.pro365.b3"),
+        tUI("pricing.pro365.b4"),
+        tUI("pricing.pro365.b5"),
+        tUI("pricing.pro365.b6"),
+        tUI("pricing.pro365.b7"),
+        tUI("pricing.pro365.b8"),
+        tUI("pricing.pro365.b9"),
+      ],
+    },
+  ];
 
-const videoId = 'kSc0F38T3ac';
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
 
-const videoSrc =
-  `https://www.youtube-nocookie.com/embed/${videoId}?` +
-  new URLSearchParams({
-    autoplay: autoPlayVideo ? '1' : '0',
-    mute: autoPlayVideo ? '1' : '0', // autoplay tylko w ciszy
-    controls: '0',
-    rel: '0',
-    modestbranding: '1',
-    loop: autoPlayVideo ? '1' : '0',
-    playlist: videoId, // WYMAGANE do loop
-    playsinline: '1',
-    enablejsapi: '1',
-    origin,
-  }).toString();
+  const videoId = "kSc0F38T3ac";
 
+  const videoSrc =
+    `https://www.youtube-nocookie.com/embed/${videoId}?` +
+    new URLSearchParams({
+      autoplay: autoPlayVideo ? "1" : "0",
+      mute: autoPlayVideo ? "1" : "0", // autoplay tylko w ciszy
+      controls: "0",
+      rel: "0",
+      modestbranding: "1",
+      loop: autoPlayVideo ? "1" : "0",
+      playlist: videoId, // WYMAGANE do loop
+      playsinline: "1",
+      enablejsapi: "1",
+      origin,
+    }).toString();
 
-const steps = [
-  {
-    title: tUI('steps.registration.title'),
-    desc: tUI('steps.registration.desc'),
-    icon: '/icons/registration.svg',
-    alt: tUI('steps.registration.alt'),
-    color: 'text-red-500',
-  },
-  {
-    title: tUI('steps.medical.title'),
-    desc: tUI('steps.medical.desc'),
-    icon: '/icons/medical.svg',
-    alt: tUI('steps.medical.alt'),
-    color: 'text-orange-500',
-  },
-  {
-    title: tUI('steps.interview.title'),
-    desc: tUI('steps.interview.desc'),
-    icon: '/icons/interview.svg',
-    alt: tUI('steps.interview.alt'),
-    color: 'text-yellow-500',
-  },
-  {
-    title: tUI('steps.calculator.title'),
-    desc: tUI('steps.calculator.desc'),
-    icon: '/icons/calculator.svg',
-    alt: tUI('steps.calculator.alt'),
-    color: 'text-green-500',
-  },
-  {
-    title: tUI('steps.plan.title'),
-    desc: tUI('steps.plan.desc'),
-    icon: '/icons/plan.svg',
-    alt: tUI('steps.plan.alt'),
-    color: 'text-blue-500',
-  },
-  {
-    title: tUI('steps.recipes.title'),
-    desc: tUI('steps.recipes.desc'),
-    icon: '/icons/recipes.svg',
-    alt: tUI('steps.recipes.alt'),
-    color: 'text-cyan-500',
-  },
-];
-
+  const steps = [
+    {
+      title: tUI("steps.registration.title"),
+      desc: tUI("steps.registration.desc"),
+      icon: "/icons/registration.svg",
+      alt: tUI("steps.registration.alt"),
+      color: "text-red-500",
+    },
+    {
+      title: tUI("steps.medical.title"),
+      desc: tUI("steps.medical.desc"),
+      icon: "/icons/medical.svg",
+      alt: tUI("steps.medical.alt"),
+      color: "text-orange-500",
+    },
+    {
+      title: tUI("steps.interview.title"),
+      desc: tUI("steps.interview.desc"),
+      icon: "/icons/interview.svg",
+      alt: tUI("steps.interview.alt"),
+      color: "text-yellow-500",
+    },
+    {
+      title: tUI("steps.calculator.title"),
+      desc: tUI("steps.calculator.desc"),
+      icon: "/icons/calculator.svg",
+      alt: tUI("steps.calculator.alt"),
+      color: "text-green-500",
+    },
+    {
+      title: tUI("steps.plan.title"),
+      desc: tUI("steps.plan.desc"),
+      icon: "/icons/plan.svg",
+      alt: tUI("steps.plan.alt"),
+      color: "text-blue-500",
+    },
+    {
+      title: tUI("steps.recipes.title"),
+      desc: tUI("steps.recipes.desc"),
+      icon: "/icons/recipes.svg",
+      alt: tUI("steps.recipes.alt"),
+      color: "text-cyan-500",
+    },
+  ];
 
   return (
- <main className="relative min-h-screen bg-[#0f271e]/70 bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60 text-white dark:text-white transition-all duration-300">
-
-      <PediatricRibbon tUI={tUI} />
+    <main className="relative min-h-screen text-white transition-all duration-300 bg-[#06131a]">
 
       <Head>
-        <title>{tUI('app.title')}</title>
+        <title>{tUI("app.title")}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="description" content={tUI('app.metaDescription')} />
+        <meta name="description" content={tUI("app.metaDescription")} />
         <link rel="preconnect" href="https://www.youtube-nocookie.com" />
         <link rel="preconnect" href="https://i.ytimg.com" />
       </Head>
@@ -555,442 +623,535 @@ const steps = [
             filter: saturate(1.1) brightness(1);
           }
         }
+
+        /* subtle fiber motion */
+        @keyframes dcpFiberDash {
+          0% {
+            stroke-dashoffset: 0;
+            opacity: 0.55;
+          }
+          50% {
+            opacity: 0.75;
+          }
+          100% {
+            stroke-dashoffset: -240;
+            opacity: 0.55;
+          }
+        }
+        .dcp-fiber {
+          animation: dcpFiberDash 14s linear infinite;
+        }
+        .dcp-fiber-slow {
+          animation-duration: 22s;
+        }
       `}</style>
 
-      {/* NAV */}
-      <nav className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between px-2 md:px-4">
-        <div className="flex items-center gap-2">
-          <label htmlFor="language-select" className="sr-only">
-            {tUI('nav.languageLabel')}
-          </label>
-          <select
-            id="language-select"
-            value={lang}
-            onChange={(e) => {
-              const selected = e.target.value as LangKey;
-              setLang(selected);
-              localStorage.setItem('platformLang', selected);
-            }}
-            className="border rounded px-3 py-1 shadow bg-white/80 text-black backdrop-blur dark:bg-gray-800 dark:text-white"
-            aria-label={tUI('nav.languageAria')}
-          >
-            {Object.entries(languageLabels).map(([key, label]) => (
-              <option key={key} value={key}>{label}</option>
-            ))}
-          </select>
-        </div>
+      {/* GLOBAL BACKDROP */}
+      <div className="absolute inset-0 -z-10">
+        <GlassBackdrop />
+      </div>
 
-        <div className="flex items-center gap-2 group" title={darkMode ? tUI('nav.lightMode') : tUI('nav.darkMode')}>
-          <span className="text-xs text-black/80 dark:text-white/80 hidden sm:block">
-            {darkMode ? tUI('nav.lightMode') : tUI('nav.darkMode')}
-          </span>
-          <button
-            onClick={() => setDarkMode(!darkMode)}
-            className={`relative inline-flex items-center h-6 w-11 rounded-full transition-colors ${darkMode ? 'bg-gray-700' : 'bg-yellow-400'}`}
-            aria-label={tUI('nav.toggleContrast')}
-            title={tUI('nav.toggleContrast')}
-          >
-            <span className={`absolute left-1 text-sm ${darkMode ? 'opacity-0' : 'opacity-100'}`}>☀️</span>
-            <span className={`absolute right-1 text-sm ${darkMode ? 'opacity-100' : 'opacity-0'}`}>🌙</span>
-            <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-300 ${darkMode ? 'translate-x-5' : 'translate-x-1'}`} />
-          </button>
+      {/* NAV */}
+      <nav className="sticky top-0 z-50 w-full">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="mt-3 mb-2 rounded-2xl border border-white/10 bg-white/8 backdrop-blur-xl shadow-[0_18px_60px_rgba(0,0,0,.35)]">
+            <div className="flex items-center justify-between px-3 py-2 md:px-4">
+              <div className="flex items-center gap-2">
+                <label htmlFor="language-select" className="sr-only">
+                  {tUI("nav.languageLabel")}
+                </label>
+                <select
+                  id="language-select"
+                  value={lang}
+                  onChange={(e) => {
+                    const selected = e.target.value as LangKey;
+                    setLang(selected);
+                    localStorage.setItem("platformLang", selected);
+                  }}
+                  className="border border-white/10 rounded-xl px-3 py-1.5 shadow bg-white/10 text-white backdrop-blur-xl focus:outline-none focus:ring-2 focus:ring-sky-400/60"
+                  aria-label={tUI("nav.languageAria")}
+                >
+                  {Object.entries(languageLabels).map(([key, label]) => (
+                    <option key={key} value={key} className="text-black">
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2 group" title={darkMode ? tUI("nav.lightMode") : tUI("nav.darkMode")}>
+                <span className="text-xs text-white/80 hidden sm:block">
+                  {darkMode ? tUI("nav.lightMode") : tUI("nav.darkMode")}
+                </span>
+                <button
+                  onClick={() => setDarkMode(!darkMode)}
+                  className={`relative inline-flex items-center h-7 w-12 rounded-full transition-colors border border-white/10 ${
+                    darkMode ? "bg-white/10" : "bg-white/12"
+                  }`}
+                  aria-label={tUI("nav.toggleContrast")}
+                  title={tUI("nav.toggleContrast")}
+                >
+                  <span className={`absolute left-1 text-sm ${darkMode ? "opacity-0" : "opacity-100"}`}>☀️</span>
+                  <span className={`absolute right-1 text-sm ${darkMode ? "opacity-100" : "opacity-0"}`}>🌙</span>
+                  <span
+                    className={`inline-block h-6 w-6 transform rounded-full bg-white shadow transition-transform duration-300 ${
+                      darkMode ? "translate-x-5" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </nav>
 
+      {/* HERO */}
       <section className="relative w-full">
-        <div className="relative h-[680px] md:h-[700px] lg:h-[720px]">
-          <Image
-            src="/landing-hero.jpg"
-            alt={tUI('landing.heroAlt')}
-            fill
-            priority
-            className="object-cover"
-          />
-          <div className="absolute inset-0 bg-[#0f271e]/65 dark:bg-[#0c1f18]/65" />
+        <div className="relative">
+          {/* Hero container (glass panel) */}
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-6 md:pt-10">
+            <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/6 backdrop-blur-2xl shadow-[0_30px_90px_rgba(0,0,0,.45)]">
+              {/* inner highlight */}
+              <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_15%_0%,rgba(255,255,255,.10),transparent_55%)] opacity-70" />
+              <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,.08),rgba(0,0,0,.10))] opacity-50" />
 
-          {/* OVERLAY: grid → logo w 1. wierszu, treść w 2. */}
-          <div className="absolute inset-0">
-            <div className="h-full grid grid-rows-[auto,1fr] gap-y-4 sm:gap-y-6">
-              {/* LOGO — zawsze nad treścią, wyśrodkowane */}
-              <div className="flex justify-center pt-2">
-                <Image
-                  src="/logo-dietcare.png"
-                  alt={tUI('landing.logoAlt')}
-                  width={300}
-                  height={96}
-                  className="drop-shadow-2xl w-40 sm:w-56 md:w-64 lg:w-[300px] h-auto"
-                  priority
-                />
-              </div>
+              <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-8 p-6 sm:p-8 md:p-10">
+                {/* Left: Logo + microcopy */}
+                <div className="flex flex-col gap-6">
+                  <div className="flex items-center gap-3">
+                    <div className="relative h-12 w-12 rounded-2xl bg-white/10 border border-white/10 backdrop-blur-xl shadow">
+                      <div className="absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_30%_30%,rgba(56,189,248,.35),transparent_55%)]" />
+                      <div className="absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_70%_70%,rgba(167,139,250,.25),transparent_55%)]" />
+                      <Image src="/logo-dietcare.png" alt={tUI("landing.logoAlt")} fill className="object-contain p-2" priority />
+                    </div>
 
-              {/* TEKST + CTA — prawa strona, bez nakładania na logo */}
-              <div className="flex items-start justify-end px-6 md:pr-12 lg:pr-24">
-                <div className="max-w-[560px] md:max-w-[640px] text-justify">
-                  <p className="text-base md:text-lg lg:text-xl font-semibold tracking-tight leading-[1.6] text-white/95">
-                    <span>{tUI('landing.tagline.title')}</span>
-                    <sup className="align-super text-xs ml-1">
-                    <a
-                    href="#claim-footnote"
-                    aria-describedby="claim-footnote"
-                    className="no-underline hover:underline focus:outline-none focus:ring-2 focus:ring-emerald-400 rounded-sm"
-                    >
-                    *
-                    </a>
-                    </sup>
+                    <div className="leading-tight">
+                      <div className="text-sm opacity-80 tracking-wide">{tUI("app.title")}</div>
+                      <div className="text-xs opacity-60">Clinical AI Nutrition Ecosystem</div>
+                    </div>
+                  </div>
+
+                  <div className="relative">
+                    <p className="text-base sm:text-lg md:text-xl font-semibold tracking-tight leading-[1.6] text-white/95">
+                      <span>{tUI("landing.tagline.title")}</span>
+                      <sup className="align-super text-xs ml-1">
+                        <a
+                          href="#claim-footnote"
+                          aria-describedby="claim-footnote"
+                          className="no-underline hover:underline focus:outline-none focus:ring-2 focus:ring-sky-400/60 rounded-sm"
+                        >
+                          *
+                        </a>
+                      </sup>
                     </p>
-                  <p className="mt-4 text-base md:text-lg lg:text-xl font-semibold tracking-tight leading-[1.6] text-white/95">
-                    {tUI('landing.tagline.desc')}
-                        {isPromo && (
-                  <div className="mb-4 inline-flex items-center gap-3 rounded-full bg-sky-600/90 px-4 py-2 shadow-lg border border-sky-300/70">
-                    {/* Niebieski krąg – symbol World Diabetes Day */}
-                    <span
-                      aria-hidden
-                      className="h-6 w-6 rounded-full border-[3px] border-white bg-sky-500 shadow-inner"
-                    />
-                    <div className="text-xs sm:text-sm leading-snug">
-                      <div className="font-semibold">
-                        {tUI('promo')} {/* Światowy Dzień Cukrzycy – Cena specjalna */}
+
+                    <p className="mt-4 text-base sm:text-lg md:text-xl font-semibold tracking-tight leading-[1.6] text-white/90">
+                      {tUI("landing.tagline.desc")}
+                    </p>
+
+                    {isPromo && (
+                      <div className="mt-5 inline-flex items-center gap-3 rounded-full bg-white/10 px-4 py-2 shadow-lg border border-white/12 backdrop-blur-xl">
+                        <span aria-hidden className="h-6 w-6 rounded-full border-[3px] border-white bg-sky-500/70 shadow-inner" />
+                        <div className="text-xs sm:text-sm leading-snug">
+                          <div className="font-semibold">{tUI("promo")}</div>
+                          <div className="opacity-90">
+                            Plan 30 dni: <span className="font-semibold">49 PLN</span> (~13 EUR / 14 USD)
+                          </div>
+                        </div>
                       </div>
-                      <div className="opacity-90">
-                        Plan 30 dni: <span className="font-semibold">49 PLN</span> (~13 EUR / 14 USD)
+                    )}
+                  </div>
+
+                  <div className="mt-2 w-full flex flex-col sm:flex-row gap-3">
+                    <button
+                      onClick={() => {
+                        localStorage.setItem("entryMode", "patient");
+                        window.location.href = "/register?mode=patient";
+                      }}
+                      className="w-full sm:w-auto rounded-2xl px-6 py-3 text-base sm:text-lg font-semibold shadow-lg border border-white/10
+                      bg-[linear-gradient(135deg,rgba(56,189,248,.35),rgba(16,185,129,.25))] hover:bg-[linear-gradient(135deg,rgba(56,189,248,.45),rgba(16,185,129,.32))]
+                      backdrop-blur-xl"
+                      aria-label={tUI("cta.title")}
+                      title={tUI("cta.title")}
+                    >
+                      {tUI("cta.title")}
+                    </button>
+
+                    <button
+                      onClick={goToTv}
+                      className="w-full sm:w-auto rounded-2xl px-6 py-3 text-base sm:text-lg font-semibold shadow-lg border border-white/10
+                      bg-white/10 hover:bg-white/14 backdrop-blur-xl"
+                      aria-label={tUI("cta.preview")}
+                      title={tUI("cta.preview")}
+                    >
+                      {tUI("cta.preview")}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Right: “glass preview” panel with embedded logo watermark + fiber feel */}
+                <div className="relative rounded-3xl border border-white/10 bg-white/7 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,.35)] overflow-hidden">
+                  <div className="absolute inset-0 bg-[radial-gradient(140%_90%_at_10%_0%,rgba(255,255,255,.10),transparent_50%)]" />
+                  <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,.05),rgba(0,0,0,.12))] opacity-70" />
+
+                  {/* watermark inside panel */}
+                  <div className="absolute -bottom-12 -right-10 h-[420px] w-[420px] opacity-[0.14] rotate-[10deg]">
+                    <Image src="/logo-dietcare.png" alt="" fill className="object-contain" />
+                  </div>
+
+                  <div className="relative p-6 sm:p-8">
+                    <div className="text-sm opacity-80">{tUI("landing.heroAlt")}</div>
+
+                    <div className="mt-4 grid grid-cols-2 gap-3">
+                      {steps.slice(0, 4).map((s) => (
+                        <div
+                          key={s.title + s.icon}
+                          className="rounded-2xl border border-white/10 bg-white/8 backdrop-blur-xl px-4 py-3"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`h-10 w-10 rounded-2xl border border-white/10 bg-white/8 flex items-center justify-center ${s.color}`}>
+                              <span
+                                aria-hidden
+                                className="h-6 w-6 bg-current"
+                                style={{
+                                  WebkitMaskImage: `url(${s.icon})`,
+                                  maskImage: `url(${s.icon})`,
+                                  WebkitMaskRepeat: "no-repeat",
+                                  maskRepeat: "no-repeat",
+                                  WebkitMaskPosition: "center",
+                                  maskPosition: "center",
+                                  WebkitMaskSize: "contain",
+                                  maskSize: "contain",
+                                }}
+                              />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="text-sm font-semibold truncate">{s.title}</div>
+                              <div className="text-xs opacity-70 line-clamp-2">{s.desc}</div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-5 rounded-2xl border border-white/10 bg-white/8 backdrop-blur-xl px-4 py-3">
+                      <div className="text-xs uppercase tracking-wide opacity-70">AI + Clinician loop</div>
+                      <div className="mt-1 text-sm opacity-85">
+                        Medical → Interview → Model → Diet → QA → PDF → Recipes
+                      </div>
+                      <div className="mt-3 h-2 rounded-full bg-white/10 overflow-hidden border border-white/10">
+                        <div className="h-full w-[62%] bg-[linear-gradient(90deg,rgba(56,189,248,.60),rgba(167,139,250,.45),rgba(16,185,129,.45))]" />
                       </div>
                     </div>
                   </div>
-                )}
-                </p>
-
-                 <div className="mt-6 w-full flex flex-col sm:flex-row gap-3 justify-end pb-6 md:pb-10">
-                  <button
-                    onClick={() => {
-                      localStorage.setItem('entryMode', 'patient');
-                      window.location.href = '/register?mode=patient';
-                    }}
-                    className="w-full sm:w-auto max-w-[260px] bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl text-base sm:text-lg shadow-lg"
-                    aria-label={tUI('cta.title')}
-                    title={tUI('cta.title')}
-                  >
-                    {tUI('cta.title')}
-                  </button>
-
-                  <button
-                    onClick={goToTv}
-                    className="w-full sm:w-auto max-w-[260px] bg-white/90 text-gray-900 hover:bg-white px-6 py-3 rounded-xl text-base sm:text-lg shadow-lg border border-white/40 dark:bg-black/30 dark:text-white dark:hover:bg-black/40"
-                    aria-label={tUI('cta.preview')}
-                    title={tUI('cta.preview')}
-                  >
-                    {tUI('cta.preview')}
-                  </button>
                 </div>
-                </div>
+                {/* end right */}
               </div>
             </div>
           </div>
         </div>
       </section>
 
-
-      {/* STEPS */}
-      <section className="mx-auto max-w-6xl px-5 mt-8 md:mt-12">
+      {/* STEPS (pełne) */}
+      <section className="mx-auto max-w-6xl px-5 mt-10 md:mt-14">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-5">
           {steps.map((s) => (
             <div
               key={s.title + s.icon}
-              className="rounded-2xl bg-white/15 dark:bg-black/20 backdrop-blur p-4 md:p-5 shadow-lg border border-white/10 text-center"
+              className="rounded-3xl bg-white/7 backdrop-blur-2xl p-4 md:p-5 shadow-[0_18px_60px_rgba(0,0,0,.30)] border border-white/10 text-center"
             >
-            <div className={`mx-auto h-10 w-10 md:h-12 md:w-12 mb-2 relative flex items-center justify-center ${s.color}`}>
-              {/* pastelowa pastylka w tle, obręcz przyjmuje ten sam kolor */}
-              <span className="absolute inset-0 rounded-2xl opacity-20 ring-1 ring-current/30" />
-              {/* ikona „pomalowana” bieżącym kolorem */}
-              <span
-                aria-hidden
-                className="relative z-10 h-8 w-8 md:h-10 md:w-10 bg-current"
-                style={{
-                  WebkitMaskImage: `url(${s.icon})`,
-                  maskImage: `url(${s.icon})`,
-                  WebkitMaskRepeat: 'no-repeat',
-                  maskRepeat: 'no-repeat',
-                  WebkitMaskPosition: 'center',
-                  maskPosition: 'center',
-                  WebkitMaskSize: 'contain',
-                  maskSize: 'contain',
-                }}
-              />
-            </div>
-            <h3 className={`font-semibold ${s.color}`}>{s.title}</h3>
-              <p className="text-sm opacity-90 mt-1">{s.desc}</p>
+              <div className={`mx-auto h-10 w-10 md:h-12 md:w-12 mb-2 relative flex items-center justify-center ${s.color}`}>
+                <span className="absolute inset-0 rounded-2xl opacity-20 ring-1 ring-current/30" />
+                <span
+                  aria-hidden
+                  className="relative z-10 h-8 w-8 md:h-10 md:w-10 bg-current"
+                  style={{
+                    WebkitMaskImage: `url(${s.icon})`,
+                    maskImage: `url(${s.icon})`,
+                    WebkitMaskRepeat: "no-repeat",
+                    maskRepeat: "no-repeat",
+                    WebkitMaskPosition: "center",
+                    maskPosition: "center",
+                    WebkitMaskSize: "contain",
+                    maskSize: "contain",
+                  }}
+                />
+              </div>
+              <h3 className={`font-semibold ${s.color}`}>{s.title}</h3>
+              <p className="text-sm opacity-85 mt-1">{s.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-   {/* PRICING */}
-<section id="pricing" className="mx-auto max-w-6xl px-5 mt-12 md:mt-16">
-  <h2 className="text-center text-2xl md:text-3xl font-bold mb-6">
-    {tUI('pricing.title')}
-  </h2>
+      {/* PRICING */}
+      <section id="pricing" className="mx-auto max-w-6xl px-5 mt-12 md:mt-16">
+        <h2 className="text-center text-2xl md:text-3xl font-bold mb-6">
+          {tUI("pricing.title")}
+        </h2>
 
-  <div className="grid lg:grid-cols-2 gap-6">
-    {/* Pacjenci — 4 plany */}
-    <div>
-      <h3 className="text-lg font-semibold mb-3 opacity-90">
-        {tUI('pricing.patientsHeader')}
-      </h3>
-      <div className="grid sm:grid-cols-2 gap-4">
-        {patientPlans.map((p) => (
-        <div
-          key={p.title}
-          className={
-            "relative rounded-2xl backdrop-blur p-5 border transition overflow-hidden " +
-            (p.title === tUI('pricing.plan30.title')
-              ? "bg-white/10 dark:bg-black/20 border-fuchsia-300/40 shadow-[0_0_0_1px_rgba(255,255,255,.06),0_24px_80px_rgba(0,0,0,.45)]"
-              : "bg-white/15 dark:bg-black/20 border-white/10 shadow-lg"
-            )
-          }
-        >
-          {/* PREMIUM GLOW tylko dla Plan 30 */}
-          {p.title === tUI('pricing.plan30.title') && (
-            <>
-              {/* poświata */}
-              <div
-                aria-hidden
-                className="pointer-events-none absolute -inset-10 opacity-70 blur-2xl"
-                style={{
-                  background:
-                    "radial-gradient(60% 60% at 20% 15%, rgba(56,189,248,.55), transparent 60%)," +
-                    "radial-gradient(55% 55% at 85% 30%, rgba(167,139,250,.55), transparent 60%)," +
-                    "radial-gradient(60% 60% at 55% 90%, rgba(251,113,133,.45), transparent 60%)",
-                }}
-              />
-              {/* „szkło” na wierzchu */}
-              <div
-                aria-hidden
-                className="pointer-events-none absolute inset-0 opacity-40"
-                style={{
-                  background:
-                    "linear-gradient(135deg, rgba(255,255,255,.10) 0%, rgba(255,255,255,.02) 35%, rgba(0,0,0,.08) 100%)",
-                }}
-              />
-            </>
-          )}
+        <div className="grid lg:grid-cols-2 gap-6">
+          {/* Pacjenci — 4 plany */}
+          <div>
+            <h3 className="text-lg font-semibold mb-3 opacity-90">{tUI("pricing.patientsHeader")}</h3>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {patientPlans.map((p) => (
+                <div
+                  key={p.title}
+                  className={
+                    "relative rounded-3xl backdrop-blur-2xl p-5 border transition overflow-hidden " +
+                    (p.title === tUI("pricing.plan30.title")
+                      ? "bg-white/8 border-sky-300/25 shadow-[0_0_0_1px_rgba(255,255,255,.06),0_26px_90px_rgba(0,0,0,.45)]"
+                      : "bg-white/7 border-white/10 shadow-[0_18px_60px_rgba(0,0,0,.30)]")
+                  }
+                >
+                  {/* PREMIUM GLOW tylko dla Plan 30 */}
+                  {p.title === tUI("pricing.plan30.title") && (
+                    <>
+                      <div
+                        aria-hidden
+                        className="pointer-events-none absolute -inset-10 opacity-70 blur-2xl"
+                        style={{
+                          background:
+                            "radial-gradient(60% 60% at 20% 15%, rgba(56,189,248,.45), transparent 60%)," +
+                            "radial-gradient(55% 55% at 85% 30%, rgba(167,139,250,.40), transparent 60%)," +
+                            "radial-gradient(60% 60% at 55% 90%, rgba(16,185,129,.28), transparent 60%)",
+                        }}
+                      />
+                      <div
+                        aria-hidden
+                        className="pointer-events-none absolute inset-0 opacity-40"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, rgba(255,255,255,.10) 0%, rgba(255,255,255,.03) 35%, rgba(0,0,0,.10) 100%)",
+                        }}
+                      />
+                    </>
+                  )}
 
-          <div className="relative">
-            <div className="flex items-baseline justify-between">
-              <h4 className="font-semibold">{p.title}</h4>
-              <span className="text-emerald-300 font-semibold">{p.price}</span>
+                  <div className="relative">
+                    <div className="flex items-baseline justify-between">
+                      <h4 className="font-semibold">{p.title}</h4>
+                      <span className="text-sky-200 font-semibold">{p.price}</span>
+                    </div>
+
+                    {p.popular && (
+                      <div className="mt-1 text-xs inline-block px-2 py-0.5 rounded bg-sky-500/15 border border-sky-300/25">
+                        {tUI("pricing.popularTag")}
+                      </div>
+                    )}
+
+                    {/* Badge trialu – tylko na Plan 30 */}
+                    {p.title === tUI("pricing.plan30.title") && (
+                      <div className="mt-2 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold border border-white/15 bg-white/8">
+                        <span aria-hidden className="h-2.5 w-2.5 rounded-full bg-sky-200 shadow-[0_0_18px_rgba(56,189,248,.65)]" />
+                        <span>{tUI("pricing.trial7Badge")}</span>
+                      </div>
+                    )}
+
+                    {isPromo && p.title === tUI("pricing.plan30.title") && (
+                      <div className="mt-2 text-xs inline-block px-2 py-0.5 rounded bg-sky-500/15 border border-sky-300/25 text-sky-200">
+                        {tUI("promo")}
+                      </div>
+                    )}
+
+                    <ul className="mt-3 space-y-2 text-sm opacity-95">
+                      {p.bullets.map((b, i) => (
+                        <li key={i}>• {b}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              ))}
             </div>
+          </div>
 
-            {p.popular && (
-              <div className="mt-1 text-xs inline-block px-2 py-0.5 rounded bg-emerald-500/20 border border-emerald-400/40">
-                {tUI('pricing.popularTag')}
-              </div>
-            )}
-
-            {/* Badge trialu – tylko na Plan 30 (marketing, 11 języków) */}
-            {p.title === tUI('pricing.plan30.title') && (
-              <div className="mt-2 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold border border-white/20 bg-white/10">
-                <span aria-hidden className="h-2.5 w-2.5 rounded-full bg-emerald-300 shadow-[0_0_18px_rgba(110,231,183,.85)]" />
-                <span>{tUI('pricing.trial7Badge')}</span>
-              </div>
-            )}
-
-            {isPromo && p.title === tUI('pricing.plan30.title') && (
-              <div className="mt-2 text-xs inline-block px-2 py-0.5 rounded bg-sky-500/20 border border-sky-400/40 text-sky-200">
-                {tUI('promo')}
-              </div>
-            )}
-
-            <ul className="mt-3 space-y-2 text-sm opacity-95">
-              {p.bullets.map((b, i) => <li key={i}>• {b}</li>)}
-            </ul>
+          {/* Lekarze & dietetycy (PRO) — 2 plany */}
+          <div>
+            <h3 className="text-lg font-semibold mb-3 opacity-90">{tUI("pricing.doctorsHeader")}</h3>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {proPlans.map((p) => (
+                <div
+                  key={p.title}
+                  className="rounded-3xl bg-white/7 backdrop-blur-2xl p-5 border border-white/10 shadow-[0_18px_60px_rgba(0,0,0,.30)]"
+                >
+                  <div className="flex items-baseline justify-between">
+                    <h4 className="font-semibold">{p.title}</h4>
+                    <span className="text-sky-200 font-semibold">{p.price}</span>
+                  </div>
+                  <ul className="mt-3 space-y-2 text-sm opacity-95">
+                    {p.bullets.map((b, i) => (
+                      <li key={i}>• {b}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
-        ))}
-      </div>
-    </div>
-
-    {/* Lekarze & dietetycy (PRO) — 2 plany */}
-    <div>
-      <h3 className="text-lg font-semibold mb-3 opacity-90">
-        {tUI('pricing.doctorsHeader')}
-      </h3>
-      <div className="grid sm:grid-cols-2 gap-4">
-        {proPlans.map((p) => (
-          <div
-            key={p.title}
-            className="rounded-2xl bg-white/15 dark:bg-black/20 backdrop-blur p-5 border border-white/10 shadow-lg"
-          >
-            <div className="flex items-baseline justify-between">
-              <h4 className="font-semibold">{p.title}</h4>
-              <span className="text-emerald-300 font-semibold">{p.price}</span>
+        {/* MODERN TV – osadzone w sekcji PRICING */}
+        <div id="intro-tv" ref={tvSectionRef} className="mt-10 md:mt-12">
+          <div className="relative mx-auto w-full max-w-6xl px-2 sm:px-4" aria-label="Modern TV – intro video player">
+            <div
+              className="relative mx-auto w-full aspect-video rounded-[18px] bg-black/85 shadow-[0_28px_90px_rgba(0,0,0,.55)] ring-1 ring-white/10 overflow-hidden"
+              style={{
+                boxShadow: "0 34px 100px rgba(0,0,0,.60), inset 0 0 0 1px rgba(255,255,255,.04)",
+              }}
+            >
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-9 bg-gradient-to-t from-white/6 to-transparent" />
+              <div className="pointer-events-none absolute inset-0 hidden sm:block bg-[radial-gradient(120%_80%_at_10%_0%,rgba(255,255,255,.06),transparent_55%)]" />
+              <iframe
+                ref={playerRef}
+                className="absolute inset-0 h-full w-full"
+                src={videoSrc}
+                title="Diet Care Platform — intro"
+                allow="autoplay; encrypted-media; picture-in-picture"
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="strict-origin-when-cross-origin"
+              />
             </div>
-            <ul className="mt-3 space-y-2 text-sm opacity-95">
-              {p.bullets.map((b, i) => <li key={i}>• {b}</li>)}
-            </ul>
+
+            <div className="mx-auto mt-3 h-2 sm:h-2.5 w-[88%] rounded-full bg-white/8 ring-1 ring-white/10 backdrop-blur-xl" />
+            <div className="mx-auto mt-3 flex w-[92%] items-center justify-between">
+              <span className="h-1.5 w-16 sm:w-24 rounded-full bg-white/8" />
+              <span className="h-1.5 w-16 sm:w-24 rounded-full bg-white/8" />
+            </div>
           </div>
-        ))}
-      </div>
-    </div>
-  </div>
- {/* MODERN TV – osadzone w sekcji PRICING (w pełni responsywne) */}
-<div id="intro-tv" ref={tvSectionRef} className="mt-10 md:mt-12">
-  <div
-    className="relative mx-auto w-full max-w-6xl px-2 sm:px-4"
-    aria-label="Modern TV – intro video player"
-  >
-    {/* Ekran z ultracienką ramką */}
-    <div
-      className="relative mx-auto w-full aspect-video rounded-[14px] bg-black/95 shadow-[0_20px_60px_rgba(0,0,0,.45)] ring-1 ring-white/10 overflow-hidden"
-      style={{
-        boxShadow:
-          '0 30px 80px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.04)',
-      }}
-    >
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-9 bg-gradient-to-t from-white/6 to-transparent" />
-      <div className="pointer-events-none absolute inset-0 hidden sm:block bg-[radial-gradient(120%_80%_at_10%_0%,rgba(255,255,255,.06),transparent_55%)]" />
-      <iframe
-        ref={playerRef}
-        className="absolute inset-0 h-full w-full"
-        src={videoSrc}
-        title="Diet Care Platform — intro"
-        allow="autoplay; encrypted-media; picture-in-picture"
-        allowFullScreen
-        loading="lazy"
-        referrerPolicy="strict-origin-when-cross-origin"
-      />
-    </div>
-
-    {/* Soundbar (dyskretny) */}
-    <div className="mx-auto mt-3 h-2 sm:h-2.5 w-[88%] rounded-full bg-gradient-to-b from-gray-800 to-gray-900 ring-1 ring-white/10" />
-
-    {/* Stojak – dwie stopy */}
-    <div className="mx-auto mt-3 flex w-[92%] items-center justify-between">
-      <span className="h-1.5 w-16 sm:w-24 rounded-full bg-black/60" />
-      <span className="h-1.5 w-16 sm:w-24 rounded-full bg-black/60" />
-    </div>
-  </div>
-</div>
-
-</section>
+        </div>
+      </section>
 
       {/* CTA końcowe */}
       <section className="mx-auto max-w-6xl px-5 mt-10 mb-16">
-        <p className="text-center text-xl md:text-2xl font-semibold mb-4">
-          {tUI('cta.title')}
-        </p>
+        <p className="text-center text-xl md:text-2xl font-semibold mb-4">{tUI("cta.title")}</p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
             onClick={() => {
-              localStorage.setItem('entryMode', 'patient');
-              window.location.href = '/register?mode=patient';
+              localStorage.setItem("entryMode", "patient");
+              window.location.href = "/register?mode=patient";
             }}
-            className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-lg text-lg shadow"
-            aria-label={tUI('cta.patientAria')}
-            title={tUI('cta.patientAria')}
+            className="w-full sm:w-auto rounded-2xl px-6 py-3 text-lg font-semibold shadow-lg border border-white/10
+            bg-[linear-gradient(135deg,rgba(56,189,248,.35),rgba(16,185,129,.25))] hover:bg-[linear-gradient(135deg,rgba(56,189,248,.45),rgba(16,185,129,.32))]
+            backdrop-blur-xl"
+            aria-label={tUI("cta.patientAria")}
+            title={tUI("cta.patientAria")}
           >
-            {tUI('cta.enterAsPatient')}
+            {tUI("cta.enterAsPatient")}
           </button>
 
           <button
             onClick={() => {
-              localStorage.setItem('entryMode', 'doctor');
-              window.location.href = '/register?mode=doctor';
+              localStorage.setItem("entryMode", "doctor");
+              window.location.href = "/register?mode=doctor";
             }}
-            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-lg shadow"
-            aria-label={tUI('cta.doctorAria')}
-            title={tUI('cta.doctorAria')}
+            className="w-full sm:w-auto rounded-2xl px-6 py-3 text-lg font-semibold shadow-lg border border-white/10
+            bg-white/10 hover:bg-white/14 backdrop-blur-xl"
+            aria-label={tUI("cta.doctorAria")}
+            title={tUI("cta.doctorAria")}
           >
-            {tUI('cta.enterAsDoctor')}
+            {tUI("cta.enterAsDoctor")}
           </button>
         </div>
       </section>
+
       {/* FOOTER */}
+      <footer className="mt-12 md:mt-16 border-t border-white/10 bg-white/6 backdrop-blur-2xl">
+        <div className="mx-auto max-w-6xl px-5 py-8 md:py-10 grid gap-8 md:grid-cols-2">
+          <div>
+            <h3 className="text-lg font-semibold">{tUI("footer.contact")}</h3>
+            <p className="mt-2 text-sm opacity-90">
+              <span className="font-medium">{tUI("footer.admin")}:</span> ALS sp. z o.o.
+            </p>
+            <p className="mt-2 text-sm">
+              <span className="font-medium">{tUI("footer.email")}:</span>{" "}
+              <a href="mailto:contact@dcp.care" className="underline decoration-white/30 hover:decoration-white">
+                contact@dcp.care
+              </a>
+            </p>
+          </div>
 
-<footer className="mt-12 md:mt-16 border-t border-white/10 bg-white/5 dark:bg-black/20 backdrop-blur">
-  <div className="mx-auto max-w-6xl px-5 py-8 md:py-10 grid gap-8 md:grid-cols-2">
-    {/* Kontakt (bez adresu) */}
-    <div>
-      <h3 className="text-lg font-semibold">{tUI('footer.contact')}</h3>
-      <p className="mt-2 text-sm opacity-90">
-        <span className="font-medium">{tUI('footer.admin')}:</span> ALS sp. z o.o.
-      </p>
-      <p className="mt-2 text-sm">
-        <span className="font-medium">{tUI('footer.email')}:</span>{' '}
-        <a href="mailto:contact@dcp.care" className="underline decoration-white/40 hover:decoration-white">
-          contact@dcp.care
-        </a>
-      </p>
-    </div>
-
-          {/* Social + strona www */}
           <div className="md:text-right">
-        <h3 className="text-lg font-semibold">{tUI('footer.followUs')}</h3>
+            <h3 className="text-lg font-semibold">{tUI("footer.followUs")}</h3>
 
-        <div className="mt-4 flex gap-6 md:gap-8 justify-center md:justify-end items-center">
-         
-          {/* Facebook */}
-          <a href="https://www.facebook.com/profile.php?id=61580694946237" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="opacity-90 hover:opacity-100 transition">
-            <svg width="36" height="36" viewBox="0 0 24 24" role="img" aria-hidden="true">
-              <rect x="2" y="2" width="20" height="20" rx="4" fill="#1877F2"/>
-              <path d="M13.4 8.7h2V6.2c-.4-.1-1.2-.2-2.1-.2-2.1 0-3.5 1.3-3.5 3.6v2H7.9v2.5h1.9V21h2.6v-6h2.1l.4-2.5H12.4v-1.7c0-.7.2-1.1 1-1.1z" fill="#fff"/>
-            </svg>
-           </a>
-            {/* Instagram */}
-            <a href="https://www.instagram.com/diet.care88" target="_blank" rel="noopener noreferrer"
-            aria-label="Instagram" title="Instagram" className="opacity-90 hover:opacity-100 transition">
-            <svg width="36" height="36" viewBox="0 0 24 24" role="img" aria-hidden="true">
-            <defs>
-              <linearGradient id="igGrad" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#F58529"/>
-                <stop offset="50%" stopColor="#DD2A7B"/>
-                <stop offset="100%" stopColor="#8134AF"/>
-              </linearGradient>
-            </defs>
-            <rect x="2" y="2" width="20" height="20" rx="5" fill="url(#igGrad)"/>
-            {/* obramowanie „korpusu” aparatu */}
-            <rect x="6" y="6" width="12" height="12" rx="4" ry="4"
-                  fill="none" stroke="rgba(255,255,255,.85)" strokeWidth="1"/>
-            {/* obiektyw */}
-            <circle cx="12" cy="12" r="3.5" fill="none" stroke="#fff" strokeWidth="2"/>
-            {/* „dioda” w prawym górnym rogu */}
-            <circle cx="16.6" cy="7.4" r="1.2" fill="#fff"/>
-          </svg>
-          </a>
+            <div className="mt-4 flex gap-6 md:gap-8 justify-center md:justify-end items-center">
+              {/* Facebook */}
+              <a
+                href="https://www.facebook.com/profile.php?id=61580694946237"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Facebook"
+                className="opacity-90 hover:opacity-100 transition"
+              >
+                <svg width="36" height="36" viewBox="0 0 24 24" role="img" aria-hidden="true">
+                  <rect x="2" y="2" width="20" height="20" rx="4" fill="#1877F2" />
+                  <path
+                    d="M13.4 8.7h2V6.2c-.4-.1-1.2-.2-2.1-.2-2.1 0-3.5 1.3-3.5 3.6v2H7.9v2.5h1.9V21h2.6v-6h2.1l.4-2.5H12.4v-1.7c0-.7.2-1.1 1-1.1z"
+                    fill="#fff"
+                  />
+                </svg>
+              </a>
 
-          {/* YouTube */}
-          <a href="https://www.youtube.com/@DietCarePlatform" target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="opacity-90 hover:opacity-100 transition">
-            <svg width="36" height="36" viewBox="0 0 24 24" role="img" aria-hidden="true">
-              <rect x="2" y="6" width="20" height="12" rx="3" fill="#FF0000"/>
-              <path d="M10 9l5 3-5 3V9z" fill="#fff"/>
-            </svg>
-          </a>
-           {/* ALS – strona administratora */}
-          <a
-            href="https://alsolution.pl/produkty-1/diet-care-platform"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="ALS – strona administratora"
-            className="opacity-90 hover:opacity-100 transition"
-            title="ALS – administrator serwisu"
-          >
-            <Image
-              src="/als-512.png"
-              alt="ALS sp. z o.o."
-              width={36}
-              height={36}
-              className="rounded-md shadow-sm"
-              priority
-            />
-          </a>
+              {/* Instagram */}
+              <a
+                href="https://www.instagram.com/diet.care88"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram"
+                title="Instagram"
+                className="opacity-90 hover:opacity-100 transition"
+              >
+                <svg width="36" height="36" viewBox="0 0 24 24" role="img" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="igGrad" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="#F58529" />
+                      <stop offset="50%" stopColor="#DD2A7B" />
+                      <stop offset="100%" stopColor="#8134AF" />
+                    </linearGradient>
+                  </defs>
+                  <rect x="2" y="2" width="20" height="20" rx="5" fill="url(#igGrad)" />
+                  <rect x="6" y="6" width="12" height="12" rx="4" ry="4" fill="none" stroke="rgba(255,255,255,.85)" strokeWidth="1" />
+                  <circle cx="12" cy="12" r="3.5" fill="none" stroke="#fff" strokeWidth="2" />
+                  <circle cx="16.6" cy="7.4" r="1.2" fill="#fff" />
+                </svg>
+              </a>
+
+              {/* YouTube */}
+              <a
+                href="https://www.youtube.com/@DietCarePlatform"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="YouTube"
+                className="opacity-90 hover:opacity-100 transition"
+              >
+                <svg width="36" height="36" viewBox="0 0 24 24" role="img" aria-hidden="true">
+                  <rect x="2" y="6" width="20" height="12" rx="3" fill="#FF0000" />
+                  <path d="M10 9l5 3-5 3V9z" fill="#fff" />
+                </svg>
+              </a>
+
+              {/* ALS – strona administratora */}
+              <a
+                href="https://alsolution.pl/produkty-1/diet-care-platform"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="ALS – strona administratora"
+                className="opacity-90 hover:opacity-100 transition"
+                title="ALS – administrator serwisu"
+              >
+                <Image src="/als-512.png" alt="ALS sp. z o.o." width={36} height={36} className="rounded-md shadow-sm" priority />
+              </a>
+            </div>
+          </div>
         </div>
-      </div>
-        </div>
+
         <div id="claim-footnote" className="mx-auto max-w-6xl px-5 pt-1 pb-3 text-[11px] md:text-xs opacity-80 leading-snug">
-          * {tUI('hero.claimFootnote')}
-          </div>    
+          * {tUI("hero.claimFootnote")}
+        </div>
+
         <div className="mx-auto max-w-6xl px-5 pb-6 text-xs opacity-70 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
           <span>© {new Date().getFullYear()} Diet Care Platform</span>
-          <span>{tUI('footer.rights')}</span>
+          <span>{tUI("footer.rights")}</span>
         </div>
       </footer>
     </main>

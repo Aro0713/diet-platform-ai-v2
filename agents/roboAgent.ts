@@ -553,7 +553,7 @@ function buildDeterministicRecipe(meal: FlatMeal, lang: string): RoboRecipe {
 
   // Jeśli to zimny posiłek (np. jogurt + orzechy / musli), nie gotujemy.
   // Mieszamy krótko bez grzania.
-  if (isColdBowl && kind === "other") {
+  if (isColdBowl && (kind === "other" || kind === "oatmeal")) {
     stepAdd("Dodaj składniki do misy.");
     stepRun(8, 30, 2, "Wymieszaj krótko.");
     stepManual("Przełóż do miski i podawaj.");
