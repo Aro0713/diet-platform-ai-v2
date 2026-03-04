@@ -1,5 +1,6 @@
-import React from 'react';
-import { tUI, type LangKey } from '@/utils/i18n';
+import React from "react";
+import { tUI, type LangKey } from "@/utils/i18n";
+import { sem, type SemanticTone } from "@/utils/semanticUI";
 import {
   NotebookPen,
   Stethoscope,
@@ -9,8 +10,8 @@ import {
   CheckCircle,
   XCircle,
   Ban,
-  Bot
-} from 'lucide-react';
+  Bot,
+} from "lucide-react";
 
 interface PatientIconGridProps {
   lang: LangKey;
@@ -21,22 +22,65 @@ interface PatientIconGridProps {
   form?: any; // ✅ ETAP 3/9
 }
 
+type IconLike =
+  | React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>
+  | (() => React.ReactNode);
+
+function IconBadge({
+  children,
+  active,
+  disabled,
+  glow,
+}: {
+  children: React.ReactNode;
+  active: boolean;
+  disabled: boolean;
+  glow: string;
+}) {
+  return (
+    <div
+      className={[
+        "relative flex items-center justify-center",
+        "h-14 w-14 rounded-2xl",
+        "border border-white/10",
+        "bg-white/7 backdrop-blur-xl",
+        "shadow-[0_18px_60px_rgba(0,0,0,.35)]",
+        disabled ? "opacity-60" : "opacity-100",
+        active ? "ring-1 ring-white/10 shadow-[0_0_0_1px_rgba(255,255,255,.06),0_26px_90px_rgba(0,0,0,.50)]" : "",
+      ].join(" ")}
+      aria-hidden
+    >
+      <div className="pointer-events-none absolute inset-0 rounded-2xl bg-[radial-gradient(120%_90%_at_20%_0%,rgba(255,255,255,.12),transparent_55%)]" />
+      <div className="pointer-events-none absolute inset-0 rounded-2xl shadow-[inset_0_0_0_1px_rgba(255,255,255,.05)]" />
+
+      {active && (
+        <div
+          className="pointer-events-none absolute -inset-6 rounded-[28px] blur-2xl opacity-70"
+          style={{ background: glow }}
+        />
+      )}
+
+      <div className="relative">{children}</div>
+    </div>
+  );
+}
+
 export const PatientIconGrid: React.FC<PatientIconGridProps> = ({
   lang,
   onSelect,
   selected,
   hasPaid,
   isTrialActive,
-  form // ✅ ETAP 3/9
+  form, // ✅ ETAP 3/9
 }) => {
   const openCancelTrial = async () => {
     try {
-      const uid = localStorage.getItem('currentUserID');
+      const uid = localStorage.getItem("currentUserID");
       if (!uid) return;
 
-      const res = await fetch('/api/create-portal-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/create-portal-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: uid, returnUrl: window.location.href }),
       });
 
@@ -44,8 +88,8 @@ export const PatientIconGrid: React.FC<PatientIconGridProps> = ({
       const url = data?.url;
       if (url) window.location.href = url;
     } catch (e) {
-      console.error('❌ Cannot open customer portal:', e);
-      alert(tUI('paymentInitError', lang));
+      console.error("❌ Cannot open customer portal:", e);
+      alert(tUI("paymentInitError", lang));
     }
   };
 
@@ -53,96 +97,54 @@ export const PatientIconGrid: React.FC<PatientIconGridProps> = ({
   const showRobot =
     Boolean(hasPaid) &&
     Boolean(form?.has_kitchen_robot) &&
-    Boolean(String(form?.kitchen_robot_model || '').trim()) &&
-    Boolean(String(form?.kitchen_robot_serial || '').trim());
+    Boolean(String(form?.kitchen_robot_model || "").trim()) &&
+    Boolean(String(form?.kitchen_robot_serial || "").trim());
 
-  const icons = [
-    {
-      id: 'data',
-      label: tUI('registrationLabel', lang),
-      icon: NotebookPen,
-      color: 'text-red-500',
-      ring: 'ring-red-300'
-    },
-    {
-      id: 'medical',
-      label: tUI('medicalAnalysis', lang),
-      icon: Stethoscope,
-      color: 'text-orange-500',
-      ring: 'ring-orange-300'
-    },
-    {
-      id: 'interview',
-      label: tUI('interviewTitle', lang),
-      icon: FileText,
-      color: 'text-yellow-500',
-      ring: 'ring-yellow-300'
-    },
-    {
-      id: 'calculator',
-      label: tUI('patientInNumbers', lang),
-      icon: Calculator,
-      color: 'text-green-500',
-      ring: 'ring-green-300'
-    },
-    {
-      id: 'diet',
-      label: tUI('dietPlan', lang),
-      icon: ChefHat,
-      color: 'text-blue-500',
-      ring: 'ring-blue-300'
-    },
-    {
-      id: 'scanner',
-      label: tUI('askLook', lang),
-      icon: () => (
-        <img
-          src="/Look.png"
-          alt="Look avatar"
-          className="w-[42px] h-[42px] rounded-full border-2 border-white shadow"
-        />
-      ),
-      color: '',
-      ring: 'ring-purple-300'
-    },
+  const icons: Array<{
+  id: string;
+  label: string;
+  icon: any;
+  tone: SemanticTone;
+}> = [
+  { id: "data", label: tUI("registrationLabel", lang), icon: NotebookPen, tone: "danger" as const },
+  { id: "medical", label: tUI("medicalAnalysis", lang), icon: Stethoscope, tone: "warning" as const },
+  { id: "interview", label: tUI("interviewTitle", lang), icon: FileText, tone: "warning" as const },
+  { id: "calculator", label: tUI("patientInNumbers", lang), icon: Calculator, tone: "success" as const },
+  { id: "diet", label: tUI("dietPlan", lang), icon: ChefHat, tone: "brand" as const },
+  {
+    id: "scanner",
+    label: tUI("askLook", lang),
+    tone: "violet" as const,
+    icon: () => (
+      <img src="/Look.png" alt="Look avatar" className="h-10 w-10 rounded-xl object-cover" />
+    ),
+  },
 
-    // ✅ ETAP 3/9 — ikona robota po Looku (warunkowo)
-    ...(showRobot
-      ? [{
-          id: 'robot',
-          label: tUI('kitchenRobot.panelLabel', lang),
-          icon: Bot,
-          color: 'text-cyan-300',
-          ring: 'ring-cyan-300'
-        }]
-      : []),
+  ...(showRobot
+    ? [{ id: "robot", label: tUI("kitchenRobot.panelLabel", lang), icon: Bot, tone: "cyan" as const }]
+    : []),
 
-    ...(isTrialActive
-      ? [{
-          id: 'cancel_trial',
-          label: tUI('cancelTrial', lang),
-          icon: Ban,
-          color: 'text-rose-200',
-          ring: 'ring-rose-300'
-        }]
-      : []),
+  ...(isTrialActive
+    ? [{ id: "cancel_trial", label: tUI("cancelTrial", lang), icon: Ban, tone: "danger" as const }]
+    : []),
 
-    {
-      id: 'status',
-      label: hasPaid ? tUI('paymentConfirmed', lang) : tUI('paymentPending', lang),
-      icon: hasPaid ? CheckCircle : XCircle,
-      color: hasPaid ? 'text-green-500' : 'text-red-500',
-      ring: hasPaid ? 'ring-green-300' : 'ring-red-300'
-    }
-  ];
+  {
+    id: "status",
+    label: hasPaid ? tUI("paymentConfirmed", lang) : tUI("paymentPending", lang),
+    icon: hasPaid ? CheckCircle : XCircle,
+    tone: (hasPaid ? "success" : "danger") as SemanticTone,
+  },
+];
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-6 mt-12 px-4">
-      {icons.map(({ id, label, icon: Icon, color, ring }: any) => {
+      {icons.map(({ id, label, icon: Icon, tone }) => {
         const isActive = selected === id;
 
         // allow: data + status always; allow cancel_trial even if hasPaid is false
-        const isDisabled = !hasPaid && id !== 'data' && id !== 'status' && id !== 'cancel_trial';
+        const isDisabled = !hasPaid && id !== "data" && id !== "status" && id !== "cancel_trial";
+
+        const { icon: iconColor, ring, glow } = sem(tone);
 
         return (
           <button
@@ -151,39 +153,58 @@ export const PatientIconGrid: React.FC<PatientIconGridProps> = ({
             onClick={() => {
               if (isDisabled) return;
 
-              if (id === 'scanner') {
-                onSelect('scanner');
+              if (id === "scanner") {
+                onSelect("scanner");
                 setTimeout(() => {
-                  document.getElementById('look-assistant')?.scrollIntoView({ behavior: 'smooth' });
+                  document.getElementById("look-assistant")?.scrollIntoView({ behavior: "smooth" });
                 }, 100);
                 return;
               }
 
-              if (id === 'cancel_trial') {
+              if (id === "cancel_trial") {
                 openCancelTrial();
                 return;
               }
 
-              if (id !== 'status') {
+              if (id !== "status") {
                 onSelect(id);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                window.scrollTo({ top: 0, behavior: "smooth" });
               }
             }}
-            className={`flex flex-col items-center justify-center p-4 rounded-2xl
-              transition-all duration-300 shadow-md
-              ${isDisabled ? 'opacity-30 cursor-not-allowed' : 'hover:scale-105'}
-              bg-white/20 dark:bg-white/10
-              ${isActive ? `scale-105 animate-pulse ring-2 ${ring}` : ''}`}
+            className={[
+              "group flex flex-col items-center justify-center p-4 rounded-3xl",
+              "transition-all duration-300",
+              "border border-white/10 bg-white/6 backdrop-blur-2xl",
+              "shadow-[0_18px_60px_rgba(0,0,0,.30)]",
+              isDisabled ? "opacity-30 cursor-not-allowed" : "hover:translate-y-[-2px] hover:bg-white/8",
+              isActive ? `ring-2 ${ring} shadow-[0_0_0_1px_rgba(255,255,255,.06),0_26px_90px_rgba(0,0,0,.50)]` : "",
+            ].join(" ")}
             aria-label={label}
             title={label}
           >
-            <Icon
-              size={42}
-              className={`mb-2 transition-transform ${color} ${isActive ? 'rotate-[8deg]' : ''}`}
-            />
-            <span className="text-xs font-medium text-white dark:text-white text-center">
-              {label}
-            </span>
+            <IconBadge active={isActive} disabled={isDisabled} glow={glow}>
+              {typeof Icon === "function" && Icon.length !== 0 ? (
+                <Icon
+                  size={30}
+                  strokeWidth={1.6}
+                  className={[
+                    "transition-transform duration-300",
+                    iconColor,
+                    isActive ? "rotate-[6deg] scale-[1.02]" : "group-hover:scale-[1.04]",
+                    "drop-shadow-[0_10px_24px_rgba(0,0,0,.35)]",
+                  ].join(" ")}
+                />
+              ) : (
+                <div className="relative">
+                  <div className="absolute -inset-2 rounded-2xl bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,.18),transparent_60%)]" />
+                  <div className="relative rounded-2xl border border-white/10 bg-white/8 p-1">
+                    <Icon />
+                  </div>
+                </div>
+              )}
+            </IconBadge>
+
+            <span className="mt-2 text-xs font-medium text-white/90 text-center">{label}</span>
           </button>
         );
       })}
