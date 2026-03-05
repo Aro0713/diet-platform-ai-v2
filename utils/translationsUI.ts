@@ -9215,4 +9215,59 @@ trial7DaysFree: {
   ar: "رقم تسلسلي غير صالح. أدخل تنسيق MAC مثل 8C:BD:37:82:7E:A1.",
   he: "מספר סידורי לא תקין. הזן בפורמט MAC, למשל 8C:BD:37:82:7E:A1."
 },
+panelStatus: {
+  pl: "Status",
+  en: "Status",
+  es: "Estado",
+  fr: "Statut",
+  de: "Status",
+  ua: "Статус",
+  ru: "Статус",
+  zh: "状态",
+  ar: "الحالة",
+  hi: "स्थिति",
+  he: "סטטוס"
+},
+
+patientSelected: {
+  pl: "Pacjent wybrany",
+  en: "Patient selected",
+  es: "Paciente seleccionado",
+  fr: "Patient sélectionné",
+  de: "Patient ausgewählt",
+  ua: "Пацієнта вибрано",
+  ru: "Пациент выбран",
+  zh: "已选择患者",
+  ar: "تم اختيار المريض",
+  hi: "मरीज़ चुना गया",
+  he: "המטופל נבחר"
+},
+
+noPatientSelected: {
+  pl: "Brak pacjenta",
+  en: "No patient selected",
+  es: "No se ha seleccionado paciente",
+  fr: "Aucun patient sélectionné",
+  de: "Kein Patient ausgewählt",
+  ua: "Пацієнта не вибрано",
+  ru: "Пациент не выбран",
+  zh: "未选择患者",
+  ar: "لم يتم اختيار مريض",
+  hi: "कोई मरीज़ चयनित नहीं",
+  he: "לא נבחר מטופל"
+},
+
+selectPatientHint: {
+  pl: "Wpisz e-mail pacjenta i pobierz dane.",
+  en: "Enter the patient's email and load the data.",
+  es: "Introduce el correo del paciente y carga los datos.",
+  fr: "Saisissez l’e-mail du patient et chargez les données.",
+  de: "Geben Sie die E-Mail des Patienten ein und laden Sie die Daten.",
+  ua: "Введіть e-mail пацієнта та завантажте дані.",
+  ru: "Введите e-mail пациента и загрузите данные.",
+  zh: "输入患者邮箱并加载数据。",
+  ar: "أدخل بريد المريض الإلكتروني وقم بتحميل البيانات.",
+  hi: "मरीज़ का ईमेल दर्ज करें और डेटा लोड करें।",
+  he: "הזן את אימייל המטופל וטען את הנתונים."
+},
 };
