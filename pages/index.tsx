@@ -674,8 +674,8 @@ export default function Home() {
           <div className="relative overflow-visible mx-auto max-w-6xl px-4 sm:px-6 pt-6 md:pt-10 lg:pr-24">
 
             {/* Premium floating logo badge — nachodzi narożnik panelu */}
-            <div className="absolute -right-24 -top-10 z-50 hidden lg:block pointer-events-none">
-              <div className="group relative h-28 w-28">
+            <div className="absolute -right-40 -top-14 z-50 hidden lg:block pointer-events-none">
+              <div className="group relative h-48 w-48">
                 {/* ambient glow */}
                 <div
                   aria-hidden
@@ -689,7 +689,7 @@ export default function Home() {
                 />
 
                 {/* badge */}
-                <div className="relative h-28 w-28 rounded-[34px] overflow-hidden">
+                <div className="relative h-48 w-48 rounded-[34px] overflow-hidden">
                   {/* outer ring */}
                   <div aria-hidden className="absolute inset-0 rounded-[34px] ring-1 ring-white/20" />
                   <div aria-hidden className="absolute inset-0 rounded-[34px] ring-1 ring-black/25" />
@@ -727,7 +727,7 @@ export default function Home() {
                     src="/logo-dietcare.png"
                     alt={tUI("landing.logoAlt")}
                     fill
-                    className="object-contain p-5 drop-shadow-[0_24px_65px_rgba(0,0,0,.65)]"
+                    className="object-contain p-8 drop-shadow-[0_30px_85px_rgba(0,0,0,.75)]"
                     priority
                   />
                 </div>
