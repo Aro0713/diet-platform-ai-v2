@@ -226,7 +226,7 @@ function Panel() {
   const [patientEmailInput, setPatientEmailInput] = useState("");
   const [patientLoadStatus, setPatientLoadStatus] = useState<"idle" | "loading" | "notFound" | "success">("idle");
 
-  const [selectedSection, setSelectedSection] = useState<SectionKey>("patient");
+  const [selectedSection, setSelectedSection] = useState<SectionKey | null>(null);
 
   const sectionRefs: Record<SectionKey, React.RefObject<HTMLDivElement | null>> = {
   patient: useRef<HTMLDivElement | null>(null),
@@ -902,83 +902,74 @@ function Panel() {
   }
 
  return (
-  <main
-    className={clsx(
-      "relative min-h-screen text-white overflow-x-hidden",
-      "bg-[#0f271e]/70 bg-gradient-to-br from-[#102f24]/80 to-[#0f271e]/60",
-      "backdrop-blur-[12px] shadow-[inset_0_0_60px_rgba(255,255,255,0.08)]"
-    )}
-  >
+  <main className="relative min-h-screen overflow-x-hidden text-white bg-[#06131a]">
     <Head>
       <title>{tUI("doctorPanelTitle", lang)}</title>
     </Head>
 
-    {/* SHELL: jak panel pacjenta */}
-    <div className="mx-auto w-full max-w-[1600px] px-3 sm:px-4 md:px-6 pt-5 pb-10">
-      <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr_220px] gap-5 lg:gap-6 items-start">
-        {/* LEFT SIDEBAR (jak pacjent) */}
-        <aside className="lg:sticky lg:top-5">
-          <div className="rounded-[28px] border border-white/10 bg-white/6 backdrop-blur-2xl shadow-[0_30px_90px_rgba(0,0,0,.45)] overflow-hidden">
-            {/* Profil / status */}
-            <div className="p-5">
-              <div className="text-xs tracking-widest text-white/60 uppercase">
-                WORKSPACE
-              </div>
-              <div className="mt-1 text-2xl font-bold leading-tight">
-                {tUI("doctorPanelTitle", lang)}
-              </div>
+    {/* GLASS BACKDROP (1:1 jak panel pacjenta) */}
+    <div aria-hidden className="pointer-events-none absolute inset-0">
+      <div className="absolute inset-0 bg-[radial-gradient(1200px_700px_at_20%_15%,rgba(56,189,248,.22),transparent_60%),radial-gradient(900px_600px_at_80%_25%,rgba(167,139,250,.16),transparent_60%),radial-gradient(900px_700px_at_55%_85%,rgba(16,185,129,.10),transparent_60%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,.10)_0%,rgba(255,255,255,.04)_30%,rgba(0,0,0,.10)_100%)] opacity-70" />
+      <div className="absolute inset-0 opacity-[0.10] mix-blend-overlay">
+        <div className="absolute inset-0 [background-image:radial-gradient(rgba(255,255,255,.18)_1px,transparent_1px)] [background-size:18px_18px]" />
+      </div>
+      <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#06131a] to-transparent opacity-60" />
+    </div>
 
+    {/* APP SHELL */}
+    <div className="relative z-10 mx-auto w-full max-w-[1720px] px-3 sm:px-4 md:px-6 lg:px-8 pt-3 md:pt-5 pb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-[340px,1fr] gap-5 lg:gap-6">
+        {/* SIDEBAR */}
+        <aside className="lg:sticky lg:top-4 h-fit rounded-3xl border border-white/10 bg-white/6 backdrop-blur-2xl shadow-[0_30px_90px_rgba(0,0,0,.45)] overflow-hidden">
+          <div className="p-5">
+            {/* Profile */}
+            <div className="rounded-3xl border border-white/10 bg-white/7 backdrop-blur-xl p-4 shadow-[0_18px_60px_rgba(0,0,0,.25)]">
               {userData?.name && (
-                <div className="mt-3 text-sm text-white/80">
-                  <div className="font-medium text-white/90">
-                    {userData.title &&
-                      translatedTitles[userData.title as "dr" | "drhab" | "prof"]?.[lang] && (
-                        <span className="mr-1">
-                          {translatedTitles[userData.title as "dr" | "drhab" | "prof"][lang]}
-                        </span>
-                      )}
-                    {userData.name}
-                  </div>
-
-                  {userData.role &&
-                    translationsUI[userData.role as "doctor" | "dietitian"]?.[lang] && (
-                      <div className="text-xs text-white/70 mt-1">
-                        {translationsUI[userData.role][lang]}
-                      </div>
+                <div className="text-sm font-medium text-white/75">
+                  {userData.title &&
+                    translatedTitles[userData.title as "dr" | "drhab" | "prof"]?.[lang] && (
+                      <span className="mr-1">
+                        {translatedTitles[userData.title as "dr" | "drhab" | "prof"][lang]}
+                      </span>
                     )}
+                  {userData.name}
                 </div>
               )}
 
-              {/* status subskrypcji */}
-              <div className="mt-4 flex items-center gap-2 text-xs">
-                {userData?.plan && new Date(userData.subscription_end) > new Date() ? (
-                  <>
-                    <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400" />
-                    <span className="text-white/80">
-                      {tUI("activeSubscription", lang)}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <span className="inline-flex h-2 w-2 rounded-full bg-yellow-400" />
-                    <span className="text-white/80">
-                      {tUI("expiredSubscription", lang)}
-                    </span>
-                  </>
-                )}
+              <div className="mt-1 text-[26px] font-semibold tracking-[-0.01em] text-white font-[Inter]">
+                {tUI("doctorPanelTitle", lang)}
+              </div>
+
+              <div className="mt-3 flex items-center gap-2">
+                <span
+                  className={clsx(
+                    "inline-flex h-2 w-2 rounded-full shadow-[0_0_18px_rgba(110,231,183,.7)]",
+                    userData?.plan && new Date(userData.subscription_end) > new Date()
+                      ? "bg-emerald-300"
+                      : "bg-rose-300"
+                  )}
+                />
+                <span className="text-xs text-white/70">
+                  {userData?.plan && new Date(userData.subscription_end) > new Date()
+                    ? tUI("activeSubscription", lang)
+                    : tUI("expiredSubscription", lang)}
+                </span>
               </div>
 
               {userData?.subscription_end && (
                 <div className="mt-1 text-xs text-white/60">
-                  {tUI("validUntil", lang)}:{" "}
-                  {new Date(userData.subscription_end).toLocaleDateString(lang)}
+                  {tUI("validUntil", lang)}{" "}
+                  <strong className="text-white">
+                    {new Date(userData.subscription_end).toLocaleDateString(lang)}
+                  </strong>
                 </div>
               )}
 
               <div className="mt-3">
                 <button
                   onClick={() => router.push("/paymentsUsers")}
-                  className="text-xs underline text-white/80 hover:text-white"
+                  className="text-xs underline text-white/70 hover:text-white"
                 >
                   {tUI("manageSubscription", lang)}
                 </button>
@@ -986,667 +977,662 @@ function Panel() {
             </div>
 
             {/* Language */}
-            <div className="px-5 pb-5">
-              <div className="text-[11px] tracking-widest text-white/50 uppercase">
-                {tUI("selectLanguage", lang)}
+            <div className="mt-4 rounded-3xl border border-white/10 bg-white/7 backdrop-blur-xl p-4">
+              <div className="text-xs uppercase tracking-wide text-white/60 mb-2">
+                {tUI("nav.languageLabel", lang)}
               </div>
-              <div className="mt-2">
-                <select
-                  value={lang}
-                  onChange={(e) => {
-                    const v = e.target.value as LangKey;
-                    setLang(v);
-                    try {
-                      localStorage.setItem("platformLang", v);
-                    } catch {
-                      /* ignore */
-                    }
-                  }}
-                  className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none hover:bg-white/10"
-                >
-                  {(["pl", "en", "de", "fr", "es", "ua", "ru", "zh", "ar", "hi", "he"] as LangKey[]).map((k) => (
-                    <option key={k} value={k} className="bg-[#0f271e]">
-                      {k.toUpperCase()}
-                    </option>
-                  ))}
-                </select>
-              </div>
+
+              <select
+                value={lang}
+                onChange={(e) => {
+                  const v = e.target.value as LangKey;
+                  setLang(v);
+                  try {
+                    localStorage.setItem("platformLang", v);
+                  } catch {
+                    /* ignore */
+                  }
+                }}
+                className="w-full rounded-2xl border border-white/10 bg-white/8 hover:bg-white/12 backdrop-blur-xl px-4 py-3 text-sm text-white outline-none transition"
+              >
+                {(["pl", "en", "de", "fr", "es", "ua", "ru", "zh", "ar", "hi", "he"] as LangKey[]).map((k) => (
+                  <option key={k} value={k} className="bg-[#06131a]">
+                    {k.toUpperCase()}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            {/* Steps / Menu (jak pacjent) */}
-            <div className="px-4 pb-5">
-              <div className="px-2 text-[11px] tracking-widest text-white/50 uppercase">
-                Kroki
+            {/* Navigation: klik = pokazuje sekcję w workspace */}
+            <div className="mt-4">
+              <div className="text-xs uppercase tracking-wide text-white/60 px-1 mb-2">
+                {tUI("stepsLabel", lang)}
               </div>
 
-              <div className="mt-3 flex flex-col gap-2">
+              <div className="flex flex-col gap-2">
                 {sidebarItems.map((it) => (
                   <button
                     key={it.k}
-                    onClick={() => gotoSection(it.k)}
+                    type="button"
+                    onClick={() => setSelectedSection(it.k)}
                     className={clsx(
-                      "group w-full flex items-center gap-3 rounded-2xl px-4 py-4 border text-left",
-                      selectedSection === it.k
-                        ? "bg-white/10 border-white/15 shadow-[0_10px_30px_rgba(0,0,0,.25)]"
-                        : "bg-white/5 border-white/10 hover:bg-white/8"
+                      "w-full rounded-2xl border border-white/10 backdrop-blur-xl shadow-[0_18px_60px_rgba(0,0,0,.18)] transition",
+                      "px-4 py-4 flex items-center gap-3 text-left",
+                      selectedSection === it.k ? "bg-white/12" : "bg-white/8 hover:bg-white/12"
                     )}
                   >
-                    <span className="grid place-items-center h-10 w-10 rounded-xl border border-white/10 bg-black/20 text-lg">
+                    <span className="grid place-items-center h-10 w-10 rounded-xl border border-white/10 bg-white/6 text-lg">
                       {it.icon}
                     </span>
                     <div className="min-w-0">
-                      <div className="text-sm font-medium text-white/90 truncate">
-                        {it.label}
-                      </div>
-                      <div className="text-xs text-white/55 truncate">
-                        {it.k === "patient"
-                          ? (form?.user_id ? "Pacjent załadowany" : "Wybierz pacjenta po e-mailu")
-                          : " "}
-                      </div>
+                      <div className="text-sm font-semibold text-white/90 truncate">{it.label}</div>
+                      {it.k === "patient" && (
+                        <div className="text-xs text-white/60 truncate">
+                          {form?.user_id ? tUI("patientData", lang) : tUI("enterEmail", lang)}
+                        </div>
+                      )}
                     </div>
                   </button>
                 ))}
               </div>
+            </div>
 
-              {/* Mini status */}
-              <div className="mt-4 px-2 text-xs text-white/60">
-                {form?.user_id ? (
-                  <span className="text-emerald-300">✅ Patient loaded</span>
-                ) : (
-                  <span className="text-yellow-300">⚠️ Select patient to start</span>
-                )}
-              </div>
+            {/* Sidebar footer: logout */}
+            <div className="mt-5">
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    await supabase.auth.signOut();
+                  } finally {
+                    localStorage.removeItem("currentUserID");
+                    localStorage.removeItem("currentUserRole");
+                    router.push("/register?mode=login");
+                  }
+                }}
+                className="w-full rounded-2xl px-4 py-3 font-semibold border border-white/10 bg-white/8 hover:bg-white/12 backdrop-blur-xl shadow-[0_18px_60px_rgba(0,0,0,.30)] transition"
+              >
+                {tUI("logout", lang)}
+              </button>
             </div>
           </div>
         </aside>
 
-        {/* CENTER WORKSPACE */}
+        {/* WORKSPACE */}
         <section className="min-w-0">
-          {/* Top bar (jak pacjent: tytuł + plan po prawej + logo po prawej) */}
-          <div className="mb-5">
-            <div className="rounded-[28px] border border-white/10 bg-white/6 backdrop-blur-2xl shadow-[0_30px_90px_rgba(0,0,0,.35)] px-5 py-4 flex items-center justify-between gap-4">
-              <div className="min-w-0">
-                <div className="text-[11px] tracking-widest text-white/50 uppercase">
-                  WORKSPACE
-                </div>
-                <div className="text-lg sm:text-xl font-bold truncate">
-                  {tUI("doctorPanelTitle", lang)}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                {/* plan pill */}
-                <div className="hidden sm:flex items-center gap-2 rounded-full border border-white/10 bg-black/20 px-3 py-2 text-xs text-white/80">
-                  <span className={clsx("inline-flex h-2 w-2 rounded-full", userData?.plan && new Date(userData.subscription_end) > new Date() ? "bg-emerald-400" : "bg-yellow-400")} />
-                  <span>
-                    {userData?.plan && new Date(userData.subscription_end) > new Date()
-                      ? `${tUI("activeSubscription", lang)}`
-                      : `${tUI("expiredSubscription", lang)}`}
-                  </span>
-                  {userData?.subscription_end && (
-                    <span className="text-white/60">
-                      • {new Date(userData.subscription_end).toLocaleDateString(lang)}
-                    </span>
-                  )}
-                </div>
-
-                {/* Logo po prawej */}
-                <img src="/logo.svg" alt="DCP" className="h-8 sm:h-9 opacity-95" />
-              </div>
-            </div>
-          </div>
-
-          {/* CONTENT STACK (Twoje sekcje 1:1) */}
-          <div className="flex flex-col gap-5">
-            {/* Patient selection */}
-            <div ref={sectionRefs.patient} className="scroll-mt-28">
-              <PanelCard>
-                <div className="flex flex-col gap-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="text-base font-semibold text-white">
-                      {tUI("patientData", lang)}
-                    </div>
-                    <div className="text-xs text-white/60">Registered-only</div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3">
-                    <input
-                      type="email"
-                      value={patientEmailInput}
-                      onChange={(e) => setPatientEmailInput(e.target.value)}
-                      placeholder={tUI("enterEmail", lang)}
-                      className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/40 outline-none focus:border-white/25"
-                    />
-                    <button
-                      onClick={handleSearchPatient}
-                      className="rounded-xl bg-emerald-600 hover:bg-emerald-700 px-5 py-3 text-sm font-medium"
-                    >
-                      🔍 {tUI("fetchPatientData", lang)}
-                    </button>
-                  </div>
-
-                  {patientLoadStatus === "loading" && (
-                    <div className="text-xs text-white/60">⏳ Loading…</div>
-                  )}
-
-                  {patientLoadStatus === "notFound" && (
-                    <div className="text-sm text-yellow-300">
-                      ❌ {tUI("patientNotFound", lang)}
-                    </div>
-                  )}
-
-                  {patientLoadStatus === "success" && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <input
-                        type="text"
-                        value={form.name || ""}
-                        onChange={(e) => setForm({ ...form, name: e.target.value })}
-                        placeholder={tUI("fullName", lang)}
-                        className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
-                      />
-                      <input
-                        type="email"
-                        value={form.email || ""}
-                        disabled
-                        className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/70 cursor-not-allowed"
-                      />
-                      <input
-                        type="tel"
-                        value={form.phone || ""}
-                        onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                        placeholder={tUI("phone", lang)}
-                        className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
-                      />
-                      <select
-                        value={form.sex || ""}
-                        onChange={(e) => setForm({ ...form, sex: e.target.value as "male" | "female" })}
-                        className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
-                      >
-                        <option value="" className="bg-[#0f271e]">
-                          -- {tUI("selectSex", lang)} --
-                        </option>
-                        <option value="male" className="bg-[#0f271e]">
-                          {tUI("male", lang)}
-                        </option>
-                        <option value="female" className="bg-[#0f271e]">
-                          {tUI("female", lang)}
-                        </option>
-                      </select>
-                      <input
-                        type="number"
-                        value={form.age || ""}
-                        onChange={(e) => setForm({ ...form, age: Number(e.target.value) })}
-                        placeholder={tUI("age", lang)}
-                        className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
-                      />
-                      <input
-                        type="number"
-                        value={form.height || ""}
-                        onChange={(e) => setForm({ ...form, height: Number(e.target.value) })}
-                        placeholder={tUI("height", lang)}
-                        className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
-                      />
-                      <input
-                        type="number"
-                        value={form.weight || ""}
-                        onChange={(e) => setForm({ ...form, weight: Number(e.target.value) })}
-                        placeholder={tUI("weight", lang)}
-                        className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
-                      />
-                      <select
-                        value={form.region || ""}
-                        onChange={(e) => setForm({ ...form, region: e.target.value })}
-                        className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
-                      >
-                        <option value="" className="bg-[#0f271e]">
-                          -- {tUI("selectRegion", lang)} --
-                        </option>
-                        <option value="Europa" className="bg-[#0f271e]">
-                          {tUI("regionEurope", lang)}
-                        </option>
-                        <option value="Ameryka Północna" className="bg-[#0f271e]">
-                          {tUI("regionNorthAmerica", lang)}
-                        </option>
-                        <option value="Ameryka Południowa" className="bg-[#0f271e]">
-                          {tUI("regionSouthAmerica", lang)}
-                        </option>
-                        <option value="Azja" className="bg-[#0f271e]">
-                          {tUI("regionAsia", lang)}
-                        </option>
-                        <option value="Afryka" className="bg-[#0f271e]">
-                          {tUI("regionAfrica", lang)}
-                        </option>
-                        <option value="Australia" className="bg-[#0f271e]">
-                          {tUI("regionAustralia", lang)}
-                        </option>
-                      </select>
-                    </div>
-                  )}
-                </div>
-              </PanelCard>
-            </div>
-
-            {/* Medical */}
-            <div ref={sectionRefs.medical} className="scroll-mt-28">
-              <PanelCard>
-                <MedicalForm
-                  key={JSON.stringify(initialMedicalData)}
-                  initialData={initialMedicalData}
-                  existingMedical={medicalData}
-                  onChange={handleMedicalChange}
-                  onUpdateMedical={(summary) => setMedicalData((prev: any) => ({ ...prev, summary }))}
-                  userId={form.user_id}
-                  lang={lang}
-                />
-              </PanelCard>
-            </div>
-
-            {/* Interview */}
-            <div ref={sectionRefs.interview} className="scroll-mt-28">
-              <PanelCard title={`🧠 ${tUI("interviewTitle", lang)}`}>
-                <InterviewWizard
-                  key={JSON.stringify(initialInterviewData)}
-                  form={form as any}
-                  initialData={initialInterviewData}
-                  lang={lang}
-                  onFinish={saveInterviewData}
-                  onUpdateNarrative={(text) => setNarrativeText(text)}
-                />
-              </PanelCard>
-            </div>
-
-            {/* Recommendation + meals per day */}
-            <div ref={sectionRefs.recommendation} className="scroll-mt-28">
-              <PanelCard>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="flex flex-col space-y-2">
-                    <label className="text-sm font-medium text-white/90">{tUI("doctorRecommendation", lang)}</label>
-                    <textarea
-                      rows={4}
-                      className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
-                      value={interviewData.recommendation || ""}
-                      onChange={(e) => setInterviewData({ ...interviewData, recommendation: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="flex flex-col space-y-2">
-                    <label className="text-sm font-medium text-white/90">{tUI("mealsPerDay", lang)}</label>
-                    <select
-                      className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
-                      value={interviewData.mealsPerDay || ""}
-                      onChange={(e) => setInterviewData({ ...interviewData, mealsPerDay: parseInt(e.target.value, 10) })}
-                    >
-                      <option value="" className="bg-[#0f271e]">{`-- ${tUI("selectOption", lang)} --`}</option>
-                      {[2, 3, 4, 5, 6].map((n) => (
-                        <option key={n} value={n} className="bg-[#0f271e]">
-                          {n}
-                        </option>
-                      ))}
-                    </select>
-
-                    <div className="text-xs text-white/60">
-                      {tUI("suggested", lang) ?? "Suggested"}:{" "}
-                      <span className="text-white/80">{getRecommendedMealsPerDay(form, interviewData)}</span>
+          <div className="mx-auto w-full max-w-[1240px] 2xl:max-w-[1400px]">
+            {/* Topbar (sticky) */}
+            <div className="sticky top-3 z-20 mb-4">
+              <div className="rounded-3xl border border-white/10 bg-white/6 backdrop-blur-2xl shadow-[0_18px_60px_rgba(0,0,0,.35)] overflow-hidden">
+                <div className="px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div>
+                    <div className="text-xs uppercase tracking-wide text-white/60">Workspace</div>
+                    <div className="text-lg font-semibold tracking-tight text-white">
+                      {sidebarItems.find((x) => x.k === selectedSection)?.label ?? tUI("doctorPanelTitle", lang)}
                     </div>
                   </div>
-                </div>
-              </PanelCard>
-            </div>
 
-            {/* Goal / Model / Cuisine */}
-            <div ref={sectionRefs.goalModelCuisine} className="scroll-mt-28">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-                <PanelCard className="h-full">
-                  <DietGoalForm onChange={(goal) => setInterviewData({ ...interviewData, goal })} lang={lang} />
-                </PanelCard>
-                <PanelCard className="h-full">
-                  <SelectModelForm onChange={(model) => setInterviewData({ ...interviewData, model })} lang={lang} />
-                </PanelCard>
-                <PanelCard className="h-full">
-                  <SelectCuisineForm onChange={(cuisine) => setInterviewData({ ...interviewData, cuisine })} lang={lang} />
-                </PanelCard>
-              </div>
-            </div>
-
-            {/* Calculator */}
-            <div ref={sectionRefs.calculator} className="scroll-mt-28">
-              <PanelCard title={`🧮 ${tUI("patientInNumbers", lang)}`} className="h-full">
-                <CalculationBlock
-                  form={form}
-                  interview={extractMappedInterview(interviewData)}
-                  lang={lang}
-                  onResult={handleCalculationResult}
-                />
-              </PanelCard>
-            </div>
-
-            {/* Actions */}
-            <div ref={sectionRefs.actions} className="scroll-mt-28">
-              <PanelCard>
-                <div className="flex flex-wrap items-stretch gap-3 sm:gap-4 w-full">
-                  <div className="flex-1 min-w-[220px]">
-                    <button
-                      type="button"
-                      onClick={handleSubmit}
-                      className="w-full h-full rounded-xl bg-emerald-600 hover:bg-emerald-700 px-4 py-3 font-medium disabled:opacity-50"
-                      disabled={isGenerating}
-                    >
-                      {isGenerating ? (
-                        <span className="flex items-center gap-2">
-                          <span className="animate-spin">⚙️</span>
-                          {tUI("writingDiet", lang)}
-                        </span>
-                      ) : (
-                        <>⚡ {tUI("generate", lang)}</>
+                  <div className="flex items-center gap-3">
+                    <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/8 px-3 py-1 text-xs text-white/80">
+                      <span
+                        className={clsx(
+                          "h-2 w-2 rounded-full",
+                          userData?.plan && new Date(userData.subscription_end) > new Date()
+                            ? "bg-emerald-300"
+                            : "bg-rose-300"
+                        )}
+                      />
+                      {userData?.plan && new Date(userData.subscription_end) > new Date()
+                        ? tUI("activeSubscription", lang)
+                        : tUI("expiredSubscription", lang)}
+                      {userData?.subscription_end && (
+                        <strong className="text-white">
+                          {" "}
+                          {new Date(userData.subscription_end).toLocaleDateString(lang)}
+                        </strong>
                       )}
-                    </button>
-                  </div>
+                    </span>
 
-                  {editableDiet && !dietApproved && (
-                    <div className="flex-1 min-w-[220px]">
-                      <button
-                        type="button"
-                        className="w-full h-full rounded-xl bg-purple-700 hover:bg-purple-800 px-4 py-3 font-medium disabled:opacity-50"
-                        onClick={handleApproveDiet}
-                        disabled={isGenerating}
-                      >
-                        ✅ {tUI("confirmDiet", lang)}
-                      </button>
-                    </div>
-                  )}
-
-                  {editableDiet && dietApproved && (
-                    <div className="flex-1 min-w-[220px]">
-                      <button
-                        type="button"
-                        className="w-full h-full rounded-xl bg-indigo-600 hover:bg-indigo-700 px-4 py-3 font-medium disabled:opacity-50"
-                        onClick={handleSendDietToPatient}
-                        disabled={isGenerating || !form?.email}
-                      >
-                        📤 {tUI("sendDietToPatient", lang)}
-                      </button>
-                    </div>
-                  )}
-
-                  <div className="flex-1 min-w-[220px]">
-                    <button
-                      type="button"
-                      className="w-full h-full rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-3 font-medium disabled:opacity-50"
-                      disabled={isGenerating || !confirmedDiet?.length || !dietApproved}
-                      onClick={async () => {
-                        try {
-                          setIsGenerating(true);
-                          const { generateDietPdf } = await import("@/utils/generateDietPdf");
-                          await generateDietPdf(
-                            form,
-                            bmi,
-                            confirmedDiet!,
-                            dietApproved,
-                            notes,
-                            lang,
-                            interviewData,
-                            {
-                              bmi: interviewData.bmi,
-                              ppm: interviewData.ppm,
-                              cpm: interviewData.cpm,
-                              pal: interviewData.pal,
-                              kcalMaintain: interviewData.kcalMaintain,
-                              kcalReduce: interviewData.kcalReduce,
-                              kcalGain: interviewData.kcalGain,
-                              nmcBroca: interviewData.nmcBroca,
-                              nmcLorentz: interviewData.nmcLorentz,
-                            },
-                            "download",
-                            narrativeText,
-                            toPdfRecipes(recipes)
-                          );
-                        } catch (e) {
-                          alert("❌ Błąd przy generowaniu PDF");
-                          console.error(e);
-                        } finally {
-                          setIsGenerating(false);
-                        }
-                      }}
-                    >
-                      📄 {tUI("pdf", lang)}
-                    </button>
-                  </div>
-
-                  <div className="flex-1 min-w-[220px]">
-                    <button
-                      type="button"
-                      onClick={handleGenerateRecipes}
-                      className="w-full h-full rounded-xl bg-amber-600 hover:bg-amber-700 px-4 py-3 font-medium disabled:opacity-50"
-                      disabled={isGenerating || recipesLoading || !mealPlan || Object.keys(mealPlan).length === 0}
-                    >
-                      {recipesLoading ? "⏳ " : "🍽️ "}
-                      {tUI("generateRecipes", lang)}
-                    </button>
-                  </div>
-
-                  <div className="flex-1 min-w-[220px]">
-                    <button
-                      type="button"
-                      onClick={handleGenerateNarrative}
-                      className="w-full h-full rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 px-4 py-3 font-medium disabled:opacity-50"
-                      disabled={isGenerating}
-                    >
-                      📝 {tUI("generateNarrative", lang) ?? "Generuj opis wywiadu"}
-                    </button>
+                    {/* Logo po prawej */}
+                    <img src="/logo.svg" alt="DCP" className="h-8 opacity-95" />
                   </div>
                 </div>
-
-                {isGenerating && (
-                  <div className="text-sm text-white/60 italic mt-4 animate-pulse">
-                    ⏳ {tUI("writingDiet", lang)}… {streamingText.length > 20 && "(czekaj, trwa generowanie)"}
-                  </div>
-                )}
-              </PanelCard>
+              </div>
             </div>
 
-            {/* Diet table */}
-            <div ref={sectionRefs.diet} className="scroll-mt-28">
-              <PanelCard>
-                {(() => {
-                  const goalVal = interviewData?.goal ?? initialInterviewData?.goal ?? (form as any)?.goal ?? "";
-                  const modelVal = interviewData?.model ?? initialInterviewData?.model ?? (form as any)?.model ?? "";
-                  const cuisineVal = interviewData?.cuisine ?? initialInterviewData?.cuisine ?? (form as any)?.cuisine ?? "";
-                  const meals =
-                    interviewData?.mealsPerDay ??
-                    initialInterviewData?.mealsPerDay ??
-                    getRecommendedMealsPerDay(form, interviewData);
+            {/* Main card shell (renderujemy TYLKO wybraną sekcję) */}
+            <div className="relative rounded-3xl border border-white/10 bg-white/6 backdrop-blur-2xl shadow-[0_30px_90px_rgba(0,0,0,.45)] p-5 md:p-10">
+              <div aria-hidden className="pointer-events-none absolute inset-0 rounded-3xl bg-[radial-gradient(120%_80%_at_15%_0%,rgba(255,255,255,.10),transparent_55%)]" />
+              <div className="relative">
+                {/* =========
+                    1) PATIENT
+                   ========= */}
+                {selectedSection === "patient" && (
+                  <PanelCard>
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="text-base font-semibold text-white">
+                          {tUI("patientData", lang)}
+                        </div>
+                        <div className="text-xs text-white/60">Registered-only</div>
+                      </div>
 
-                  const safe = (v: any) => (v === null || v === undefined || v === "" ? "—" : v);
+                      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3">
+                        <input
+                          type="email"
+                          value={patientEmailInput}
+                          onChange={(e) => setPatientEmailInput(e.target.value)}
+                          placeholder={tUI("enterEmail", lang)}
+                          className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/40 outline-none focus:border-white/25"
+                        />
+                        <button
+                          onClick={handleSearchPatient}
+                          className="rounded-xl bg-emerald-600 hover:bg-emerald-700 px-5 py-3 text-sm font-medium"
+                        >
+                          🔍 {tUI("fetchPatientData", lang)}
+                        </button>
+                      </div>
 
-                  return (
-                    <div className="mb-4">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs sm:text-sm">
-                        <div className="flex items-center justify-between px-3 py-2 rounded-full text-xs text-white bg-pink-600/80 border border-white/10">
-                          <span className="font-semibold">🎯 {tUI("goal", lang)}</span>
-                          <span className="pl-2 truncate">{tResolve(goalVal, lang)}</span>
+                      {patientLoadStatus === "loading" && <div className="text-xs text-white/60">⏳ Loading…</div>}
+
+                      {patientLoadStatus === "notFound" && (
+                        <div className="text-sm text-yellow-300">❌ {tUI("patientNotFound", lang)}</div>
+                      )}
+
+                      {patientLoadStatus === "success" && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <input
+                            type="text"
+                            value={form.name || ""}
+                            onChange={(e) => setForm({ ...form, name: e.target.value })}
+                            placeholder={tUI("fullName", lang)}
+                            className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
+                          />
+                          <input
+                            type="email"
+                            value={form.email || ""}
+                            disabled
+                            className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/70 cursor-not-allowed"
+                          />
+                          <input
+                            type="tel"
+                            value={form.phone || ""}
+                            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                            placeholder={tUI("phone", lang)}
+                            className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
+                          />
+                          <select
+                            value={form.sex || ""}
+                            onChange={(e) => setForm({ ...form, sex: e.target.value as "male" | "female" })}
+                            className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
+                          >
+                            <option value="" className="bg-[#06131a]">
+                              -- {tUI("selectSex", lang)} --
+                            </option>
+                            <option value="male" className="bg-[#06131a]">{tUI("male", lang)}</option>
+                            <option value="female" className="bg-[#06131a]">{tUI("female", lang)}</option>
+                          </select>
+                          <input
+                            type="number"
+                            value={form.age || ""}
+                            onChange={(e) => setForm({ ...form, age: Number(e.target.value) })}
+                            placeholder={tUI("age", lang)}
+                            className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
+                          />
+                          <input
+                            type="number"
+                            value={form.height || ""}
+                            onChange={(e) => setForm({ ...form, height: Number(e.target.value) })}
+                            placeholder={tUI("height", lang)}
+                            className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
+                          />
+                          <input
+                            type="number"
+                            value={form.weight || ""}
+                            onChange={(e) => setForm({ ...form, weight: Number(e.target.value) })}
+                            placeholder={tUI("weight", lang)}
+                            className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
+                          />
+                          <select
+                            value={form.region || ""}
+                            onChange={(e) => setForm({ ...form, region: e.target.value })}
+                            className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
+                          >
+                            <option value="" className="bg-[#06131a]">
+                              -- {tUI("selectRegion", lang)} --
+                            </option>
+                            <option value="Europa" className="bg-[#06131a]">{tUI("regionEurope", lang)}</option>
+                            <option value="Ameryka Północna" className="bg-[#06131a]">{tUI("regionNorthAmerica", lang)}</option>
+                            <option value="Ameryka Południowa" className="bg-[#06131a]">{tUI("regionSouthAmerica", lang)}</option>
+                            <option value="Azja" className="bg-[#06131a]">{tUI("regionAsia", lang)}</option>
+                            <option value="Afryka" className="bg-[#06131a]">{tUI("regionAfrica", lang)}</option>
+                            <option value="Australia" className="bg-[#06131a]">{tUI("regionAustralia", lang)}</option>
+                          </select>
                         </div>
-                        <div className="flex items-center justify-between px-3 py-2 rounded-full text-xs text-white bg-emerald-600/80 border border-white/10">
-                          <span className="font-semibold">🧬 {tUI("dietModel", lang)}</span>
-                          <span className="pl-2 truncate">{tResolve(modelVal, lang)}</span>
-                        </div>
-                        <div className="flex items-center justify-between px-3 py-2 rounded-full text-xs text-white bg-indigo-600/80 border border-white/10">
-                          <span className="font-semibold">🌍 {tUI("cuisine", lang)}</span>
-                          <span className="pl-2 truncate">{tResolve(cuisineVal, lang)}</span>
-                        </div>
-                        <div className="flex items-center justify-between px-3 py-2 rounded-full text-xs text-white bg-amber-600/80 border border-white/10">
-                          <span className="font-semibold">{tUI("mealsPerDay", lang)}</span>
-                          <span className="pl-2">{safe(meals)}</span>
+                      )}
+                    </div>
+                  </PanelCard>
+                )}
+
+                {/* =========
+                    2) MEDICAL
+                   ========= */}
+                {selectedSection === "medical" && (
+                  <PanelCard>
+                    <MedicalForm
+                      key={JSON.stringify(initialMedicalData)}
+                      initialData={initialMedicalData}
+                      existingMedical={medicalData}
+                      onChange={handleMedicalChange}
+                      onUpdateMedical={(summary) => setMedicalData((prev: any) => ({ ...prev, summary }))}
+                      userId={form.user_id}
+                      lang={lang}
+                    />
+                  </PanelCard>
+                )}
+
+                {/* =========
+                    3) INTERVIEW
+                   ========= */}
+                {selectedSection === "interview" && (
+                  <PanelCard title={`🧠 ${tUI("interviewTitle", lang)}`}>
+                    <InterviewWizard
+                      key={JSON.stringify(initialInterviewData)}
+                      form={form as any}
+                      initialData={initialInterviewData}
+                      lang={lang}
+                      onFinish={saveInterviewData}
+                      onUpdateNarrative={(text) => setNarrativeText(text)}
+                    />
+                  </PanelCard>
+                )}
+
+                {/* =========
+                    4) RECOMMENDATION
+                   ========= */}
+                {selectedSection === "recommendation" && (
+                  <PanelCard>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="flex flex-col space-y-2">
+                        <label className="text-sm font-medium text-white/90">{tUI("doctorRecommendation", lang)}</label>
+                        <textarea
+                          rows={4}
+                          className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
+                          value={interviewData.recommendation || ""}
+                          onChange={(e) => setInterviewData({ ...interviewData, recommendation: e.target.value })}
+                        />
+                      </div>
+
+                      <div className="flex flex-col space-y-2">
+                        <label className="text-sm font-medium text-white/90">{tUI("mealsPerDay", lang)}</label>
+                        <select
+                          className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
+                          value={interviewData.mealsPerDay || ""}
+                          onChange={(e) => setInterviewData({ ...interviewData, mealsPerDay: parseInt(e.target.value, 10) })}
+                        >
+                          <option value="" className="bg-[#06131a]">{`-- ${tUI("selectOption", lang)} --`}</option>
+                          {[2, 3, 4, 5, 6].map((n) => (
+                            <option key={n} value={n} className="bg-[#06131a]">
+                              {n}
+                            </option>
+                          ))}
+                        </select>
+
+                        <div className="text-xs text-white/60">
+                          {tUI("suggested", lang)}:{" "}
+                          <span className="text-white/80">{getRecommendedMealsPerDay(form, interviewData)}</span>
                         </div>
                       </div>
                     </div>
-                  );
-                })()}
+                  </PanelCard>
+                )}
 
-                <div className="mb-3 text-xs text-white/70">
-                  <span className="font-semibold">{tUI("legend", lang)}:</span>
-                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
-                    <span>kcal = {tUI("calories", lang)}</span>
-                    <span>B = {tUI("protein", lang)} (g)</span>
-                    <span>T = {tUI("fat", lang)} (g)</span>
-                    <span>W = {tUI("carbs", lang)} (g)</span>
-                    <span>🌿 = {tUI("fiber", lang)} (g)</span>
-                    <span>🧂 = {tUI("sodium", lang)} (mg)</span>
-                    <span>🥔 = {tUI("potassium", lang)} (mg)</span>
-                    <span>🦴 = {tUI("calcium", lang)} (mg)</span>
-                    <span>🧬 = {tUI("magnesium", lang)} (mg)</span>
-                    <span>🩸 = {tUI("iron", lang)} (mg)</span>
-                    <span>🧪 = {tUI("zinc", lang)} (mg)</span>
-                    <span>☀️ = {tUI("vitaminD", lang)} (µg)</span>
-                    <span>🧠 = {tUI("vitaminB12", lang)} (µg)</span>
-                    <span>🍊 = {tUI("vitaminC", lang)} (mg)</span>
-                    <span>👁️ = {tUI("vitaminA", lang)} (µg)</span>
-                    <span>🧈 = {tUI("vitaminE", lang)} (mg)</span>
-                    <span>💉 = {tUI("vitaminK", lang)} (µg)</span>
+                {/* =========
+                    5) GOAL / MODEL / CUISINE
+                   ========= */}
+                {selectedSection === "goalModelCuisine" && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+                    <PanelCard className="h-full">
+                      <DietGoalForm onChange={(goal) => setInterviewData({ ...interviewData, goal })} lang={lang} />
+                    </PanelCard>
+                    <PanelCard className="h-full">
+                      <SelectModelForm onChange={(model) => setInterviewData({ ...interviewData, model })} lang={lang} />
+                    </PanelCard>
+                    <PanelCard className="h-full">
+                      <SelectCuisineForm onChange={(cuisine) => setInterviewData({ ...interviewData, cuisine })} lang={lang} />
+                    </PanelCard>
                   </div>
-                </div>
+                )}
 
-                <DietTable
-                  editableDiet={editableDiet || {}}
-                  setEditableDiet={setEditableDiet}
-                  setConfirmedDiet={(dietByDay: any) => {
-                    const asArray = (x: any): any[] =>
-                      Array.isArray(x)
-                        ? x
-                        : (x && typeof x === "object" ? Object.values(x) : []).filter((v) => v != null);
+                {/* =========
+                    6) CALCULATOR
+                   ========= */}
+                {selectedSection === "calculator" && (
+                  <PanelCard title={`🧮 ${tUI("patientInNumbers", lang)}`} className="h-full">
+                    <CalculationBlock
+                      form={form}
+                      interview={extractMappedInterview(interviewData)}
+                      lang={lang}
+                      onResult={handleCalculationResult}
+                    />
+                  </PanelCard>
+                )}
 
-                    const out: any[] = [];
-                    const pushMeal = (day: string, m: any) => out.push({ ...(m || {}), day });
-
-                    try {
-                      if (dietByDay && typeof dietByDay === "object" && !Array.isArray(dietByDay)) {
-                        for (const [day, meals] of Object.entries(dietByDay)) {
-                          for (const m of asArray(meals)) pushMeal(String(day), m);
-                        }
-                      } else if (Array.isArray(dietByDay)) {
-                        if (dietByDay.length && Array.isArray(dietByDay[0])) {
-                          for (const tuple of dietByDay as any[]) {
-                            const [day, meals] = tuple;
-                            for (const m of asArray(meals)) pushMeal(String(day), m);
-                          }
-                        } else if (
-                          dietByDay.length &&
-                          typeof dietByDay[0] === "object" &&
-                          dietByDay[0] !== null &&
-                          ("day" in (dietByDay[0] as any) || "meals" in (dietByDay[0] as any))
-                        ) {
-                          for (const item of dietByDay as any[]) {
-                            const day = (item as any).day ?? "";
-                            const meals = (item as any).meals ?? (item as any).items;
-                            for (const m of asArray(meals)) pushMeal(String(day), m);
-                          }
-                        } else {
-                          for (const m of dietByDay as any[]) pushMeal(String((m as any)?.day ?? ""), m);
-                        }
-                      }
-                    } catch (e) {
-                      console.warn("setConfirmedDiet normalize error:", e, dietByDay);
-                    }
-
-                    setConfirmedDiet(out);
-                    setDietApproved(false);
-                  }}
-                  isEditable={!dietApproved}
-                  lang={lang}
-                  notes={notes}
-                  setNotes={setNotes}
-                />
-              </PanelCard>
-            </div>
-
-            {/* Recipes */}
-            <div ref={sectionRefs.recipes} className="scroll-mt-28">
-              {Object.keys(recipes).length > 0 && (
-                <PanelCard title={`🍽️ ${tUI("recipesTitle", lang)}`}>
-                  {Object.entries(recipes).map(([day, meals]) => (
-                    <div key={day} className="mb-6">
-                      <h3 className="text-lg font-semibold mb-3">{day}</h3>
-                      {Object.entries(meals).map(([mealName, r]) => (
-                        <div key={mealName} className="rounded-2xl border border-white/10 bg-white/5 p-4 mb-3">
-                          <div className="font-medium">
-                            {(r as any).meal_label || tUI(mealName as any, lang) || mealName}: {r.dish}
-                          </div>
-
-                          {!!r.time && (
-                            <div className="text-sm text-white/70 mt-1">
-                              {tUI("time", lang)}: {r.time}
-                            </div>
+                {/* =========
+                    7) ACTIONS
+                   ========= */}
+                {selectedSection === "actions" && (
+                  <PanelCard>
+                    <div className="flex flex-wrap items-stretch gap-3 sm:gap-4 w-full">
+                      <div className="flex-1 min-w-[220px]">
+                        <button
+                          type="button"
+                          onClick={handleSubmit}
+                          className="w-full h-full rounded-xl bg-emerald-600 hover:bg-emerald-700 px-4 py-3 font-medium disabled:opacity-50"
+                          disabled={isGenerating}
+                        >
+                          {isGenerating ? (
+                            <span className="flex items-center gap-2">
+                              <span className="animate-spin">⚙️</span>
+                              {tUI("writingDiet", lang)}
+                            </span>
+                          ) : (
+                            <>⚡ {tUI("generate", lang)}</>
                           )}
+                        </button>
+                      </div>
 
-                          {!!r.description && <div className="text-sm italic text-white/75 mt-1">{r.description}</div>}
+                      {editableDiet && !dietApproved && (
+                        <div className="flex-1 min-w-[220px]">
+                          <button
+                            type="button"
+                            className="w-full h-full rounded-xl bg-purple-700 hover:bg-purple-800 px-4 py-3 font-medium disabled:opacity-50"
+                            onClick={handleApproveDiet}
+                            disabled={isGenerating}
+                          >
+                            ✅ {tUI("confirmDiet", lang)}
+                          </button>
+                        </div>
+                      )}
 
-                          <div className="mt-3 text-sm">
-                            <div className="font-semibold">{tUI("ingredients", lang)}:</div>
-                            <ul className="list-disc ml-5 text-white/85">
-                              {(r.ingredients || []).map((ing, idx) => (
-                                <li key={idx}>
-                                  {ing.product} — {ing.weight ?? "–"} {ing.unit}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
+                      {editableDiet && dietApproved && (
+                        <div className="flex-1 min-w-[220px]">
+                          <button
+                            type="button"
+                            className="w-full h-full rounded-xl bg-indigo-600 hover:bg-indigo-700 px-4 py-3 font-medium disabled:opacity-50"
+                            onClick={handleSendDietToPatient}
+                            disabled={isGenerating || !form?.email}
+                          >
+                            📤 {tUI("sendDietToPatient", lang)}
+                          </button>
+                        </div>
+                      )}
 
-                          <div className="mt-3 text-sm">
-                            <div className="font-semibold">{tUI("steps", lang)}:</div>
-                            <ol className="list-decimal ml-5 text-white/85">
-                              {(r.steps || []).map((s, idx) => (
-                                <li key={idx}>{s}</li>
-                              ))}
-                            </ol>
+                      <div className="flex-1 min-w-[220px]">
+                        <button
+                          type="button"
+                          className="w-full h-full rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-3 font-medium disabled:opacity-50"
+                          disabled={isGenerating || !confirmedDiet?.length || !dietApproved}
+                          onClick={async () => {
+                            try {
+                              setIsGenerating(true);
+                              const { generateDietPdf } = await import("@/utils/generateDietPdf");
+                              await generateDietPdf(
+                                form,
+                                bmi,
+                                confirmedDiet!,
+                                dietApproved,
+                                notes,
+                                lang,
+                                interviewData,
+                                {
+                                  bmi: interviewData.bmi,
+                                  ppm: interviewData.ppm,
+                                  cpm: interviewData.cpm,
+                                  pal: interviewData.pal,
+                                  kcalMaintain: interviewData.kcalMaintain,
+                                  kcalReduce: interviewData.kcalReduce,
+                                  kcalGain: interviewData.kcalGain,
+                                  nmcBroca: interviewData.nmcBroca,
+                                  nmcLorentz: interviewData.nmcLorentz,
+                                },
+                                "download",
+                                narrativeText,
+                                toPdfRecipes(recipes)
+                              );
+                            } catch (e) {
+                              alert("❌ Błąd przy generowaniu PDF");
+                              console.error(e);
+                            } finally {
+                              setIsGenerating(false);
+                            }
+                          }}
+                        >
+                          📄 {tUI("pdf", lang)}
+                        </button>
+                      </div>
+
+                      <div className="flex-1 min-w-[220px]">
+                        <button
+                          type="button"
+                          onClick={handleGenerateRecipes}
+                          className="w-full h-full rounded-xl bg-amber-600 hover:bg-amber-700 px-4 py-3 font-medium disabled:opacity-50"
+                          disabled={isGenerating || recipesLoading || !mealPlan || Object.keys(mealPlan).length === 0}
+                        >
+                          {recipesLoading ? "⏳ " : "🍽️ "}
+                          {tUI("generateRecipes", lang)}
+                        </button>
+                      </div>
+
+                      <div className="flex-1 min-w-[220px]">
+                        <button
+                          type="button"
+                          onClick={handleGenerateNarrative}
+                          className="w-full h-full rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 px-4 py-3 font-medium disabled:opacity-50"
+                          disabled={isGenerating}
+                        >
+                          📝 {tUI("generateNarrative", lang)}
+                        </button>
+                      </div>
+                    </div>
+
+                    {isGenerating && (
+                      <div className="text-sm text-white/60 italic mt-4 animate-pulse">
+                        ⏳ {tUI("writingDiet", lang)}… {streamingText.length > 20 && `(${tUI("generatingWait", lang)})`}
+                      </div>
+                    )}
+                  </PanelCard>
+                )}
+
+                {/* =========
+                    8) DIET TABLE
+                   ========= */}
+                {selectedSection === "diet" && (
+                  <PanelCard>
+                    {/* chips + legenda + tabela jak u Ciebie */}
+                    {(() => {
+                      const goalVal = interviewData?.goal ?? initialInterviewData?.goal ?? (form as any)?.goal ?? "";
+                      const modelVal = interviewData?.model ?? initialInterviewData?.model ?? (form as any)?.model ?? "";
+                      const cuisineVal = interviewData?.cuisine ?? initialInterviewData?.cuisine ?? (form as any)?.cuisine ?? "";
+                      const meals =
+                        interviewData?.mealsPerDay ??
+                        initialInterviewData?.mealsPerDay ??
+                        getRecommendedMealsPerDay(form, interviewData);
+
+                      const safe = (v: any) => (v === null || v === undefined || v === "" ? "—" : v);
+
+                      return (
+                        <div className="mb-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs sm:text-sm">
+                            <div className="flex items-center justify-between px-3 py-2 rounded-full text-xs text-white bg-pink-600/80 border border-white/10">
+                              <span className="font-semibold">🎯 {tUI("goal", lang)}</span>
+                              <span className="pl-2 truncate">{tResolve(goalVal, lang)}</span>
+                            </div>
+                            <div className="flex items-center justify-between px-3 py-2 rounded-full text-xs text-white bg-emerald-600/80 border border-white/10">
+                              <span className="font-semibold">🧬 {tUI("dietModel", lang)}</span>
+                              <span className="pl-2 truncate">{tResolve(modelVal, lang)}</span>
+                            </div>
+                            <div className="flex items-center justify-between px-3 py-2 rounded-full text-xs text-white bg-indigo-600/80 border border-white/10">
+                              <span className="font-semibold">🌍 {tUI("cuisine", lang)}</span>
+                              <span className="pl-2 truncate">{tResolve(cuisineVal, lang)}</span>
+                            </div>
+                            <div className="flex items-center justify-between px-3 py-2 rounded-full text-xs text-white bg-amber-600/80 border border-white/10">
+                              <span className="font-semibold">{tUI("mealsPerDay", lang)}</span>
+                              <span className="pl-2">{safe(meals)}</span>
+                            </div>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  ))}
-                </PanelCard>
-              )}
-            </div>
+                      );
+                    })()}
 
-            {/* ConfirmationModal */}
-            {showConfirmModal && (
-              <ConfirmationModal
-                open={showConfirmModal}
-                missingFields={missingFields}
-                onCancel={() => setShowConfirmModal(false)}
-                onConfirm={() => {
-                  setShowConfirmModal(false);
-                  // submitPending?.();
-                }}
-              />
-            )}
+                    <div className="mb-3 text-xs text-white/70">
+                      <span className="font-semibold">{tUI("legend", lang)}:</span>
+                      <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
+                        <span>kcal = {tUI("calories", lang)}</span>
+                        <span>B = {tUI("protein", lang)} (g)</span>
+                        <span>T = {tUI("fat", lang)} (g)</span>
+                        <span>W = {tUI("carbs", lang)} (g)</span>
+                        <span>🌿 = {tUI("fiber", lang)} (g)</span>
+                        <span>🧂 = {tUI("sodium", lang)} (mg)</span>
+                        <span>🥔 = {tUI("potassium", lang)} (mg)</span>
+                        <span>🦴 = {tUI("calcium", lang)} (mg)</span>
+                        <span>🧬 = {tUI("magnesium", lang)} (mg)</span>
+                        <span>🩸 = {tUI("iron", lang)} (mg)</span>
+                        <span>🧪 = {tUI("zinc", lang)} (mg)</span>
+                        <span>☀️ = {tUI("vitaminD", lang)} (µg)</span>
+                        <span>🧠 = {tUI("vitaminB12", lang)} (µg)</span>
+                        <span>🍊 = {tUI("vitaminC", lang)} (mg)</span>
+                        <span>👁️ = {tUI("vitaminA", lang)} (µg)</span>
+                        <span>🧈 = {tUI("vitaminE", lang)} (mg)</span>
+                        <span>💉 = {tUI("vitaminK", lang)} (µg)</span>
+                      </div>
+                    </div>
+
+                    <DietTable
+                      editableDiet={editableDiet || {}}
+                      setEditableDiet={setEditableDiet}
+                      setConfirmedDiet={(dietByDay: any) => {
+                        const asArray = (x: any): any[] =>
+                          Array.isArray(x)
+                            ? x
+                            : (x && typeof x === "object" ? Object.values(x) : []).filter((v) => v != null);
+
+                        const out: any[] = [];
+                        const pushMeal = (day: string, m: any) => out.push({ ...(m || {}), day });
+
+                        try {
+                          if (dietByDay && typeof dietByDay === "object" && !Array.isArray(dietByDay)) {
+                            for (const [day, meals] of Object.entries(dietByDay)) {
+                              for (const m of asArray(meals)) pushMeal(String(day), m);
+                            }
+                          } else if (Array.isArray(dietByDay)) {
+                            if (dietByDay.length && Array.isArray(dietByDay[0])) {
+                              for (const tuple of dietByDay as any[]) {
+                                const [day, meals] = tuple;
+                                for (const m of asArray(meals)) pushMeal(String(day), m);
+                              }
+                            } else if (
+                              dietByDay.length &&
+                              typeof dietByDay[0] === "object" &&
+                              dietByDay[0] !== null &&
+                              ("day" in (dietByDay[0] as any) || "meals" in (dietByDay[0] as any))
+                            ) {
+                              for (const item of dietByDay as any[]) {
+                                const day = (item as any).day ?? "";
+                                const meals = (item as any).meals ?? (item as any).items;
+                                for (const m of asArray(meals)) pushMeal(String(day), m);
+                              }
+                            } else {
+                              for (const m of dietByDay as any[]) pushMeal(String((m as any)?.day ?? ""), m);
+                            }
+                          }
+                        } catch (e) {
+                          console.warn("setConfirmedDiet normalize error:", e, dietByDay);
+                        }
+
+                        setConfirmedDiet(out);
+                        setDietApproved(false);
+                      }}
+                      isEditable={!dietApproved}
+                      lang={lang}
+                      notes={notes}
+                      setNotes={setNotes}
+                    />
+                  </PanelCard>
+                )}
+
+                {/* =========
+                    9) RECIPES
+                   ========= */}
+                {selectedSection === "recipes" && (
+                  <div>
+                    {Object.keys(recipes).length > 0 ? (
+                      <PanelCard title={`🍽️ ${tUI("recipesTitle", lang)}`}>
+                        {Object.entries(recipes).map(([day, meals]) => (
+                          <div key={day} className="mb-6">
+                            <h3 className="text-lg font-semibold mb-3">{day}</h3>
+                            {Object.entries(meals).map(([mealName, r]) => (
+                              <div key={mealName} className="rounded-2xl border border-white/10 bg-white/5 p-4 mb-3">
+                                <div className="font-medium">
+                                  {(r as any).meal_label || tUI(mealName as any, lang) || mealName}: {r.dish}
+                                </div>
+
+                                {!!r.time && (
+                                  <div className="text-sm text-white/70 mt-1">
+                                    {tUI("time", lang)}: {r.time}
+                                  </div>
+                                )}
+
+                                {!!r.description && <div className="text-sm italic text-white/75 mt-1">{r.description}</div>}
+
+                                <div className="mt-3 text-sm">
+                                  <div className="font-semibold">{tUI("ingredients", lang)}:</div>
+                                  <ul className="list-disc ml-5 text-white/85">
+                                    {(r.ingredients || []).map((ing, idx) => (
+                                      <li key={idx}>
+                                        {ing.product} — {ing.weight ?? "–"} {ing.unit}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+
+                                <div className="mt-3 text-sm">
+                                  <div className="font-semibold">{tUI("steps", lang)}:</div>
+                                  <ol className="list-decimal ml-5 text-white/85">
+                                    {(r.steps || []).map((s, idx) => (
+                                      <li key={idx}>{s}</li>
+                                    ))}
+                                  </ol>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ))}
+                      </PanelCard>
+                    ) : (
+                      <PanelCard>
+                        <div className="text-sm text-white/70">{tUI("dietGenerationFailed", lang)}</div>
+                      </PanelCard>
+                    )}
+                  </div>
+                )}
+
+                {/* ConfirmationModal */}
+                {showConfirmModal && (
+                  <ConfirmationModal
+                    open={showConfirmModal}
+                    missingFields={missingFields}
+                    onCancel={() => setShowConfirmModal(false)}
+                    onConfirm={() => {
+                      setShowConfirmModal(false);
+                      // submitPending?.();
+                    }}
+                  />
+                )}
+              </div>
+            </div>
           </div>
         </section>
-
-        {/* RIGHT (oddech jak w pacjencie; możesz tu dodać widgety później) */}
-       <aside className="hidden lg:block lg:sticky lg:top-5">
-          <div className="rounded-[28px] border border-white/10 bg-white/4 backdrop-blur-2xl shadow-[0_30px_90px_rgba(0,0,0,.25)] p-4">
-            <div className="text-xs tracking-widest text-white/50 uppercase">
-              {tUI("panelStatus", lang)}
-            </div>
-
-            <div className="mt-3 text-sm text-white/80">
-              {form?.user_id ? (
-                <>
-                  <div className="font-medium text-white/90">✅ {tUI("patientSelected", lang)}</div>
-                  <div className="text-xs text-white/60 mt-1 truncate">
-                    {form.email || form.user_id}
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="font-medium text-white/90">⚠️ {tUI("noPatientSelected", lang)}</div>
-                  <div className="text-xs text-white/60 mt-1">
-                    {tUI("selectPatientHint", lang)}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </aside>
       </div>
     </div>
   </main>
