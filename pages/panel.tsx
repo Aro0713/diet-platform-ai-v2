@@ -852,7 +852,7 @@ function Panel() {
           </button>
 
           <div className="mt-4 flex items-center justify-end gap-2 text-xs text-white/60">
-            <span>{tUI("language", lang) ?? "Language"}</span>
+            <span>{tUI("selectLanguage", lang) ?? "Language"}</span>
             <select
               value={lang}
               onChange={(e) => {
@@ -878,24 +878,26 @@ function Panel() {
     );
   }
 
-  // -----------------------------
-  // Render
-  // -----------------------------
-  const sidebarItems = useMemo(
-    () =>
-      [
-        { k: "patient", icon: "👤", label: tUI("patientData", lang) },
-        { k: "medical", icon: "🧾", label: tUI("medicalData", lang) },
-        { k: "interview", icon: "🧠", label: tUI("interviewTitle", lang) },
-        { k: "recommendation", icon: "✍️", label: tUI("doctorRecommendation", lang) },
-        { k: "goalModelCuisine", icon: "🎯", label: `${tUI("goal", lang)} / ${tUI("dietModel", lang)} / ${tUI("cuisine", lang)}` },
-        { k: "calculator", icon: "🧮", label: tUI("patientInNumbers", lang) },
-        { k: "actions", icon: "⚡", label: tUI("actions", lang) ?? "Akcje" },
-        { k: "diet", icon: "📅", label: tUI("dietPlan", lang) ?? "Dieta" },
-        { k: "recipes", icon: "🍽️", label: tUI("recipesTitle", lang) },
-      ] as Array<{ k: SectionKey; icon: string; label: string }>,
-    [lang]
-  );
+  // Render (hooks muszą być ZAWSZE wywołane)
+const sidebarItems = useMemo(
+  () =>
+    [
+      { k: "patient", icon: "👤", label: tUI("patientData", lang) },
+      { k: "medical", icon: "🧾", label: tUI("medicalData", lang) },
+      { k: "interview", icon: "🧠", label: tUI("interviewTitle", lang) },
+      { k: "recommendation", icon: "✍️", label: tUI("doctorRecommendation", lang) },
+      {
+        k: "goalModelCuisine",
+        icon: "🎯",
+        label: `${tUI("goal", lang)} / ${tUI("dietModel", lang)} / ${tUI("cuisine", lang)}`,
+      },
+      { k: "calculator", icon: "🧮", label: tUI("patientInNumbers", lang) },
+      { k: "actions", icon: "⚡", label: (tUI("actions" as any, lang) as any) ?? "Akcje" },
+      { k: "diet", icon: "📅", label: (tUI("dietPlan" as any, lang) as any) ?? "Dieta" },
+      { k: "recipes", icon: "🍽️", label: tUI("recipesTitle", lang) },
+    ] as Array<{ k: SectionKey; icon: string; label: string }>,
+  [lang]
+);
 
   return (
     <main
@@ -962,7 +964,7 @@ function Panel() {
 
           {/* Center: language only */}
           <div className="hidden md:flex items-center gap-2">
-            <span className="text-xs text-white/60">{tUI("language", lang) ?? "Language"}</span>
+            <span className="text-xs text-white/60">{tUI("selectLanguage", lang) ?? "Language"}</span>
             <select
               value={lang}
               onChange={(e) => {
@@ -1543,7 +1545,7 @@ function Panel() {
 
               <div className="mt-4 pt-4 border-t border-white/10 text-xs text-white/60">
                 <div className="flex items-center justify-between">
-                  <span>{tUI("language", lang) ?? "Language"}</span>
+                  <span>{tUI("selectLanguage", lang) ?? "Language"}</span>
                   <select
                     value={lang}
                     onChange={(e) => {
