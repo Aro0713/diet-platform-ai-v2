@@ -688,95 +688,32 @@ export default function Home() {
       </nav>
 
             {/* HERO */}
-      <section className="relative w-full">
+            <section className="relative w-full">
         <div className="relative">
-          {/* Hero container wrapper (pozycjonowanie logo obok panelu) */}
-          <div className="relative overflow-visible mx-auto max-w-6xl px-4 sm:px-6 pt-6 md:pt-10 lg:pr-24">
+          {/* Hero container wrapper (logo poza kontenerami jak na szkicu) */}
+          <div className="relative overflow-visible mx-auto max-w-6xl px-4 sm:px-6 pt-6 md:pt-10 lg:pr-64">
 
-            {/* Premium floating logo badge — nachodzi narożnik panelu */}
-            <div className="absolute -right-40 -top-14 z-50 hidden lg:block pointer-events-none">
-              <div className="group relative h-48 w-48">
-
-                {/* badge */}
-                <div className="relative h-48 w-48 rounded-[34px] overflow-hidden">
-                  {/* outer ring */}
-                   <div aria-hidden className="absolute inset-0 rounded-[44px] ring-1 ring-white/30" />
-                   <div aria-hidden className="absolute inset-0 rounded-[44px] ring-1 ring-black/30" />
-         
-                  {/* glass fill (crisp) */}
-                  <div className="absolute inset-0 rounded-[44px] bg-white/8 backdrop-blur-lg border border-white/25 shadow-[0_20px_70px_rgba(0,0,0,.55)]" />
-
-                  {/* specular + sheen */}
-                        <div aria-hidden className="absolute -top-18 -left-18 h-44 w-44 rounded-full bg-white/12 blur-xl opacity-45" />
-                        <div
-                    aria-hidden
-                    className="absolute inset-0 opacity-35"
-                    style={{
-                      background:
-                        "linear-gradient(135deg, rgba(255,255,255,.22) 0%, rgba(255,255,255,.06) 38%, rgba(0,0,0,.14) 100%)",
-                    }}
-                  />
-
-                  {/* subtle noise */}
-                  <div
-                    aria-hidden
-                    className="absolute inset-0 opacity-[0.03] mix-blend-overlay"
-                    style={{
-                      backgroundImage:
-                        "radial-gradient(rgba(255,255,255,.35) 1px, transparent 1px)",
-                      backgroundSize: "18px 18px",
-                    }}
-                  />
-
-                  <Image
-                    src="/logo-dietcare.png"
-                    alt={tUI("landing.logoAlt")}
-                    fill
-                    className="object-contain p-8 contrast-150 saturate-120 brightness-110 drop-shadow-[0_12px_35px_rgba(0,0,0,.55)]"
-                    priority
-                  />
-                </div>
-
-                {/* tiny anchor shadow to make it feel attached to panel */}
-                <div
-                  aria-hidden
-                  className="absolute -left-10 top-12 h-20 w-24 blur-2xl opacity-35"
-                  style={{
-                    background: "radial-gradient(closest-side, rgba(0,0,0,.55), transparent 70%)",
-                  }}
+            {/* LOGO — poza kontenerami (bez badge, bez szkła, bez poświaty) */}
+            <div className="absolute right-0 top-6 z-40 hidden lg:block pointer-events-none">
+              <div className="relative h-52 w-52">
+                <Image
+                  src="/logo-dietcare.png"
+                  alt={tUI("landing.logoAlt")}
+                  fill
+                  className="object-contain drop-shadow-[0_14px_40px_rgba(0,0,0,.55)]"
+                  priority
                 />
               </div>
             </div>
-              <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/6 backdrop-blur-2xl shadow-[0_30px_90px_rgba(0,0,0,.45)] ios-no-backdrop ios-glass-bg">
-                {/* Corner-attached logo (premium, not a stamp) */}
-                <div className="absolute -right-6 -top-6 z-40 hidden lg:block pointer-events-none">
-                  <div className="relative h-28 w-28 rounded-[28px] overflow-hidden border border-white/18 bg-white/10 backdrop-blur-xl shadow-[0_30px_90px_rgba(0,0,0,.55)] ring-1 ring-white/12">
-                    {/* specular highlight */}
-                    <div aria-hidden className="absolute -top-10 -left-10 h-24 w-24 rounded-full bg-white/16 blur-2xl opacity-70" />
-                    {/* subtle diagonal sheen */}
-                    <div
-                      aria-hidden
-                      className="absolute inset-0 opacity-25"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,.05) 40%, rgba(0,0,0,.12) 100%)",
-                      }}
-                    />
-                    <Image
-                      src="/logo-dietcare.png"
-                      alt={tUI("landing.logoAlt")}
-                      fill
-                      className="object-contain p-6 contrast-125 saturate-110"
-                      priority
-                    />
-                  </div>
-                </div>
+
+            {/* Hero container (glass panel) */}
+            <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/6 backdrop-blur-2xl shadow-[0_30px_90px_rgba(0,0,0,.45)] ios-no-backdrop ios-glass-bg">
               {/* inner highlight */}
               <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_15%_0%,rgba(255,255,255,.10),transparent_55%)] opacity-70" />
               <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,.08),rgba(0,0,0,.10))] opacity-50" />
 
               <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-8 p-6 sm:p-8 md:p-10">
-              {/* Left: Copy + CTA */}
+                {/* Left: Copy + CTA */}
                 <div className="flex flex-col gap-6">
                   <div className="relative">
                     <p className="text-base sm:text-lg md:text-xl font-semibold tracking-tight leading-[1.6] text-white/95">
@@ -833,8 +770,8 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Right: “glass preview” panel with embedded logo watermark + fiber feel */}
-                  <div className="relative rounded-3xl border border-white/10 bg-white/7 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,.35)] overflow-hidden ios-no-backdrop ios-glass-bg">
+                {/* Right: “glass preview” panel */}
+                <div className="relative rounded-3xl border border-white/10 bg-white/7 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,.35)] overflow-hidden ios-no-backdrop ios-glass-bg">
                   <div className="absolute inset-0 bg-[radial-gradient(140%_90%_at_10%_0%,rgba(255,255,255,.10),transparent_50%)]" />
                   <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,.05),rgba(0,0,0,.12))] opacity-70" />
 
