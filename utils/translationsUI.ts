@@ -9283,4 +9283,31 @@ dietWorkflow: {
   hi: "आहार निर्माण",
   he: "יצירת תפריט"
 },
+suggested: {
+  pl: "Sugerowane",
+  en: "Suggested",
+  de: "Empfohlen",
+  fr: "Suggéré",
+  es: "Sugerido",
+  ua: "Рекомендовано",
+  ru: "Рекомендуется",
+  zh: "建议值",
+  ar: "مقترح",
+  hi: "सुझावित",
+  he: "מומלץ"
+},
+
+generateNarrative: {
+  pl: "Generuj opis wywiadu",
+  en: "Generate interview summary",
+  de: "Interviewbeschreibung generieren",
+  fr: "Générer le résumé de l’entretien",
+  es: "Generar resumen de la entrevista",
+  ua: "Згенерувати опис інтерв’ю",
+  ru: "Сгенерировать описание интервью",
+  zh: "生成访谈摘要",
+  ar: "إنشاء ملخص المقابلة",
+  hi: "साक्षात्कार सारांश बनाएँ",
+  he: "צור סיכום ראיון"
+},
 };

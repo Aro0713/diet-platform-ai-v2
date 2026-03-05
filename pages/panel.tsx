@@ -971,12 +971,7 @@ const sidebarItems = useMemo(
               </div>
             </div>
 
-            {/* Language */}
-            <div className="mt-4 rounded-3xl border border-white/10 bg-white/7 backdrop-blur-xl p-4">
-              <div className="text-xs uppercase tracking-wide text-white/60 mb-2">
-                {tUI("nav.languageLabel", lang)}
-              </div>
-
+            <div className="relative">
               <select
                 value={lang}
                 onChange={(e) => {
@@ -988,14 +983,18 @@ const sidebarItems = useMemo(
                     /* ignore */
                   }
                 }}
-                className="w-full rounded-2xl border border-white/10 bg-white/8 hover:bg-white/12 backdrop-blur-xl px-4 py-3 text-sm text-white outline-none transition"
+                className="w-full appearance-none rounded-2xl border border-white/10 bg-white/10 hover:bg-white/15 backdrop-blur-xl px-4 pr-12 py-3 text-sm text-white/90 outline-none transition"
               >
                 {(["pl", "en", "de", "fr", "es", "ua", "ru", "zh", "ar", "hi", "he"] as LangKey[]).map((k) => (
-                  <option key={k} value={k} className="bg-[#06131a]">
+                  <option key={k} value={k} className="bg-[#06131a] text-white">
                     {k.toUpperCase()}
                   </option>
                 ))}
               </select>
+
+              <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-white/60">
+                ▾
+              </span>
             </div>
 
             {/* Navigation: klik = pokazuje sekcję w workspace */}
