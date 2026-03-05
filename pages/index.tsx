@@ -593,9 +593,25 @@ export default function Home() {
       </Head>
 
       <style jsx global>{`
-        html, body {
+        /* iOS Safari: backdrop-filter + sticky scroll => delayed repaints ("kontenery doczytują się") */
+          @supports (-webkit-touch-callout: none) {
+            .ios-no-backdrop {
+              -webkit-backdrop-filter: none !important;
+              backdrop-filter: none !important;
+            }
+            .ios-glass-bg {
+              background: rgba(255,255,255,0.08) !important; /* szkło bez blur */
+              border-color: rgba(255,255,255,0.14) !important;
+            }
+          }
+          html, body {
             background: #06131a;
             height: 100%;
+          }
+            @supports (-webkit-touch-callout: none) {
+            nav.dcp-ios-no-sticky {
+              position: static !important;
+            }
           }
         @keyframes dcpPediatricGlow {
           0% {
@@ -640,9 +656,9 @@ export default function Home() {
       </div>
 
       {/* NAV */}
-      <nav className="sticky top-0 z-50 w-full">
+      <nav className="sticky top-0 z-50 w-full dcp-ios-no-sticky">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <div className="mt-3 mb-2 rounded-2xl border border-white/10 bg-white/8 backdrop-blur-xl shadow-[0_18px_60px_rgba(0,0,0,.35)]">
+          <div className="mt-3 mb-2 rounded-2xl border border-white/10 bg-white/8 backdrop-blur-xl shadow-[0_18px_60px_rgba(0,0,0,.35)] ios-no-backdrop ios-glass-bg">
             <div className="flex items-center justify-between px-3 py-2 md:px-4">
               <div className="flex items-center gap-2">
                 <label htmlFor="language-select" className="sr-only">
@@ -731,8 +747,30 @@ export default function Home() {
                 />
               </div>
             </div>
-
-            <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/6 backdrop-blur-2xl shadow-[0_30px_90px_rgba(0,0,0,.45)]">
+              <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/6 backdrop-blur-2xl shadow-[0_30px_90px_rgba(0,0,0,.45)] ios-no-backdrop ios-glass-bg">
+                {/* Corner-attached logo (premium, not a stamp) */}
+                <div className="absolute -right-6 -top-6 z-40 hidden lg:block pointer-events-none">
+                  <div className="relative h-28 w-28 rounded-[28px] overflow-hidden border border-white/18 bg-white/10 backdrop-blur-xl shadow-[0_30px_90px_rgba(0,0,0,.55)] ring-1 ring-white/12">
+                    {/* specular highlight */}
+                    <div aria-hidden className="absolute -top-10 -left-10 h-24 w-24 rounded-full bg-white/16 blur-2xl opacity-70" />
+                    {/* subtle diagonal sheen */}
+                    <div
+                      aria-hidden
+                      className="absolute inset-0 opacity-25"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,.05) 40%, rgba(0,0,0,.12) 100%)",
+                      }}
+                    />
+                    <Image
+                      src="/logo-dietcare.png"
+                      alt={tUI("landing.logoAlt")}
+                      fill
+                      className="object-contain p-6 contrast-125 saturate-110"
+                      priority
+                    />
+                  </div>
+                </div>
               {/* inner highlight */}
               <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_15%_0%,rgba(255,255,255,.10),transparent_55%)] opacity-70" />
               <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,.08),rgba(0,0,0,.10))] opacity-50" />
@@ -796,7 +834,7 @@ export default function Home() {
                 </div>
 
                 {/* Right: “glass preview” panel with embedded logo watermark + fiber feel */}
-                <div className="relative rounded-3xl border border-white/10 bg-white/7 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,.35)] overflow-hidden">
+                  <div className="relative rounded-3xl border border-white/10 bg-white/7 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,.35)] overflow-hidden ios-no-backdrop ios-glass-bg">
                   <div className="absolute inset-0 bg-[radial-gradient(140%_90%_at_10%_0%,rgba(255,255,255,.10),transparent_50%)]" />
                   <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,.05),rgba(0,0,0,.12))] opacity-70" />
 
