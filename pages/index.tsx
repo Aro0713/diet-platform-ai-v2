@@ -699,7 +699,7 @@ export default function Home() {
 
       {/* NAV */}
       <nav className="sticky top-0 z-50 w-full dcp-ios-no-sticky">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="mx-auto max-w-6xl px-5">
           <div className="mt-3 mb-2 rounded-2xl border border-white/10 bg-white/8 backdrop-blur-xl shadow-[0_18px_60px_rgba(0,0,0,.35)] ios-no-backdrop ios-glass-bg">
             <div className="flex items-center justify-between px-3 py-2 md:px-4">
               <div className="flex items-center gap-2">
@@ -733,7 +733,7 @@ export default function Home() {
             <section className="relative w-full">
         <div className="relative">
           {/* Hero container wrapper (logo poza kontenerami jak na szkicu) */}
-          <div className="relative overflow-visible mx-auto max-w-6xl px-5 pt-6 md:pt-10 lg:pr-64">
+          <div className="relative overflow-visible mx-auto max-w-6xl px-5 pt-6 md:pt-10">
 
             {/* Hero container (glass panel) */}
             <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/6 backdrop-blur-2xl shadow-[0_30px_90px_rgba(0,0,0,.45)] ios-no-backdrop ios-glass-bg">
