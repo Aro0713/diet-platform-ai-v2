@@ -12,6 +12,16 @@ const FOOTER = {
   youtube: "https://www.youtube.com/@DietCarePlatform",
   adminName: "ALS sp. z o.o.",
 };
+const [scrolled, setScrolled] = useState(false);
+
+useEffect(() => {
+  const onScroll = () => {
+    setScrolled(window.scrollY > 40);
+  };
+
+  window.addEventListener("scroll", onScroll);
+  return () => window.removeEventListener("scroll", onScroll);
+}, []);
 
 // ────────────────────────────────────────────────────────────────────────────
 // PRICING — market-aware (PL → PLN, EU → EUR, OTHER → USD)
@@ -583,6 +593,22 @@ export default function Home() {
 
   return (
     <main className="relative min-h-[100dvh] text-white transition-all duration-300 bg-[#06131a]">
+            {/* Global logo – prawy górny róg strony */}
+      <div
+        className={`absolute top-28 right-10 z-40 hidden lg:block pointer-events-none transition-all duration-500 ${
+          scrolled ? "scale-75 opacity-90" : "scale-100"
+        }`}
+      >
+        <div className="relative h-44 w-44">
+          <Image
+            src="/logo-dietcare.png"
+            alt={tUI("landing.logoAlt")}
+            fill
+            className="object-contain drop-shadow-[0_20px_60px_rgba(0,0,0,.65)]"
+            priority
+          />
+        </div>
+      </div>
 
       <Head>
         <title>{tUI("app.title")}</title>
@@ -593,6 +619,18 @@ export default function Home() {
       </Head>
 
       <style jsx global>{`
+                /* subtle gradient mask for logo readability */
+          .logo-mask {
+            position: absolute;
+            inset: -60px;
+            background: radial-gradient(
+              circle at center,
+              rgba(6,19,26,0) 0%,
+              rgba(6,19,26,0.35) 70%,
+              rgba(6,19,26,0.65) 100%
+            );
+            z-index: -1;
+          }
         /* iOS Safari: backdrop-filter + sticky scroll => delayed repaints ("kontenery doczytują się") */
           @supports (-webkit-touch-callout: none) {
             .ios-no-backdrop {
@@ -692,19 +730,6 @@ export default function Home() {
         <div className="relative">
           {/* Hero container wrapper (logo poza kontenerami jak na szkicu) */}
           <div className="relative overflow-visible mx-auto max-w-6xl px-4 sm:px-6 pt-6 md:pt-10 lg:pr-64">
-
-            {/* LOGO — poza kontenerami (bez badge, bez szkła, bez poświaty) */}
-            <div className="absolute right-0 top-6 z-40 hidden lg:block pointer-events-none">
-              <div className="relative h-52 w-52">
-                <Image
-                  src="/logo-dietcare.png"
-                  alt={tUI("landing.logoAlt")}
-                  fill
-                  className="object-contain drop-shadow-[0_14px_40px_rgba(0,0,0,.55)]"
-                  priority
-                />
-              </div>
-            </div>
 
             {/* Hero container (glass panel) */}
             <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/6 backdrop-blur-2xl shadow-[0_30px_90px_rgba(0,0,0,.45)] ios-no-backdrop ios-glass-bg">
