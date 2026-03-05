@@ -826,6 +826,29 @@ function Panel() {
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+    // -----------------------------
+  // Sidebar items (MUSI być przed każdym early-return!)
+  // -----------------------------
+  const sidebarItems = useMemo(
+    () =>
+      [
+        { k: "patient", icon: "👤", label: tUI("patientData", lang) },
+        { k: "medical", icon: "🧾", label: tUI("medicalData", lang) },
+        { k: "interview", icon: "🧠", label: tUI("interviewTitle", lang) },
+        { k: "recommendation", icon: "✍️", label: tUI("doctorRecommendation", lang) },
+        {
+          k: "goalModelCuisine",
+          icon: "🎯",
+          label: `${tUI("goal", lang)} / ${tUI("dietModel", lang)} / ${tUI("cuisine", lang)}`,
+        },
+        { k: "calculator", icon: "🧮", label: tUI("patientInNumbers", lang) },
+        { k: "actions", icon: "⚡", label: (tUI("actions" as any, lang) as any) ?? "Akcje" },
+        { k: "diet", icon: "📅", label: (tUI("dietPlan" as any, lang) as any) ?? "Dieta" },
+        { k: "recipes", icon: "🍽️", label: tUI("recipesTitle", lang) },
+      ] as Array<{ k: SectionKey; icon: string; label: string }>,
+    [lang]
+  );
+
   // -----------------------------
   // Subscription gate
   // -----------------------------
@@ -877,27 +900,6 @@ function Panel() {
       </main>
     );
   }
-
-  // Render (hooks muszą być ZAWSZE wywołane)
-const sidebarItems = useMemo(
-  () =>
-    [
-      { k: "patient", icon: "👤", label: tUI("patientData", lang) },
-      { k: "medical", icon: "🧾", label: tUI("medicalData", lang) },
-      { k: "interview", icon: "🧠", label: tUI("interviewTitle", lang) },
-      { k: "recommendation", icon: "✍️", label: tUI("doctorRecommendation", lang) },
-      {
-        k: "goalModelCuisine",
-        icon: "🎯",
-        label: `${tUI("goal", lang)} / ${tUI("dietModel", lang)} / ${tUI("cuisine", lang)}`,
-      },
-      { k: "calculator", icon: "🧮", label: tUI("patientInNumbers", lang) },
-      { k: "actions", icon: "⚡", label: (tUI("actions" as any, lang) as any) ?? "Akcje" },
-      { k: "diet", icon: "📅", label: (tUI("dietPlan" as any, lang) as any) ?? "Dieta" },
-      { k: "recipes", icon: "🍽️", label: tUI("recipesTitle", lang) },
-    ] as Array<{ k: SectionKey; icon: string; label: string }>,
-  [lang]
-);
 
   return (
     <main
