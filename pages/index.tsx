@@ -671,49 +671,45 @@ export default function Home() {
       <section className="relative w-full">
         <div className="relative">
           {/* Hero container wrapper (pozycjonowanie logo obok panelu) */}
-          <div className="relative mx-auto max-w-6xl px-4 sm:px-6 pt-6 md:pt-10 lg:pr-20">
+          <div className="relative overflow-visible mx-auto max-w-6xl px-4 sm:px-6 pt-6 md:pt-10 lg:pr-20">
 
-                   {/* Logo obok kontenerów (pod NAV), glass premium */}
-            <div className="absolute right-4 top-6 z-30 hidden lg:block">
-              <div className="group relative h-12 w-12 rounded-2xl">
+            {/* Logo w narożniku, poza kontenerami (pod NAV) */}
+            <div className="absolute -right-6 -top-6 z-40 hidden lg:block pointer-events-none">
+              <div className="group relative h-20 w-20 rounded-[26px]">
                 {/* outer glow */}
                 <div
                   aria-hidden
-                  className="pointer-events-none absolute -inset-3 rounded-[20px] blur-xl opacity-60 group-hover:opacity-80 transition-opacity"
+                  className="absolute -inset-5 rounded-[30px] blur-2xl opacity-60"
                   style={{
                     background:
-                      "radial-gradient(60% 60% at 25% 20%, rgba(56,189,248,.40), transparent 60%)," +
-                      "radial-gradient(55% 55% at 85% 30%, rgba(167,139,250,.35), transparent 60%)," +
-                      "radial-gradient(60% 60% at 55% 90%, rgba(16,185,129,.22), transparent 60%)",
+                      "radial-gradient(60% 60% at 25% 20%, rgba(56,189,248,.45), transparent 60%)," +
+                      "radial-gradient(55% 55% at 85% 30%, rgba(167,139,250,.40), transparent 60%)," +
+                      "radial-gradient(60% 60% at 55% 90%, rgba(16,185,129,.25), transparent 60%)",
                   }}
                 />
 
                 {/* glass body */}
-                <div className="relative h-12 w-12 rounded-2xl border border-white/15 bg-white/8 backdrop-blur-2xl shadow-[0_18px_55px_rgba(0,0,0,.45)] ring-1 ring-white/10 overflow-hidden">
+                <div className="relative h-20 w-20 rounded-[26px] border border-white/15 bg-white/8 backdrop-blur-2xl shadow-[0_28px_85px_rgba(0,0,0,.55)] ring-1 ring-white/10 overflow-hidden">
                   {/* specular highlight */}
-                  <div
-                    aria-hidden
-                    className="absolute -top-6 -left-6 h-16 w-16 rounded-full bg-white/25 blur-xl opacity-70"
-                  />
+                  <div aria-hidden className="absolute -top-10 -left-10 h-24 w-24 rounded-full bg-white/25 blur-2xl opacity-70" />
                   {/* diagonal sheen */}
                   <div
                     aria-hidden
                     className="absolute inset-0 opacity-55"
                     style={{
                       background:
-                        "linear-gradient(135deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,.06) 35%, rgba(0,0,0,.10) 100%)",
+                        "linear-gradient(135deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,.06) 35%, rgba(0,0,0,.12) 100%)",
                     }}
                   />
-
                   {/* inner micro-gradients */}
-                  <div className="absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_30%_30%,rgba(56,189,248,.22),transparent_55%)]" />
-                  <div className="absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_70%_70%,rgba(167,139,250,.16),transparent_55%)]" />
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(56,189,248,.22),transparent_55%)]" />
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_70%,rgba(167,139,250,.18),transparent_55%)]" />
 
                   <Image
                     src="/logo-dietcare.png"
                     alt={tUI("landing.logoAlt")}
                     fill
-                    className="object-contain p-2 drop-shadow-[0_10px_25px_rgba(0,0,0,.45)]"
+                    className="object-contain p-3 drop-shadow-[0_18px_45px_rgba(0,0,0,.55)]"
                     priority
                   />
                 </div>
@@ -787,11 +783,6 @@ export default function Home() {
                 <div className="relative rounded-3xl border border-white/10 bg-white/7 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,.35)] overflow-hidden">
                   <div className="absolute inset-0 bg-[radial-gradient(140%_90%_at_10%_0%,rgba(255,255,255,.10),transparent_50%)]" />
                   <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,.05),rgba(0,0,0,.12))] opacity-70" />
-
-                  {/* watermark inside panel */}
-                  <div className="absolute -bottom-12 -right-10 h-[420px] w-[420px] opacity-[0.14] rotate-[10deg]">
-                    <Image src="/logo-dietcare.png" alt="" fill className="object-contain" />
-                  </div>
 
                   <div className="relative p-6 sm:p-8">
                     <div className="text-sm opacity-80">{tUI("landing.heroAlt")}</div>
