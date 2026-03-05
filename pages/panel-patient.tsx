@@ -1983,117 +1983,101 @@ return (
                   )}
                 </div>
 
-                 {selectedSection === "scanner" && (() => {
-                  const askLookTitle = tUI("askLook", lang);
-                  const askLookDescKey = tUI("askLookDesc", lang);
-                  const askLookDesc =
-                    askLookDescKey === "askLookDesc"
-                      ? "Scan products, get AI guidance and build a shopping basket aligned with your diet."
-                      : askLookDescKey;
+                 {selectedSection === "robot" && (
+                      <div id="section-robot" className="space-y-6">
+                        {/* Guards */}
+                        {!hasPaid && (
+                          <div className="rounded-3xl border border-white/10 bg-white/6 backdrop-blur-2xl shadow-[0_18px_60px_rgba(0,0,0,.30)] p-5">
+                            <div className="text-xs uppercase tracking-wide text-white/60 mb-1">
+                              {tUI("kitchenRobot.panelTitle", lang)}
+                            </div>
+                            <div className="font-semibold text-lg">{tUI("kitchenRobot.guard.noAccessTitle", lang)}</div>
+                            <div className="text-sm text-white/80 mt-1">{tUI("kitchenRobot.guard.noAccessDesc", lang)}</div>
+                            <div className="mt-4">
+                              <Link href="/payment">
+                                <button className="w-full sm:w-auto rounded-2xl px-6 py-3 font-semibold border border-white/10 bg-white/10 hover:bg-white/14 backdrop-blur-xl shadow-[0_18px_60px_rgba(0,0,0,.30)] transition">
+                                  {tUI("goToPayment", lang)}
+                                </button>
+                              </Link>
+                            </div>
+                          </div>
+                        )}
 
-                  const productTitleKey = tUI("productAssistantTitle", lang);
-                  const productTitle = productTitleKey === "productAssistantTitle" ? "Look Assistant" : productTitleKey;
-
-                  const productSubtitleKey = tUI("productAssistantSubtitle", lang);
-                  const productSubtitle =
-                    productSubtitleKey === "productAssistantSubtitle"
-                      ? "AI product analysis & suggestions"
-                      : productSubtitleKey;
-
-                  const liveKey = tUI("live", lang);
-                  const liveLabel = liveKey === "live" ? "Live" : liveKey;
-
-                  const basketTitleKey = tUI("basketTitle", lang);
-                  const basketTitle = basketTitleKey === "basketTitle" ? "Basket" : basketTitleKey;
-
-                  const basketSubtitleKey = tUI("basketSubtitle", lang);
-                  const basketSubtitle =
-                    basketSubtitleKey === "basketSubtitle" ? "Products saved from Look" : basketSubtitleKey;
-
-                  const basketHintKey = tUI("basketHint", lang);
-                  const basketHint =
-                    basketHintKey === "basketHint"
-                      ? "Tip: add items while scanning — the basket will stay here."
-                      : basketHintKey;
-
-                  return (
-                    <div id="section-scanner" className="space-y-6">
-                      {/* Header */}
-                      <div className="rounded-3xl border border-white/10 bg-white/6 backdrop-blur-2xl shadow-[0_18px_60px_rgba(0,0,0,.30)] p-5 md:p-6">
-                        <div className="text-xs uppercase tracking-wide text-white/60 mb-1">
-                          {askLookTitle}
-                        </div>
-                        <div className="text-xl font-semibold tracking-tight text-white">
-                          {askLookTitle}
-                        </div>
-                        <div className="text-sm text-white/75 mt-2">
-                          {askLookDesc}
-                        </div>
-                      </div>
-
-                      {/* Workspace */}
-                      <div className="grid grid-cols-1 xl:grid-cols-[1fr,420px] gap-6">
-                        {/* Look Assistant */}
-                        <div className="relative rounded-3xl border border-white/10 bg-white/6 backdrop-blur-2xl shadow-[0_30px_90px_rgba(0,0,0,.45)] overflow-hidden">
-                          <div
-                            aria-hidden
-                            className="pointer-events-none absolute inset-0 rounded-3xl bg-[radial-gradient(120%_80%_at_15%_0%,rgba(255,255,255,.10),transparent_55%)]"
-                          />
-                          <div className="relative p-5 md:p-6">
-                            <div className="flex items-center justify-between gap-3 mb-4">
-                              <div>
-                                <div className="text-sm font-semibold text-white">
-                                  {productTitle}
-                                </div>
-                                <div className="text-xs text-white/60">
-                                  {productSubtitle}
-                                </div>
+                        {hasPaid &&
+                          (!form?.has_kitchen_robot ||
+                            !String(form?.kitchen_robot_model || "").trim() ||
+                            !String(form?.kitchen_robot_serial || "").trim()) && (
+                            <div className="rounded-3xl border border-white/10 bg-white/6 backdrop-blur-2xl shadow-[0_18px_60px_rgba(0,0,0,.30)] p-5">
+                              <div className="text-xs uppercase tracking-wide text-white/60 mb-1">
+                                {tUI("kitchenRobot.panelTitle", lang)}
                               </div>
-
-                              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/8 px-3 py-1 text-xs text-white/80">
-                                <span className="h-2 w-2 rounded-full bg-sky-300" />
-                                {liveLabel}
+                              <div className="font-semibold text-lg">{tUI("kitchenRobot.guard.fixConfigTitle", lang)}</div>
+                              <div className="text-sm text-white/80 mt-1">{tUI("kitchenRobot.guard.fixConfigDesc", lang)}</div>
+                              <div className="mt-4">
+                                <button
+                                  onClick={() => handleSectionChange("data")}
+                                  className="w-full sm:w-auto rounded-2xl px-6 py-3 font-semibold border border-white/10 bg-white/10 hover:bg-white/14 backdrop-blur-xl shadow-[0_18px_60px_rgba(0,0,0,.30)] transition"
+                                >
+                                  {tUI("kitchenRobot.goToRegistration", lang)}
+                                </button>
                               </div>
                             </div>
+                          )}
 
-                            <ProductAssistantPanel
-                              lang={lang}
-                              patient={form}
-                              form={form}
-                              interviewData={interviewData}
-                              medical={medicalData}
-                              dietPlan={editableDiet}
-                            />
+                        {hasPaid &&
+                          form?.has_kitchen_robot &&
+                          String(form?.kitchen_robot_model || "").trim() &&
+                          String(form?.kitchen_robot_serial || "").trim() &&
+                          (!editableDiet || Object.keys(editableDiet).length === 0) && (
+                            <div className="rounded-3xl border border-white/10 bg-white/6 backdrop-blur-2xl shadow-[0_18px_60px_rgba(0,0,0,.30)] p-5">
+                              <div className="text-xs uppercase tracking-wide text-white/60 mb-1">
+                                {tUI("kitchenRobot.panelTitle", lang)}
+                              </div>
+                              <div className="font-semibold text-lg">{tUI("kitchenRobot.guard.noDietTitle", lang)}</div>
+                              <div className="text-sm text-white/80 mt-1">{tUI("kitchenRobot.guard.noDietDesc", lang)}</div>
+                              <div className="mt-4">
+                                <button
+                                  onClick={() => handleSectionChange("diet")}
+                                  className="w-full sm:w-auto rounded-2xl px-6 py-3 font-semibold border border-white/10 bg-white/10 hover:bg-white/14 backdrop-blur-xl shadow-[0_18px_60px_rgba(0,0,0,.30)] transition"
+                                >
+                                  {tUI("kitchenRobot.goToDiet", lang)}
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                        {/* Main robot panel */}
+                        <div className="rounded-3xl border border-white/10 bg-white/6 backdrop-blur-2xl shadow-[0_30px_90px_rgba(0,0,0,.45)] p-5 md:p-6">
+                          <div className="pointer-events-none absolute inset-0 rounded-3xl bg-[radial-gradient(120%_80%_at_15%_0%,rgba(255,255,255,.10),transparent_55%)]" />
+                          <div className="relative">
+                            {/* ... TU ZOSTAWIASZ 1:1 CAŁĄ RESZTĘ SWOJEGO BLOKU ROBOTA ... */}
                           </div>
                         </div>
 
-                        {/* Basket */}
-                        <div className="rounded-3xl border border-white/10 bg-white/6 backdrop-blur-2xl shadow-[0_18px_60px_rgba(0,0,0,.30)] overflow-hidden">
-                          <div className="p-5 md:p-6">
-                            <div className="flex items-center justify-between gap-3 mb-4">
-                              <div>
-                                <div className="text-sm font-semibold text-white">
-                                  {basketTitle}
-                                </div>
-                                <div className="text-xs text-white/60">
-                                  {basketSubtitle}
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="rounded-2xl border border-white/10 bg-white/7 backdrop-blur-xl p-3">
-                              <BasketTable lang={lang} />
-                            </div>
-
-                            <div className="mt-4 text-xs text-white/60">
-                              {basketHint}
-                            </div>
-                          </div>
+                        {/* History */}
+                        <div className="rounded-3xl border border-white/10 bg-white/6 backdrop-blur-2xl shadow-[0_18px_60px_rgba(0,0,0,.30)] p-5">
+                          {/* ... 1:1 historia ... */}
                         </div>
+
+                        {/* Filters */}
+                        {robotRecipes.length > 0 && (
+                          <div className="rounded-3xl border border-white/10 bg-white/6 backdrop-blur-2xl shadow-[0_18px_60px_rgba(0,0,0,.30)] p-5">
+                            {/* ... 1:1 filtry ... */}
+                          </div>
+                        )}
+
+                        {/* Results */}
+                        {robotPrograms?.recipes?.length ? (
+                          <div className="space-y-4">
+                            {/* ... 1:1 results ... */}
+                          </div>
+                        ) : (
+                          <div className="rounded-3xl border border-white/10 bg-white/6 backdrop-blur-2xl shadow-[0_18px_60px_rgba(0,0,0,.30)] p-6 text-center text-sm text-white/70">
+                            {tUI("kitchenRobot.noProgramYet", lang)}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  );
-                })()}
+                    )}
                 </div>
               </div>
             )}
