@@ -248,12 +248,6 @@ export default function Home() {
   const [lang, setLang] = useState<LangKey>("pl");
   const [langReady, setLangReady] = useState(false);
 
-  // dark mode (jak w register.tsx)
-  const [darkMode, setDarkMode] = useState(() => {
-    if (typeof window !== "undefined") return localStorage.getItem("theme") === "dark";
-    return false;
-  });
-
   // Autoodtwarzanie TV (sterowane przez przycisk „Zobacz co Cię czeka”)
   const [autoPlayVideo, setAutoPlayVideo] = useState(true);
 
@@ -314,16 +308,6 @@ export default function Home() {
       });
     };
   }, []);
-
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    }
-  }, [darkMode]);
 
   // tUI lokalne (jak w register.tsx)
   const tUI = (key: keyof typeof translationsUI): string => {
@@ -678,59 +662,72 @@ export default function Home() {
                   ))}
                 </select>
               </div>
-
-              <div className="flex items-center gap-2 group" title={darkMode ? tUI("nav.lightMode") : tUI("nav.darkMode")}>
-                <span className="text-xs text-white/80 hidden sm:block">
-                  {darkMode ? tUI("nav.lightMode") : tUI("nav.darkMode")}
-                </span>
-                <button
-                  onClick={() => setDarkMode(!darkMode)}
-                  className={`relative inline-flex items-center h-7 w-12 rounded-full transition-colors border border-white/10 ${
-                    darkMode ? "bg-white/10" : "bg-white/12"
-                  }`}
-                  aria-label={tUI("nav.toggleContrast")}
-                  title={tUI("nav.toggleContrast")}
-                >
-                  <span className={`absolute left-1 text-sm ${darkMode ? "opacity-0" : "opacity-100"}`}>☀️</span>
-                  <span className={`absolute right-1 text-sm ${darkMode ? "opacity-100" : "opacity-0"}`}>🌙</span>
-                  <span
-                    className={`inline-block h-6 w-6 transform rounded-full bg-white shadow transition-transform duration-300 ${
-                      darkMode ? "translate-x-5" : "translate-x-1"
-                    }`}
-                  />
-                </button>
-              </div>
             </div>
           </div>
         </div>
       </nav>
 
-      {/* HERO */}
+            {/* HERO */}
       <section className="relative w-full">
         <div className="relative">
-          {/* Hero container (glass panel) */}
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 pt-6 md:pt-10">
+          {/* Hero container wrapper (pozycjonowanie logo obok panelu) */}
+          <div className="relative mx-auto max-w-6xl px-4 sm:px-6 pt-6 md:pt-10 lg:pr-20">
+
+                   {/* Logo obok kontenerów (pod NAV), glass premium */}
+            <div className="absolute right-4 top-6 z-30 hidden lg:block">
+              <div className="group relative h-12 w-12 rounded-2xl">
+                {/* outer glow */}
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute -inset-3 rounded-[20px] blur-xl opacity-60 group-hover:opacity-80 transition-opacity"
+                  style={{
+                    background:
+                      "radial-gradient(60% 60% at 25% 20%, rgba(56,189,248,.40), transparent 60%)," +
+                      "radial-gradient(55% 55% at 85% 30%, rgba(167,139,250,.35), transparent 60%)," +
+                      "radial-gradient(60% 60% at 55% 90%, rgba(16,185,129,.22), transparent 60%)",
+                  }}
+                />
+
+                {/* glass body */}
+                <div className="relative h-12 w-12 rounded-2xl border border-white/15 bg-white/8 backdrop-blur-2xl shadow-[0_18px_55px_rgba(0,0,0,.45)] ring-1 ring-white/10 overflow-hidden">
+                  {/* specular highlight */}
+                  <div
+                    aria-hidden
+                    className="absolute -top-6 -left-6 h-16 w-16 rounded-full bg-white/25 blur-xl opacity-70"
+                  />
+                  {/* diagonal sheen */}
+                  <div
+                    aria-hidden
+                    className="absolute inset-0 opacity-55"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,.06) 35%, rgba(0,0,0,.10) 100%)",
+                    }}
+                  />
+
+                  {/* inner micro-gradients */}
+                  <div className="absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_30%_30%,rgba(56,189,248,.22),transparent_55%)]" />
+                  <div className="absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_70%_70%,rgba(167,139,250,.16),transparent_55%)]" />
+
+                  <Image
+                    src="/logo-dietcare.png"
+                    alt={tUI("landing.logoAlt")}
+                    fill
+                    className="object-contain p-2 drop-shadow-[0_10px_25px_rgba(0,0,0,.45)]"
+                    priority
+                  />
+                </div>
+              </div>
+            </div>
+
             <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/6 backdrop-blur-2xl shadow-[0_30px_90px_rgba(0,0,0,.45)]">
               {/* inner highlight */}
               <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_15%_0%,rgba(255,255,255,.10),transparent_55%)] opacity-70" />
               <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,.08),rgba(0,0,0,.10))] opacity-50" />
 
               <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-8 p-6 sm:p-8 md:p-10">
-                {/* Left: Logo + microcopy */}
+              {/* Left: Copy + CTA */}
                 <div className="flex flex-col gap-6">
-                  <div className="flex items-center gap-3">
-                    <div className="relative h-12 w-12 rounded-2xl bg-white/10 border border-white/10 backdrop-blur-xl shadow">
-                      <div className="absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_30%_30%,rgba(56,189,248,.35),transparent_55%)]" />
-                      <div className="absolute inset-0 rounded-2xl bg-[radial-gradient(circle_at_70%_70%,rgba(167,139,250,.25),transparent_55%)]" />
-                      <Image src="/logo-dietcare.png" alt={tUI("landing.logoAlt")} fill className="object-contain p-2" priority />
-                    </div>
-
-                    <div className="leading-tight">
-                      <div className="text-sm opacity-80 tracking-wide">{tUI("app.title")}</div>
-                      <div className="text-xs opacity-60">Clinical AI Nutrition Ecosystem</div>
-                    </div>
-                  </div>
-
                   <div className="relative">
                     <p className="text-base sm:text-lg md:text-xl font-semibold tracking-tight leading-[1.6] text-white/95">
                       <span>{tUI("landing.tagline.title")}</span>
@@ -999,6 +996,7 @@ export default function Home() {
               <div className="pointer-events-none absolute inset-x-0 bottom-0 h-9 bg-gradient-to-t from-white/6 to-transparent" />
               <div className="pointer-events-none absolute inset-0 hidden sm:block bg-[radial-gradient(120%_80%_at_10%_0%,rgba(255,255,255,.06),transparent_55%)]" />
               <iframe
+                id="introPlayer"
                 ref={playerRef}
                 className="absolute inset-0 h-full w-full"
                 src={videoSrc}
