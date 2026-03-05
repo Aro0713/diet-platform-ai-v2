@@ -733,7 +733,7 @@ export default function Home() {
             <section className="relative w-full">
         <div className="relative">
           {/* Hero container wrapper (logo poza kontenerami jak na szkicu) */}
-          <div className="relative overflow-visible mx-auto max-w-6xl px-4 sm:px-6 pt-6 md:pt-10 lg:pr-64">
+          <div className="relative overflow-visible mx-auto max-w-6xl px-5 pt-6 md:pt-10 lg:pr-64">
 
             {/* Hero container (glass panel) */}
             <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/6 backdrop-blur-2xl shadow-[0_30px_90px_rgba(0,0,0,.45)] ios-no-backdrop ios-glass-bg">
@@ -741,7 +741,7 @@ export default function Home() {
               <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_15%_0%,rgba(255,255,255,.10),transparent_55%)] opacity-70" />
               <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,.08),rgba(0,0,0,.10))] opacity-50" />
 
-              <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-8 p-6 sm:p-8 md:p-10">
+              <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-8 p-6 md:p-8">
                 {/* Left: Copy + CTA */}
                 <div className="flex flex-col gap-6">
                   <div className="relative">
