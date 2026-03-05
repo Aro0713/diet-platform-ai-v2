@@ -582,7 +582,7 @@ export default function Home() {
   ];
 
   return (
-    <main className="relative min-h-screen text-white transition-all duration-300 bg-[#06131a]">
+    <main className="relative min-h-[100dvh] text-white transition-all duration-300 bg-[#06131a]">
 
       <Head>
         <title>{tUI("app.title")}</title>
@@ -593,6 +593,10 @@ export default function Home() {
       </Head>
 
       <style jsx global>{`
+        html, body {
+            background: #06131a;
+            height: 100%;
+          }
         @keyframes dcpPediatricGlow {
           0% {
             background-position: 0% 50%;
@@ -684,10 +688,10 @@ export default function Home() {
                    <div aria-hidden className="absolute inset-0 rounded-[44px] ring-1 ring-black/30" />
          
                   {/* glass fill (crisp) */}
-                  <div className="absolute inset-0 rounded-[44px] bg-white/12 backdrop-blur-xl border border-white/20 shadow-[0_28px_90px_rgba(0,0,0,.55)]" />
+                  <div className="absolute inset-0 rounded-[44px] bg-white/8 backdrop-blur-lg border border-white/25 shadow-[0_20px_70px_rgba(0,0,0,.55)]" />
 
                   {/* specular + sheen */}
-                        <div aria-hidden className="absolute -top-16 -left-16 h-40 w-40 rounded-full bg-white/18 blur-2xl opacity-60" />
+                        <div aria-hidden className="absolute -top-18 -left-18 h-44 w-44 rounded-full bg-white/12 blur-xl opacity-45" />
                         <div
                     aria-hidden
                     className="absolute inset-0 opacity-35"
@@ -696,10 +700,6 @@ export default function Home() {
                         "linear-gradient(135deg, rgba(255,255,255,.22) 0%, rgba(255,255,255,.06) 38%, rgba(0,0,0,.14) 100%)",
                     }}
                   />
-
-                  {/* inner brand tints */}
-                  <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_28%_28%,rgba(56,189,248,.22),transparent_58%)]" />
-                  <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_72%_72%,rgba(167,139,250,.18),transparent_60%)]" />
 
                   {/* subtle noise */}
                   <div
@@ -716,7 +716,7 @@ export default function Home() {
                     src="/logo-dietcare.png"
                     alt={tUI("landing.logoAlt")}
                     fill
-                    className="object-contain p-8 contrast-125 saturate-110 drop-shadow-[0_18px_50px_rgba(0,0,0,.65)]"
+                    className="object-contain p-8 contrast-150 saturate-120 brightness-110 drop-shadow-[0_12px_35px_rgba(0,0,0,.55)]"
                     priority
                   />
                 </div>
