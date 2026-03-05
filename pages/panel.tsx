@@ -191,10 +191,8 @@ type SectionKey =
   | "medical"
   | "interview"
   | "recommendation"
-  | "goalModelCuisine"
   | "calculator"
-  | "actions"
-  | "diet"
+  | "dietWorkflow"
   | "recipes";
 
 function Panel() {
@@ -233,12 +231,11 @@ function Panel() {
   medical: useRef<HTMLDivElement | null>(null),
   interview: useRef<HTMLDivElement | null>(null),
   recommendation: useRef<HTMLDivElement | null>(null),
-  goalModelCuisine: useRef<HTMLDivElement | null>(null),
   calculator: useRef<HTMLDivElement | null>(null),
-  actions: useRef<HTMLDivElement | null>(null),
-  diet: useRef<HTMLDivElement | null>(null),
+  dietWorkflow: useRef<HTMLDivElement | null>(null),
   recipes: useRef<HTMLDivElement | null>(null),
 };
+
   const {
     form,
     setForm,
@@ -829,25 +826,23 @@ function Panel() {
     // -----------------------------
   // Sidebar items (MUSI być przed każdym early-return!)
   // -----------------------------
-  const sidebarItems = useMemo(
-    () =>
-      [
-        { k: "patient", icon: "👤", label: tUI("patientData", lang) },
-        { k: "medical", icon: "🧾", label: tUI("medicalData", lang) },
-        { k: "interview", icon: "🧠", label: tUI("interviewTitle", lang) },
-        { k: "recommendation", icon: "✍️", label: tUI("doctorRecommendation", lang) },
-        {
-          k: "goalModelCuisine",
-          icon: "🎯",
-          label: `${tUI("goal", lang)} / ${tUI("dietModel", lang)} / ${tUI("cuisine", lang)}`,
-        },
-        { k: "calculator", icon: "🧮", label: tUI("patientInNumbers", lang) },
-        { k: "actions", icon: "⚡", label: (tUI("actions" as any, lang) as any) ?? "Akcje" },
-        { k: "diet", icon: "📅", label: (tUI("dietPlan" as any, lang) as any) ?? "Dieta" },
-        { k: "recipes", icon: "🍽️", label: tUI("recipesTitle", lang) },
-      ] as Array<{ k: SectionKey; icon: string; label: string }>,
-    [lang]
-  );
+const sidebarItems = useMemo(
+  () =>
+    [
+      { k: "patient", icon: "👤", label: tUI("patientData", lang) },
+      { k: "medical", icon: "🧾", label: tUI("medicalData", lang) },
+      { k: "interview", icon: "🧠", label: tUI("interviewTitle", lang) },
+      { k: "recommendation", icon: "✍️", label: tUI("doctorRecommendation", lang) },
+      { k: "calculator", icon: "🧮", label: tUI("patientInNumbers", lang) },
+      {
+        k: "dietWorkflow",
+        icon: "🎯",
+        label: `${tUI("goal", lang)} / ${tUI("dietModel", lang)} / ${tUI("cuisine", lang)} / ${tUI("actions" as any, lang)} / ${tUI("dietPlan" as any, lang)}`,
+      },
+      { k: "recipes", icon: "🍽️", label: tUI("recipesTitle", lang) },
+    ] as Array<{ k: SectionKey; icon: string; label: string }>,
+  [lang]
+);
 
   // -----------------------------
   // Subscription gate
@@ -1288,24 +1283,7 @@ function Panel() {
                 )}
 
                 {/* =========
-                    5) GOAL / MODEL / CUISINE
-                   ========= */}
-                {selectedSection === "goalModelCuisine" && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-                    <PanelCard className="h-full">
-                      <DietGoalForm onChange={(goal) => setInterviewData({ ...interviewData, goal })} lang={lang} />
-                    </PanelCard>
-                    <PanelCard className="h-full">
-                      <SelectModelForm onChange={(model) => setInterviewData({ ...interviewData, model })} lang={lang} />
-                    </PanelCard>
-                    <PanelCard className="h-full">
-                      <SelectCuisineForm onChange={(cuisine) => setInterviewData({ ...interviewData, cuisine })} lang={lang} />
-                    </PanelCard>
-                  </div>
-                )}
-
-                {/* =========
-                    6) CALCULATOR
+                    5) CALCULATOR
                    ========= */}
                 {selectedSection === "calculator" && (
                   <PanelCard title={`🧮 ${tUI("patientInNumbers", lang)}`} className="h-full">
@@ -1317,252 +1295,273 @@ function Panel() {
                     />
                   </PanelCard>
                 )}
-
-                {/* =========
-                    7) ACTIONS
+               {/* =========
+                   6) CLINICAL METRICS
                    ========= */}
-                {selectedSection === "actions" && (
-                  <PanelCard>
-                    <div className="flex flex-wrap items-stretch gap-3 sm:gap-4 w-full">
-                      <div className="flex-1 min-w-[220px]">
-                        <button
-                          type="button"
-                          onClick={handleSubmit}
-                          className="w-full h-full rounded-xl bg-emerald-600 hover:bg-emerald-700 px-4 py-3 font-medium disabled:opacity-50"
-                          disabled={isGenerating}
-                        >
-                          {isGenerating ? (
-                            <span className="flex items-center gap-2">
-                              <span className="animate-spin">⚙️</span>
-                              {tUI("writingDiet", lang)}
-                            </span>
-                          ) : (
-                            <>⚡ {tUI("generate", lang)}</>
+                 {selectedSection === "dietWorkflow" && (
+                    <div className="space-y-6">
+                      {/* GÓRA: ustawienia generowania diety */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5">
+                        <PanelCard className="h-full">
+                          <DietGoalForm
+                            onChange={(goal) => setInterviewData({ ...interviewData, goal })}
+                            lang={lang}
+                          />
+                        </PanelCard>
+
+                        <PanelCard className="h-full">
+                          <SelectModelForm
+                            onChange={(model) => setInterviewData({ ...interviewData, model })}
+                            lang={lang}
+                          />
+                        </PanelCard>
+
+                        <PanelCard className="h-full">
+                          <SelectCuisineForm
+                            onChange={(cuisine) => setInterviewData({ ...interviewData, cuisine })}
+                            lang={lang}
+                          />
+                        </PanelCard>
+                      </div>
+
+                      {/* AKCJE */}
+                      <PanelCard>
+                        <div className="flex flex-wrap items-stretch gap-3 sm:gap-4 w-full">
+                          <div className="flex-1 min-w-[220px]">
+                            <button
+                              type="button"
+                              onClick={handleSubmit}
+                              className="w-full h-full rounded-xl bg-emerald-600 hover:bg-emerald-700 px-4 py-3 font-medium disabled:opacity-50"
+                              disabled={isGenerating}
+                            >
+                              {isGenerating ? (
+                                <span className="flex items-center gap-2">
+                                  <span className="animate-spin">⚙️</span>
+                                  {tUI("writingDiet", lang)}
+                                </span>
+                              ) : (
+                                <>⚡ {tUI("generate", lang)}</>
+                              )}
+                            </button>
+                          </div>
+
+                          {editableDiet && !dietApproved && (
+                            <div className="flex-1 min-w-[220px]">
+                              <button
+                                type="button"
+                                className="w-full h-full rounded-xl bg-purple-700 hover:bg-purple-800 px-4 py-3 font-medium disabled:opacity-50"
+                                onClick={handleApproveDiet}
+                                disabled={isGenerating}
+                              >
+                                ✅ {tUI("confirmDiet", lang)}
+                              </button>
+                            </div>
                           )}
-                        </button>
-                      </div>
 
-                      {editableDiet && !dietApproved && (
-                        <div className="flex-1 min-w-[220px]">
-                          <button
-                            type="button"
-                            className="w-full h-full rounded-xl bg-purple-700 hover:bg-purple-800 px-4 py-3 font-medium disabled:opacity-50"
-                            onClick={handleApproveDiet}
-                            disabled={isGenerating}
-                          >
-                            ✅ {tUI("confirmDiet", lang)}
-                          </button>
-                        </div>
-                      )}
-
-                      {editableDiet && dietApproved && (
-                        <div className="flex-1 min-w-[220px]">
-                          <button
-                            type="button"
-                            className="w-full h-full rounded-xl bg-indigo-600 hover:bg-indigo-700 px-4 py-3 font-medium disabled:opacity-50"
-                            onClick={handleSendDietToPatient}
-                            disabled={isGenerating || !form?.email}
-                          >
-                            📤 {tUI("sendDietToPatient", lang)}
-                          </button>
-                        </div>
-                      )}
-
-                      <div className="flex-1 min-w-[220px]">
-                        <button
-                          type="button"
-                          className="w-full h-full rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-3 font-medium disabled:opacity-50"
-                          disabled={isGenerating || !confirmedDiet?.length || !dietApproved}
-                          onClick={async () => {
-                            try {
-                              setIsGenerating(true);
-                              const { generateDietPdf } = await import("@/utils/generateDietPdf");
-                              await generateDietPdf(
-                                form,
-                                bmi,
-                                confirmedDiet!,
-                                dietApproved,
-                                notes,
-                                lang,
-                                interviewData,
-                                {
-                                  bmi: interviewData.bmi,
-                                  ppm: interviewData.ppm,
-                                  cpm: interviewData.cpm,
-                                  pal: interviewData.pal,
-                                  kcalMaintain: interviewData.kcalMaintain,
-                                  kcalReduce: interviewData.kcalReduce,
-                                  kcalGain: interviewData.kcalGain,
-                                  nmcBroca: interviewData.nmcBroca,
-                                  nmcLorentz: interviewData.nmcLorentz,
-                                },
-                                "download",
-                                narrativeText,
-                                toPdfRecipes(recipes)
-                              );
-                            } catch (e) {
-                              alert("❌ Błąd przy generowaniu PDF");
-                              console.error(e);
-                            } finally {
-                              setIsGenerating(false);
-                            }
-                          }}
-                        >
-                          📄 {tUI("pdf", lang)}
-                        </button>
-                      </div>
-
-                      <div className="flex-1 min-w-[220px]">
-                        <button
-                          type="button"
-                          onClick={handleGenerateRecipes}
-                          className="w-full h-full rounded-xl bg-amber-600 hover:bg-amber-700 px-4 py-3 font-medium disabled:opacity-50"
-                          disabled={isGenerating || recipesLoading || !mealPlan || Object.keys(mealPlan).length === 0}
-                        >
-                          {recipesLoading ? "⏳ " : "🍽️ "}
-                          {tUI("generateRecipes", lang)}
-                        </button>
-                      </div>
-
-                      <div className="flex-1 min-w-[220px]">
-                        <button
-                          type="button"
-                          onClick={handleGenerateNarrative}
-                          className="w-full h-full rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 px-4 py-3 font-medium disabled:opacity-50"
-                          disabled={isGenerating}
-                        >
-                          📝 {tUI("generateNarrative", lang)}
-                        </button>
-                      </div>
-                    </div>
-
-                    {isGenerating && (
-                      <div className="text-sm text-white/60 italic mt-4 animate-pulse">
-                        ⏳ {tUI("writingDiet", lang)}… {streamingText.length > 20 && `(${tUI("generatingWait", lang)})`}
-                      </div>
-                    )}
-                  </PanelCard>
-                )}
-
-                {/* =========
-                    8) DIET TABLE
-                   ========= */}
-                {selectedSection === "diet" && (
-                  <PanelCard>
-                    {/* chips + legenda + tabela jak u Ciebie */}
-                    {(() => {
-                      const goalVal = interviewData?.goal ?? initialInterviewData?.goal ?? (form as any)?.goal ?? "";
-                      const modelVal = interviewData?.model ?? initialInterviewData?.model ?? (form as any)?.model ?? "";
-                      const cuisineVal = interviewData?.cuisine ?? initialInterviewData?.cuisine ?? (form as any)?.cuisine ?? "";
-                      const meals =
-                        interviewData?.mealsPerDay ??
-                        initialInterviewData?.mealsPerDay ??
-                        getRecommendedMealsPerDay(form, interviewData);
-
-                      const safe = (v: any) => (v === null || v === undefined || v === "" ? "—" : v);
-
-                      return (
-                        <div className="mb-4">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs sm:text-sm">
-                            <div className="flex items-center justify-between px-3 py-2 rounded-full text-xs text-white bg-pink-600/80 border border-white/10">
-                              <span className="font-semibold">🎯 {tUI("goal", lang)}</span>
-                              <span className="pl-2 truncate">{tResolve(goalVal, lang)}</span>
+                          {editableDiet && dietApproved && (
+                            <div className="flex-1 min-w-[220px]">
+                              <button
+                                type="button"
+                                className="w-full h-full rounded-xl bg-indigo-600 hover:bg-indigo-700 px-4 py-3 font-medium disabled:opacity-50"
+                                onClick={handleSendDietToPatient}
+                                disabled={isGenerating || !form?.email}
+                              >
+                                📤 {tUI("sendDietToPatient", lang)}
+                              </button>
                             </div>
-                            <div className="flex items-center justify-between px-3 py-2 rounded-full text-xs text-white bg-emerald-600/80 border border-white/10">
-                              <span className="font-semibold">🧬 {tUI("dietModel", lang)}</span>
-                              <span className="pl-2 truncate">{tResolve(modelVal, lang)}</span>
-                            </div>
-                            <div className="flex items-center justify-between px-3 py-2 rounded-full text-xs text-white bg-indigo-600/80 border border-white/10">
-                              <span className="font-semibold">🌍 {tUI("cuisine", lang)}</span>
-                              <span className="pl-2 truncate">{tResolve(cuisineVal, lang)}</span>
-                            </div>
-                            <div className="flex items-center justify-between px-3 py-2 rounded-full text-xs text-white bg-amber-600/80 border border-white/10">
-                              <span className="font-semibold">{tUI("mealsPerDay", lang)}</span>
-                              <span className="pl-2">{safe(meals)}</span>
-                            </div>
+                          )}
+
+                          <div className="flex-1 min-w-[220px]">
+                            <button
+                              type="button"
+                              className="w-full h-full rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-3 font-medium disabled:opacity-50"
+                              disabled={isGenerating || !confirmedDiet?.length || !dietApproved}
+                              onClick={async () => {
+                                try {
+                                  setIsGenerating(true);
+                                  const { generateDietPdf } = await import("@/utils/generateDietPdf");
+                                  await generateDietPdf(
+                                    form,
+                                    bmi,
+                                    confirmedDiet!,
+                                    dietApproved,
+                                    notes,
+                                    lang,
+                                    interviewData,
+                                    {
+                                      bmi: interviewData.bmi,
+                                      ppm: interviewData.ppm,
+                                      cpm: interviewData.cpm,
+                                      pal: interviewData.pal,
+                                      kcalMaintain: interviewData.kcalMaintain,
+                                      kcalReduce: interviewData.kcalReduce,
+                                      kcalGain: interviewData.kcalGain,
+                                      nmcBroca: interviewData.nmcBroca,
+                                      nmcLorentz: interviewData.nmcLorentz,
+                                    },
+                                    "download",
+                                    narrativeText,
+                                    toPdfRecipes(recipes)
+                                  );
+                                } catch (e) {
+                                  alert("❌ Błąd przy generowaniu PDF");
+                                  console.error(e);
+                                } finally {
+                                  setIsGenerating(false);
+                                }
+                              }}
+                            >
+                              📄 {tUI("pdf", lang)}
+                            </button>
+                          </div>
+
+                          <div className="flex-1 min-w-[220px]">
+                            <button
+                              type="button"
+                              onClick={handleGenerateRecipes}
+                              className="w-full h-full rounded-xl bg-amber-600 hover:bg-amber-700 px-4 py-3 font-medium disabled:opacity-50"
+                              disabled={isGenerating || recipesLoading || !mealPlan || Object.keys(mealPlan).length === 0}
+                            >
+                              {recipesLoading ? "⏳ " : "🍽️ "}
+                              {tUI("generateRecipes", lang)}
+                            </button>
+                          </div>
+
+                          <div className="flex-1 min-w-[220px]">
+                            <button
+                              type="button"
+                              onClick={handleGenerateNarrative}
+                              className="w-full h-full rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 px-4 py-3 font-medium disabled:opacity-50"
+                              disabled={isGenerating}
+                            >
+                              📝 {tUI("generateNarrative", lang)}
+                            </button>
                           </div>
                         </div>
-                      );
-                    })()}
 
-                    <div className="mb-3 text-xs text-white/70">
-                      <span className="font-semibold">{tUI("legend", lang)}:</span>
-                      <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
-                        <span>kcal = {tUI("calories", lang)}</span>
-                        <span>B = {tUI("protein", lang)} (g)</span>
-                        <span>T = {tUI("fat", lang)} (g)</span>
-                        <span>W = {tUI("carbs", lang)} (g)</span>
-                        <span>🌿 = {tUI("fiber", lang)} (g)</span>
-                        <span>🧂 = {tUI("sodium", lang)} (mg)</span>
-                        <span>🥔 = {tUI("potassium", lang)} (mg)</span>
-                        <span>🦴 = {tUI("calcium", lang)} (mg)</span>
-                        <span>🧬 = {tUI("magnesium", lang)} (mg)</span>
-                        <span>🩸 = {tUI("iron", lang)} (mg)</span>
-                        <span>🧪 = {tUI("zinc", lang)} (mg)</span>
-                        <span>☀️ = {tUI("vitaminD", lang)} (µg)</span>
-                        <span>🧠 = {tUI("vitaminB12", lang)} (µg)</span>
-                        <span>🍊 = {tUI("vitaminC", lang)} (mg)</span>
-                        <span>👁️ = {tUI("vitaminA", lang)} (µg)</span>
-                        <span>🧈 = {tUI("vitaminE", lang)} (mg)</span>
-                        <span>💉 = {tUI("vitaminK", lang)} (µg)</span>
-                      </div>
+                        {isGenerating && (
+                          <div className="text-sm text-white/60 italic mt-4 animate-pulse">
+                            ⏳ {tUI("writingDiet", lang)}… {streamingText.length > 20 && `(${tUI("generatingWait", lang)})`}
+                          </div>
+                        )}
+                      </PanelCard>
+
+                      {/* TABELA DIETY */}
+                      <PanelCard>
+                        {(() => {
+                          const goalVal = interviewData?.goal ?? initialInterviewData?.goal ?? (form as any)?.goal ?? "";
+                          const modelVal = interviewData?.model ?? initialInterviewData?.model ?? (form as any)?.model ?? "";
+                          const cuisineVal = interviewData?.cuisine ?? initialInterviewData?.cuisine ?? (form as any)?.cuisine ?? "";
+                          const meals =
+                            interviewData?.mealsPerDay ??
+                            initialInterviewData?.mealsPerDay ??
+                            getRecommendedMealsPerDay(form, interviewData);
+
+                          const safe = (v: any) => (v === null || v === undefined || v === "" ? "—" : v);
+
+                          return (
+                            <div className="mb-4">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs sm:text-sm">
+                                <div className="flex items-center justify-between px-3 py-2 rounded-full text-xs text-white bg-pink-600/80 border border-white/10">
+                                  <span className="font-semibold">🎯 {tUI("goal", lang)}</span>
+                                  <span className="pl-2 truncate">{tResolve(goalVal, lang)}</span>
+                                </div>
+                                <div className="flex items-center justify-between px-3 py-2 rounded-full text-xs text-white bg-emerald-600/80 border border-white/10">
+                                  <span className="font-semibold">🧬 {tUI("dietModel", lang)}</span>
+                                  <span className="pl-2 truncate">{tResolve(modelVal, lang)}</span>
+                                </div>
+                                <div className="flex items-center justify-between px-3 py-2 rounded-full text-xs text-white bg-indigo-600/80 border border-white/10">
+                                  <span className="font-semibold">🌍 {tUI("cuisine", lang)}</span>
+                                  <span className="pl-2 truncate">{tResolve(cuisineVal, lang)}</span>
+                                </div>
+                                <div className="flex items-center justify-between px-3 py-2 rounded-full text-xs text-white bg-amber-600/80 border border-white/10">
+                                  <span className="font-semibold">{tUI("mealsPerDay", lang)}</span>
+                                  <span className="pl-2">{safe(meals)}</span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })()}
+
+                        <div className="mb-3 text-xs text-white/70">
+                          <span className="font-semibold">{tUI("legend", lang)}:</span>
+                          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
+                            <span>kcal = {tUI("calories", lang)}</span>
+                            <span>B = {tUI("protein", lang)} (g)</span>
+                            <span>T = {tUI("fat", lang)} (g)</span>
+                            <span>W = {tUI("carbs", lang)} (g)</span>
+                            <span>🌿 = {tUI("fiber", lang)} (g)</span>
+                            <span>🧂 = {tUI("sodium", lang)} (mg)</span>
+                            <span>🥔 = {tUI("potassium", lang)} (mg)</span>
+                            <span>🦴 = {tUI("calcium", lang)} (mg)</span>
+                            <span>🧬 = {tUI("magnesium", lang)} (mg)</span>
+                            <span>🩸 = {tUI("iron", lang)} (mg)</span>
+                            <span>🧪 = {tUI("zinc", lang)} (mg)</span>
+                            <span>☀️ = {tUI("vitaminD", lang)} (µg)</span>
+                            <span>🧠 = {tUI("vitaminB12", lang)} (µg)</span>
+                            <span>🍊 = {tUI("vitaminC", lang)} (mg)</span>
+                            <span>👁️ = {tUI("vitaminA", lang)} (µg)</span>
+                            <span>🧈 = {tUI("vitaminE", lang)} (mg)</span>
+                            <span>💉 = {tUI("vitaminK", lang)} (µg)</span>
+                          </div>
+                        </div>
+
+                        <DietTable
+                          editableDiet={editableDiet || {}}
+                          setEditableDiet={setEditableDiet}
+                          setConfirmedDiet={(dietByDay: any) => {
+                            const asArray = (x: any): any[] =>
+                              Array.isArray(x)
+                                ? x
+                                : (x && typeof x === "object" ? Object.values(x) : []).filter((v) => v != null);
+
+                            const out: any[] = [];
+                            const pushMeal = (day: string, m: any) => out.push({ ...(m || {}), day });
+
+                            try {
+                              if (dietByDay && typeof dietByDay === "object" && !Array.isArray(dietByDay)) {
+                                for (const [day, meals] of Object.entries(dietByDay)) {
+                                  for (const m of asArray(meals)) pushMeal(String(day), m);
+                                }
+                              } else if (Array.isArray(dietByDay)) {
+                                if (dietByDay.length && Array.isArray(dietByDay[0])) {
+                                  for (const tuple of dietByDay as any[]) {
+                                    const [day, meals] = tuple;
+                                    for (const m of asArray(meals)) pushMeal(String(day), m);
+                                  }
+                                } else if (
+                                  dietByDay.length &&
+                                  typeof dietByDay[0] === "object" &&
+                                  dietByDay[0] !== null &&
+                                  ("day" in (dietByDay[0] as any) || "meals" in (dietByDay[0] as any))
+                                ) {
+                                  for (const item of dietByDay as any[]) {
+                                    const day = (item as any).day ?? "";
+                                    const meals = (item as any).meals ?? (item as any).items;
+                                    for (const m of asArray(meals)) pushMeal(String(day), m);
+                                  }
+                                } else {
+                                  for (const m of dietByDay as any[]) pushMeal(String((m as any)?.day ?? ""), m);
+                                }
+                              }
+                            } catch (e) {
+                              console.warn("setConfirmedDiet normalize error:", e, dietByDay);
+                            }
+
+                            setConfirmedDiet(out);
+                            setDietApproved(false);
+                          }}
+                          isEditable={!dietApproved}
+                          lang={lang}
+                          notes={notes}
+                          setNotes={setNotes}
+                        />
+                      </PanelCard>
                     </div>
-
-                    <DietTable
-                      editableDiet={editableDiet || {}}
-                      setEditableDiet={setEditableDiet}
-                      setConfirmedDiet={(dietByDay: any) => {
-                        const asArray = (x: any): any[] =>
-                          Array.isArray(x)
-                            ? x
-                            : (x && typeof x === "object" ? Object.values(x) : []).filter((v) => v != null);
-
-                        const out: any[] = [];
-                        const pushMeal = (day: string, m: any) => out.push({ ...(m || {}), day });
-
-                        try {
-                          if (dietByDay && typeof dietByDay === "object" && !Array.isArray(dietByDay)) {
-                            for (const [day, meals] of Object.entries(dietByDay)) {
-                              for (const m of asArray(meals)) pushMeal(String(day), m);
-                            }
-                          } else if (Array.isArray(dietByDay)) {
-                            if (dietByDay.length && Array.isArray(dietByDay[0])) {
-                              for (const tuple of dietByDay as any[]) {
-                                const [day, meals] = tuple;
-                                for (const m of asArray(meals)) pushMeal(String(day), m);
-                              }
-                            } else if (
-                              dietByDay.length &&
-                              typeof dietByDay[0] === "object" &&
-                              dietByDay[0] !== null &&
-                              ("day" in (dietByDay[0] as any) || "meals" in (dietByDay[0] as any))
-                            ) {
-                              for (const item of dietByDay as any[]) {
-                                const day = (item as any).day ?? "";
-                                const meals = (item as any).meals ?? (item as any).items;
-                                for (const m of asArray(meals)) pushMeal(String(day), m);
-                              }
-                            } else {
-                              for (const m of dietByDay as any[]) pushMeal(String((m as any)?.day ?? ""), m);
-                            }
-                          }
-                        } catch (e) {
-                          console.warn("setConfirmedDiet normalize error:", e, dietByDay);
-                        }
-
-                        setConfirmedDiet(out);
-                        setDietApproved(false);
-                      }}
-                      isEditable={!dietApproved}
-                      lang={lang}
-                      notes={notes}
-                      setNotes={setNotes}
-                    />
-                  </PanelCard>
-                )}
+                  )}          
 
                 {/* =========
-                    9) RECIPES
+                    7) RECIPES
                    ========= */}
                 {selectedSection === "recipes" && (
                   <div>

@@ -9270,4 +9270,17 @@ selectPatientHint: {
   hi: "मरीज़ का ईमेल दर्ज करें और डेटा लोड करें।",
   he: "הזן את אימייל המטופל וטען את הנתונים."
 },
+dietWorkflow: {
+  pl: "Generowanie diety",
+  en: "Diet Generation",
+  de: "Diäterstellung",
+  fr: "Génération du régime",
+  es: "Generación de dieta",
+  ua: "Створення дієти",
+  ru: "Создание диеты",
+  zh: "饮食生成",
+  ar: "إنشاء النظام الغذائي",
+  hi: "आहार निर्माण",
+  he: "יצירת תפריט"
+},
 };
