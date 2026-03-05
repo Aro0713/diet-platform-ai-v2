@@ -598,13 +598,13 @@ export default function Home() {
     <main className="relative min-h-[100dvh] text-white transition-all duration-300 bg-[#06131a]">
             {/* Global logo – prawy górny róg strony */}
       <div
-        className={`absolute top-28 right-10 z-40 hidden lg:block pointer-events-none transition-all duration-500 ${
+        className={`absolute top-6 right-6 z-40 hidden lg:block pointer-events-none transition-all duration-500 ${
           scrolled ? "scale-75 opacity-90" : "scale-100"
         }`}
       >
-        <div className="relative h-44 w-44">
-            <div className="logo-mask" />
-            <Image
+        <div className="relative h-64 w-64">
+          <div className="logo-mask" />
+          <Image
             src="/logo-dietcare.png"
             alt={tUI("landing.logoAlt")}
             fill
