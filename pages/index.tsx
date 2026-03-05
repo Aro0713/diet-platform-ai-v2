@@ -12,16 +12,6 @@ const FOOTER = {
   youtube: "https://www.youtube.com/@DietCarePlatform",
   adminName: "ALS sp. z o.o.",
 };
-const [scrolled, setScrolled] = useState(false);
-
-useEffect(() => {
-  const onScroll = () => {
-    setScrolled(window.scrollY > 40);
-  };
-
-  window.addEventListener("scroll", onScroll);
-  return () => window.removeEventListener("scroll", onScroll);
-}, []);
 
 // ────────────────────────────────────────────────────────────────────────────
 // PRICING — market-aware (PL → PLN, EU → EUR, OTHER → USD)
@@ -257,6 +247,19 @@ export default function Home() {
 
   const [lang, setLang] = useState<LangKey>("pl");
   const [langReady, setLangReady] = useState(false);
+
+    // logo: scroll -> subtle scale
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    onScroll(); // ustaw od razu
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   // Autoodtwarzanie TV (sterowane przez przycisk „Zobacz co Cię czeka”)
   const [autoPlayVideo, setAutoPlayVideo] = useState(true);
@@ -600,7 +603,8 @@ export default function Home() {
         }`}
       >
         <div className="relative h-44 w-44">
-          <Image
+            <div className="logo-mask" />
+            <Image
             src="/logo-dietcare.png"
             alt={tUI("landing.logoAlt")}
             fill
