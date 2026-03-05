@@ -676,32 +676,21 @@ export default function Home() {
             {/* Premium floating logo badge — nachodzi narożnik panelu */}
             <div className="absolute -right-40 -top-14 z-50 hidden lg:block pointer-events-none">
               <div className="group relative h-48 w-48">
-                {/* ambient glow */}
-                <div
-                  aria-hidden
-                  className="absolute -inset-8 rounded-[38px] blur-3xl opacity-70"
-                  style={{
-                    background:
-                      "radial-gradient(60% 60% at 25% 20%, rgba(56,189,248,.55), transparent 62%)," +
-                      "radial-gradient(55% 55% at 85% 30%, rgba(167,139,250,.45), transparent 62%)," +
-                      "radial-gradient(60% 60% at 55% 90%, rgba(16,185,129,.30), transparent 62%)",
-                  }}
-                />
 
                 {/* badge */}
                 <div className="relative h-48 w-48 rounded-[34px] overflow-hidden">
                   {/* outer ring */}
-                  <div aria-hidden className="absolute inset-0 rounded-[34px] ring-1 ring-white/20" />
-                  <div aria-hidden className="absolute inset-0 rounded-[34px] ring-1 ring-black/25" />
-
-                  {/* glass fill */}
-                  <div className="absolute inset-0 rounded-[34px] bg-white/10 backdrop-blur-2xl border border-white/15 shadow-[0_35px_120px_rgba(0,0,0,.65)]" />
+                   <div aria-hidden className="absolute inset-0 rounded-[44px] ring-1 ring-white/30" />
+                   <div aria-hidden className="absolute inset-0 rounded-[44px] ring-1 ring-black/30" />
+         
+                  {/* glass fill (crisp) */}
+                  <div className="absolute inset-0 rounded-[44px] bg-white/12 backdrop-blur-xl border border-white/20 shadow-[0_28px_90px_rgba(0,0,0,.55)]" />
 
                   {/* specular + sheen */}
-                  <div aria-hidden className="absolute -top-14 -left-14 h-36 w-36 rounded-full bg-white/28 blur-3xl opacity-80" />
-                  <div
+                        <div aria-hidden className="absolute -top-16 -left-16 h-40 w-40 rounded-full bg-white/18 blur-2xl opacity-60" />
+                        <div
                     aria-hidden
-                    className="absolute inset-0 opacity-60"
+                    className="absolute inset-0 opacity-35"
                     style={{
                       background:
                         "linear-gradient(135deg, rgba(255,255,255,.22) 0%, rgba(255,255,255,.06) 38%, rgba(0,0,0,.14) 100%)",
@@ -715,7 +704,7 @@ export default function Home() {
                   {/* subtle noise */}
                   <div
                     aria-hidden
-                    className="absolute inset-0 opacity-[0.08] mix-blend-overlay"
+                    className="absolute inset-0 opacity-[0.03] mix-blend-overlay"
                     style={{
                       backgroundImage:
                         "radial-gradient(rgba(255,255,255,.35) 1px, transparent 1px)",
@@ -727,7 +716,7 @@ export default function Home() {
                     src="/logo-dietcare.png"
                     alt={tUI("landing.logoAlt")}
                     fill
-                    className="object-contain p-8 drop-shadow-[0_30px_85px_rgba(0,0,0,.75)]"
+                    className="object-contain p-8 contrast-125 saturate-110 drop-shadow-[0_18px_50px_rgba(0,0,0,.65)]"
                     priority
                   />
                 </div>
