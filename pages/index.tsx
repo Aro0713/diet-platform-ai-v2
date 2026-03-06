@@ -91,6 +91,7 @@ const EU_COUNTRIES = new Set([
   "ES",
   "SE",
 ]);
+
 declare global {
   interface Window {
     YT: any;
@@ -104,7 +105,17 @@ declare global {
  * - subtle watermark logo (selectively blended)
  * - fiber optic threads (SVG, very subtle)
  */
-function GlassBackdrop() {
+function GlassBackdrop({ lite = false }: { lite?: boolean }) {
+  if (lite) {
+    return (
+      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(900px_500px_at_20%_15%,rgba(56,189,248,.12),transparent_60%),radial-gradient(700px_500px_at_80%_25%,rgba(167,139,250,.10),transparent_60%),radial-gradient(800px_600px_at_55%_85%,rgba(16,185,129,.06),transparent_60%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,.05)_0%,rgba(255,255,255,.02)_35%,rgba(0,0,0,.10)_100%)] opacity-70" />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#06131a] to-transparent opacity-60" />
+      </div>
+    );
+  }
+
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
       {/* Base gradient */}
@@ -118,8 +129,7 @@ function GlassBackdrop() {
         <div className="absolute inset-0 [background-image:radial-gradient(rgba(255,255,255,.18)_1px,transparent_1px)] [background-size:18px_18px] blur-[0.2px]" />
       </div>
 
-      {/* Logo watermark (selective + subtle)
-          Jeśli masz lepszy znak (np. samo serce) podmień src na np. /logo-mark.png */}
+      {/* Logo watermark */}
       <div className="absolute inset-0 opacity-[0.12]">
         <div className="absolute -top-20 -left-10 h-[520px] w-[520px] blur-[0.2px] rotate-[-10deg]">
           <Image
@@ -141,7 +151,7 @@ function GlassBackdrop() {
         </div>
       </div>
 
-      {/* Fiber threads (very subtle) */}
+      {/* Fiber threads */}
       <svg
         className="absolute inset-0 h-full w-full opacity-[0.18]"
         viewBox="0 0 1200 800"
@@ -169,7 +179,6 @@ function GlassBackdrop() {
           </filter>
         </defs>
 
-        {/* Lines */}
         <path
           d="M-40,620 C180,520 240,420 420,380 C620,335 720,470 860,420 C1010,365 1080,200 1240,120"
           fill="none"
@@ -191,7 +200,6 @@ function GlassBackdrop() {
           filter="url(#fiberGlow)"
         />
 
-        {/* Micro sparkles */}
         {Array.from({ length: 14 }).map((_, i) => {
           const x = 60 + i * 80;
           const y = 120 + ((i * 37) % 520);
@@ -203,7 +211,6 @@ function GlassBackdrop() {
         })}
       </svg>
 
-      {/* Bottom fade for readability */}
       <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#06131a] to-transparent opacity-60" />
     </div>
   );
@@ -218,14 +225,15 @@ export default function Home() {
   const [ytReady, setYtReady] = useState(false);
   const ytPlayerRef = useRef<any>(null);
 
+  const [isIOS, setIsIOS] = useState(false);
+  const [loadVideo, setLoadVideo] = useState(false);
+
   const goToTv = () => {
-    // 1) Scroll
     tvSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 
-    // 2) Odpal audio/wideo wprost z YouTube API (gest użytkownika)
+    setLoadVideo(true);
     setAutoPlayVideo(true);
 
-    // iOS: wywołania MUSZĄ być wprost z handlera kliknięcia
     const p = ytPlayerRef.current;
     if (p && ytReady) {
       try {
@@ -236,7 +244,6 @@ export default function Home() {
       } catch {}
     }
 
-    // Fallback: stary mechanizm postMessage (gdy player jeszcze się inicjuje)
     const win = playerRef.current?.contentWindow;
     if (win) {
       win.postMessage(JSON.stringify({ event: "command", func: "unMute", args: [] }), "*");
@@ -248,20 +255,32 @@ export default function Home() {
   const [lang, setLang] = useState<LangKey>("pl");
   const [langReady, setLangReady] = useState(false);
 
-    // logo: scroll -> subtle scale
+  // logo: scroll -> subtle scale
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
 
+    const ua = window.navigator.userAgent;
+    const isiOS =
+      /iP(hone|ad|od)/.test(ua) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+    setIsIOS(isiOS);
+    setLoadVideo(!isiOS);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
     const onScroll = () => setScrolled(window.scrollY > 40);
-    onScroll(); // ustaw od razu
+    onScroll();
 
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Autoodtwarzanie TV (sterowane przez przycisk „Zobacz co Cię czeka”)
+  // Autoodtwarzanie TV
   const [autoPlayVideo, setAutoPlayVideo] = useState(true);
 
   useEffect(() => {
@@ -274,55 +293,86 @@ export default function Home() {
   }, []);
 
   // ──────────────────────────────────────────────────────────────
-  // MARKET-AWARE PRICING (hooki muszą być wewnątrz komponentu)
+  // MARKET-AWARE PRICING
   // ──────────────────────────────────────────────────────────────
   const [market, setMarket] = useState<Market>("PL");
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const stored = localStorage.getItem("platformLang");
+    if (stored && Object.keys(languageLabels).includes(stored)) {
+      setLang(stored as LangKey);
+    } else {
+      const navLang = (navigator.language || "en").slice(0, 2).toLowerCase();
+      if (Object.keys(languageLabels).includes(navLang)) {
+        setLang(navLang as LangKey);
+      } else {
+        setLang("en");
+      }
+    }
+
     let mounted = true;
+
     (async () => {
       try {
         const res = await fetch("https://ipapi.co/json/");
         const data = await res.json();
+
+        if (!mounted) return;
+
         const cc = String(data?.country_code || "").toUpperCase();
         if (cc === "PL") {
-          if (mounted) setMarket("PL");
+          setMarket("PL");
         } else if (EU_COUNTRIES.has(cc)) {
-          if (mounted) setMarket("EU");
+          setMarket("EU");
         } else {
-          if (mounted) setMarket("OTHER");
+          setMarket("OTHER");
+        }
+
+        const detected = data?.languages?.split(",")[0]?.toLowerCase();
+        if (detected && Object.keys(languageLabels).includes(detected)) {
+          setLang(detected as LangKey);
+          localStorage.setItem("platformLang", detected);
         }
       } catch {
-        if (mounted) setMarket("OTHER"); // fallback
+        if (!mounted) return;
+        setMarket("OTHER");
+      } finally {
+        if (mounted) setLangReady(true);
       }
     })();
+
     return () => {
       mounted = false;
     };
   }, []);
 
   useEffect(() => {
-    // Dołącz skrypt Iframe API tylko raz
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || !loadVideo) return;
+
     if (window.YT && window.YT.Player) {
-      setYtReady(true);
       ytPlayerRef.current = new window.YT.Player("introPlayer", {
         events: { onReady: () => setYtReady(true) },
       });
       return;
     }
-    const tag = document.createElement("script");
-    tag.src = "https://www.youtube.com/iframe_api";
-    document.body.appendChild(tag);
+
+    const existing = document.querySelector('script[src="https://www.youtube.com/iframe_api"]');
+    if (!existing) {
+      const tag = document.createElement("script");
+      tag.src = "https://www.youtube.com/iframe_api";
+      document.body.appendChild(tag);
+    }
 
     window.onYouTubeIframeAPIReady = () => {
       ytPlayerRef.current = new window.YT.Player("introPlayer", {
         events: { onReady: () => setYtReady(true) },
       });
     };
-  }, []);
+  }, [loadVideo]);
 
-  // tUI lokalne (jak w register.tsx)
+  // tUI lokalne
   const tUI = (key: keyof typeof translationsUI): string => {
     const entry = translationsUI[key];
     if (!entry) {
@@ -331,36 +381,6 @@ export default function Home() {
     }
     return entry[lang] || entry.pl || `[${String(key)}]`;
   };
-
-  // detekcja języka (IP) + localStorage
-  useEffect(() => {
-    const initLang = async () => {
-      try {
-        const stored = localStorage.getItem("platformLang");
-        if (stored && Object.keys(languageLabels).includes(stored)) {
-          setLang(stored as LangKey);
-          setLangReady(true);
-          return;
-        }
-        const res = await fetch("https://ipapi.co/json/");
-        const data = await res.json();
-        const detected = data?.languages?.split(",")[0]?.toLowerCase();
-        if (detected && Object.keys(languageLabels).includes(detected)) {
-          setLang(detected as LangKey);
-          localStorage.setItem("platformLang", detected);
-        } else {
-          setLang("en");
-          localStorage.setItem("platformLang", "en");
-        }
-      } catch {
-        setLang("pl");
-        localStorage.setItem("platformLang", "pl");
-      } finally {
-        setLangReady(true);
-      }
-    };
-    initLang();
-  }, []);
 
   // Magic link → /reset
   useEffect(() => {
@@ -371,16 +391,6 @@ export default function Home() {
       }
     }
   }, []);
-
-  if (!langReady) {
-    return (
-      <main className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-500 text-sm" aria-live="polite" role="status">
-          ⏳ Ładowanie języka...
-        </p>
-      </main>
-    );
-  }
 
   // 5) Formatowanie ceny
   function formatPrice(value: number, currency: string) {
@@ -399,27 +409,21 @@ export default function Home() {
   // ─────────────────────────────────────────────
   const now = new Date();
 
-  // Uwaga: miesiące są 0–11, więc listopad = 10
-  const promoStart = new Date(2025, 10, 14); // 14.11.2025
-  const promoEnd = new Date(2025, 11, 14); // 14.12.2025
+  const promoStart = new Date(2025, 10, 14);
+  const promoEnd = new Date(2025, 11, 14);
 
   const isPromo = now >= promoStart && now <= promoEnd;
 
-  // ceny promocyjne globalnie
   const PROMO_PRICE = {
     PL: 49,
     EU: 13,
     OTHER: 14,
   } as const;
 
-  // 7) Sformatowane ceny
   const pricePatient7 = formatPrice(pp.plan7, cur);
   const basePatient30 = pp.plan30;
-
   const promoPatient30 = PROMO_PRICE[market];
-
   const pricePatient30 = formatPrice(isPromo ? promoPatient30 : basePatient30, cur);
-
   const pricePatient90 = formatPrice(pp.plan90, cur);
   const pricePatient365 = formatPrice(pp.plan365, cur);
 
@@ -531,19 +535,18 @@ export default function Home() {
   ];
 
   const origin = typeof window !== "undefined" ? window.location.origin : "";
-
   const videoId = "kSc0F38T3ac";
 
   const videoSrc =
     `https://www.youtube-nocookie.com/embed/${videoId}?` +
     new URLSearchParams({
       autoplay: autoPlayVideo ? "1" : "0",
-      mute: autoPlayVideo ? "1" : "0", // autoplay tylko w ciszy
+      mute: autoPlayVideo ? "1" : "0",
       controls: "0",
       rel: "0",
       modestbranding: "1",
       loop: autoPlayVideo ? "1" : "0",
-      playlist: videoId, // WYMAGANE do loop
+      playlist: videoId,
       playsinline: "1",
       enablejsapi: "1",
       origin,
@@ -595,12 +598,16 @@ export default function Home() {
   ];
 
   return (
-    <main className="relative min-h-[100dvh] text-white transition-all duration-300 bg-[#06131a]">
-            {/* Global logo – prawy górny róg strony */}
+    <main
+      className={`relative min-h-[100dvh] text-white bg-[#06131a] ${
+        isIOS ? "dcp-ios-lite" : "transition-all duration-300"
+      }`}
+    >
+      {/* Global logo – prawy górny róg strony */}
       <div
-        className={`absolute top-6 right-6 z-40 hidden lg:block pointer-events-none transition-all duration-500 ${
-          scrolled ? "scale-75 opacity-90" : "scale-100"
-        }`}
+        className={`absolute top-6 right-6 z-40 hidden lg:block pointer-events-none ${
+          isIOS ? "" : "transition-all duration-500"
+        } ${scrolled ? "scale-75 opacity-90" : "scale-100"}`}
       >
         <div className="relative h-64 w-64">
           <div className="logo-mask" />
@@ -623,38 +630,66 @@ export default function Home() {
       </Head>
 
       <style jsx global>{`
-                /* subtle gradient mask for logo readability */
-          .logo-mask {
-            position: absolute;
-            inset: -60px;
-            background: radial-gradient(
-              circle at center,
-              rgba(6,19,26,0) 0%,
-              rgba(6,19,26,0.35) 70%,
-              rgba(6,19,26,0.65) 100%
-            );
-            z-index: -1;
+        .logo-mask {
+          position: absolute;
+          inset: -60px;
+          background: radial-gradient(
+            circle at center,
+            rgba(6, 19, 26, 0) 0%,
+            rgba(6, 19, 26, 0.35) 70%,
+            rgba(6, 19, 26, 0.65) 100%
+          );
+          z-index: -1;
+        }
+
+        @supports (-webkit-touch-callout: none) {
+          .ios-no-backdrop {
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
           }
-        /* iOS Safari: backdrop-filter + sticky scroll => delayed repaints ("kontenery doczytują się") */
-          @supports (-webkit-touch-callout: none) {
-            .ios-no-backdrop {
-              -webkit-backdrop-filter: none !important;
-              backdrop-filter: none !important;
-            }
-            .ios-glass-bg {
-              background: rgba(255,255,255,0.08) !important; /* szkło bez blur */
-              border-color: rgba(255,255,255,0.14) !important;
-            }
+          .ios-glass-bg {
+            background: rgba(255, 255, 255, 0.08) !important;
+            border-color: rgba(255, 255, 255, 0.14) !important;
           }
-          html, body {
-            background: #06131a;
-            height: 100%;
+        }
+
+        html,
+        body {
+          background: #06131a;
+          height: 100%;
+        }
+
+        @supports (-webkit-touch-callout: none) {
+          nav.dcp-ios-no-sticky {
+            position: static !important;
           }
-            @supports (-webkit-touch-callout: none) {
-            nav.dcp-ios-no-sticky {
-              position: static !important;
-            }
+
+          .dcp-ios-lite,
+          .dcp-ios-lite * {
+            -webkit-font-smoothing: antialiased;
           }
+
+          .dcp-ios-lite .dcp-fiber,
+          .dcp-ios-lite .dcp-fiber-slow,
+          .dcp-ios-lite animate {
+            animation: none !important;
+          }
+
+          .dcp-ios-lite .backdrop-blur-xl,
+          .dcp-ios-lite .backdrop-blur-2xl,
+          .dcp-ios-lite .backdrop-blur-md,
+          .dcp-ios-lite .backdrop-blur-sm,
+          .dcp-ios-lite .ios-no-backdrop {
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+          }
+
+          .dcp-ios-lite .ios-glass-bg {
+            background: rgba(255, 255, 255, 0.08) !important;
+            border-color: rgba(255, 255, 255, 0.14) !important;
+          }
+        }
+
         @keyframes dcpPediatricGlow {
           0% {
             background-position: 0% 50%;
@@ -670,7 +705,6 @@ export default function Home() {
           }
         }
 
-        /* subtle fiber motion */
         @keyframes dcpFiberDash {
           0% {
             stroke-dashoffset: 0;
@@ -684,6 +718,7 @@ export default function Home() {
             opacity: 0.55;
           }
         }
+
         .dcp-fiber {
           animation: dcpFiberDash 14s linear infinite;
         }
@@ -694,7 +729,7 @@ export default function Home() {
 
       {/* GLOBAL BACKDROP */}
       <div className="absolute inset-0 -z-10">
-        <GlassBackdrop />
+        <GlassBackdrop lite={isIOS} />
       </div>
 
       {/* NAV */}
@@ -729,20 +764,15 @@ export default function Home() {
         </div>
       </nav>
 
-            {/* HERO */}
-            <section className="relative w-full">
+      {/* HERO */}
+      <section className="relative w-full">
         <div className="relative">
-          {/* Hero container wrapper (logo poza kontenerami jak na szkicu) */}
           <div className="relative overflow-visible mx-auto max-w-6xl px-5 pt-6 md:pt-10">
-
-            {/* Hero container (glass panel) */}
             <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/6 backdrop-blur-2xl shadow-[0_30px_90px_rgba(0,0,0,.45)] ios-no-backdrop ios-glass-bg">
-              {/* inner highlight */}
               <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_15%_0%,rgba(255,255,255,.10),transparent_55%)] opacity-70" />
               <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,.08),rgba(0,0,0,.10))] opacity-50" />
 
               <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-8 p-6 md:p-8">
-                {/* Left: Copy + CTA */}
                 <div className="flex flex-col gap-6">
                   <div className="relative">
                     <p className="text-base sm:text-lg md:text-xl font-semibold tracking-tight leading-[1.6] text-white/95">
@@ -799,7 +829,6 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Right: “glass preview” panel */}
                 <div className="relative rounded-3xl border border-white/10 bg-white/7 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,.35)] overflow-hidden ios-no-backdrop ios-glass-bg">
                   <div className="absolute inset-0 bg-[radial-gradient(140%_90%_at_10%_0%,rgba(255,255,255,.10),transparent_50%)]" />
                   <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,.05),rgba(0,0,0,.12))] opacity-70" />
@@ -857,7 +886,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* STEPS (pełne) */}
+      {/* STEPS */}
       <section className="mx-auto max-w-6xl px-5 mt-10 md:mt-14">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-5">
           {steps.map((s) => (
@@ -896,7 +925,7 @@ export default function Home() {
         </h2>
 
         <div className="grid lg:grid-cols-2 gap-6">
-          {/* Pacjenci — 4 plany */}
+          {/* Pacjenci */}
           <div>
             <h3 className="text-lg font-semibold mb-3 opacity-90">{tUI("pricing.patientsHeader")}</h3>
             <div className="grid sm:grid-cols-2 gap-4">
@@ -910,7 +939,6 @@ export default function Home() {
                       : "bg-white/7 border-white/10 shadow-[0_18px_60px_rgba(0,0,0,.30)]")
                   }
                 >
-                  {/* PREMIUM GLOW tylko dla Plan 30 */}
                   {p.title === tUI("pricing.plan30.title") && (
                     <>
                       <div
@@ -946,7 +974,6 @@ export default function Home() {
                       </div>
                     )}
 
-                    {/* Badge trialu – tylko na Plan 30 */}
                     {p.title === tUI("pricing.plan30.title") && (
                       <div className="mt-2 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold border border-white/15 bg-white/8">
                         <span aria-hidden className="h-2.5 w-2.5 rounded-full bg-sky-200 shadow-[0_0_18px_rgba(56,189,248,.65)]" />
@@ -971,7 +998,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Lekarze & dietetycy (PRO) — 2 plany */}
+          {/* Lekarze & dietetycy */}
           <div>
             <h3 className="text-lg font-semibold mb-3 opacity-90">{tUI("pricing.doctorsHeader")}</h3>
             <div className="grid sm:grid-cols-2 gap-4">
@@ -995,7 +1022,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* MODERN TV – osadzone w sekcji PRICING */}
+        {/* MODERN TV */}
         <div id="intro-tv" ref={tvSectionRef} className="mt-10 md:mt-12">
           <div className="relative mx-auto w-full max-w-6xl px-2 sm:px-4" aria-label="Modern TV – intro video player">
             <div
@@ -1006,17 +1033,35 @@ export default function Home() {
             >
               <div className="pointer-events-none absolute inset-x-0 bottom-0 h-9 bg-gradient-to-t from-white/6 to-transparent" />
               <div className="pointer-events-none absolute inset-0 hidden sm:block bg-[radial-gradient(120%_80%_at_10%_0%,rgba(255,255,255,.06),transparent_55%)]" />
-              <iframe
-                id="introPlayer"
-                ref={playerRef}
-                className="absolute inset-0 h-full w-full"
-                src={videoSrc}
-                title="Diet Care Platform — intro"
-                allow="autoplay; encrypted-media; picture-in-picture"
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="strict-origin-when-cross-origin"
-              />
+
+              {loadVideo ? (
+                <iframe
+                  id="introPlayer"
+                  ref={playerRef}
+                  className="absolute inset-0 h-full w-full"
+                  src={videoSrc}
+                  title="Diet Care Platform — intro"
+                  allow="autoplay; encrypted-media; picture-in-picture"
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoadVideo(true);
+                    setAutoPlayVideo(true);
+                  }}
+                  className="absolute inset-0 flex items-center justify-center bg-black/40"
+                  aria-label={tUI("cta.preview")}
+                  title={tUI("cta.preview")}
+                >
+                  <div className="rounded-full border border-white/15 bg-white/10 px-5 py-3 backdrop-blur-md">
+                    {tUI("cta.preview")}
+                  </div>
+                </button>
+              )}
             </div>
 
             <div className="mx-auto mt-3 h-2 sm:h-2.5 w-[88%] rounded-full bg-white/8 ring-1 ring-white/10 backdrop-blur-xl" />
@@ -1037,7 +1082,7 @@ export default function Home() {
               localStorage.setItem("entryMode", "patient");
               window.location.href = "/register?mode=patient";
             }}
-           className="w-full sm:w-auto rounded-2xl px-6 py-3 text-lg font-semibold shadow-lg border border-white/10 bg-[linear-gradient(135deg,rgba(56,189,248,.35),rgba(16,185,129,.25))] hover:bg-[linear-gradient(135deg,rgba(56,189,248,.45),rgba(16,185,129,.32))] backdrop-blur-xl"
+            className="w-full sm:w-auto rounded-2xl px-6 py-3 text-lg font-semibold shadow-lg border border-white/10 bg-[linear-gradient(135deg,rgba(56,189,248,.35),rgba(16,185,129,.25))] hover:bg-[linear-gradient(135deg,rgba(56,189,248,.45),rgba(16,185,129,.32))] backdrop-blur-xl"
             aria-label={tUI("cta.patientAria")}
             title={tUI("cta.patientAria")}
           >
@@ -1078,7 +1123,6 @@ export default function Home() {
             <h3 className="text-lg font-semibold">{tUI("footer.followUs")}</h3>
 
             <div className="mt-4 flex gap-6 md:gap-8 justify-center md:justify-end items-center">
-              {/* Facebook */}
               <a
                 href="https://www.facebook.com/profile.php?id=61580694946237"
                 target="_blank"
@@ -1095,7 +1139,6 @@ export default function Home() {
                 </svg>
               </a>
 
-              {/* Instagram */}
               <a
                 href="https://www.instagram.com/diet.care88"
                 target="_blank"
@@ -1119,7 +1162,6 @@ export default function Home() {
                 </svg>
               </a>
 
-              {/* YouTube */}
               <a
                 href="https://www.youtube.com/@DietCarePlatform"
                 target="_blank"
@@ -1133,7 +1175,6 @@ export default function Home() {
                 </svg>
               </a>
 
-              {/* ALS – strona administratora */}
               <a
                 href="https://alsolution.pl/produkty-1/diet-care-platform"
                 target="_blank"
