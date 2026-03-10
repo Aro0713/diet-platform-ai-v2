@@ -1163,7 +1163,7 @@ export default function Home() {
               </a>
 
               <a
-                href="https://www.youtube.com/@DietCarePlatform"
+                href="https://youtu.be/Au8Vtn0s33s"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="YouTube"
